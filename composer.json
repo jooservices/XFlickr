@@ -7,7 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.5",
-        "inertiajs/inertia-laravel": "^2.0",
+        "inertiajs/inertia-laravel": "^3.1",
         "jooservices/flickr": "^1.0",
         "jooservices/laravel-config": "^1.1",
         "jooservices/laravel-events": "^1.0",
