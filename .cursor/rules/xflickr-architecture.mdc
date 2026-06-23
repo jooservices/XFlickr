@@ -1,0 +1,17 @@
+---
+description: XFlickr architecture boundaries for app and frontend code.
+globs: app/**,resources/js/**
+alwaysApply: false
+---
+
+# XFlickr architecture
+
+Read [`AGENTS.md`](../../AGENTS.md) and skill [`ai/skills/form-request-service-repository/SKILL.md`](../../ai/skills/form-request-service-repository/SKILL.md).
+
+Flow: `Controller → FormRequest → Service → Repository → Model`
+
+- Crawl logic: `jooservices/xflickr-crawler` package only
+- Manual crawl triggers only — no auto-spidering
+- Jobs delegate to Services
+
+Module map: [`ai/skills/class-purpose-and-module-map/SKILL.md`](../../ai/skills/class-purpose-and-module-map/SKILL.md)

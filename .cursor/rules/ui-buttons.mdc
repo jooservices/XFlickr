@@ -1,0 +1,34 @@
+---
+description: UI button, crawl action, and card patterns for XFlickr frontend.
+globs: resources/js/**
+alwaysApply: false
+---
+
+# UI buttons and crawl actions
+
+Canonical skill: [`ai/skills/react-inertia-frontend/SKILL.md`](../../ai/skills/react-inertia-frontend/SKILL.md)
+
+## Buttons
+
+- Use [`Button`](resources/js/Components/Button.tsx) or [`ActionButton`](resources/js/Components/ActionButton.tsx) for interactive controls.
+- Do **not** add raw `rounded-md bg-*` button classes in pages or feature components.
+- Semantic variants live in [`buttonVariants.ts`](resources/js/lib/buttonVariants.ts):
+  - `primary` — main form submit / confirm
+  - `primaryDark` — strong CTA (filters, modal confirm)
+  - `secondary` — neutral outline
+  - `connect` — OAuth / connect
+  - `destructive` — disconnect / delete
+  - `warning` — reauthorize
+  - `ghost` — icon-only / close
+  - `link` — inline text action
+
+## Crawl actions
+
+- Use [`CrawlActionBar`](resources/js/Components/CrawlActionBar.tsx) everywhere crawl, download, or upload is triggered.
+- Do **not** import [`CrawlDropdown`](resources/js/Components/CrawlDropdown.tsx) from pages — it is internal to `CrawlActionBar`.
+- Scopes: `account` (Flickr accounts table) or `contact` (contacts list rows, contact detail).
+
+## Cards
+
+- Use [`Card`](resources/js/Components/Card.tsx) for all card layouts.
+- Flickr/Storage settings use [`ProviderCard`](resources/js/Components/ProviderCard.tsx) preset — not a separate layout.
