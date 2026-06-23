@@ -9,6 +9,7 @@ use App\Jobs\UploadPhotoJob;
 use App\Models\StorageAccount;
 use App\Models\StoredFile;
 use App\Services\Flickr\ContactCatalogDetailStatsService;
+use App\Services\Flickr\ContactDetailService;
 use App\Services\Flickr\ContactListSorter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
@@ -129,6 +130,13 @@ final class FlickrContactFrontendSupportTest extends TestCase
             ->where('contact.nsid', $contact->nsid)
             ->where('crawl_state.photos.crawled', true)
             ->missing('contact_detail'));
+
+        $payload = app(ContactDetailService::class)->forShow($connection, $contact->nsid);
+
+        $this->assertIsArray($payload);
+        $this->assertSame($contact->nsid, $payload['contact']['nsid']);
+        $this->assertArrayNotHasKey('contact_detail', $payload);
+        $this->assertNull(app(ContactDetailService::class)->forShow($connection, 'missing@N01'));
     }
 
     public function test_favorites_catalog_api_filters_by_subject_nsid(): void
