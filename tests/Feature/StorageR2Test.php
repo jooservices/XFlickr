@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Contracts\StorageDownloadStreamer;
 use App\Enums\StorageDriver;
 use App\Models\StorageAccount;
 use App\Services\Storage\StorageAccountScopeService;
 use App\Services\Storage\StorageR2ConnectionVerifier;
+use App\Support\Storage\StorageStreamResult;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -110,6 +112,68 @@ final class StorageR2Test extends TestCase
         $response->assertJson(['message' => 'path is required.']);
     }
 
+    public function test_r2_download_streams_existing_file(): void
+    {
+        $account = $this->r2Account(['prefix' => 'archive']);
+        $stream = fopen('php://temp', 'rb+');
+        $this->assertIsResource($stream);
+        fwrite($stream, 'file-bytes');
+        rewind($stream);
+
+        $this->app->instance(StorageDownloadStreamer::class, new class($stream) implements StorageDownloadStreamer
+        {
+            /**
+             * @param  resource  $stream
+             */
+            public function __construct(private mixed $stream) {}
+
+            public function openStreamForAccount(StorageAccount $account, string $remotePath): ?StorageStreamResult
+            {
+                return new StorageStreamResult($this->stream, 'image.txt', 'text/plain');
+            }
+        });
+
+        $response = $this->get('/api/storage/r2/download?account_id='.$account->id.'&path=photos/image.txt');
+
+        $response->assertOk();
+        $this->assertSame('file-bytes', $response->streamedContent());
+        $response->assertHeader('Content-Disposition', 'attachment; filename="image.txt"');
+    }
+
+    public function test_r2_download_returns_not_found_for_missing_file(): void
+    {
+        $account = $this->r2Account(['prefix' => 'archive']);
+        $this->app->instance(StorageDownloadStreamer::class, new class implements StorageDownloadStreamer
+        {
+            public function openStreamForAccount(StorageAccount $account, string $remotePath): ?StorageStreamResult
+            {
+                return null;
+            }
+        });
+
+        $response = $this->getJson('/api/storage/r2/download?account_id='.$account->id.'&path=missing.jpg');
+
+        $response->assertStatus(404);
+        $response->assertJson(['message' => 'Remote file not found.']);
+    }
+
+    public function test_download_returns_unsupported_for_non_r2_provider(): void
+    {
+        $account = StorageAccount::query()->create([
+            'provider' => StorageDriver::GoogleDrive->value,
+            'label' => 'Drive',
+            'credentials' => [
+                'granted_scopes' => StorageDriver::GoogleDrive->defaultScopes(),
+            ],
+            'connected_at' => now(),
+        ]);
+
+        $response = $this->getJson('/api/storage/google-drive/download?account_id='.$account->id.'&path=file.jpg');
+
+        $response->assertStatus(422);
+        $response->assertJson(['message' => 'Download is not supported for this provider yet.']);
+    }
+
     public function test_settings_page_includes_r2_connection_meta(): void
     {
         $account = StorageAccount::query()->create([
@@ -135,5 +199,24 @@ final class StorageR2Test extends TestCase
             ->where('storage_accounts.0.connection_meta.bucket', 'xflickr-archive')
             ->where('storage_accounts.0.connection_meta.endpoint', 'https://example.r2.cloudflarestorage.com')
             ->where('storage_accounts.0.connection_meta.prefix', 'uploads'));
+    }
+
+    /**
+     * @param  array<string, mixed>  $credentials
+     */
+    private function r2Account(array $credentials = []): StorageAccount
+    {
+        return StorageAccount::query()->create([
+            'provider' => StorageDriver::R2->value,
+            'label' => 'R2 bucket',
+            'credentials' => [
+                'access_key_id' => 'key',
+                'secret_access_key' => 'secret',
+                'bucket' => 'photos',
+                'endpoint' => 'https://example.r2.cloudflarestorage.com',
+                ...$credentials,
+            ],
+            'connected_at' => now(),
+        ]);
     }
 }

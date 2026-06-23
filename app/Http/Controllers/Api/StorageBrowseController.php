@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Contracts\StorageDownloadStreamer;
 use App\Enums\StorageDriver;
 use App\Http\Requests\Api\Storage\BrowseStorageRequest;
 use App\Http\Requests\Api\Storage\DeleteStorageItemsRequest;
@@ -18,9 +19,8 @@ use App\Services\Storage\StorageBrowseLocalService;
 use App\Services\Storage\StorageBrowseService;
 use App\Services\Storage\StorageBrowseSyncService;
 use App\Services\Storage\StorageDeleteService;
-use App\Services\Storage\StorageFlysystemFactory;
-use App\Support\Storage\StorageR2Config;
 use Illuminate\Http\JsonResponse;
+use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -42,7 +42,7 @@ final class StorageBrowseController
     ): JsonResponse {
         try {
             $driver = StorageDriver::fromRouteSlug($provider);
-        } catch (\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
             return response()->json(['message' => 'Invalid storage provider.'], 422);
         }
 
@@ -83,7 +83,7 @@ final class StorageBrowseController
     ): JsonResponse {
         try {
             $driver = StorageDriver::fromRouteSlug($provider);
-        } catch (\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
             return response()->json(['message' => 'Invalid storage provider.'], 422);
         }
 
@@ -114,7 +114,7 @@ final class StorageBrowseController
     ): JsonResponse {
         try {
             $driver = StorageDriver::fromRouteSlug($provider);
-        } catch (\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
             return response()->json(['message' => 'Invalid storage provider.'], 422);
         }
 
@@ -131,7 +131,7 @@ final class StorageBrowseController
                 $request->itemIds(),
                 $request->containerId(),
             );
-        } catch (\InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         } catch (Throwable $e) {
             return $this->browseErrorResponse($e, $scopes, $account);
@@ -155,15 +155,12 @@ final class StorageBrowseController
         DownloadStorageFileRequest $request,
         string $provider,
         StorageAccountScopeService $scopes,
+        StorageDownloadStreamer $downloads,
     ): StreamedResponse|JsonResponse {
         try {
             $driver = StorageDriver::fromRouteSlug($provider);
-        } catch (\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
             return response()->json(['message' => 'Invalid storage provider.'], 422);
-        }
-
-        if ($driver !== StorageDriver::R2) {
-            return response()->json(['message' => 'Download is not supported for this provider yet.'], 422);
         }
 
         $account = $request->account($driver);
@@ -175,33 +172,23 @@ final class StorageBrowseController
         $remotePath = $request->path();
 
         try {
-            $credentials = $account->credentials ?? [];
-            $config = StorageR2Config::from($credentials);
-            $objectKey = $config->objectKey($remotePath);
-            $disk = app(StorageFlysystemFactory::class)->diskForAccount($account);
-
-            if (! $disk->exists($objectKey)) {
+            $stream = $downloads->openStreamForAccount($account, $remotePath);
+            if ($stream === null) {
                 return response()->json(['message' => 'Remote file not found.'], 404);
             }
 
-            $stream = $disk->readStream($objectKey);
-            if ($stream === false) {
-                return response()->json(['message' => 'Unable to read remote file.'], 422);
-            }
-
-            $filename = basename($remotePath);
-            $mimeType = $disk->mimeType($objectKey) ?: 'application/octet-stream';
-
             return response()->stream(function () use ($stream): void {
-                fpassthru($stream);
+                fpassthru($stream->stream);
 
-                if (is_resource($stream)) {
-                    fclose($stream);
+                if (is_resource($stream->stream)) {
+                    fclose($stream->stream);
                 }
             }, 200, [
-                'Content-Type' => $mimeType,
-                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+                'Content-Type' => $stream->mimeType,
+                'Content-Disposition' => 'attachment; filename="'.$stream->filename.'"',
             ]);
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         } catch (Throwable $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }

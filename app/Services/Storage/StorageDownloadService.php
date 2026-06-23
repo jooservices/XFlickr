@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace App\Services\Storage;
 
+use App\Contracts\StorageDownloadStreamer;
 use App\Enums\StorageDriver;
 use App\Models\StorageAccount;
 use App\Repositories\StorageAccountRepository;
 use App\Support\Storage\StorageR2Config;
+use App\Support\Storage\StorageStreamResult;
+use InvalidArgumentException;
 use RuntimeException;
 
-final class StorageDownloadService
+final class StorageDownloadService implements StorageDownloadStreamer
 {
     public function __construct(
         private readonly StorageFlysystemFactory $flysystem,
@@ -67,6 +70,36 @@ final class StorageDownloadService
             'size' => $metadata['size'],
             'etag' => $metadata['etag'],
         ];
+    }
+
+    public function openStreamForAccount(StorageAccount $account, string $remotePath): ?StorageStreamResult
+    {
+        $driver = StorageDriver::from($account->provider);
+
+        if ($driver !== StorageDriver::R2) {
+            throw new InvalidArgumentException('Download is not supported for this provider yet.');
+        }
+
+        $credentials = $account->credentials ?? [];
+        $objectKey = $this->objectKey($driver, $credentials, $remotePath);
+        $disk = $this->flysystem->diskForAccount($account);
+
+        if (! $disk->exists($objectKey)) {
+            return null;
+        }
+
+        $stream = $disk->readStream($objectKey);
+        if ($stream === false) {
+            throw new RuntimeException('Unable to read remote file.');
+        }
+
+        $mimeType = $disk->mimeType($objectKey) ?: 'application/octet-stream';
+
+        return new StorageStreamResult(
+            stream: $stream,
+            filename: basename($remotePath),
+            mimeType: $mimeType,
+        );
     }
 
     /**
