@@ -36,6 +36,7 @@ Thumbs.db
 /.nyc_output
 
 # --- AI / agent ephemeral (never commit) ---
+/plan.md
 /ai/plans/*.md
 !/ai/plans/.gitkeep
 .cursor/plans/
