@@ -173,9 +173,22 @@ final class PhotoUploadServiceTest extends TestCase
         Bus::assertNothingDispatched();
     }
 
-    private function createStorageAccount(): StorageAccount
+    public function test_it_resolves_explicit_or_default_storage_account(): void
     {
-        return StorageAccount::query()->create([
+        $defaultAccount = $this->createStorageAccount(['label' => 'Default Photos', 'is_default' => true]);
+        $explicitAccount = $this->createStorageAccount(['label' => 'Archive Photos']);
+        $service = app(PhotoUploadService::class);
+
+        $this->assertTrue($explicitAccount->is($service->resolveStorageAccount($explicitAccount->id)));
+        $this->assertTrue($defaultAccount->is($service->resolveStorageAccount()));
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    private function createStorageAccount(array $attributes = []): StorageAccount
+    {
+        return StorageAccount::query()->create(array_merge([
             'provider' => 'google_photos',
             'label' => 'Photos',
             'credentials' => [
@@ -183,6 +196,6 @@ final class PhotoUploadServiceTest extends TestCase
                 'refresh_token' => 'refresh',
             ],
             'connected_at' => now(),
-        ]);
+        ], $attributes));
     }
 }

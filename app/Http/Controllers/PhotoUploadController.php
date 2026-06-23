@@ -17,7 +17,7 @@ final class PhotoUploadController
 
     public function store(QueuePhotoUploadRequest $request, Connection $connection): RedirectResponse
     {
-        $storageAccount = $request->resolvedStorageAccount();
+        $storageAccount = $this->photoUploadService->resolveStorageAccount($request->storageAccountId());
 
         if ($storageAccount === null) {
             return back()->with('error', 'No storage account configured.');

@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Requests\Transfer;
 
 use App\Http\Requests\Request;
-use App\Models\StorageAccount;
-use App\Repositories\StorageAccountRepository;
 
 final class QueuePhotoUploadRequest extends Request
 {
@@ -33,16 +31,11 @@ final class QueuePhotoUploadRequest extends Request
         ];
     }
 
-    public function resolvedStorageAccount(): ?StorageAccount
+    public function storageAccountId(): ?int
     {
-        $storageAccountId = (int) $this->input('storage_account_id', 0);
-        $accounts = app(StorageAccountRepository::class);
+        $storageAccountId = $this->validated('storage_account_id');
 
-        if ($storageAccountId > 0) {
-            return $accounts->findByIdOrFail($storageAccountId);
-        }
-
-        return $accounts->findDefault();
+        return is_numeric($storageAccountId) && (int) $storageAccountId > 0 ? (int) $storageAccountId : null;
     }
 
     public function singlePhotoId(): ?string

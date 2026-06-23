@@ -8,6 +8,7 @@ use App\Enums\StoredFileStatus;
 use App\Jobs\UploadPhotoJob;
 use App\Models\StorageAccount;
 use App\Repositories\Crawler\PhotoQueryRepository;
+use App\Repositories\StorageAccountRepository;
 use App\Repositories\StorageUploadRepository;
 use App\Repositories\StoredFileRepository;
 use App\Repositories\TransferBatchRepository;
@@ -21,11 +22,21 @@ final class PhotoUploadService
     public function __construct(
         private readonly PhotoQueryRepository $photos,
         private readonly PhotoDownloadService $downloads,
+        private readonly StorageAccountRepository $storageAccounts,
         private readonly StoredFileRepository $storedFiles,
         private readonly StorageUploadRepository $storageUploads,
         private readonly TransferBatchRepository $batches,
         private readonly TransferItemRepository $items,
     ) {}
+
+    public function resolveStorageAccount(?int $storageAccountId = null): ?StorageAccount
+    {
+        if ($storageAccountId !== null && $storageAccountId > 0) {
+            return $this->storageAccounts->findByIdOrFail($storageAccountId);
+        }
+
+        return $this->storageAccounts->findDefault();
+    }
 
     /**
      * @return int Number of photos queued

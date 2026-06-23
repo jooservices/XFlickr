@@ -12,6 +12,7 @@ use App\Http\Requests\Storage\BeginStorageOAuthRequest;
 use App\Http\Requests\Storage\ReauthorizeStorageRequest;
 use App\Http\Requests\Storage\StorageOAuthCallbackRequest;
 use App\Http\Requests\Transfer\QueuePhotoDownloadRequest;
+use App\Http\Requests\Transfer\QueuePhotoUploadRequest;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Validator;
@@ -70,6 +71,23 @@ final class FormRequestValidationTest extends TestCase
 
         $this->assertSame('photo-1', $request->singlePhotoId());
         $this->assertSame(['67890@N01'], $request->contactNsids());
+    }
+
+    public function test_queue_photo_upload_request_exposes_storage_account_id_without_lookup(): void
+    {
+        $request = QueuePhotoUploadRequest::create('/upload', 'POST', [
+            'storage_account_id' => '42',
+        ]);
+        $request->setContainer($this->app);
+        $request->validateResolved();
+
+        $this->assertSame(42, $request->storageAccountId());
+
+        $defaultRequest = QueuePhotoUploadRequest::create('/upload', 'POST');
+        $defaultRequest->setContainer($this->app);
+        $defaultRequest->validateResolved();
+
+        $this->assertNull($defaultRequest->storageAccountId());
     }
 
     public function test_begin_flickr_oauth_request_defaults_and_trims_app_profile(): void
