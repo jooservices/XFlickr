@@ -1,0 +1,75 @@
+# Isolated test stack — ONLY stack for php artisan test / PHPUnit.
+# Dev MySQL (volume mysql-data) must not be touched by RefreshDatabase / migrate:fresh.
+# FORBIDDEN: docker compose exec app php artisan test  (uses dev stack — wipes data)
+#
+# Run all tests:
+#   composer test:docker
+#   ./scripts/test-docker.sh
+#   docker compose -f docker-compose.test.yml run --rm test
+#
+# Run a filter:
+#   ./scripts/test-docker.sh --filter=TokenBridgeTest
+#   docker compose -f docker-compose.test.yml run --rm test php artisan test --filter=TokenBridgeTest
+
+name: xflickr-test
+
+x-php-build: &php-build
+  build:
+    context: .
+    dockerfile: Dockerfile
+
+services:
+  test:
+    <<: *php-build
+    environment:
+      APP_NAME: xflickr
+      APP_ENV: testing
+      APP_KEY: ${APP_KEY}
+      APP_DEBUG: "true"
+      APP_URL: http://localhost
+      BCRYPT_ROUNDS: "4"
+      BROADCAST_CONNECTION: "null"
+      CACHE_STORE: array
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ":memory:"
+      DB_URL: ""
+      MAIL_MAILER: array
+      QUEUE_CONNECTION: sync
+      SESSION_DRIVER: array
+      PULSE_ENABLED: "false"
+      TELESCOPE_ENABLED: "false"
+      NIGHTWATCH_ENABLED: "false"
+      REDIS_CLIENT: phpredis
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DATABASE: xflickr_test
+      CONFIG_STORE_CACHE_ENABLED: "false"
+      EVENTS_EVENTSOURCING_ENABLED: "true"
+      EVENTS_EVENT_LOG_ENABLED: "true"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    entrypoint: ["/var/www/html/docker/test-entrypoint.sh"]
+    command: ["php", "artisan", "test"]
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
+
+  mongodb:
+    image: mongo:7
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+      start_period: 5s

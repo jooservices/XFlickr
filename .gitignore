@@ -1,0 +1,43 @@
+# --- Human / local development ---
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+.phpactor.json
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+/auth.json
+Homestead.json
+Homestead.yaml
+Thumbs.db
+/node_modules
+/vendor
+
+# --- Laravel runtime / build ---
+/.phpunit.cache
+.phpunit.result.cache
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/bootstrap/cache/*
+!bootstrap/cache/.gitignore
+
+# --- Static analysis / tooling caches ---
+.deptrac.cache
+
+# --- GitHub / CI artifacts ---
+/coverage
+/.nyc_output
+
+# --- AI / agent ephemeral (never commit) ---
+/ai/plans/*.md
+!/ai/plans/.gitkeep
+.cursor/plans/
+.cursor/tmp/
+*.plan.md
