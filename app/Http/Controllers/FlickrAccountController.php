@@ -6,11 +6,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Flickr\CrawlFlickrAccountRequest;
 use App\Services\Flickr\FlickrCrawlService;
-use App\Support\Flickr\ConnectionPresenter;
+use App\Services\Flickr\FlickrOAuthService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
-use JOOservices\XFlickrCrawler\Facades\FlickrService;
 use JOOservices\XFlickrCrawler\Models\Connection;
 
 final class FlickrAccountController
@@ -20,14 +19,10 @@ final class FlickrAccountController
         return redirect()->route('flickr.accounts.contacts.index', $connection);
     }
 
-    public function list(): Response
+    public function list(FlickrOAuthService $oauth): Response
     {
-        $accounts = FlickrService::connections()
-            ->list()
-            ->map(fn (Connection $connection): array => ConnectionPresenter::toArray($connection));
-
         return Inertia::render('Flickr/Index', [
-            'accounts' => $accounts,
+            'accounts' => $oauth->listAccounts(),
         ]);
     }
 
