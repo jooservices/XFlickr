@@ -4,23 +4,21 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Flickr\BeginFlickrOAuthRequest;
 use App\Http\Requests\Flickr\FlickrConnectionKeyRequest;
 use App\Http\Requests\Flickr\FlickrOAuthCallbackRequest;
 use App\Services\Flickr\FlickrOAuthService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use JOOservices\Flickr\Exceptions\AuthenticationException;
 use JOOservices\Flickr\Exceptions\ConfigurationException;
 use JOOservices\XFlickrCrawler\Exceptions\FlickrAppNotConfiguredException;
 
 final class FlickrAuthController
 {
-    public function connect(Request $request, FlickrOAuthService $oauth): RedirectResponse
+    public function connect(BeginFlickrOAuthRequest $request, FlickrOAuthService $oauth): RedirectResponse
     {
-        $appProfile = (string) $request->query('app_profile', 'main');
-
         try {
-            $begin = $oauth->begin($appProfile);
+            $begin = $oauth->begin($request->appProfile());
         } catch (ConfigurationException|FlickrAppNotConfiguredException) {
             return redirect()->route('settings.index', ['tab' => 'flickr'])->with('error', 'Flickr app credentials are invalid or incomplete.');
         } catch (AuthenticationException $exception) {
