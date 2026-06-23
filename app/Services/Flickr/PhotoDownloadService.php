@@ -9,6 +9,7 @@ use App\Repositories\Crawler\PhotoQueryRepository;
 use App\Repositories\StoredFileRepository;
 use App\Repositories\TransferBatchRepository;
 use App\Repositories\TransferItemRepository;
+use App\Services\Transfer\TransferQueueResult;
 use Illuminate\Support\Collection;
 use JOOservices\XFlickrCrawler\Models\Connection;
 use JOOservices\XFlickrCrawler\Models\Photo;
@@ -21,6 +22,47 @@ final class PhotoDownloadService
         private readonly TransferBatchRepository $batches,
         private readonly TransferItemRepository $items,
     ) {}
+
+    /**
+     * @param  list<string>  $contactNsids
+     */
+    public function queueFromInput(
+        Connection $connection,
+        ?string $flickrPhotoId = null,
+        ?string $contactNsid = null,
+        array $contactNsids = [],
+    ): TransferQueueResult {
+        if ($flickrPhotoId !== null && $flickrPhotoId !== '') {
+            $queuedBatches = $this->queuePhotoDownload($connection, $flickrPhotoId);
+
+            return TransferQueueResult::success(
+                $queuedBatches === 0 ? 'No download queued for this photo.' : 'Photo download queued.',
+                $queuedBatches,
+            );
+        }
+
+        if ($contactNsids !== []) {
+            $queuedBatches = 0;
+
+            foreach ($contactNsids as $selectedContactNsid) {
+                $queuedBatches += $this->queueDownloads($connection, $selectedContactNsid);
+            }
+
+            return TransferQueueResult::success(
+                $queuedBatches === 0
+                    ? 'No photos pending download.'
+                    : "{$queuedBatches} contact download batch(es) queued.",
+                $queuedBatches,
+            );
+        }
+
+        $queuedBatches = $this->queueDownloads($connection, $contactNsid);
+
+        return TransferQueueResult::success(
+            $queuedBatches === 0 ? 'No photos pending download.' : "{$queuedBatches} download batch(es) queued.",
+            $queuedBatches,
+        );
+    }
 
     /**
      * @return int Number of batches queued

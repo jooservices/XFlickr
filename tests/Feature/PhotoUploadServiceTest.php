@@ -183,6 +183,50 @@ final class PhotoUploadServiceTest extends TestCase
         $this->assertTrue($defaultAccount->is($service->resolveStorageAccount()));
     }
 
+    public function test_it_returns_error_result_when_queueing_from_input_without_storage_account(): void
+    {
+        $connection = $this->createFlickrConnection(['connection_key' => 'me@N01']);
+
+        $result = app(PhotoUploadService::class)->queueFromInput($connection);
+
+        $this->assertSame('error', $result->flashKey);
+        $this->assertSame('No storage account configured.', $result->message);
+        $this->assertSame(0, $result->queuedCount);
+    }
+
+    public function test_it_queues_upload_from_input_and_returns_flash_result(): void
+    {
+        Bus::fake([UploadPhotoJob::class]);
+
+        $connection = $this->createFlickrConnection(['connection_key' => 'me@N01']);
+        $storageAccount = $this->createStorageAccount(['is_default' => true]);
+
+        Photo::query()->create([
+            'flickr_photo_id' => 'p-input-upload',
+            'owner_nsid' => 'me@N01',
+            'title' => 'Input upload',
+        ]);
+        StoredFile::query()->create([
+            'flickr_photo_id' => 'p-input-upload',
+            'owner_nsid' => 'me@N01',
+            'variant' => 'original',
+            'status' => 'completed',
+            'local_path' => 'flickr/me@N01/photos/p-input-upload_abc.jpg',
+            'original_name' => 'p-input-upload_original.jpg',
+        ]);
+
+        $result = app(PhotoUploadService::class)->queueFromInput(
+            $connection,
+            storageAccountId: $storageAccount->id,
+            flickrPhotoId: 'p-input-upload',
+        );
+
+        $this->assertSame('success', $result->flashKey);
+        $this->assertSame('Photo upload queued.', $result->message);
+        $this->assertSame(1, $result->queuedCount);
+        Bus::assertDispatched(UploadPhotoJob::class, 1);
+    }
+
     /**
      * @param  array<string, mixed>  $attributes
      */

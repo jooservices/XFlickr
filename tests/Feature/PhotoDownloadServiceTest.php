@@ -135,4 +135,26 @@ final class PhotoDownloadServiceTest extends TestCase
         ]);
         Bus::assertDispatched(DownloadPhotoJob::class, 1);
     }
+
+    public function test_it_queues_from_input_and_returns_flash_result(): void
+    {
+        Bus::fake([DownloadPhotoJob::class]);
+
+        $connection = $this->createFlickrConnection(['connection_key' => 'me@N01']);
+        Photo::query()->create([
+            'flickr_photo_id' => 'p-input',
+            'owner_nsid' => 'friend@N01',
+            'title' => 'Input photo',
+        ]);
+
+        $result = app(PhotoDownloadService::class)->queueFromInput(
+            $connection,
+            flickrPhotoId: 'p-input',
+        );
+
+        $this->assertSame('success', $result->flashKey);
+        $this->assertSame('Photo download queued.', $result->message);
+        $this->assertSame(1, $result->queuedCount);
+        Bus::assertDispatched(DownloadPhotoJob::class, 1);
+    }
 }

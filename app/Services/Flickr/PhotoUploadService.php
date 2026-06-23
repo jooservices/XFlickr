@@ -13,6 +13,7 @@ use App\Repositories\StorageUploadRepository;
 use App\Repositories\StoredFileRepository;
 use App\Repositories\TransferBatchRepository;
 use App\Repositories\TransferItemRepository;
+use App\Services\Transfer\TransferQueueResult;
 use Illuminate\Support\Collection;
 use JOOservices\XFlickrCrawler\Models\Connection;
 use JOOservices\XFlickrCrawler\Models\Photo;
@@ -36,6 +37,60 @@ final class PhotoUploadService
         }
 
         return $this->storageAccounts->findDefault();
+    }
+
+    /**
+     * @param  list<string>  $contactNsids
+     */
+    public function queueFromInput(
+        Connection $connection,
+        ?int $storageAccountId = null,
+        ?string $flickrPhotoId = null,
+        ?string $contactNsid = null,
+        array $contactNsids = [],
+    ): TransferQueueResult {
+        $storageAccount = $this->resolveStorageAccount($storageAccountId);
+
+        if ($storageAccount === null) {
+            return TransferQueueResult::error('No storage account configured.');
+        }
+
+        if ($flickrPhotoId !== null && $flickrPhotoId !== '') {
+            $queued = $this->queuePhotoUpload($connection, $storageAccount, $flickrPhotoId);
+
+            return TransferQueueResult::success(
+                $queued === 0 ? 'No upload queued for this photo.' : 'Photo upload queued.',
+                $queued,
+            );
+        }
+
+        if ($contactNsids !== []) {
+            $queued = 0;
+
+            foreach ($contactNsids as $selectedContactNsid) {
+                $queued += $this->queueUploads($connection, $storageAccount, $selectedContactNsid);
+            }
+
+            $contactCount = count($contactNsids);
+
+            return TransferQueueResult::success(
+                $queued === 0
+                    ? 'No photos pending upload.'
+                    : "{$queued} photo(s) queued for upload across {$contactCount} contact(s).",
+                $queued,
+            );
+        }
+
+        $queued = $this->queueUploads($connection, $storageAccount, $contactNsid);
+
+        return TransferQueueResult::success(
+            $queued === 0
+                ? 'No photos pending upload.'
+                : ($contactNsid !== null && $contactNsid !== ''
+                    ? "{$queued} photo(s) queued for upload."
+                    : 'Account photo upload queued.'),
+            $queued,
+        );
     }
 
     /**
