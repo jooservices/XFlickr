@@ -111,7 +111,6 @@ final class FlickrContactController
         return Inertia::render('Contacts/Show', [
             'account' => ConnectionPresenter::toArray($connection),
             'contact' => ContactPresenter::toDetailArray($contact),
-            'contact_detail' => ContactPresenter::toDetailArray($contact),
             'catalog_stats' => $detailStats->forContact($connection, $contactNsid),
             'crawl_state' => $crawlState->forContact($connection, $contactNsid, [$contactNsid => $counts]),
         ]);

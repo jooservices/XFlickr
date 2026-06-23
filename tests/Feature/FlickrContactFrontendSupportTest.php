@@ -126,7 +126,9 @@ final class FlickrContactFrontendSupportTest extends TestCase
                 ->where('with_sizes', 1)
                 ->where('in_api', 42)
                 ->etc())
-            ->where('contact_detail.nsid', $contact->nsid));
+            ->where('contact.nsid', $contact->nsid)
+            ->where('crawl_state.photos.crawled', true)
+            ->missing('contact_detail'));
     }
 
     public function test_favorites_catalog_api_filters_by_subject_nsid(): void
