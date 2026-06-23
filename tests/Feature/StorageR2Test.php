@@ -198,7 +198,9 @@ final class StorageR2Test extends TestCase
             ->where('storage_accounts.0.id', $account->id)
             ->where('storage_accounts.0.connection_meta.bucket', 'xflickr-archive')
             ->where('storage_accounts.0.connection_meta.endpoint', 'https://example.r2.cloudflarestorage.com')
-            ->where('storage_accounts.0.connection_meta.prefix', 'uploads'));
+            ->where('storage_accounts.0.connection_meta.prefix', 'uploads')
+            ->where('storage_drivers.3.value', StorageDriver::R2->value)
+            ->where('storage_drivers.3.requires_oauth', false));
     }
 
     /**
