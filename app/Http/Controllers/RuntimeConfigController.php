@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Settings\RuntimeConfigPathRequest;
 use App\Http\Requests\Settings\StoreRuntimeConfigRequest;
 use App\Services\RuntimeConfigAdminService;
 use Illuminate\Http\RedirectResponse;
@@ -19,16 +20,16 @@ final class RuntimeConfigController
         return redirect()->route('settings.index', ['tab' => 'general'])->with('success', 'Configuration saved.');
     }
 
-    public function destroy(string $path, RuntimeConfigAdminService $configAdmin): RedirectResponse
+    public function destroy(RuntimeConfigPathRequest $request, RuntimeConfigAdminService $configAdmin): RedirectResponse
     {
-        $configAdmin->delete(urldecode($path));
+        $configAdmin->delete($request->configPath());
 
         return redirect()->route('settings.index', ['tab' => 'general'])->with('success', 'Configuration deleted.');
     }
 
-    public function reset(string $path, RuntimeConfigAdminService $configAdmin): RedirectResponse
+    public function reset(RuntimeConfigPathRequest $request, RuntimeConfigAdminService $configAdmin): RedirectResponse
     {
-        $configAdmin->resetToDefault(urldecode($path));
+        $configAdmin->resetToDefault($request->configPath());
 
         return redirect()->route('settings.index', ['tab' => 'general'])->with('success', 'Configuration reset to default.');
     }

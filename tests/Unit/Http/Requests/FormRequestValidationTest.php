@@ -7,6 +7,7 @@ namespace Tests\Unit\Http\Requests;
 use App\Enums\StorageDriver;
 use App\Http\Requests\Flickr\BeginFlickrOAuthRequest;
 use App\Http\Requests\Flickr\CrawlFlickrAccountRequest;
+use App\Http\Requests\Settings\RuntimeConfigPathRequest;
 use App\Http\Requests\Settings\StoreFlickrAppProfileRequest;
 use App\Http\Requests\Storage\BeginStorageOAuthRequest;
 use App\Http\Requests\Storage\ReauthorizeStorageRequest;
@@ -154,6 +155,17 @@ final class FormRequestValidationTest extends TestCase
         $request->validateResolved();
 
         $this->assertSame('google_photos', $request->provider());
+    }
+
+    public function test_runtime_config_path_request_decodes_route_path(): void
+    {
+        $request = RuntimeConfigPathRequest::create('/settings/config/xflickr%2Eglobal_pause/reset', 'POST');
+        $request->setContainer($this->app);
+        $this->bindRoute($request, '/settings/config/{path}/reset');
+
+        $request->validateResolved();
+
+        $this->assertSame('xflickr.global_pause', $request->configPath());
     }
 
     private function bindRoute(Request $request, string $uri): void
