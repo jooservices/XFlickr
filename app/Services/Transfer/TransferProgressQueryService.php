@@ -73,14 +73,6 @@ final class TransferProgressQueryService
         $query = $this->sorter->apply($query, $request->sort(), $request->direction(), self::BATCH_SORTS);
         $batchList = $query->limit($request->limit())->get();
 
-        if ($request->isActive()) {
-            foreach ($batchList as $batch) {
-                $this->batchReconciler->reconcile($batch);
-            }
-
-            $batchList = $batchList->map(fn (TransferBatch $batch): TransferBatch => $batch->fresh());
-        }
-
         return response()->json([
             'data' => $batchList->map(fn (TransferBatch $batch): array => [
                 ...$batch->toArray(),
