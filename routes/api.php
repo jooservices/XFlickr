@@ -7,8 +7,6 @@ use App\Http\Controllers\Api\StorageBrowseController;
 use App\Http\Controllers\Api\TransferProgressController;
 use App\Http\Controllers\FlickrAccountController;
 use App\Http\Controllers\FlickrContactController;
-use App\Http\Controllers\PhotoDownloadController;
-use App\Http\Controllers\PhotoUploadController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/dashboard/snapshot', [DashboardController::class, 'snapshot']);
@@ -16,8 +14,6 @@ Route::get('/dashboard/snapshot', [DashboardController::class, 'snapshot']);
 Route::prefix('flickr/accounts/{connection}')->group(function (): void {
     Route::get('/', [FlickrAccountController::class, 'index']);
     Route::post('/crawl', [FlickrAccountController::class, 'crawl']);
-    Route::post('/download', [PhotoDownloadController::class, 'store']);
-    Route::post('/upload', [PhotoUploadController::class, 'store']);
 
     Route::get('/contacts', [FlickrContactController::class, 'index']);
     Route::get('/contacts/progress', [FlickrContactController::class, 'progress']);
