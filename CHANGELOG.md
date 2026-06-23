@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-06-23
+
 ### Added
 
 - Self-hosted Flickr archive manager with Laravel 12, React 19, and Inertia 3.
@@ -24,3 +26,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - GitHub CI workflow running `composer test:docker`, `npm run typecheck`, and `composer instructions:verify`.
 - Full documentation hub (`docs/00`–`05`), governance files (LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT).
 - 20 canonical AI skills (`ai/skills/`), multi-LLM workflow scripts, and `composer instructions:verify`.
+
+[1.0.0]: https://github.com/jooservices/XFlickr/releases/tag/v1.0.0
