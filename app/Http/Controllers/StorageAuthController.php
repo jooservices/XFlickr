@@ -1,0 +1,143 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers;
+
+use App\Enums\StorageDriver;
+use App\Http\Requests\Settings\ConnectR2Request;
+use App\Http\Requests\Storage\StorageAccountIdRequest;
+use App\Http\Requests\Storage\StorageOAuthCallbackRequest;
+use App\Models\StorageAccount;
+use App\Services\Storage\StorageAccountService;
+use App\Services\Storage\StorageOAuthService;
+use App\Services\Storage\StorageR2ConnectionVerifier;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+
+final class StorageAuthController
+{
+    public function connect(Request $request, StorageOAuthService $oauth): RedirectResponse
+    {
+        $provider = (string) $request->route('provider');
+
+        try {
+            $driver = StorageDriver::from($provider);
+            $accountId = (int) $request->query('account_id', 0);
+            $returnUrl = $this->sanitizeReturnUrl($request->query('return_url'));
+
+            $url = $oauth->begin(
+                $driver,
+                $accountId > 0 ? $accountId : null,
+                $returnUrl,
+            );
+        } catch (\Throwable) {
+            return redirect()->route('settings.index', ['tab' => 'storage'])->with(
+                'error',
+                'Storage OAuth could not be started. Add app credentials for this provider in Settings first.',
+            );
+        }
+
+        return redirect()->away($url);
+    }
+
+    public function reauthorize(Request $request, StorageAccount $account, StorageOAuthService $oauth): RedirectResponse
+    {
+        $returnUrl = $this->sanitizeReturnUrl($request->query('return_url'));
+
+        try {
+            $url = $oauth->beginForAccount($account, $returnUrl);
+        } catch (\Throwable) {
+            return redirect($returnUrl ?? route('settings.index', ['tab' => 'storage']))->with(
+                'error',
+                'Storage reauthorization could not be started. Check app credentials in Settings.',
+            );
+        }
+
+        return redirect()->away($url);
+    }
+
+    public function callback(StorageOAuthCallbackRequest $request, StorageOAuthService $oauth): RedirectResponse
+    {
+        $provider = (string) $request->route('provider');
+        $returnUrl = $oauth->consumeReturnUrl();
+
+        if ($request->hasOAuthError()) {
+            return redirect($returnUrl)->with('error', 'Storage authorization was denied.');
+        }
+
+        if (! $oauth->validateState($request->state())) {
+            return redirect($returnUrl)->with('error', 'Storage OAuth callback was incomplete.');
+        }
+
+        try {
+            $oauth->complete($provider, $request->code());
+        } catch (\Throwable) {
+            return redirect($returnUrl)->with('error', 'Storage account could not be connected.');
+        }
+
+        return redirect($returnUrl)->with('success', 'Storage account authorized successfully.');
+    }
+
+    public function disconnect(StorageAccountIdRequest $request, StorageAccountService $accounts): RedirectResponse
+    {
+        $account = $accounts->find($request->accountId());
+
+        if ($account === null) {
+            return redirect()->route('settings.index', ['tab' => 'storage'])->with('error', 'Storage account was not found.');
+        }
+
+        $accounts->disconnect($account);
+
+        return redirect()->route('settings.index', ['tab' => 'storage'])->with('success', 'Storage account disconnected.');
+    }
+
+    public function setDefault(StorageAccountIdRequest $request, StorageAccountService $accounts): RedirectResponse
+    {
+        $account = $accounts->find($request->accountId());
+
+        if ($account === null) {
+            return redirect()->route('settings.index', ['tab' => 'storage'])->with('error', 'Storage account was not found.');
+        }
+
+        $accounts->setDefault($account);
+
+        return redirect()->route('settings.index', ['tab' => 'storage'])->with('success', 'Default storage account updated.');
+    }
+
+    public function connectR2(ConnectR2Request $request, StorageAccountService $accounts, StorageR2ConnectionVerifier $verifier): RedirectResponse
+    {
+        $validated = $request->validated();
+        $credentials = $request->credentials();
+
+        try {
+            $verifier->verify($credentials);
+        } catch (\Throwable) {
+            return redirect()->route('settings.index', ['tab' => 'storage'])->with(
+                'error',
+                'Cloudflare R2 connection failed. Check bucket, endpoint, and API token permissions.',
+            );
+        }
+
+        $accounts->connectApiKey(
+            StorageDriver::R2->value,
+            $validated['label'],
+            $credentials,
+        );
+
+        return redirect()->route('settings.index', ['tab' => 'storage'])->with('success', 'Cloudflare R2 account connected.');
+    }
+
+    private function sanitizeReturnUrl(mixed $returnUrl): ?string
+    {
+        if (! is_string($returnUrl) || $returnUrl === '') {
+            return null;
+        }
+
+        if (! str_starts_with($returnUrl, '/')) {
+            return null;
+        }
+
+        return $returnUrl;
+    }
+}

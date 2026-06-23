@@ -1,0 +1,115 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Storage;
+
+use App\Enums\StorageDriver;
+use App\Models\StorageAccount;
+use App\Repositories\StorageAccountRepository;
+use App\Support\Storage\StorageR2Config;
+use RuntimeException;
+
+final class StorageDownloadService
+{
+    public function __construct(
+        private readonly StorageFlysystemFactory $flysystem,
+        private readonly StorageAccountRepository $accounts,
+    ) {}
+
+    /**
+     * @return array{path: string, size: int|null, etag: string|null}
+     */
+    public function downloadToPath(int $storageAccountId, string $remotePath, string $localPath): array
+    {
+        $account = $this->accounts->findByIdOrFail($storageAccountId);
+        $driver = StorageDriver::from($account->provider);
+        $credentials = $account->credentials ?? [];
+        $objectKey = $this->objectKey($driver, $credentials, $remotePath);
+
+        $disk = $this->flysystem->diskForAccount($account);
+        $stream = $disk->readStream($objectKey);
+
+        if ($stream === false) {
+            throw new RuntimeException("Unable to read remote file [{$remotePath}].");
+        }
+
+        $directory = dirname($localPath);
+        if (! is_dir($directory) && ! mkdir($directory, 0755, true) && ! is_dir($directory)) {
+            throw new RuntimeException("Unable to create directory [{$directory}].");
+        }
+
+        $destination = fopen($localPath, 'wb');
+        if ($destination === false) {
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+
+            throw new RuntimeException("Unable to open local file [{$localPath}].");
+        }
+
+        try {
+            stream_copy_to_stream($stream, $destination);
+        } finally {
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+
+            if (is_resource($destination)) {
+                fclose($destination);
+            }
+        }
+
+        $metadata = $this->remoteMetadata($account, $objectKey);
+
+        return [
+            'path' => $localPath,
+            'size' => $metadata['size'],
+            'etag' => $metadata['etag'],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $credentials
+     */
+    private function objectKey(StorageDriver $driver, array $credentials, string $remotePath): string
+    {
+        $remotePath = ltrim($remotePath, '/');
+
+        if ($driver === StorageDriver::R2) {
+            return StorageR2Config::from($credentials)->objectKey($remotePath);
+        }
+
+        return $remotePath;
+    }
+
+    /**
+     * @return array{etag: string|null, size: int|null}
+     */
+    private function remoteMetadata(StorageAccount $account, string $objectKey): array
+    {
+        if (StorageDriver::from($account->provider) !== StorageDriver::R2) {
+            return ['etag' => null, 'size' => null];
+        }
+
+        $credentials = $account->credentials ?? [];
+        $config = StorageR2Config::from($credentials);
+        $client = $this->flysystem->r2Client($credentials);
+
+        try {
+            $result = $client->headObject([
+                'Bucket' => $config->bucket,
+                'Key' => $objectKey,
+            ]);
+        } catch (\Throwable) {
+            return ['etag' => null, 'size' => null];
+        }
+
+        $etag = isset($result['ETag']) ? trim((string) $result['ETag'], '"') : null;
+
+        return [
+            'etag' => $etag,
+            'size' => isset($result['ContentLength']) ? (int) $result['ContentLength'] : null,
+        ];
+    }
+}
