@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Transfer;
 
+use App\Enums\TransferBatchStatus;
 use App\Http\Requests\Api\ListTransferBatchesRequest;
 use App\Models\TransferBatch;
 use App\Repositories\TransferBatchRepository;
@@ -64,7 +65,7 @@ final class TransferProgressQueryService
         if ($request->isActive()) {
             $query->where(function ($builder): void {
                 $builder
-                    ->where('status', 'running')
+                    ->where('status', TransferBatchStatus::Running->value)
                     ->orWhere('updated_at', '>=', now()->subHours(6));
             });
         }

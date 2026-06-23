@@ -5,16 +5,18 @@ declare(strict_types=1);
 namespace App\Services\Flickr;
 
 use App\Enums\PhotoTransferExecutionOutcome;
-use App\Jobs\DownloadPhotoJob;
+use App\Enums\StorageUploadStatus;
+use App\Enums\StoredFileStatus;
+use App\Enums\TransferItemStatus;
 use App\Repositories\StorageUploadRepository;
 use App\Repositories\StoredFileRepository;
-use App\Repositories\TransferBatchRepository;
 use App\Repositories\TransferItemRepository;
 use App\Services\Storage\StorageUploadService;
 use App\Services\Transfer\TransferBatchReconciler;
 use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 
 final class PhotoUploadExecutionService
 {
@@ -23,7 +25,6 @@ final class PhotoUploadExecutionService
         private readonly TransferBatchReconciler $batchReconciler,
         private readonly StoredFileRepository $storedFiles,
         private readonly StorageUploadRepository $storageUploads,
-        private readonly TransferBatchRepository $batches,
         private readonly TransferItemRepository $items,
     ) {}
 
@@ -37,28 +38,21 @@ final class PhotoUploadExecutionService
     ): PhotoTransferExecutionOutcome {
         $storedFile = $this->storedFiles->findOriginalByFlickrPhotoId($flickrPhotoId);
 
-        if ($storedFile === null || $storedFile->status !== 'completed') {
-            if ($ownerNsid !== '') {
-                $connectionKey = $batchId !== null
-                    ? ($this->batches->connectionKeyForId($batchId) ?? '')
-                    : '';
-
-                if ($connectionKey !== '') {
-                    DownloadPhotoJob::dispatch(
-                        $flickrPhotoId,
-                        $ownerNsid,
-                        $connectionKey,
-                        $batchId,
-                    );
-                }
+        if ($storedFile === null || $storedFile->status !== StoredFileStatus::Completed->value) {
+            if ($attempt < $maxAttempts) {
+                return PhotoTransferExecutionOutcome::Deferred;
             }
 
-            return PhotoTransferExecutionOutcome::Deferred;
+            $message = "Local file for Flickr photo [{$flickrPhotoId}] is not ready for upload.";
+            $this->updateItemStatus($batchId, $flickrPhotoId, TransferItemStatus::Failed, $message);
+            $this->batchReconciler->reconcile($batchId);
+
+            throw new RuntimeException($message);
         }
 
         $upload = $this->storageUploads->firstOrCreateForAccount($storedFile->id, $storageAccountId);
 
-        if ($upload->status === 'completed') {
+        if ($upload->status === StorageUploadStatus::Completed->value) {
             $this->markItemCompleted($batchId, $flickrPhotoId);
             $this->batchReconciler->reconcile($batchId);
 
@@ -72,7 +66,7 @@ final class PhotoUploadExecutionService
             $lock->block(60);
 
             $this->storageUploads->markUploading($storedFile->id, $storageAccountId);
-            $this->updateItemStatus($batchId, $flickrPhotoId, 'processing');
+            $this->updateItemStatus($batchId, $flickrPhotoId, TransferItemStatus::Processing);
 
             $localPath = $storedFile->local_path;
             if ($localPath === null || ! Storage::exists($localPath)) {
@@ -95,7 +89,7 @@ final class PhotoUploadExecutionService
         } catch (Exception $e) {
             if ($attempt < $maxAttempts) {
                 $this->storageUploads->markPendingForAccount($storedFile->id, $storageAccountId, $e->getMessage());
-                $this->updateItemStatus($batchId, $flickrPhotoId, 'processing', $e->getMessage());
+                $this->updateItemStatus($batchId, $flickrPhotoId, TransferItemStatus::Processing, $e->getMessage());
             }
 
             throw $e;
@@ -120,7 +114,7 @@ final class PhotoUploadExecutionService
             );
         }
 
-        $this->updateItemStatus($batchId, $flickrPhotoId, 'failed', $errorMessage);
+        $this->updateItemStatus($batchId, $flickrPhotoId, TransferItemStatus::Failed, $errorMessage);
         $this->batchReconciler->reconcile($batchId);
     }
 
@@ -133,7 +127,7 @@ final class PhotoUploadExecutionService
         $this->items->markCompleted($batchId, $flickrPhotoId);
     }
 
-    private function updateItemStatus(?int $batchId, string $flickrPhotoId, string $status, ?string $error = null): void
+    private function updateItemStatus(?int $batchId, string $flickrPhotoId, TransferItemStatus $status, ?string $error = null): void
     {
         if ($batchId === null) {
             return;

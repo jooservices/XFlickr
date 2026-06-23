@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Flickr;
 
+use App\Enums\StoredFileStatus;
 use App\Jobs\UploadPhotoJob;
 use App\Models\StorageAccount;
 use App\Repositories\Crawler\PhotoQueryRepository;
@@ -19,6 +20,7 @@ final class PhotoUploadService
 {
     public function __construct(
         private readonly PhotoQueryRepository $photos,
+        private readonly PhotoDownloadService $downloads,
         private readonly StoredFileRepository $storedFiles,
         private readonly StorageUploadRepository $storageUploads,
         private readonly TransferBatchRepository $batches,
@@ -34,7 +36,7 @@ final class PhotoUploadService
             ? $ownerNsid
             : $connection->connection_key;
 
-        $photoList = $this->photos->listByOwnerNsid($ownerNsid, ['flickr_photo_id', 'owner_nsid']);
+        $photoList = $this->photos->listByOwnerNsid($ownerNsid, ['id', 'flickr_photo_id', 'owner_nsid']);
 
         return $this->queuePendingPhotos($connection, $photoList, $storageAccount, $ownerNsid !== $connection->connection_key ? $ownerNsid : null);
     }
@@ -44,7 +46,7 @@ final class PhotoUploadService
      */
     public function queuePhotoUpload(Connection $connection, StorageAccount $storageAccount, string $flickrPhotoId): int
     {
-        $photo = $this->photos->findByFlickrPhotoId($flickrPhotoId, ['flickr_photo_id', 'owner_nsid']);
+        $photo = $this->photos->findByFlickrPhotoId($flickrPhotoId, ['id', 'flickr_photo_id', 'owner_nsid']);
 
         if ($photo === null) {
             return 0;
@@ -63,28 +65,51 @@ final class PhotoUploadService
         StorageAccount $storageAccount,
         ?string $subjectNsid = null,
     ): int {
-        $pending = $photos->filter(function (Photo $photo) use ($storageAccount): bool {
+        /** @var Collection<int, Photo> $needsDownload */
+        $needsDownload = collect();
+        /** @var Collection<int, Photo> $readyForUpload */
+        $readyForUpload = collect();
+
+        foreach ($photos as $photo) {
             $storedFile = $this->storedFiles->findOriginalByFlickrPhotoId($photo->flickr_photo_id);
 
             if ($storedFile === null) {
-                return true;
+                $needsDownload->push($photo);
+
+                continue;
             }
 
-            return ! $this->storageUploads->hasCompleted($storedFile->id, $storageAccount->id);
-        });
+            if ($storedFile->status !== StoredFileStatus::Completed->value) {
+                $needsDownload->push($photo);
 
-        if ($pending->isEmpty()) {
+                continue;
+            }
+
+            if (! $this->storageUploads->hasCompleted($storedFile->id, $storageAccount->id)) {
+                $readyForUpload->push($photo);
+            }
+        }
+
+        if ($needsDownload->isNotEmpty()) {
+            $firstNeedingDownload = $needsDownload->first();
+            $downloadOwnerNsid = $subjectNsid ?? ($firstNeedingDownload instanceof Photo
+                ? $firstNeedingDownload->owner_nsid
+                : $connection->connection_key);
+            $this->downloads->queueSelectedDownloads($connection, $needsDownload, $downloadOwnerNsid);
+        }
+
+        if ($readyForUpload->isEmpty()) {
             return 0;
         }
 
         $batch = $this->batches->createUploadBatch(
             $connection,
             $storageAccount->id,
-            $pending->count(),
+            $readyForUpload->count(),
             $subjectNsid,
         );
 
-        foreach ($pending as $photo) {
+        foreach ($readyForUpload as $photo) {
             $this->items->createPending($batch->id, $photo->flickr_photo_id);
 
             UploadPhotoJob::dispatch(
@@ -95,6 +120,6 @@ final class PhotoUploadService
             );
         }
 
-        return $pending->count();
+        return $readyForUpload->count();
     }
 }

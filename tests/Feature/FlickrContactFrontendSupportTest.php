@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Jobs\DownloadPhotoJob;
 use App\Jobs\UploadPhotoJob;
 use App\Models\StorageAccount;
+use App\Models\StoredFile;
 use App\Services\Flickr\ContactCatalogDetailStatsService;
 use App\Services\Flickr\ContactListSorter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -307,7 +309,7 @@ final class FlickrContactFrontendSupportTest extends TestCase
 
     public function test_contacts_bulk_upload_accepts_multiple_contact_nsids(): void
     {
-        Bus::fake([UploadPhotoJob::class]);
+        Bus::fake([DownloadPhotoJob::class, UploadPhotoJob::class]);
 
         $connection = $this->createFlickrConnection();
 
@@ -334,6 +336,15 @@ final class FlickrContactFrontendSupportTest extends TestCase
                 'flickr_photo_id' => 'p-'.$nsid,
                 'owner_nsid' => $nsid,
                 'title' => 'Photo',
+            ]);
+
+            StoredFile::query()->forceCreate([
+                'flickr_photo_id' => 'p-'.$nsid,
+                'owner_nsid' => $nsid,
+                'variant' => 'original',
+                'status' => 'completed',
+                'local_path' => 'flickr/'.$nsid.'/photos/p-'.$nsid.'_abc.jpg',
+                'original_name' => 'p-'.$nsid.'_original.jpg',
             ]);
         }
 

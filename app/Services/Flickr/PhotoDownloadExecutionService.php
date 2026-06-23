@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Flickr;
 
 use App\Enums\PhotoTransferExecutionOutcome;
+use App\Enums\StoredFileStatus;
+use App\Enums\TransferItemStatus;
 use App\Repositories\Crawler\ConnectionQueryRepository;
 use App\Repositories\Crawler\PhotoQueryRepository;
 use App\Repositories\StoredFileRepository;
@@ -58,7 +60,7 @@ final class PhotoDownloadExecutionService
 
             $storedFile = $this->storedFiles->firstOrCreateOriginal($flickrPhotoId, $ownerNsid);
 
-            if ($storedFile->status === 'completed') {
+            if ($storedFile->status === StoredFileStatus::Completed->value) {
                 $this->markItemCompleted($batchId, $flickrPhotoId);
                 $this->batchReconciler->reconcile($batchId);
                 $lock->release();
@@ -67,7 +69,7 @@ final class PhotoDownloadExecutionService
             }
 
             $this->storedFiles->markDownloading($flickrPhotoId);
-            $this->updateItemStatus($batchId, $flickrPhotoId, 'processing');
+            $this->updateItemStatus($batchId, $flickrPhotoId, TransferItemStatus::Processing);
 
             $download = $this->resolver->resolve($flickrPhotoId, $connection);
             $finalPath = $this->finalPathFor($flickrPhotoId, $ownerNsid, $photo);
@@ -111,7 +113,7 @@ final class PhotoDownloadExecutionService
 
             if ($attempt < $maxAttempts) {
                 $this->storedFiles->markPending($flickrPhotoId, $e->getMessage());
-                $this->updateItemStatus($batchId, $flickrPhotoId, 'processing', $e->getMessage());
+                $this->updateItemStatus($batchId, $flickrPhotoId, TransferItemStatus::Processing, $e->getMessage());
             }
 
             throw $e;
@@ -123,7 +125,7 @@ final class PhotoDownloadExecutionService
     public function handleFailure(string $flickrPhotoId, ?int $batchId, string $errorMessage): void
     {
         $this->storedFiles->markFailed($flickrPhotoId, $errorMessage);
-        $this->updateItemStatus($batchId, $flickrPhotoId, 'failed', $errorMessage);
+        $this->updateItemStatus($batchId, $flickrPhotoId, TransferItemStatus::Failed, $errorMessage);
         $this->batchReconciler->reconcile($batchId);
     }
 
@@ -143,7 +145,7 @@ final class PhotoDownloadExecutionService
         $this->items->markCompleted($batchId, $flickrPhotoId);
     }
 
-    private function updateItemStatus(?int $batchId, string $flickrPhotoId, string $status, ?string $error = null): void
+    private function updateItemStatus(?int $batchId, string $flickrPhotoId, TransferItemStatus $status, ?string $error = null): void
     {
         if ($batchId === null) {
             return;

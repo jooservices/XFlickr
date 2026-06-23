@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Transfer;
 
+use App\Enums\TransferBatchStatus;
+use App\Enums\TransferItemStatus;
 use App\Models\TransferBatch;
 use App\Repositories\TransferBatchRepository;
 use App\Repositories\TransferItemRepository;
@@ -29,15 +31,15 @@ final class TransferBatchReconciler
             return;
         }
 
-        $completed = $this->items->countByStatus($batch->id, 'completed');
-        $failed = $this->items->countByStatus($batch->id, 'failed');
+        $completed = $this->items->countByStatus($batch->id, TransferItemStatus::Completed);
+        $failed = $this->items->countByStatus($batch->id, TransferItemStatus::Failed);
         $processed = $completed + $failed;
-        $status = $batch->status;
+        $status = TransferBatchStatus::tryFrom((string) $batch->status) ?? TransferBatchStatus::Running;
 
         if ($processed >= $batch->total_count) {
-            $status = $failed >= $batch->total_count ? 'failed' : 'completed';
-        } elseif ($batch->status !== 'running') {
-            $status = 'running';
+            $status = $failed >= $batch->total_count ? TransferBatchStatus::Failed : TransferBatchStatus::Completed;
+        } elseif ($batch->status !== TransferBatchStatus::Running->value) {
+            $status = TransferBatchStatus::Running;
         }
 
         $this->batches->updateCounts($batch, $completed, $failed, $status);

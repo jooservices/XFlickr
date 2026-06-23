@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Enums\StorageUploadStatus;
 use App\Models\StorageUpload;
 use Jooservices\LaravelRepository\Repositories\EloquentRepository;
 use Jooservices\LaravelRepository\Traits\HasCrud;
@@ -24,7 +25,7 @@ final class StorageUploadRepository extends EloquentRepository
         return $this->newQuery()
             ->where('stored_file_id', $storedFileId)
             ->where('storage_account_id', $storageAccountId)
-            ->where('status', 'completed')
+            ->where('status', StorageUploadStatus::Completed->value)
             ->exists();
     }
 
@@ -36,7 +37,7 @@ final class StorageUploadRepository extends EloquentRepository
                 'storage_account_id' => $storageAccountId,
             ],
             [
-                'status' => 'pending',
+                'status' => StorageUploadStatus::Pending->value,
             ],
         );
     }
@@ -55,7 +56,7 @@ final class StorageUploadRepository extends EloquentRepository
     public function markFailedForAccount(int $storedFileId, int $storageAccountId, string $errorMessage): void
     {
         $this->updateForAccount($storedFileId, $storageAccountId, [
-            'status' => 'failed',
+            'status' => StorageUploadStatus::Failed->value,
             'error_message' => $errorMessage,
         ]);
     }
@@ -63,7 +64,7 @@ final class StorageUploadRepository extends EloquentRepository
     public function markUploading(int $storedFileId, int $storageAccountId): void
     {
         $this->updateForAccount($storedFileId, $storageAccountId, [
-            'status' => 'uploading',
+            'status' => StorageUploadStatus::Uploading->value,
         ]);
     }
 
@@ -73,7 +74,7 @@ final class StorageUploadRepository extends EloquentRepository
     public function markCompletedForAccount(int $storedFileId, int $storageAccountId, array $remoteMetadata): void
     {
         $this->updateForAccount($storedFileId, $storageAccountId, [
-            'status' => 'completed',
+            'status' => StorageUploadStatus::Completed->value,
             'remote_file_id' => $remoteMetadata['id'],
             'remote_path' => $remoteMetadata['path'],
             'remote_etag' => $remoteMetadata['etag'],
@@ -85,7 +86,7 @@ final class StorageUploadRepository extends EloquentRepository
     public function markPendingForAccount(int $storedFileId, int $storageAccountId, string $errorMessage): void
     {
         $this->updateForAccount($storedFileId, $storageAccountId, [
-            'status' => 'pending',
+            'status' => StorageUploadStatus::Pending->value,
             'error_message' => $errorMessage,
         ]);
     }

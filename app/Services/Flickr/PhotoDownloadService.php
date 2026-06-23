@@ -52,6 +52,15 @@ final class PhotoDownloadService
      * @param  Collection<int, Photo>  $photos
      * @return int Number of batches queued
      */
+    public function queueSelectedDownloads(Connection $connection, Collection $photos, string $ownerNsid): int
+    {
+        return $this->queuePendingPhotos($connection, $photos, $ownerNsid);
+    }
+
+    /**
+     * @param  Collection<int, Photo>  $photos
+     * @return int Number of batches queued
+     */
     private function queuePendingPhotos(Connection $connection, Collection $photos, string $ownerNsid): int
     {
         $pending = $photos->reject(
