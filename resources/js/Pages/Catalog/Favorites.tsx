@@ -1,0 +1,137 @@
+import { Head } from '@inertiajs/react';
+
+import Breadcrumbs from '@/Components/Breadcrumbs';
+import CatalogOwnerNsidFilter from '@/Components/CatalogOwnerNsidFilter';
+import ContactNsidLinks from '@/Components/ContactNsidLinks';
+import CrawlActionBar from '@/Components/CrawlActionBar';
+import DataTable from '@/Components/DataTable';
+import FlickrPhotoIdLinks from '@/Components/FlickrPhotoIdLinks';
+import PageHeading from '@/Components/PageHeading';
+import Thumbnail from '@/Components/Thumbnail';
+import { useCatalogOwnerNsidTable } from '@/hooks/useCatalogOwnerNsidTable';
+import AppLayout from '@/Layouts/AppLayout';
+import { catalogPageCrumbs } from '@/lib/breadcrumbs';
+import { flickrPhotoThumbnailUrl } from '@/lib/flickrPhoto';
+import type { Favorite, FlickrAccount, PageProps } from '@/types';
+
+interface Props extends PageProps {
+    account: FlickrAccount | null;
+}
+
+export default function CatalogFavorites({ account }: Props) {
+    const { data: favorites, meta, setPage, loading, sortKey, sortDirection, handleSortChange, filterFormProps } =
+        useCatalogOwnerNsidTable<Favorite>('subject_nsid', {
+            fetchPath: '/api/flickr/catalog/favorites',
+            initialSort: 'id',
+            initialDirection: 'desc',
+        });
+
+    return (
+        <AppLayout>
+            <Head title="Favorites" />
+
+            <div className="space-y-6">
+                <PageHeading
+                    breadcrumbs={<Breadcrumbs items={catalogPageCrumbs('Favorites', account)} />}
+                    title="Favorites"
+                    subtitle="Browse crawled favorites in the catalog."
+                />
+
+                <CatalogOwnerNsidFilter
+                    {...filterFormProps}
+                    placeholder="Filter by contact NSID"
+                />
+
+                {loading ? (
+                    <p className="text-sm text-slate-500">Loading…</p>
+                ) : (
+                    <DataTable
+                        columns={[
+                            {
+                                key: 'thumbnail',
+                                label: '',
+                                render: (favorite) => (
+                                    <Thumbnail
+                                        url={
+                                            favorite.photo
+                                                ? flickrPhotoThumbnailUrl(favorite.photo)
+                                                : null
+                                        }
+                                        alt={favorite.photo?.title || 'Photo'}
+                                    />
+                                ),
+                            },
+                            {
+                                key: 'xflickr_photo_id',
+                                label: 'Photo',
+                                sortable: true,
+                                render: (favorite) =>
+                                    favorite.photo?.flickr_photo_id && favorite.photo.owner_nsid ? (
+                                        <FlickrPhotoIdLinks
+                                            photoId={favorite.photo.flickr_photo_id}
+                                            ownerNsid={favorite.photo.owner_nsid}
+                                            title={favorite.photo.title}
+                                        />
+                                    ) : (
+                                        <span className="font-mono text-xs">{favorite.xflickr_photo_id}</span>
+                                    ),
+                            },
+                            {
+                                key: 'subject_nsid',
+                                label: 'Contact',
+                                sortable: true,
+                                render: (favorite) => (
+                                    <ContactNsidLinks
+                                        nsid={favorite.subject_nsid}
+                                        accountPublicId={account?.public_id}
+                                    />
+                                ),
+                            },
+                            {
+                                key: 'photo_owner_nsid',
+                                label: 'Owner',
+                                sortable: true,
+                                render: (favorite) => {
+                                    const ownerNsid =
+                                        favorite.photo_owner_nsid ?? favorite.photo?.owner_nsid;
+
+                                    return ownerNsid ? (
+                                        <ContactNsidLinks
+                                            nsid={ownerNsid}
+                                            accountPublicId={account?.public_id}
+                                        />
+                                    ) : (
+                                        '—'
+                                    );
+                                },
+                            },
+                        ]}
+                        data={favorites}
+                        rowKey={(favorite) => String(favorite.id)}
+                        sortKey={sortKey}
+                        sortDirection={sortDirection}
+                        onSortChange={handleSortChange}
+                        emptyMessage="No favorites found."
+                        actionsColumn={
+                            account?.public_id
+                                ? (favorite) =>
+                                      favorite.photo?.flickr_photo_id ? (
+                                          <CrawlActionBar
+                                              scope="photo"
+                                              accountPublicId={account.public_id}
+                                              flickrPhotoId={favorite.photo.flickr_photo_id}
+                                              showCrawl={false}
+                                              label="Crawl"
+                                          />
+                                      ) : null
+                                : undefined
+                        }
+                        actionsLabel="Crawl"
+                        meta={meta ?? undefined}
+                        onPageChange={setPage}
+                    />
+                )}
+            </div>
+        </AppLayout>
+    );
+}
