@@ -1,0 +1,23 @@
+# Documentation changelog
+
+Record of significant documentation and AI governance changes (not package releases).
+
+## 2026-06-23
+
+- Bootstrapped full documentation hub (`docs/README.md`, sections `00`–`05`).
+- Added governance files: LICENSE, CHANGELOG, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT.
+- Expanded AGENTS.md, CLAUDE.md, and `ai/skills/` ecosystem.
+- Added multi-LLM development workflow and adapter sync verification.
+- Archived historical planning docs to `docs/05-maintenance/archive/`.
+- Migrated `docker-safety.md` from `docs/development/` to `docs/05-maintenance/`.
+- Relocated `audit.md` to `codebase-audit-2026-06.md` with resolved-status notes.
+
+## 2026-06-23 (agent/AI docs audit)
+
+- Linked `docs/04-development/ai-skills.md` from docs hub, setup, and contributing.
+- Replaced duplicate `.cursor/skills/xflickr-docker-testing` body with canonical stub.
+- Aligned `xflickr-docker-testing` and `react-inertia-frontend` skill section headings.
+- Added YAML frontmatter to `.cursor/rules/ui-buttons.mdc`.
+- Added missing `ai/plans/.gitkeep`.
+- Expanded `composer instructions:verify` to check all 20 Copilot skill stubs.
+- Refreshed `risks-legacy-and-gaps.md` and audit status table for resolved items.
