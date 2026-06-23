@@ -9,6 +9,9 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    env:
+      # Required by docker-compose.test.yml (APP_KEY: ${APP_KEY})
+      APP_KEY: base64:+uMxrQHiSSnSC9QQV4KkDMmLjTIBbCEe5KZsCUlWuuk=
     steps:
       - uses: actions/checkout@v4
 
