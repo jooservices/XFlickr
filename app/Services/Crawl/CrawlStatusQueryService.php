@@ -4,14 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services\Crawl;
 
-use App\Http\Requests\Api\ListCrawlLogsRequest;
-use App\Http\Requests\Api\ListCrawlRunsRequest;
 use App\Repositories\Crawler\ApiLogQueryRepository;
 use App\Repositories\Crawler\CrawlRunQueryRepository;
 use App\Repositories\Crawler\CrawlTargetQueryRepository;
 use App\Services\Flickr\FlickrRateLimitPresenter;
 use App\Support\Query\QuerySorter;
-use Illuminate\Http\JsonResponse;
 use JOOservices\XFlickrCrawler\Models\Connection;
 use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
 
@@ -24,50 +21,60 @@ final class CrawlStatusQueryService
         private readonly CrawlRunQueryRepository $crawlRuns,
         private readonly CrawlTargetQueryRepository $crawlTargets,
         private readonly ApiLogQueryRepository $apiLogs,
+        private readonly FlickrRateLimitPresenter $rateLimit,
         private readonly QuerySorter $sorter,
     ) {}
 
-    public function summary(Connection $connection, FlickrRateLimitPresenter $rateLimit): JsonResponse
+    /**
+     * @return array<string, mixed>
+     */
+    public function summary(Connection $connection): array
     {
         $connectionKey = $connection->connection_key;
 
-        return response()->json([
+        return [
             'connection_key' => $connectionKey,
             'runs' => $this->crawlRuns->statusCountsForConnection($connectionKey),
             'pending_targets' => $this->crawlTargets->countPendingForConnection($connectionKey),
             'global_pause' => XFlickrConfig::globalPause(),
-            'rate_limit' => $rateLimit->present($connectionKey),
-        ]);
+            'rate_limit' => $this->rateLimit->present($connectionKey),
+        ];
     }
 
-    public function runs(ListCrawlRunsRequest $request, Connection $connection): JsonResponse
+    /**
+     * @return array{data: list<mixed>, meta: array<string, mixed>}
+     */
+    public function runs(Connection $connection, string $sort, string $direction, int $perPage, int $page): array
     {
         $query = $this->crawlRuns->queryForConnection($connection->connection_key);
-        $query = $this->sorter->apply($query, $request->sort(), $request->direction(), self::RUN_SORTS);
-        $paginator = $this->crawlRuns->paginateQuery($query, $request->perPage(), $request->page());
+        $query = $this->sorter->apply($query, $sort, $direction, self::RUN_SORTS);
+        $paginator = $this->crawlRuns->paginateQuery($query, $perPage, $page);
 
-        return response()->json([
+        return [
             'data' => $paginator->items(),
             'meta' => [
                 'current_page' => $paginator->currentPage(),
                 'last_page' => $paginator->lastPage(),
                 'per_page' => $paginator->perPage(),
                 'total' => $paginator->total(),
-                'sort' => $this->sorter->resolveSort($request->sort(), self::RUN_SORTS),
-                'direction' => $this->sorter->resolveDirection($request->direction()),
+                'sort' => $this->sorter->resolveSort($sort, self::RUN_SORTS),
+                'direction' => $this->sorter->resolveDirection($direction),
             ],
-        ]);
+        ];
     }
 
-    public function logs(ListCrawlLogsRequest $request, Connection $connection): JsonResponse
+    /**
+     * @return array{data: list<mixed>, meta: array<string, mixed>}
+     */
+    public function logs(Connection $connection, int $perPage, int $page): array
     {
         $paginator = $this->apiLogs->paginateForConnection(
             $connection->connection_key,
-            $request->perPage(),
-            $request->page(),
+            $perPage,
+            $page,
         );
 
-        return response()->json([
+        return [
             'data' => $paginator->items(),
             'meta' => [
                 'current_page' => $paginator->currentPage(),
@@ -75,6 +82,6 @@ final class CrawlStatusQueryService
                 'per_page' => $paginator->perPage(),
                 'total' => $paginator->total(),
             ],
-        ]);
+        ];
     }
 }

@@ -18,11 +18,25 @@ final class TransferProgressController
 
     public function show(Connection $connection, TransferBatch $batch): JsonResponse
     {
-        return $this->transferProgress->show($connection, $batch);
+        $payload = $this->transferProgress->show($connection, $batch);
+
+        if ($payload === null) {
+            abort(404);
+        }
+
+        return response()->json($payload);
     }
 
     public function index(ListTransferBatchesRequest $request, Connection $connection): JsonResponse
     {
-        return $this->transferProgress->index($request, $connection);
+        return response()->json($this->transferProgress->index(
+            $connection,
+            $request->status(),
+            $request->type(),
+            $request->isActive(),
+            $request->sort(),
+            $request->direction(),
+            $request->limit(),
+        ));
     }
 }

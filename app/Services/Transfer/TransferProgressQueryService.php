@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace App\Services\Transfer;
 
 use App\Enums\TransferBatchStatus;
-use App\Http\Requests\Api\ListTransferBatchesRequest;
 use App\Models\TransferBatch;
 use App\Repositories\TransferBatchRepository;
 use App\Support\Query\QuerySorter;
-use Illuminate\Http\JsonResponse;
 use JOOservices\XFlickrCrawler\Models\Connection;
 
 final class TransferProgressQueryService
@@ -23,15 +21,18 @@ final class TransferProgressQueryService
         private readonly QuerySorter $sorter,
     ) {}
 
-    public function show(Connection $connection, TransferBatch $batch): JsonResponse
+    /**
+     * @return array{batch: array<string, mixed>, items: mixed}|null
+     */
+    public function show(Connection $connection, TransferBatch $batch): ?array
     {
         if ($batch->connection_key !== $connection->connection_key) {
-            abort(404);
+            return null;
         }
 
         $batch->load('items');
 
-        return response()->json([
+        return [
             'batch' => [
                 'id' => $batch->id,
                 'type' => $batch->type,
@@ -47,22 +48,32 @@ final class TransferProgressQueryService
                 'storage_account_id' => $batch->storage_account_id,
             ],
             'items' => $batch->items,
-        ]);
+        ];
     }
 
-    public function index(ListTransferBatchesRequest $request, Connection $connection): JsonResponse
-    {
+    /**
+     * @return array{data: mixed}
+     */
+    public function index(
+        Connection $connection,
+        ?string $status,
+        ?string $type,
+        bool $active,
+        string $sort,
+        string $direction,
+        int $limit,
+    ): array {
         $query = $this->batches->queryForConnection($connection->connection_key);
 
-        if ($status = $request->status()) {
+        if ($status !== null) {
             $query->where('status', $status);
         }
 
-        if ($type = $request->type()) {
+        if ($type !== null) {
             $query->where('type', $type);
         }
 
-        if ($request->isActive()) {
+        if ($active) {
             $query->where(function ($builder): void {
                 $builder
                     ->where('status', TransferBatchStatus::Running->value)
@@ -70,16 +81,16 @@ final class TransferProgressQueryService
             });
         }
 
-        $query = $this->sorter->apply($query, $request->sort(), $request->direction(), self::BATCH_SORTS);
-        $batchList = $query->limit($request->limit())->get();
+        $query = $this->sorter->apply($query, $sort, $direction, self::BATCH_SORTS);
+        $batchList = $query->limit($limit)->get();
 
-        return response()->json([
+        return [
             'data' => $batchList->map(fn (TransferBatch $batch): array => [
                 ...$batch->toArray(),
                 'sample_error' => $batch->failed_count > 0
                     ? $this->batchReconciler->sampleError($batch->id)
                     : null,
             ]),
-        ]);
+        ];
     }
 }

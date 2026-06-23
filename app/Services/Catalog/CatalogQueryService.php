@@ -4,16 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services\Catalog;
 
-use App\Http\Requests\Api\Catalog\ListFavoritesRequest;
-use App\Http\Requests\Api\Catalog\ListGalleriesRequest;
-use App\Http\Requests\Api\Catalog\ListPhotosetsRequest;
-use App\Http\Requests\Api\Catalog\ListPhotosRequest;
 use App\Repositories\Crawler\CatalogQueryRepository;
 use App\Support\Catalog\CollectionCatalogPresenter;
 use App\Support\Catalog\PhotoCatalogPresenter;
 use App\Support\Query\QuerySorter;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Http\JsonResponse;
 
 final class CatalogQueryService
 {
@@ -24,69 +19,81 @@ final class CatalogQueryService
         private readonly CollectionCatalogPresenter $collectionPresenter,
     ) {}
 
-    public function photosResponse(ListPhotosRequest $request): JsonResponse
+    /**
+     * @return array{data: list<array<string, mixed>>, meta: array<string, mixed>}
+     */
+    public function photos(?string $ownerNsid, string $sort, string $direction, int $perPage, int $page): array
     {
         $paginator = $this->catalog->paginatePhotos(
-            $request->ownerNsid(),
-            $request->sort(),
-            $request->direction(),
-            $request->perPage(),
-            $request->page(),
+            $ownerNsid,
+            $sort,
+            $direction,
+            $perPage,
+            $page,
         );
 
-        return response()->json([
+        return [
             'data' => $this->photoPresenter->presentPage($paginator->items()),
-            'meta' => $this->meta($paginator, $request->sort(), $request->direction(), CatalogQueryRepository::PHOTO_SORTS),
-        ]);
+            'meta' => $this->meta($paginator, $sort, $direction, CatalogQueryRepository::PHOTO_SORTS),
+        ];
     }
 
-    public function photosetsResponse(ListPhotosetsRequest $request): JsonResponse
+    /**
+     * @return array{data: list<array<string, mixed>>, meta: array<string, mixed>}
+     */
+    public function photosets(?string $ownerNsid, string $sort, string $direction, int $perPage, int $page): array
     {
         $paginator = $this->catalog->paginatePhotosets(
-            $request->ownerNsid(),
-            $request->sort(),
-            $request->direction(),
-            $request->perPage(),
-            $request->page(),
+            $ownerNsid,
+            $sort,
+            $direction,
+            $perPage,
+            $page,
         );
 
-        return response()->json([
+        return [
             'data' => $this->collectionPresenter->presentPhotosets($paginator->items()),
-            'meta' => $this->meta($paginator, $request->sort(), $request->direction(), CatalogQueryRepository::PHOTOSET_SORTS),
-        ]);
+            'meta' => $this->meta($paginator, $sort, $direction, CatalogQueryRepository::PHOTOSET_SORTS),
+        ];
     }
 
-    public function galleriesResponse(ListGalleriesRequest $request): JsonResponse
+    /**
+     * @return array{data: list<array<string, mixed>>, meta: array<string, mixed>}
+     */
+    public function galleries(?string $ownerNsid, string $sort, string $direction, int $perPage, int $page): array
     {
         $paginator = $this->catalog->paginateGalleries(
-            $request->ownerNsid(),
-            $request->sort(),
-            $request->direction(),
-            $request->perPage(),
-            $request->page(),
+            $ownerNsid,
+            $sort,
+            $direction,
+            $perPage,
+            $page,
         );
 
-        return response()->json([
+        return [
             'data' => $this->collectionPresenter->presentGalleries($paginator->items()),
-            'meta' => $this->meta($paginator, $request->sort(), $request->direction(), CatalogQueryRepository::GALLERY_SORTS),
-        ]);
+            'meta' => $this->meta($paginator, $sort, $direction, CatalogQueryRepository::GALLERY_SORTS),
+        ];
     }
 
-    public function favoritesResponse(ListFavoritesRequest $request): JsonResponse
+    /**
+     * @return array{data: list<mixed>, meta: array<string, mixed>}
+     */
+    public function favorites(?string $connectionKey, ?string $subjectNsid, string $sort, string $direction, int $perPage, int $page): array
     {
         $paginator = $this->catalog->paginateFavorites(
-            $request->connectionKey(),
-            $request->subjectNsid(),
-            $request->sort(),
-            $request->direction(),
-            $request->perPage(),
-            $request->page(),
+            $connectionKey,
+            $subjectNsid,
+            $sort,
+            $direction,
+            $perPage,
+            $page,
         );
 
-        return response()->json([
+        return [
             'data' => $paginator->items(),
-            'meta' => $this->meta($paginator, $request->sort(), $request->direction(), CatalogQueryRepository::FAVORITE_SORTS),
-        ]);
+            'meta' => $this->meta($paginator, $sort, $direction, CatalogQueryRepository::FAVORITE_SORTS),
+        ];
     }
 
     /**
