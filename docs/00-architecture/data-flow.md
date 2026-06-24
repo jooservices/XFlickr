@@ -1,5 +1,7 @@
 # Data flow
 
+For presentation-ready diagrams (end-to-end journey, OAuth, queues, storage browse), see [Architecture diagrams](architecture-diagrams.md).
+
 ## Crawl pipeline
 
 ```mermaid

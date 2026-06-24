@@ -55,4 +55,23 @@ final class StorageOAuthServiceTest extends TestCase
         $this->assertSame(StorageDriver::OneDrive->value, session('storage_oauth_provider'));
         $this->assertTrue(RuntimeConfig::has('storage_app.onedrive'));
     }
+
+    public function test_consume_return_url_rejects_external_hosts(): void
+    {
+        session(['storage_oauth_return_url' => 'https://evil.example/phish']);
+
+        $url = app(StorageOAuthService::class)->consumeReturnUrl();
+
+        $this->assertSame(route('settings.index', ['tab' => 'storage']), $url);
+        $this->assertNull(session('storage_oauth_return_url'));
+    }
+
+    public function test_consume_return_url_allows_relative_paths(): void
+    {
+        session(['storage_oauth_return_url' => '/storages/google-photos?account_id=1']);
+
+        $url = app(StorageOAuthService::class)->consumeReturnUrl();
+
+        $this->assertSame('/storages/google-photos?account_id=1', $url);
+    }
 }

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Architecture diagrams doc (`docs/00-architecture/architecture-diagrams.md`) — end-to-end flows, crawl, transfer, storage, OAuth, queues, and data stores for presentations.
+- Live Flickr API quota meter in the top navbar with account picker and 5-second refresh.
+- Dashboard hourly API usage chart (last 24 hours, quota reference line, 5-second refresh) with account picker.
+- Dashboard stat cards split into two rows: operations (Accounts, Active crawls, Transfers) and catalog (Contacts, Photos, Photosets, Galleries) for the selected quota account.
+
 ## [1.0.0] - 2026-06-23
 
 ### Added

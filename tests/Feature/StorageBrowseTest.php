@@ -87,6 +87,36 @@ final class StorageBrowseTest extends TestCase
         $response->assertJsonStructure(['reauthorize_url', 'missing_scopes']);
     }
 
+    public function test_google_photos_thumbnail_rejects_untrusted_base_url(): void
+    {
+        $account = StorageAccount::query()->create([
+            'provider' => 'google_photos',
+            'label' => 'Test Photos',
+            'credentials' => [
+                'access_token' => 'test-token',
+                'refresh_token' => 'refresh',
+                'client_id' => 'client',
+                'client_secret' => 'secret',
+                'expires_at' => now()->addHour()->toIso8601String(),
+                'granted_scopes' => StorageDriver::GooglePhotos->defaultScopes(),
+            ],
+            'connected_at' => now(),
+        ]);
+
+        Http::fake([
+            'photoslibrary.googleapis.com/v1/mediaItems/media-1' => Http::response([
+                'baseUrl' => 'http://169.254.169.254/latest/meta-data',
+            ]),
+            '169.254.169.254/*' => Http::response('metadata', 200),
+        ]);
+
+        $response = $this->getJson("/api/storage/google-photos/thumbnail?account_id={$account->id}&media_id=media-1");
+
+        $response->assertStatus(422);
+        $response->assertJson(['message' => 'Invalid or unauthorized thumbnail domain prefix.']);
+        Http::assertNotSent(fn ($request): bool => str_contains($request->url(), '169.254.169.254'));
+    }
+
     public function test_storage_browse_lists_google_photos_albums_and_items(): void
     {
         $account = StorageAccount::query()->create([

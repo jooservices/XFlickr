@@ -2,6 +2,11 @@
 
 Record of significant documentation and AI governance changes (not package releases).
 
+## 2026-06-23 (architecture diagrams)
+
+- Added `docs/00-architecture/architecture-diagrams.md` — Mermaid charts for end-to-end journey, system context, manual crawl, download/upload, storage browse, OAuth, Horizon queues, and data stores.
+- Cross-linked from `project-overview.md`, `data-flow.md`, and `docs/README.md`.
+
 ## 2026-06-23
 
 - Bootstrapped full documentation hub (`docs/README.md`, sections `00`–`05`).

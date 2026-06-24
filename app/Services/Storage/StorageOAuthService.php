@@ -88,7 +88,21 @@ final class StorageOAuthService
         $returnUrl = session('storage_oauth_return_url');
         session()->forget('storage_oauth_return_url');
 
-        return is_string($returnUrl) && $returnUrl !== '' ? $returnUrl : route('settings.index', ['tab' => 'storage']);
+        if (! is_string($returnUrl) || $returnUrl === '') {
+            return route('settings.index', ['tab' => 'storage']);
+        }
+
+        $parsed = parse_url($returnUrl);
+        if ($parsed === false) {
+            return route('settings.index', ['tab' => 'storage']);
+        }
+
+        $host = $parsed['host'] ?? null;
+        if (is_string($host) && ! hash_equals(request()->getHost(), $host)) {
+            return route('settings.index', ['tab' => 'storage']);
+        }
+
+        return $returnUrl;
     }
 
     public function validateState(?string $state): bool

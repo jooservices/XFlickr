@@ -7,6 +7,7 @@ namespace App\Repositories\Crawler;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use JOOservices\XFlickrCrawler\Models\ConnectionContact;
 use JOOservices\XFlickrCrawler\Models\Photo;
 use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
 
@@ -41,6 +42,31 @@ final class PhotoQueryRepository
     public function countWithSizes(): int
     {
         return Photo::query()->whereNotNull('raw_payload->sizes')->count();
+    }
+
+    public function countForConnection(string $connectionKey): int
+    {
+        return Photo::query()
+            ->whereIn(
+                'owner_nsid',
+                ConnectionContact::query()
+                    ->where('connection_key', $connectionKey)
+                    ->select('contact_nsid'),
+            )
+            ->count();
+    }
+
+    public function countWithSizesForConnection(string $connectionKey): int
+    {
+        return Photo::query()
+            ->whereIn(
+                'owner_nsid',
+                ConnectionContact::query()
+                    ->where('connection_key', $connectionKey)
+                    ->select('contact_nsid'),
+            )
+            ->whereNotNull('raw_payload->sizes')
+            ->count();
     }
 
     public function countWithSizesForOwner(string $ownerNsid): int

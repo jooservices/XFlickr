@@ -21,6 +21,7 @@ use App\Services\Storage\StorageBrowseSyncService;
 use App\Services\Storage\StorageDeleteService;
 use Illuminate\Http\JsonResponse;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -185,7 +186,7 @@ final class StorageBrowseController
                 }
             }, 200, [
                 'Content-Type' => $stream->mimeType,
-                'Content-Disposition' => 'attachment; filename="'.$stream->filename.'"',
+                'Content-Disposition' => $this->downloadDisposition($stream->filename),
             ]);
         } catch (InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
@@ -218,5 +219,18 @@ final class StorageBrowseController
         }
 
         return response()->json(['message' => $message], 422);
+    }
+
+    private function downloadDisposition(string $filename): string
+    {
+        $filename = str_replace(["\0", '/', '\\'], '_', $filename);
+        $fallback = preg_replace('/[^\x20-\x7e]|[%\/\\\\"]/', '_', $filename) ?: 'download';
+        $fallback = trim($fallback);
+
+        return HeaderUtils::makeDisposition(
+            HeaderUtils::DISPOSITION_ATTACHMENT,
+            $filename !== '' ? $filename : 'download',
+            $fallback !== '' ? $fallback : 'download',
+        );
     }
 }

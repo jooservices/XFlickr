@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { type PropsWithChildren, useState } from 'react';
 
+import NavbarRateLimit from '@/Components/NavbarRateLimit';
 import { cn } from '@/lib/cn';
 import type { PageProps } from '@/types';
 
@@ -140,10 +141,10 @@ export default function AppLayout({ children }: PropsWithChildren) {
             ) : null}
 
             <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
-                <div className="flex h-14 items-center lg:divide-x lg:divide-slate-200">
+                <div className="flex min-h-14 items-center lg:divide-x lg:divide-slate-200">
                     <div
                         className={cn(
-                            'flex w-full items-center gap-3 px-4 lg:shrink-0 lg:px-6',
+                            'flex items-center gap-3 px-4 lg:shrink-0 lg:px-6',
                             SIDEBAR_WIDTH,
                         )}
                     >
@@ -162,8 +163,8 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         </Link>
                     </div>
 
-                    <div className="hidden flex-1 items-center px-4 md:flex lg:px-6">
-                        <nav className="flex items-center gap-1">
+                    <div className="flex min-w-0 flex-1 items-center justify-between gap-3 px-3 py-2 md:gap-4 md:px-4 lg:px-6">
+                        <nav className="hidden items-center gap-1 md:flex">
                             {topNav.map((item) => {
                                 const path = url.split('?')[0] ?? '';
                                 const active =
@@ -189,6 +190,8 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 );
                             })}
                         </nav>
+
+                        <NavbarRateLimit />
                     </div>
                 </div>
             </header>
@@ -211,7 +214,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
             <div className="lg:flex">
                 <aside
                     className={cn(
-                        'border-b border-slate-200 bg-white lg:border-b-0 lg:border-r',
+                        'border-b border-slate-200 bg-white lg:sticky lg:top-14 lg:max-h-[calc(100vh-3.5rem)] lg:overflow-y-auto lg:self-start lg:border-b-0 lg:border-r',
                         SIDEBAR_WIDTH,
                         mobileOpen ? 'block' : 'hidden lg:block',
                     )}

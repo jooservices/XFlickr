@@ -26,6 +26,7 @@ final class OneDriveStorageBrowseDriver implements StorageBrowseDriver
     ): StorageBrowseResult {
         return $this->browse->browse(
             $account->credentials ?? [],
+            $account,
             $perPage,
             $albumPageToken,
             $itemPageToken,

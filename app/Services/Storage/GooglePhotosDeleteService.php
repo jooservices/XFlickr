@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Storage;
 
+use App\Models\StorageAccount;
 use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
 
@@ -20,7 +21,7 @@ final class GooglePhotosDeleteService
      * @param  list<string>  $itemIds
      * @return array{deleted: list<string>, failed: list<array{id: string, message: string}>}
      */
-    public function deleteMany(array $credentials, array $itemIds, ?string $albumId): array
+    public function deleteMany(StorageAccount $account, array $credentials, array $itemIds, ?string $albumId): array
     {
         if ($albumId === null || $albumId === '') {
             throw new InvalidArgumentException(
@@ -28,7 +29,7 @@ final class GooglePhotosDeleteService
             );
         }
 
-        $accessToken = $this->tokens->accessToken($credentials);
+        $accessToken = $this->tokens->accessToken($credentials, $account);
         $deleted = [];
         $failed = [];
 

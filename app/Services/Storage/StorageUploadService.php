@@ -30,7 +30,7 @@ final class StorageUploadService
         $credentials = $account->credentials ?? [];
 
         if ($driver === StorageDriver::GooglePhotos) {
-            $result = $this->googlePhotosUpload->uploadFile($credentials, $localPath, $remotePath);
+            $result = $this->googlePhotosUpload->uploadFile($account, $credentials, $localPath, $remotePath);
 
             $this->browseLocal->upsertItem($account, null, [
                 'id' => $result['id'],

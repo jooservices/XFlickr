@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Storage;
 
+use App\Models\StorageAccount;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -21,6 +22,7 @@ final class OneDriveBrowseService
      */
     public function browse(
         array $credentials,
+        StorageAccount $account,
         int $perPage = 25,
         ?string $albumPageToken = null,
         ?string $itemPageToken = null,
@@ -28,7 +30,7 @@ final class OneDriveBrowseService
         bool $includeAlbums = true,
         bool $includeItems = true,
     ): StorageBrowseResult {
-        $accessToken = $this->tokens->accessToken($credentials);
+        $accessToken = $this->tokens->accessToken($credentials, $account);
 
         $path = $folderId !== null && $folderId !== ''
             ? "/me/drive/items/{$folderId}/children"

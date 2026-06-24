@@ -137,7 +137,36 @@ final class StorageR2Test extends TestCase
 
         $response->assertOk();
         $this->assertSame('file-bytes', $response->streamedContent());
-        $response->assertHeader('Content-Disposition', 'attachment; filename="image.txt"');
+        $response->assertHeader('Content-Disposition', 'attachment; filename=image.txt');
+    }
+
+    public function test_download_filename_cannot_inject_response_headers(): void
+    {
+        $account = $this->r2Account();
+        $stream = fopen('php://temp', 'rb+');
+        $this->assertIsResource($stream);
+        fwrite($stream, 'file-bytes');
+        rewind($stream);
+
+        $this->app->instance(StorageDownloadStreamer::class, new class($stream) implements StorageDownloadStreamer
+        {
+            /**
+             * @param  resource  $stream
+             */
+            public function __construct(private mixed $stream) {}
+
+            public function openStreamForAccount(StorageAccount $account, string $remotePath): ?StorageStreamResult
+            {
+                return new StorageStreamResult($this->stream, "file\"\r\nX-Injected-Header: value.txt", 'text/plain');
+            }
+        });
+
+        $response = $this->get('/api/storage/r2/download?account_id='.$account->id.'&path=photos/image.txt');
+
+        $response->assertOk();
+        $response->assertHeaderMissing('X-Injected-Header');
+        $this->assertStringNotContainsString("\r", (string) $response->headers->get('Content-Disposition'));
+        $this->assertStringNotContainsString("\n", (string) $response->headers->get('Content-Disposition'));
     }
 
     public function test_r2_download_returns_not_found_for_missing_file(): void

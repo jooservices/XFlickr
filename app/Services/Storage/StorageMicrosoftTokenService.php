@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Storage;
 
+use App\Models\StorageAccount;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -12,7 +13,7 @@ final class StorageMicrosoftTokenService
     /**
      * @param  array<string, mixed>  $credentials
      */
-    public function accessToken(array $credentials): string
+    public function accessToken(array $credentials, StorageAccount $account): string
     {
         $accessToken = (string) ($credentials['access_token'] ?? '');
         $expiresAt = isset($credentials['expires_at']) ? strtotime((string) $credentials['expires_at']) : false;
@@ -40,6 +41,38 @@ final class StorageMicrosoftTokenService
             throw new RuntimeException('OneDrive token refresh failed.');
         }
 
-        return (string) $response->json('access_token');
+        $token = $response->json();
+        if (! is_array($token) || empty($token['access_token'])) {
+            throw new RuntimeException('OneDrive token refresh failed.');
+        }
+
+        $account->update([
+            'credentials' => $this->refreshedCredentials($credentials, $token),
+        ]);
+
+        return (string) $token['access_token'];
+    }
+
+    /**
+     * @param  array<string, mixed>  $credentials
+     * @param  array<string, mixed>  $token
+     * @return array<string, mixed>
+     */
+    private function refreshedCredentials(array $credentials, array $token): array
+    {
+        $refreshed = array_merge($credentials, [
+            'access_token' => $token['access_token'],
+            'expires_at' => now()->addSeconds((int) ($token['expires_in'] ?? 3600))->toIso8601String(),
+        ]);
+
+        if (! empty($token['refresh_token'])) {
+            $refreshed['refresh_token'] = $token['refresh_token'];
+        }
+
+        if (! empty($token['token_type'])) {
+            $refreshed['token_type'] = $token['token_type'];
+        }
+
+        return $refreshed;
     }
 }

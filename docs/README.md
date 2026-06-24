@@ -26,8 +26,9 @@ Documentation map for operators, developers, and AI agents.
 2. [Coding standards](04-development/coding-standards.md)
 3. [Testing](04-development/testing.md)
 4. [Docker stacks](03-operations/docker-stacks.md)
-5. [Contributing](04-development/07-contributing.md)
-6. [AI skills maintenance](04-development/ai-skills.md) — when editing agent skills
+5. [Architecture diagrams](00-architecture/architecture-diagrams.md)
+6. [Contributing](04-development/07-contributing.md)
+7. [AI skills maintenance](04-development/ai-skills.md) — when editing agent skills
 
 ### AI agents
 
@@ -41,7 +42,7 @@ Documentation map for operators, developers, and AI agents.
 
 | Section | Audience | Contents |
 |---|---|---|
-| [00-architecture](00-architecture/project-overview.md) | Developers, agents | System design, data flow, package boundaries |
+| [00-architecture](00-architecture/project-overview.md) | Developers, agents | System design, [architecture diagrams](00-architecture/architecture-diagrams.md), data flow, package boundaries |
 | [01-getting-started](01-getting-started/docker-installation.md) | Operators | Install, environments, first run |
 | [02-user-guide](02-user-guide/dashboard.md) | Operators | UI pages and workflows |
 | [03-operations](03-operations/docker-stacks.md) | Operators, DevOps | Horizon, scheduler, deploy, Docker |

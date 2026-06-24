@@ -1,5 +1,7 @@
 # Repository structure
 
+Architecture diagrams (flows, queues, OAuth): [Architecture diagrams](architecture-diagrams.md).
+
 ```text
 XFlickr/
 ├── app/

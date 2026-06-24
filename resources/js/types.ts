@@ -212,6 +212,30 @@ export interface RateLimitState {
     cooldown_seconds_remaining: number;
 }
 
+export interface ApiUsageBucket {
+    hour_start: string;
+    requests: number;
+    is_current: boolean;
+}
+
+export interface FlickrApiUsageSnapshot {
+    connection_key: string;
+    hours: number;
+    generated_at: string;
+    max_requests_per_hour: number;
+    buckets: ApiUsageBucket[];
+    rate_limit: RateLimitState;
+}
+
+export interface FlickrRateLimitSnapshot {
+    generated_at: string;
+    active_connection_key: string | null;
+    accounts: Array<{
+        account: FlickrAccount;
+        rate_limit: RateLimitState;
+    }>;
+}
+
 export interface CrawlSummary {
     connection_key: string;
     runs: {
@@ -233,6 +257,11 @@ export interface DashboardSnapshotAccountRow {
         failed: number;
     };
     pending_targets: number;
+    contacts_db: number;
+    photos_db: number;
+    photos_with_sizes: number;
+    photosets_db: number;
+    galleries_db: number;
     latest_run: CrawlRun | null;
     transfers: {
         downloads_active: number;
@@ -247,8 +276,6 @@ export interface DashboardSnapshot {
         accounts: number;
         runs_running: number;
         pending_targets: number;
-        photos_db: number;
-        photos_with_sizes: number;
         stored_files: number;
         downloads_active: number;
         uploads_active: number;

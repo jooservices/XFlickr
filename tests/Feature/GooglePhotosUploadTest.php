@@ -47,6 +47,7 @@ final class GooglePhotosUploadTest extends TestCase
 
         try {
             $result = app(GooglePhotosUploadService::class)->uploadFile(
+                $account,
                 $account->credentials ?? [],
                 $tempFile,
                 'Flickr/nsid/Photos/123_original.jpg',

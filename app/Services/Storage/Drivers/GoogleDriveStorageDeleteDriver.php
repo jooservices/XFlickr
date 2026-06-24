@@ -18,7 +18,7 @@ final class GoogleDriveStorageDeleteDriver implements StorageDeleteDriver
 
     public function deleteMany(StorageAccount $account, array $itemIds, ?string $containerId = null): array
     {
-        $result = $this->delete->deleteMany($account->credentials ?? [], $itemIds);
+        $result = $this->delete->deleteMany($account, $account->credentials ?? [], $itemIds);
 
         if ($result['deleted'] !== []) {
             $this->browseLocal->deleteCachedItems($account, $result['deleted']);

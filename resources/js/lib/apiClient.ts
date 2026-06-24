@@ -68,6 +68,12 @@ async function request<T>(path: string, init: RequestInit, params?: ApiRequestOp
     return body as T;
 }
 
+function csrfHeaders(): HeadersInit {
+    const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
+
+    return match ? { 'X-XSRF-TOKEN': decodeURIComponent(match[1]) } : {};
+}
+
 export async function apiGet<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
     return request<T>(
         path,
@@ -95,6 +101,7 @@ export async function apiPost<T>(
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
+                ...csrfHeaders(),
                 ...options.headers,
             },
             body: body === undefined ? undefined : JSON.stringify(body),

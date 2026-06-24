@@ -7,9 +7,17 @@ interface RateLimitMeterProps {
     rateLimit: RateLimitState;
     className?: string;
     compact?: boolean;
+    label?: string;
+    variant?: 'default' | 'navbar';
 }
 
-export default function RateLimitMeter({ rateLimit, className, compact = false }: RateLimitMeterProps) {
+export default function RateLimitMeter({
+    rateLimit,
+    className,
+    compact = false,
+    label = 'Crawl API quota',
+    variant = 'default',
+}: RateLimitMeterProps) {
     const windowSeconds = useCountdown(
         rateLimit.window_reset_at,
         rateLimit.window_seconds_remaining,
@@ -25,11 +33,18 @@ export default function RateLimitMeter({ rateLimit, className, compact = false }
     const isWarning = percent >= 80 && percent < 100;
     const isFull = percent >= 100;
     const inCooldown = cooldownSeconds > 0;
+    const isNavbar = variant === 'navbar';
+    const showWindowReset = (!compact || isNavbar) && rateLimit.window_reset_at && windowSeconds > 0;
 
     return (
-        <div className={cn('space-y-1.5', className)}>
+        <div
+            className={cn(
+                isNavbar ? 'w-[240px] space-y-1' : 'space-y-1.5',
+                className,
+            )}
+        >
             <div className="flex items-center justify-between gap-2 text-xs">
-                <span className="font-medium text-slate-700">Crawl API quota</span>
+                <span className="font-medium text-slate-700">{label}</span>
                 <span className={cn('text-slate-500', isFull && 'text-amber-700', inCooldown && 'text-red-700')}>
                     {used} / {max}
                 </span>
@@ -43,10 +58,11 @@ export default function RateLimitMeter({ rateLimit, className, compact = false }
                     '[&>div>div]:bg-blue-600',
                     isWarning && '[&>div>div]:bg-amber-500',
                     (isFull || inCooldown) && '[&>div>div]:bg-red-500',
+                    isNavbar && '[&>div]:h-1.5',
                 )}
             />
 
-            {!compact && rateLimit.window_reset_at && windowSeconds > 0 ? (
+            {showWindowReset ? (
                 <p className="text-xs text-slate-500">
                     Window resets in {formatCountdown(windowSeconds)}
                 </p>

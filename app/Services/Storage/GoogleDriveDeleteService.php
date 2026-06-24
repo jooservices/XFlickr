@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Storage;
 
+use App\Models\StorageAccount;
 use Google\Service\Drive;
 use Throwable;
 
@@ -18,9 +19,9 @@ final class GoogleDriveDeleteService
      * @param  list<string>  $itemIds
      * @return array{deleted: list<string>, failed: list<array{id: string, message: string}>}
      */
-    public function deleteMany(array $credentials, array $itemIds): array
+    public function deleteMany(StorageAccount $account, array $credentials, array $itemIds): array
     {
-        $client = $this->tokens->client($credentials);
+        $client = $this->tokens->clientForAccount($credentials, $account);
         $service = new Drive($client);
 
         $deleted = [];
