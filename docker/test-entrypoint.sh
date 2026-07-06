@@ -25,6 +25,21 @@ if [ "${DB_CONNECTION:-}" != "sqlite" ] || [ "${DB_DATABASE:-}" != ":memory:" ];
     exit 1
 fi
 
+# CI checkouts omit .env (gitignored). Some bootstrap paths read the file directly;
+# without it PHPUnit reports warnings on every test under --coverage.
+if [ ! -f .env ]; then
+    cp .env.example .env
+fi
+
+if [ -n "${APP_KEY:-}" ]; then
+    if grep -q '^APP_KEY=' .env; then
+        sed -i.bak "s|^APP_KEY=.*|APP_KEY=${APP_KEY}|" .env
+        rm -f .env.bak
+    else
+        echo "APP_KEY=${APP_KEY}" >> .env
+    fi
+fi
+
 php artisan config:clear --no-interaction
 
 exec "$@"

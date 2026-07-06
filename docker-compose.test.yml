@@ -24,7 +24,7 @@ services:
     environment:
       APP_NAME: xflickr
       APP_ENV: testing
-      APP_KEY: ${APP_KEY}
+      APP_KEY: ${APP_KEY:-base64:+uMxrQHiSSnSC9QQV4KkDMmLjTIBbCEe5KZsCUlWuuk=}
       APP_DEBUG: "true"
       APP_URL: http://localhost
       BCRYPT_ROUNDS: "4"
