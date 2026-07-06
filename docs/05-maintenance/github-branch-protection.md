@@ -6,8 +6,8 @@ XFlickr follows the same branch model as [`jooservices/dto`](https://github.com/
 
 | Branch | Role |
 |---|---|
+| `master` | **Default branch** (dto standard) — stable releases; OpenSSF Scorecard publishes here |
 | `develop` | Integration branch — feature/fix PRs target here |
-| `master` | Stable release branch — release PRs target here; tags created here |
 | `release/<version>` | Release stabilization and metadata only |
 | `hotfix/*` | Urgent fixes from `master` → back-merge to `develop` |
 
