@@ -27,6 +27,15 @@ final class StorageRemoteSyncStateRepository extends EloquentRepository
             ->first();
     }
 
+    public function lockForParent(int $accountId, string $parentRemoteId): ?StorageRemoteSyncState
+    {
+        return $this->newQuery()
+            ->where('storage_account_id', $accountId)
+            ->where('parent_remote_id', $parentRemoteId)
+            ->lockForUpdate()
+            ->first();
+    }
+
     public function firstOrCreateForParent(int $accountId, string $parentRemoteId): StorageRemoteSyncState
     {
         return $this->newQuery()->firstOrCreate(
@@ -50,23 +59,14 @@ final class StorageRemoteSyncStateRepository extends EloquentRepository
     }
 
     /**
-     * @param  list<string>  $remoteIds
+     * @param  list<string>  $mergedIds
      */
-    public function appendReconcileSeenRemoteIds(int $accountId, string $parentRemoteId, array $remoteIds): void
+    public function updateReconcileSeenRemoteIds(int $accountId, string $parentRemoteId, array $mergedIds): void
     {
-        if ($remoteIds === []) {
-            return;
-        }
-
-        $state = $this->findForParent($accountId, $parentRemoteId);
-        if ($state === null || ! $state->reconciling) {
-            return;
-        }
-
-        $seen = is_array($state->reconcile_seen_remote_ids) ? $state->reconcile_seen_remote_ids : [];
-        $merged = array_values(array_unique([...$seen, ...$remoteIds]));
-
-        $state->update(['reconcile_seen_remote_ids' => $merged]);
+        $this->newQuery()
+            ->where('storage_account_id', $accountId)
+            ->where('parent_remote_id', $parentRemoteId)
+            ->update(['reconcile_seen_remote_ids' => $mergedIds]);
     }
 
     public function clearReconcileState(int $accountId, string $parentRemoteId): void

@@ -11,7 +11,7 @@
 | Build | Vite | 8 |
 | Primary DB | MySQL | 8 |
 | Queue / rate limit | Redis | 7 |
-| Config / logging / events | MongoDB | 7 |
+| Config / credentials | MongoDB | 7 |
 | Queue dashboard | Laravel Horizon | 5 |
 | OAuth (storage) | Laravel Socialite | 5 |
 
@@ -23,8 +23,8 @@
 | `jooservices/flickr` | Flickr API SDK (OAuth 1.0a) |
 | `jooservices/laravel-config` | App credentials in MongoDB |
 | `jooservices/laravel-repository` | Repository base classes |
-| `jooservices/laravel-logging` | Structured audit logs |
-| `jooservices/laravel-events` | Domain event sourcing |
+| `jooservices/laravel-logging` | Audit logs for settings and credential changes |
+| `jooservices/laravel-events` | Domain events for Flickr/storage account lifecycle |
 | `league/flysystem-aws-s3-v3` | Cloudflare R2 |
 | `masbug/flysystem-google-drive-ext` | Google Drive |
 | `justus/flysystem-onedrive` | OneDrive |
@@ -35,6 +35,6 @@
 |---|---|
 | MySQL `xflickr` | Accounts, stored files, transfers, storage metadata |
 | MySQL `xflickr_*` (crawler) | Connections, contacts, photos, crawl runs |
-| MongoDB `xflickr` | Flickr/storage app credentials, config entries, event logs |
+| MongoDB `xflickr` | Flickr/storage app credentials (laravel-config), stored domain events, audit logs |
 | Redis | Queues, Horizon meta, crawler rate limiting |
 | Local disk | Downloaded photo files under `storage/app/private/flickr/` |

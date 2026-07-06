@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Jobs\DownloadPhotoJob;
 use App\Jobs\UploadPhotoJob;
 use App\Models\StorageAccount;
+use App\Models\StoredFile;
 use App\Services\Flickr\ContactCatalogDetailStatsService;
+use App\Services\Flickr\ContactDetailService;
 use App\Services\Flickr\ContactListSorter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
@@ -124,7 +127,16 @@ final class FlickrContactFrontendSupportTest extends TestCase
                 ->where('with_sizes', 1)
                 ->where('in_api', 42)
                 ->etc())
-            ->where('contact_detail.nsid', $contact->nsid));
+            ->where('contact.nsid', $contact->nsid)
+            ->where('crawl_state.photos.crawled', true)
+            ->missing('contact_detail'));
+
+        $payload = app(ContactDetailService::class)->forShow($connection, $contact->nsid);
+
+        $this->assertIsArray($payload);
+        $this->assertSame($contact->nsid, $payload['contact']['nsid']);
+        $this->assertArrayNotHasKey('contact_detail', $payload);
+        $this->assertNull(app(ContactDetailService::class)->forShow($connection, 'missing@N01'));
     }
 
     public function test_favorites_catalog_api_filters_by_subject_nsid(): void
@@ -307,7 +319,7 @@ final class FlickrContactFrontendSupportTest extends TestCase
 
     public function test_contacts_bulk_upload_accepts_multiple_contact_nsids(): void
     {
-        Bus::fake([UploadPhotoJob::class]);
+        Bus::fake([DownloadPhotoJob::class, UploadPhotoJob::class]);
 
         $connection = $this->createFlickrConnection();
 
@@ -334,6 +346,15 @@ final class FlickrContactFrontendSupportTest extends TestCase
                 'flickr_photo_id' => 'p-'.$nsid,
                 'owner_nsid' => $nsid,
                 'title' => 'Photo',
+            ]);
+
+            StoredFile::query()->forceCreate([
+                'flickr_photo_id' => 'p-'.$nsid,
+                'owner_nsid' => $nsid,
+                'variant' => 'original',
+                'status' => 'completed',
+                'local_path' => 'flickr/'.$nsid.'/photos/p-'.$nsid.'_abc.jpg',
+                'original_name' => 'p-'.$nsid.'_original.jpg',
             ]);
         }
 

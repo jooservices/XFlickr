@@ -9,15 +9,12 @@ use App\Http\Requests\Flickr\CrawlFlickrContactRequest;
 use App\Http\Requests\Flickr\FlickrContactProgressRequest;
 use App\Http\Requests\Flickr\FlickrContactSuggestRequest;
 use App\Http\Requests\Flickr\ListFlickrContactsRequest;
-use App\Services\Flickr\ContactCatalogCountsService;
-use App\Services\Flickr\ContactCatalogDetailStatsService;
-use App\Services\Flickr\ContactCrawlStateService;
+use App\Services\Flickr\ContactDetailService;
 use App\Services\Flickr\ContactListPresenter;
 use App\Services\Flickr\ContactListQueryService;
 use App\Services\Flickr\ContactListSorter;
 use App\Services\Flickr\FlickrCrawlService;
 use App\Support\Flickr\ConnectionPresenter;
-use App\Support\Flickr\ContactPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -93,28 +90,12 @@ final class FlickrContactController
     public function show(
         Connection $connection,
         string $contactNsid,
-        ContactCatalogCountsService $catalogCounts,
-        ContactCrawlStateService $crawlState,
-        ContactCatalogDetailStatsService $detailStats,
-        ContactListQueryService $contactList,
+        ContactDetailService $contacts,
     ): Response {
-        abort_unless($contactList->isLinked($connection, $contactNsid), 404);
+        $payload = $contacts->forShow($connection, $contactNsid);
+        abort_unless($payload !== null, 404);
 
-        $contact = $contactList->findContact($contactNsid);
-        $counts = $catalogCounts->forContacts($connection, [$contactNsid])[$contactNsid] ?? [
-            'photos' => 0,
-            'photosets' => 0,
-            'galleries' => 0,
-            'favorites' => 0,
-        ];
-
-        return Inertia::render('Contacts/Show', [
-            'account' => ConnectionPresenter::toArray($connection),
-            'contact' => ContactPresenter::toDetailArray($contact),
-            'contact_detail' => ContactPresenter::toDetailArray($contact),
-            'catalog_stats' => $detailStats->forContact($connection, $contactNsid),
-            'crawl_state' => $crawlState->forContact($connection, $contactNsid, [$contactNsid => $counts]),
-        ]);
+        return Inertia::render('Contacts/Show', $payload);
     }
 
     public function crawlBulk(CrawlFlickrContactBulkRequest $request, Connection $connection, FlickrCrawlService $crawlService): RedirectResponse

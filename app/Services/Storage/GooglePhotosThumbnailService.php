@@ -25,7 +25,7 @@ final class GooglePhotosThumbnailService
         }
 
         $credentials = $account->credentials ?? [];
-        $accessToken = $this->tokens->accessToken($credentials);
+        $accessToken = $this->tokens->accessToken($credentials, $account);
 
         $metadata = Http::withToken($accessToken)
             ->get("https://photoslibrary.googleapis.com/v1/mediaItems/{$mediaItemId}");
@@ -39,7 +39,13 @@ final class GooglePhotosThumbnailService
             throw new RuntimeException('Google Photos media item has no preview URL.');
         }
 
-        $image = Http::withToken($accessToken)->get($baseUrl.'=w128-h128');
+        if (! $this->isAllowedGooglePhotosBaseUrl($baseUrl)) {
+            throw new RuntimeException('Invalid or unauthorized thumbnail domain prefix.');
+        }
+
+        $image = Http::withToken($accessToken)
+            ->withoutRedirecting()
+            ->get($baseUrl.'=w128-h128');
 
         if (! $image->successful()) {
             throw new RuntimeException('Google Photos thumbnail could not be loaded.');
@@ -53,5 +59,21 @@ final class GooglePhotosThumbnailService
             'Content-Type' => $contentType,
             'Cache-Control' => 'private, max-age=3600',
         ]);
+    }
+
+    private function isAllowedGooglePhotosBaseUrl(string $baseUrl): bool
+    {
+        foreach ([
+            'https://lh3.googleusercontent.com/',
+            'https://lh4.googleusercontent.com/',
+            'https://lh5.googleusercontent.com/',
+            'https://lh6.googleusercontent.com/',
+        ] as $prefix) {
+            if (str_starts_with($baseUrl, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

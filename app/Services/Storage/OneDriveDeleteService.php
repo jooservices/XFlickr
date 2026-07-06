@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Storage;
 
+use App\Models\StorageAccount;
 use Illuminate\Support\Facades\Http;
 
 final class OneDriveDeleteService
@@ -19,9 +20,9 @@ final class OneDriveDeleteService
      * @param  list<string>  $itemIds
      * @return array{deleted: list<string>, failed: list<array{id: string, message: string}>}
      */
-    public function deleteMany(array $credentials, array $itemIds): array
+    public function deleteMany(StorageAccount $account, array $credentials, array $itemIds): array
     {
-        $accessToken = $this->tokens->accessToken($credentials);
+        $accessToken = $this->tokens->accessToken($credentials, $account);
 
         $deleted = [];
         $failed = [];

@@ -8,7 +8,6 @@ use App\Enums\StorageDriver;
 use App\Models\StorageAccount;
 use App\Support\Storage\StorageR2Config;
 use Aws\S3\S3Client;
-use Google\Client as GoogleClient;
 use Google\Service\Drive;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Filesystem\FilesystemAdapter;
@@ -23,14 +22,19 @@ use RuntimeException;
 
 final class StorageFlysystemFactory
 {
+    public function __construct(
+        private readonly StorageGoogleTokenService $googleTokens,
+        private readonly StorageMicrosoftTokenService $microsoftTokens,
+    ) {}
+
     public function diskForAccount(StorageAccount $account): Filesystem
     {
         $credentials = $account->credentials ?? [];
 
         return match (StorageDriver::from($account->provider)) {
-            StorageDriver::GoogleDrive => $this->googleDriveDisk($credentials),
+            StorageDriver::GoogleDrive => $this->googleDriveDisk($account, $credentials),
             StorageDriver::GooglePhotos => throw new RuntimeException('Google Photos uses direct API upload.'),
-            StorageDriver::OneDrive => $this->oneDriveDisk($credentials),
+            StorageDriver::OneDrive => $this->oneDriveDisk($account, $credentials),
             StorageDriver::R2 => $this->r2Disk($credentials),
         };
     }
@@ -72,21 +76,9 @@ final class StorageFlysystemFactory
     /**
      * @param  array<string, mixed>  $credentials
      */
-    private function googleDriveDisk(array $credentials): Filesystem
+    private function googleDriveDisk(StorageAccount $account, array $credentials): Filesystem
     {
-        $clientId = (string) ($credentials['client_id'] ?? '');
-        $clientSecret = (string) ($credentials['client_secret'] ?? '');
-        $refreshToken = (string) ($credentials['refresh_token'] ?? '');
-
-        if ($clientId === '' || $clientSecret === '' || $refreshToken === '') {
-            throw new RuntimeException('Google Drive credentials are incomplete.');
-        }
-
-        $client = new GoogleClient;
-        $client->setClientId($clientId);
-        $client->setClientSecret($clientSecret);
-        $client->refreshToken($refreshToken);
-
+        $client = $this->googleTokens->clientForAccount($credentials, $account);
         $service = new Drive($client);
         $adapter = new GoogleDriveAdapter($service, 'xflickr');
 
@@ -96,9 +88,9 @@ final class StorageFlysystemFactory
     /**
      * @param  array<string, mixed>  $credentials
      */
-    private function oneDriveDisk(array $credentials): Filesystem
+    private function oneDriveDisk(StorageAccount $account, array $credentials): Filesystem
     {
-        $accessToken = app(StorageMicrosoftTokenService::class)->accessToken($credentials);
+        $accessToken = $this->microsoftTokens->accessToken($credentials, $account);
 
         $graph = new Graph;
         $graph->setAccessToken($accessToken);

@@ -45,6 +45,11 @@ final class ContactQueryRepository
         return $query;
     }
 
+    public function countForConnection(string $connectionKey): int
+    {
+        return $this->queryForConnection($connectionKey)->count();
+    }
+
     /**
      * @param  list<string>  $nsids
      * @return list<Contact>

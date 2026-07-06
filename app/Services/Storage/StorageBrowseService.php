@@ -12,10 +12,7 @@ use RuntimeException;
 final class StorageBrowseService
 {
     public function __construct(
-        private readonly GooglePhotosBrowseService $googlePhotos,
-        private readonly GoogleDriveBrowseService $googleDrive,
-        private readonly OneDriveBrowseService $oneDrive,
-        private readonly R2BrowseService $r2,
+        private readonly StorageDriverRegistry $drivers,
         private readonly StorageAccountRepository $accounts,
     ) {}
 
@@ -45,13 +42,14 @@ final class StorageBrowseService
             throw new RuntimeException('Storage account not found for this provider.');
         }
 
-        $credentials = $account->credentials ?? [];
-
-        return match ($driver) {
-            StorageDriver::GooglePhotos => $this->googlePhotos->browse($credentials, $perPage, $albumPageToken, $itemPageToken, $containerId, $accountId, $includeAlbums, $includeItems),
-            StorageDriver::GoogleDrive => $this->googleDrive->browse($credentials, $perPage, $albumPageToken, $itemPageToken, $containerId, $includeAlbums, $includeItems),
-            StorageDriver::OneDrive => $this->oneDrive->browse($credentials, $perPage, $albumPageToken, $itemPageToken, $containerId, $includeAlbums, $includeItems),
-            StorageDriver::R2 => $this->r2->browse($credentials, $perPage, $albumPageToken, $itemPageToken, $containerId, $includeAlbums, $includeItems),
-        };
+        return $this->drivers->browseDriver($driver)->browse(
+            $account,
+            $perPage,
+            $albumPageToken,
+            $itemPageToken,
+            $containerId,
+            $includeAlbums,
+            $includeItems,
+        );
     }
 }

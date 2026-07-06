@@ -7,6 +7,7 @@ namespace App\Repositories\Crawler;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use JOOservices\XFlickrCrawler\Models\ConnectionContact;
 use JOOservices\XFlickrCrawler\Models\Photo;
 use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
 
@@ -21,6 +22,30 @@ final class PhotoQueryRepository
         return Photo::query()
             ->where('owner_nsid', $ownerNsid)
             ->get($columns);
+    }
+
+    public function existsForOwnerNsid(string $ownerNsid): bool
+    {
+        return Photo::query()
+            ->where('owner_nsid', $ownerNsid)
+            ->exists();
+    }
+
+    /**
+     * @param  list<string>  $columns
+     * @param  callable(Collection<int, Photo>): void  $callback
+     */
+    public function chunkByOwnerNsid(
+        string $ownerNsid,
+        int $chunkSize,
+        callable $callback,
+        array $columns = ['id', 'flickr_photo_id', 'owner_nsid'],
+    ): void {
+        Photo::query()
+            ->where('owner_nsid', $ownerNsid)
+            ->select($columns)
+            ->orderBy('id')
+            ->chunk($chunkSize, $callback);
     }
 
     /**
@@ -41,6 +66,31 @@ final class PhotoQueryRepository
     public function countWithSizes(): int
     {
         return Photo::query()->whereNotNull('raw_payload->sizes')->count();
+    }
+
+    public function countForConnection(string $connectionKey): int
+    {
+        return Photo::query()
+            ->whereIn(
+                'owner_nsid',
+                ConnectionContact::query()
+                    ->where('connection_key', $connectionKey)
+                    ->select('contact_nsid'),
+            )
+            ->count();
+    }
+
+    public function countWithSizesForConnection(string $connectionKey): int
+    {
+        return Photo::query()
+            ->whereIn(
+                'owner_nsid',
+                ConnectionContact::query()
+                    ->where('connection_key', $connectionKey)
+                    ->select('contact_nsid'),
+            )
+            ->whereNotNull('raw_payload->sizes')
+            ->count();
     }
 
     public function countWithSizesForOwner(string $ownerNsid): int

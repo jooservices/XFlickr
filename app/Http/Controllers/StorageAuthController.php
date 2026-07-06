@@ -6,6 +6,8 @@ namespace App\Http\Controllers;
 
 use App\Enums\StorageDriver;
 use App\Http\Requests\Settings\ConnectR2Request;
+use App\Http\Requests\Storage\BeginStorageOAuthRequest;
+use App\Http\Requests\Storage\ReauthorizeStorageRequest;
 use App\Http\Requests\Storage\StorageAccountIdRequest;
 use App\Http\Requests\Storage\StorageOAuthCallbackRequest;
 use App\Models\StorageAccount;
@@ -13,23 +15,16 @@ use App\Services\Storage\StorageAccountService;
 use App\Services\Storage\StorageOAuthService;
 use App\Services\Storage\StorageR2ConnectionVerifier;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 
 final class StorageAuthController
 {
-    public function connect(Request $request, StorageOAuthService $oauth): RedirectResponse
+    public function connect(BeginStorageOAuthRequest $request, StorageOAuthService $oauth): RedirectResponse
     {
-        $provider = (string) $request->route('provider');
-
         try {
-            $driver = StorageDriver::from($provider);
-            $accountId = (int) $request->query('account_id', 0);
-            $returnUrl = $this->sanitizeReturnUrl($request->query('return_url'));
-
             $url = $oauth->begin(
-                $driver,
-                $accountId > 0 ? $accountId : null,
-                $returnUrl,
+                $request->driver(),
+                $request->accountId(),
+                $request->returnUrl(),
             );
         } catch (\Throwable) {
             return redirect()->route('settings.index', ['tab' => 'storage'])->with(
@@ -41,9 +36,9 @@ final class StorageAuthController
         return redirect()->away($url);
     }
 
-    public function reauthorize(Request $request, StorageAccount $account, StorageOAuthService $oauth): RedirectResponse
+    public function reauthorize(ReauthorizeStorageRequest $request, StorageAccount $account, StorageOAuthService $oauth): RedirectResponse
     {
-        $returnUrl = $this->sanitizeReturnUrl($request->query('return_url'));
+        $returnUrl = $request->returnUrl();
 
         try {
             $url = $oauth->beginForAccount($account, $returnUrl);
@@ -59,7 +54,6 @@ final class StorageAuthController
 
     public function callback(StorageOAuthCallbackRequest $request, StorageOAuthService $oauth): RedirectResponse
     {
-        $provider = (string) $request->route('provider');
         $returnUrl = $oauth->consumeReturnUrl();
 
         if ($request->hasOAuthError()) {
@@ -71,7 +65,7 @@ final class StorageAuthController
         }
 
         try {
-            $oauth->complete($provider, $request->code());
+            $oauth->complete($request->provider(), $request->code());
         } catch (\Throwable) {
             return redirect($returnUrl)->with('error', 'Storage account could not be connected.');
         }
@@ -126,18 +120,5 @@ final class StorageAuthController
         );
 
         return redirect()->route('settings.index', ['tab' => 'storage'])->with('success', 'Cloudflare R2 account connected.');
-    }
-
-    private function sanitizeReturnUrl(mixed $returnUrl): ?string
-    {
-        if (! is_string($returnUrl) || $returnUrl === '') {
-            return null;
-        }
-
-        if (! str_starts_with($returnUrl, '/')) {
-            return null;
-        }
-
-        return $returnUrl;
     }
 }

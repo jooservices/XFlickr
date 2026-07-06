@@ -6,15 +6,19 @@ namespace App\Services\Storage;
 
 use App\Enums\StorageDriver;
 use App\Models\StorageAccount;
+use App\Services\Storage\OAuth\MicrosoftProvider;
 use Illuminate\Support\Str;
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
-use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Contracts\Factory as SocialiteFactory;
+use Laravel\Socialite\SocialiteManager;
 use Laravel\Socialite\Two\AbstractProvider;
+use Laravel\Socialite\Two\GoogleProvider;
 
 final class StorageOAuthService
 {
     public function __construct(
         private readonly StorageAccountService $accounts,
+        private readonly SocialiteFactory $socialite,
     ) {}
 
     public function begin(StorageDriver $driver, ?int $accountId = null, ?string $returnUrl = null): string
@@ -84,7 +88,21 @@ final class StorageOAuthService
         $returnUrl = session('storage_oauth_return_url');
         session()->forget('storage_oauth_return_url');
 
-        return is_string($returnUrl) && $returnUrl !== '' ? $returnUrl : route('settings.index', ['tab' => 'storage']);
+        if (! is_string($returnUrl) || $returnUrl === '') {
+            return route('settings.index', ['tab' => 'storage']);
+        }
+
+        $parsed = parse_url($returnUrl);
+        if ($parsed === false) {
+            return route('settings.index', ['tab' => 'storage']);
+        }
+
+        $host = $parsed['host'] ?? null;
+        if (is_string($host) && ! hash_equals(request()->getHost(), $host)) {
+            return route('settings.index', ['tab' => 'storage']);
+        }
+
+        return $returnUrl;
     }
 
     public function validateState(?string $state): bool
@@ -106,19 +124,29 @@ final class StorageOAuthService
     private function provider(StorageDriver $driver): AbstractProvider
     {
         $appConfig = $this->appConfig($driver);
-        $providerKey = $driver->oauthProviderKey();
-        $redirect = $appConfig['redirect'] ?? url("/storage/callback/{$driver->value}");
+        $redirect = $appConfig['redirect'] !== '' ? $appConfig['redirect'] : url("/storage/callback/{$driver->value}");
 
-        config([
-            "services.{$providerKey}.client_id" => $appConfig['client_id'] ?? '',
-            "services.{$providerKey}.client_secret" => $appConfig['client_secret'] ?? '',
-            "services.{$providerKey}.redirect" => $redirect,
+        if (! $this->socialite instanceof SocialiteManager) {
+            throw new \RuntimeException('Socialite manager does not support explicit provider construction.');
+        }
+
+        return $this->socialite->buildProvider($this->providerClass($driver), [
+            'client_id' => $appConfig['client_id'],
+            'client_secret' => $appConfig['client_secret'],
+            'redirect' => $redirect,
         ]);
+    }
 
-        /** @var AbstractProvider $provider */
-        $provider = Socialite::driver($providerKey);
-
-        return $provider->redirectUrl($redirect);
+    /**
+     * @return class-string<AbstractProvider>
+     */
+    private function providerClass(StorageDriver $driver): string
+    {
+        return match ($driver) {
+            StorageDriver::GoogleDrive, StorageDriver::GooglePhotos => GoogleProvider::class,
+            StorageDriver::OneDrive => MicrosoftProvider::class,
+            StorageDriver::R2 => throw new \InvalidArgumentException("Storage driver [{$driver->value}] does not use OAuth."),
+        };
     }
 
     /**

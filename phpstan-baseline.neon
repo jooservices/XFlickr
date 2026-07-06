@@ -1,7 +1,889 @@
 parameters:
 	ignoreErrors:
 		-
+			message: '#^Method App\\Events\\FlickrAccountConnected\:\:aggregateId\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Events/FlickrAccountConnected.php
+
+		-
+			message: '#^Method App\\Events\\FlickrAccountDisconnected\:\:aggregateId\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Events/FlickrAccountDisconnected.php
+
+		-
+			message: '#^Method App\\Events\\StorageAccountConnected\:\:aggregateId\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Events/StorageAccountConnected.php
+
+		-
+			message: '#^Method App\\Events\\StorageAccountDisconnected\:\:aggregateId\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Events/StorageAccountDisconnected.php
+
+		-
+			message: '#^Method App\\Models\\StorageAccount\:\:uploads\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/StorageAccount.php
+
+		-
+			message: '#^Method App\\Models\\StorageRemoteAlbum\:\:storageAccount\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/StorageRemoteAlbum.php
+
+		-
+			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/StorageRemoteItem.php
+
+		-
+			message: '#^Method App\\Models\\StorageRemoteItem\:\:storageAccount\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/StorageRemoteItem.php
+
+		-
+			message: '#^Method App\\Models\\StorageRemoteSyncState\:\:storageAccount\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/StorageRemoteSyncState.php
+
+		-
+			message: '#^Method App\\Models\\StorageUpload\:\:storageAccount\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/StorageUpload.php
+
+		-
+			message: '#^Method App\\Models\\StorageUpload\:\:storedFile\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/StorageUpload.php
+
+		-
+			message: '#^Method App\\Models\\StoredFile\:\:uploads\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/StoredFile.php
+
+		-
+			message: '#^Method App\\Models\\TransferBatch\:\:items\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/TransferBatch.php
+
+		-
+			message: '#^Method App\\Models\\TransferBatch\:\:storageAccount\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/TransferBatch.php
+
+		-
+			message: '#^Method App\\Models\\TransferItem\:\:batch\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/TransferItem.php
+
+		-
+			message: '#^Method App\\Repositories\\ConfigEntryRepository\:\:listOrdered\(\) should return Illuminate\\Support\\Collection\<int, JOOservices\\LaravelConfig\\Models\\Config\> but returns Illuminate\\Database\\Eloquent\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/ConfigEntryRepository.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\ApiLog\:\:\$hour_start\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Repositories/Crawler/ApiLogQueryRepository.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\ApiLog\:\:\$requests\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Repositories/Crawler/ApiLogQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\ApiLogQueryRepository\:\:hourlyCountsForConnection\(\) should return Illuminate\\Support\\Collection\<int, object\{hour_start\: string, requests\: int\}\> but returns Illuminate\\Support\\Collection\<int, object\{hour_start\: string, requests\: int\}&stdClass\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/Crawler/ApiLogQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\ApiLogQueryRepository\:\:paginateForConnection\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/Crawler/ApiLogQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:favoriteCountSubquery\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:galleryCountSubquery\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:paginateFavorites\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:paginateGalleries\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:paginatePhotos\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:paginatePhotosets\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:photosetCountSubquery\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$ownerNsids$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
+
+		-
+			message: '#^PHPDoc tag @return with type array\<string, int\> is incompatible with native type int\.$#'
+			identifier: return.phpDocType
+			count: 1
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
+
+		-
+			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<JOOservices\\XFlickrCrawler\\Models\\Favorite\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
+
+		-
+			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<JOOservices\\XFlickrCrawler\\Models\\Gallery\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
+
+		-
+			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<JOOservices\\XFlickrCrawler\\Models\\Photo\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
+
+		-
+			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<JOOservices\\XFlickrCrawler\\Models\\Photoset\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$nsid\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Repositories/Crawler/ContactQueryRepository.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$realname\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Repositories/Crawler/ContactQueryRepository.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$username\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Repositories/Crawler/ContactQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\ContactQueryRepository\:\:suggestForConnection\(\) should return Illuminate\\Support\\Collection\<int, array\{nsid\: string, username\: string\|null, realname\: string\|null\}\> but returns Illuminate\\Support\\Collection\<int, array\{nsid\: mixed, username\: mixed, realname\: mixed\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/Crawler/ContactQueryRepository.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,JOOservices\\XFlickrCrawler\\Models\\Contact\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Repositories/Crawler/ContactQueryRepository.php
+
+		-
+			message: '#^Return type of call to method Illuminate\\Database\\Eloquent\\Collection\<int,JOOservices\\XFlickrCrawler\\Models\\Contact\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: method.unresolvableReturnType
+			count: 1
+			path: app/Repositories/Crawler/ContactQueryRepository.php
+
+		-
+			message: '#^Return type of call to method Illuminate\\Support\\Collection\<int,array\<string, mixed\>\>\:\:values\(\) contains unresolvable type\.$#'
+			identifier: method.unresolvableReturnType
+			count: 1
+			path: app/Repositories/Crawler/ContactQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\CrawlRunQueryRepository\:\:listForContacts\(\) has parameter \$statuses with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/Crawler/CrawlRunQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\CrawlRunQueryRepository\:\:paginateQuery\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/Crawler/CrawlRunQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\CrawlRunQueryRepository\:\:paginateQuery\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/Crawler/CrawlRunQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\CrawlTargetQueryRepository\:\:groupedByRunIds\(\) should return Illuminate\\Support\\Collection\<int, Illuminate\\Support\\Collection\<int, JOOservices\\XFlickrCrawler\\Models\\CrawlTarget\>\> but returns Illuminate\\Database\\Eloquent\\Collection\<\(int\|string\), Illuminate\\Database\\Eloquent\\Collection\<int, JOOservices\\XFlickrCrawler\\Models\\CrawlTarget\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/Crawler/CrawlTargetQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\PhotoQueryRepository\:\:ownerCountSubquery\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/Crawler/PhotoQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\PhotoQueryRepository\:\:photosetAndGalleryMemberships\(\) return type with generic class Illuminate\\Support\\Collection does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 2
+			path: app/Repositories/Crawler/PhotoQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\PhotoQueryRepository\:\:updateRawPayload\(\) has parameter \$rawPayload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/Crawler/PhotoQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\StorageAccountRepository\:\:findById\(\) should return App\\Models\\StorageAccount\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/StorageAccountRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\StorageAccountRepository\:\:findByIdOrFail\(\) should return App\\Models\\StorageAccount but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/StorageAccountRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\StorageAccountRepository\:\:findDefault\(\) should return App\\Models\\StorageAccount\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/StorageAccountRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\StorageAccountRepository\:\:listForProvider\(\) should return Illuminate\\Support\\Collection\<int, App\\Models\\StorageAccount\> but returns Illuminate\\Database\\Eloquent\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/StorageAccountRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\StorageAccountRepository\:\:listOrderedForSettings\(\) should return Illuminate\\Support\\Collection\<int, App\\Models\\StorageAccount\> but returns Illuminate\\Database\\Eloquent\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/StorageAccountRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\StorageAccountRepository\:\:updateOrCreateByProviderAndLabel\(\) should return App\\Models\\StorageAccount but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/StorageAccountRepository.php
+
+		-
+			message: '#^Unable to resolve the template type TCallbackReturnType in call to static method Illuminate\\Database\\Connection\:\:transaction\(\)$#'
+			identifier: argument.templateType
+			count: 1
+			path: app/Repositories/StorageAccountRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\StorageRemoteAlbumRepository\:\:paginateForParent\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/StorageRemoteAlbumRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\StorageRemoteAlbumRepository\:\:upsertByRemoteId\(\) should return App\\Models\\StorageRemoteAlbum but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/StorageRemoteAlbumRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\StorageRemoteItemRepository\:\:paginateForParent\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/StorageRemoteItemRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\StorageRemoteItemRepository\:\:upsertByRemoteId\(\) should return App\\Models\\StorageRemoteItem but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/StorageRemoteItemRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\StorageRemoteItemRepository\:\:upsertFromBrowseItem\(\) should return App\\Models\\StorageRemoteItem but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/StorageRemoteItemRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\StorageRemoteSyncStateRepository\:\:findForParent\(\) should return App\\Models\\StorageRemoteSyncState\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/StorageRemoteSyncStateRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\StorageRemoteSyncStateRepository\:\:firstOrCreateForParent\(\) should return App\\Models\\StorageRemoteSyncState but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/StorageRemoteSyncStateRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\StorageRemoteSyncStateRepository\:\:lockForParent\(\) should return App\\Models\\StorageRemoteSyncState\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/StorageRemoteSyncStateRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\StorageUploadRepository\:\:firstOrCreateForAccount\(\) should return App\\Models\\StorageUpload but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/StorageUploadRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\StoredFileRepository\:\:completedOriginalCountSubquery\(\) should return Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\StoredFile\> but returns Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/StoredFileRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\StoredFileRepository\:\:findOriginalByFlickrPhotoId\(\) should return App\\Models\\StoredFile\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/StoredFileRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\StoredFileRepository\:\:firstOrCreateOriginal\(\) should return App\\Models\\StoredFile but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/StoredFileRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\StoredFileRepository\:\:originalsForOwners\(\) should return Illuminate\\Support\\Collection\<int, App\\Models\\StoredFile\> but returns Illuminate\\Database\\Eloquent\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/StoredFileRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\TransferBatchRepository\:\:createDownloadBatch\(\) should return App\\Models\\TransferBatch but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/TransferBatchRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\TransferBatchRepository\:\:createUploadBatch\(\) should return App\\Models\\TransferBatch but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/TransferBatchRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\TransferBatchRepository\:\:findById\(\) should return App\\Models\\TransferBatch\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/TransferBatchRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\TransferBatchRepository\:\:lockById\(\) should return App\\Models\\TransferBatch\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/TransferBatchRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\TransferBatchRepository\:\:queryForConnection\(\) should return Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\TransferBatch\> but returns Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/TransferBatchRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\TransferBatchRepository\:\:runningDownloadsForSubjects\(\) should return Illuminate\\Support\\Collection\<int, App\\Models\\TransferBatch\> but returns Illuminate\\Database\\Eloquent\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/TransferBatchRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\TransferItemRepository\:\:createPending\(\) should return App\\Models\\TransferItem but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/TransferItemRepository.php
+
+		-
+			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<JOOservices\\XFlickrCrawler\\Models\\CrawlRun\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/Crawl/CrawlStatusQueryService.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$api_calls\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/DashboardService.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$completed_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/DashboardService.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$contacts_discovered\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/DashboardService.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$crawl_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/DashboardService.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$failed_reason\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/DashboardService.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$photos_discovered\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/DashboardService.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$started_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/DashboardService.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$subject_nsid\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/DashboardService.php
+
+		-
+			message: '#^Parameter \#1 \$array of function array_reduce contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Services/DashboardService.php
+
+		-
+			message: '#^Parameter \#2 \$callback of function array_reduce contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Services/DashboardService.php
+
+		-
+			message: '#^Parameter \#3 \$callback of static method Illuminate\\Cache\\Repository\:\:remember\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Services/DashboardService.php
+
+		-
+			message: '#^Return type of call to static method Illuminate\\Cache\\Repository\:\:remember\(\) contains unresolvable type\.$#'
+			identifier: staticMethod.unresolvableReturnType
+			count: 1
+			path: app/Services/DashboardService.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$photos_discovered\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/Flickr/ContactCatalogDetailStatsService.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$crawl_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Flickr/ContactCrawlStateService.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$subject_nsid\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Flickr/ContactCrawlStateService.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlTarget\:\:\$last_result_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Flickr/ContactCrawlStateService.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$nsid\.$#'
+			identifier: property.notFound
+			count: 5
+			path: app/Services/Flickr/ContactListPresenter.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$realname\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Flickr/ContactListPresenter.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$username\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Flickr/ContactListPresenter.php
+
+		-
+			message: '#^Method App\\Services\\Flickr\\ContactListQueryService\:\:paginateForConnection\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/Flickr/ContactListQueryService.php
+
+		-
+			message: '#^Method App\\Services\\Flickr\\ContactListQueryService\:\:suggest\(\) should return Illuminate\\Support\\Collection\<int, array\{nsid\: string, username\: string\|null, realname\: string\|null\}\> but returns Illuminate\\Support\\Collection\<int, array\{nsid\: string, username\: string\|null, realname\: string\|null\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/Flickr/ContactListQueryService.php
+
+		-
+			message: '#^Match arm comparison between ''downloads_count'' and ''downloads_count'' is always true\.$#'
+			identifier: match.alwaysTrue
+			count: 1
+			path: app/Services/Flickr/ContactListSorter.php
+
+		-
+			message: '#^Parameter \#3 \$countQuery of method App\\Services\\Flickr\\ContactListSorter\:\:orderBySubqueryCount\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\StoredFile\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/Flickr/ContactListSorter.php
+
+		-
 			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
 			identifier: larastan.noEnvCallsOutsideOfConfig
 			count: 1
 			path: app/Services/Flickr/FlickrAppProfileService.php
+
+		-
+			message: '#^Method App\\Services\\Flickr\\FlickrAppProfileService\:\:listPublic\(\) should return Illuminate\\Support\\Collection\<int, array\{profile\: string, label\: string\|null, api_key_hint\: string, callback_url\: string\|null, accounts_count\: int\}\> but returns Illuminate\\Support\\Collection\<int, array\{profile\: string, label\: string\|null, api_key_hint\: string, callback_url\: string, accounts_count\: int\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/Flickr/FlickrAppProfileService.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Photo\:\:\$flickr_photo_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/Flickr/FlickrPhotoSizeResolver.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Photo\:\:\$raw_payload\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/Flickr/FlickrPhotoSizeResolver.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Photo\:\:\$raw_payload\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/Flickr/PhotoDownloadExecutionService.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Photo\:\:\$flickr_photo_id\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Services/Flickr/PhotoDownloadService.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Photo\:\:\$owner_nsid\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Services/Flickr/PhotoDownloadService.php
+
+		-
+			message: '#^Parameter \#1 \$array of function array_values contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Services/Flickr/PhotoDownloadService.php
+
+		-
+			message: '#^Parameter \#1 \$array of function uasort contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Services/Flickr/PhotoDownloadService.php
+
+		-
+			message: '#^Parameter \#2 \$callback of function uasort contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Services/Flickr/PhotoDownloadService.php
+
+		-
+			message: '#^Return type of call to function array_values contains unresolvable type\.$#'
+			identifier: function.unresolvableReturnType
+			count: 1
+			path: app/Services/Flickr/PhotoDownloadService.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Photo\:\:\$flickr_photo_id\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Services/Flickr/PhotoUploadService.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Photo\:\:\$owner_nsid\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Services/Flickr/PhotoUploadService.php
+
+		-
+			message: '#^Instanceof between JOOservices\\XFlickrCrawler\\Models\\Photo and JOOservices\\XFlickrCrawler\\Models\\Photo will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: app/Services/Flickr/PhotoUploadService.php
+
+		-
+			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/Storage/GooglePhotosConnectionVerifier.php
+
+		-
+			message: '#^Method App\\Services\\Storage\\OAuth\\MicrosoftProvider\:\:mapUserToObject\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Storage/OAuth/MicrosoftProvider.php
+
+		-
+			message: '#^Property App\\Services\\Storage\\OAuth\\MicrosoftProvider\:\:\$scopes type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Storage/OAuth/MicrosoftProvider.php
+
+		-
+			message: '#^Offset ''client_id'' does not exist on array\{\}\|string\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: app/Services/Storage/StorageAccountService.php
+
+		-
+			message: '#^Offset ''client_secret'' does not exist on array\{\}\|string\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: app/Services/Storage/StorageAccountService.php
+
+		-
+			message: '#^Offset ''refresh_token'' does not exist on array\{\}\|string\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: app/Services/Storage/StorageAccountService.php
+
+		-
+			message: '#^Method App\\Services\\Storage\\StorageAppProfileService\:\:listPublic\(\) should return Illuminate\\Support\\Collection\<int, array\{provider\: string, label\: string, client_id_hint\: string, redirect\: string\|null, accounts_count\: int\}\> but returns Illuminate\\Support\\Collection\<int, array\{provider\: string, label\: string, client_id_hint\: string, redirect\: string, accounts_count\: int\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/Storage/StorageAppProfileService.php
+
+		-
+			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/Storage/StorageBrowseLocalService.php
+
+		-
+			message: '#^Call to function is_string\(\) with \*NEVER\* will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Services/Storage/StorageBrowseSyncService.php
+
+		-
+			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/Storage/StorageBrowseSyncService.php
+
+		-
+			message: '#^Empty array passed to foreach\.$#'
+			identifier: foreach.emptyArray
+			count: 1
+			path: app/Services/Storage/StorageBrowseSyncService.php
+
+		-
+			message: '#^Property App\\Models\\StorageRemoteSyncState\:\:\$last_synced_at \(string\|null\) does not accept Illuminate\\Support\\Carbon\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Services/Storage/StorageBrowseSyncService.php
+
+		-
+			message: '#^Property App\\Models\\StorageRemoteSyncState\:\:\$reconcile_seen_remote_ids \(string\|null\) does not accept list\<string\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Services/Storage/StorageBrowseSyncService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between array\{\} and array\{\} will always evaluate to false\.$#'
+			identifier: notIdentical.alwaysFalse
+			count: 1
+			path: app/Services/Storage/StorageBrowseSyncService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between mixed and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Services/Storage/StorageBrowseSyncService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between \*NEVER\* and '''' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/Storage/StorageBrowseSyncService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>albums_complete" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/Storage/StorageBrowseSyncService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>items_complete" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/Storage/StorageBrowseSyncService.php
+
+		-
+			message: '#^Method App\\Services\\Storage\\StorageFlysystemFactory\:\:r2Client\(\) has parameter \$credentials with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Storage/StorageFlysystemFactory.php
+
+		-
+			message: '#^Access to an undefined property Laravel\\Socialite\\Contracts\\User\:\:\$expiresIn\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Storage/StorageOAuthService.php
+
+		-
+			message: '#^Access to an undefined property Laravel\\Socialite\\Contracts\\User\:\:\$refreshToken\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Storage/StorageOAuthService.php
+
+		-
+			message: '#^Access to an undefined property Laravel\\Socialite\\Contracts\\User\:\:\$token\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Storage/StorageOAuthService.php
+
+		-
+			message: '#^Method App\\Services\\Storage\\StorageSettingsService\:\:apps\(\) should return Illuminate\\Support\\Collection\<int, array\<string, mixed\>\> but returns Illuminate\\Support\\Collection\<int, array\{provider\: string, label\: string, client_id_hint\: string, redirect\: string\|null, accounts_count\: int\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/Storage/StorageSettingsService.php
+
+		-
+			message: '#^Method App\\Services\\Storage\\StorageSettingsService\:\:drivers\(\) should return Illuminate\\Support\\Collection\<int, array\<string, mixed\>\> but returns Illuminate\\Support\\Collection\<int, array\{value\: string, label\: string, requires_oauth\: bool, requires_app\: bool, requires_account\: bool\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/Storage/StorageSettingsService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: non\-empty\-array, Closure\(App\\Models\\TransferBatch\)\: non\-empty\-array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/Transfer/TransferProgressQueryService.php
+
+		-
+			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\TransferBatch\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/Transfer/TransferProgressQueryService.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Gallery\:\:\$raw_payload\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Support/Catalog/CollectionCatalogPresenter.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Photoset\:\:\$raw_payload\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Support/Catalog/CollectionCatalogPresenter.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$family\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Support/Flickr/ContactPresenter.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$friend\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Support/Flickr/ContactPresenter.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$nsid\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Support/Flickr/ContactPresenter.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$raw_payload\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Support/Flickr/ContactPresenter.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$realname\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Support/Flickr/ContactPresenter.php
+
+		-
+			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$username\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Support/Flickr/ContactPresenter.php
+
+		-
+			message: '#^Call to function is_object\(\) with object will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Support/FlickrPhotoUrlHelper.php
+
+		-
+			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Support/Storage/StorageAccountPresenter.php

@@ -19,21 +19,46 @@ final class CatalogController
 
     public function photos(ListPhotosRequest $request): JsonResponse
     {
-        return $this->catalog->photosResponse($request);
+        return response()->json($this->catalog->photos(
+            $request->ownerNsid(),
+            $request->sort(),
+            $request->direction(),
+            $request->perPage(),
+            $request->page(),
+        ));
     }
 
     public function photosets(ListPhotosetsRequest $request): JsonResponse
     {
-        return $this->catalog->photosetsResponse($request);
+        return response()->json($this->catalog->photosets(
+            $request->ownerNsid(),
+            $request->sort(),
+            $request->direction(),
+            $request->perPage(),
+            $request->page(),
+        ));
     }
 
     public function galleries(ListGalleriesRequest $request): JsonResponse
     {
-        return $this->catalog->galleriesResponse($request);
+        return response()->json($this->catalog->galleries(
+            $request->ownerNsid(),
+            $request->sort(),
+            $request->direction(),
+            $request->perPage(),
+            $request->page(),
+        ));
     }
 
     public function favorites(ListFavoritesRequest $request): JsonResponse
     {
-        return $this->catalog->favoritesResponse($request);
+        return response()->json($this->catalog->favorites(
+            $request->connectionKey(),
+            $request->subjectNsid(),
+            $request->sort(),
+            $request->direction(),
+            $request->perPage(),
+            $request->page(),
+        ));
     }
 }

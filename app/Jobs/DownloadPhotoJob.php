@@ -6,6 +6,7 @@ namespace App\Jobs;
 
 use App\Enums\PhotoTransferExecutionOutcome;
 use App\Services\Flickr\PhotoDownloadExecutionService;
+use DateTime;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -20,7 +21,9 @@ final class DownloadPhotoJob implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public int $tries = 3;
+    public int $tries = 100;
+
+    public int $maxExceptions = 3;
 
     public int $backoff = 30;
 
@@ -33,6 +36,11 @@ final class DownloadPhotoJob implements ShouldQueue
         $this->onQueue('xflickr-downloads');
     }
 
+    public function retryUntil(): DateTime
+    {
+        return now()->addHours(6)->toDateTime();
+    }
+
     public function handle(PhotoDownloadExecutionService $service): void
     {
         $outcome = $service->execute(
@@ -41,7 +49,7 @@ final class DownloadPhotoJob implements ShouldQueue
             $this->connectionKey,
             $this->batchId,
             $this->attempts(),
-            $this->tries,
+            $this->maxExceptions,
         );
 
         if ($outcome === PhotoTransferExecutionOutcome::Deferred) {

@@ -8,7 +8,6 @@ use App\Models\StoredFile;
 use App\Models\TransferBatch;
 use App\Services\Flickr\ContactDownloadCountsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Storage;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;
 
@@ -17,21 +16,16 @@ final class ContactDownloadCountsServiceTest extends TestCase
     use CreatesFlickrConnection;
     use RefreshDatabase;
 
-    public function test_it_counts_downloaded_files_and_verifies_local_disk(): void
+    public function test_it_counts_downloaded_files_from_status_without_local_disk_check(): void
     {
-        Storage::fake('local');
-
         $connection = $this->createFlickrConnection(['connection_key' => 'me@N01']);
-
-        $presentPath = 'flickr/friend@N01/photos/photo-1_secret.jpg';
-        Storage::put($presentPath, 'bytes');
 
         StoredFile::query()->create([
             'flickr_photo_id' => 'photo-1',
             'owner_nsid' => 'friend@N01',
             'variant' => 'original',
             'status' => 'completed',
-            'local_path' => $presentPath,
+            'local_path' => 'flickr/friend@N01/photos/photo-1_secret.jpg',
             'original_name' => 'photo-1.jpg',
         ]);
 
@@ -55,7 +49,7 @@ final class ContactDownloadCountsServiceTest extends TestCase
         $counts = app(ContactDownloadCountsService::class)->forContacts($connection, ['friend@N01']);
 
         $this->assertSame(2, $counts['friend@N01']['total']);
-        $this->assertSame(2, $counts['friend@N01']['failed']);
+        $this->assertSame(1, $counts['friend@N01']['failed']);
         $this->assertFalse($counts['friend@N01']['processing']);
     }
 

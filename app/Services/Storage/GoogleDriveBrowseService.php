@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Storage;
 
+use App\Models\StorageAccount;
 use Google\Service\Drive;
 use Google\Service\Drive\DriveFile;
 
@@ -18,6 +19,7 @@ final class GoogleDriveBrowseService
      */
     public function browse(
         array $credentials,
+        StorageAccount $account,
         int $perPage = 25,
         ?string $albumPageToken = null,
         ?string $itemPageToken = null,
@@ -25,7 +27,7 @@ final class GoogleDriveBrowseService
         bool $includeAlbums = true,
         bool $includeItems = true,
     ): StorageBrowseResult {
-        $client = $this->tokens->client($credentials);
+        $client = $this->tokens->clientForAccount($credentials, $account);
         $service = new Drive($client);
 
         $parentQuery = $folderId !== null && $folderId !== ''

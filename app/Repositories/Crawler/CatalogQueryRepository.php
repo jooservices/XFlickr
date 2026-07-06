@@ -7,6 +7,7 @@ namespace App\Repositories\Crawler;
 use App\Support\Query\QuerySorter;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use JOOservices\XFlickrCrawler\Models\ConnectionContact;
 use JOOservices\XFlickrCrawler\Models\Favorite;
 use JOOservices\XFlickrCrawler\Models\Gallery;
 use JOOservices\XFlickrCrawler\Models\Photo;
@@ -87,6 +88,34 @@ final class CatalogQueryRepository
         $query = $this->sorter->apply($query, $sort, $direction, self::FAVORITE_SORTS);
 
         return $query->paginate($perPage, ['*'], 'page', $page);
+    }
+
+    /**
+     * @param  list<string>  $ownerNsids
+     * @return array<string, int>
+     */
+    public function countPhotosetsForConnection(string $connectionKey): int
+    {
+        return Photoset::query()
+            ->whereIn(
+                'owner_nsid',
+                ConnectionContact::query()
+                    ->where('connection_key', $connectionKey)
+                    ->select('contact_nsid'),
+            )
+            ->count();
+    }
+
+    public function countGalleriesForConnection(string $connectionKey): int
+    {
+        return Gallery::query()
+            ->whereIn(
+                'owner_nsid',
+                ConnectionContact::query()
+                    ->where('connection_key', $connectionKey)
+                    ->select('contact_nsid'),
+            )
+            ->count();
     }
 
     /**

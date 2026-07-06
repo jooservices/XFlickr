@@ -14,7 +14,6 @@ import type { Contact, ContactCatalogStats, ContactCrawlState, FlickrAccount, Pa
 interface Props extends PageProps {
     account: FlickrAccount;
     contact: Contact;
-    contact_detail: Contact;
     catalog_stats: ContactCatalogStats;
     crawl_state: ContactCrawlState;
 }
@@ -49,7 +48,7 @@ function detailRows(contact: Contact): Array<{ label: string; value: string }> {
     return rows;
 }
 
-export default function ContactsShow({ account, contact, catalog_stats }: Props) {
+export default function ContactsShow({ account, contact, catalog_stats, crawl_state }: Props) {
     const displayName = contact.realname || contact.username || contact.nsid;
 
     return (
@@ -78,6 +77,7 @@ export default function ContactsShow({ account, contact, catalog_stats }: Props)
                                 scope="contact"
                                 accountPublicId={account.public_id}
                                 contactNsid={contact.nsid}
+                                typeStates={crawl_state}
                                 size="md"
                             />
                         </ActionBar>

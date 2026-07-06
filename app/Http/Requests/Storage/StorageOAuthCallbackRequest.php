@@ -4,20 +4,38 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Storage;
 
+use App\Enums\StorageDriver;
 use App\Http\Requests\Request;
+use Illuminate\Validation\Rule;
 
 final class StorageOAuthCallbackRequest extends Request
 {
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'provider' => $this->route('provider'),
+        ]);
+    }
+
     /**
      * @return array<string, mixed>
      */
     public function rules(): array
     {
         return [
+            'provider' => ['required', 'string', Rule::in(array_map(
+                static fn (StorageDriver $driver): string => $driver->value,
+                StorageDriver::cases(),
+            ))],
             'error' => ['sometimes', 'nullable', 'string'],
             'code' => ['required_without:error', 'nullable', 'string'],
             'state' => ['sometimes', 'nullable', 'string'],
         ];
+    }
+
+    public function provider(): string
+    {
+        return (string) $this->validated('provider');
     }
 
     public function hasOAuthError(): bool

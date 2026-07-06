@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Storage;
 
+use App\Models\StorageAccount;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -20,6 +21,7 @@ final class GooglePhotosBrowseService
      */
     public function browse(
         array $credentials,
+        StorageAccount $account,
         int $perPage = 25,
         ?string $albumPageToken = null,
         ?string $itemPageToken = null,
@@ -28,7 +30,7 @@ final class GooglePhotosBrowseService
         bool $includeAlbums = true,
         bool $includeItems = true,
     ): StorageBrowseResult {
-        $accessToken = $this->tokens->accessToken($credentials);
+        $accessToken = $this->tokens->accessToken($credentials, $account);
 
         $albums = ['albums' => [], 'nextPageToken' => null];
         if ($includeAlbums && $albumId === null) {

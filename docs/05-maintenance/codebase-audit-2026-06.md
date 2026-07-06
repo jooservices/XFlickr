@@ -35,10 +35,10 @@ Evaluate the current state of the XFlickr Laravel + Inertia/React application ag
 |---|-------|----------|--------|
 | [1](#issue-1-no-formrequest-layer--validation-lives-inside-controllers) | No `FormRequest` layer — validation lives inside controllers | High | **Resolved** |
 | [2](#issue-2-no-repository-layer-services-and-controllers-query-eloquent-directly) | No Repository layer — Services and Controllers query Eloquent directly | High | **Resolved** |
-| [3](#issue-3-business-and-query-logic-embedded-directly-in-controllers) | Business and query logic embedded directly in controllers | High | |
-| [4](#issue-4-jobs-contain-business-logic-instead-of-delegating-to-a-service) | Jobs contain business logic instead of delegating to a Service | High | |
-| [5](#issue-5-inconsistent-flow-for-equivalent-operations--duplicated-logic-between-job-and-service) | Inconsistent flow for equivalent operations + duplicated logic between Job and Service | Medium | |
-| [6](#issue-6-eloquent-model-reaches-into-the-service-layer) | Eloquent Model reaches into the Service layer | Medium | |
+| [3](#issue-3-business-and-query-logic-embedded-directly-in-controllers) | Business and query logic embedded directly in controllers | High | **Resolved** |
+| [4](#issue-4-jobs-contain-business-logic-instead-of-delegating-to-a-service) | Jobs contain business logic instead of delegating to a Service | High | **Resolved** |
+| [5](#issue-5-inconsistent-flow-for-equivalent-operations--duplicated-logic-between-job-and-service) | Inconsistent flow for equivalent operations + duplicated logic between Job and Service | Medium | **Resolved** |
+| [6](#issue-6-eloquent-model-reaches-into-the-service-layer) | Eloquent Model reaches into the Service layer | Medium | **Resolved** |
 | [7](#issue-7-no-static-analysis-tooling-for-be-type--architecture-safety) | No static analysis tooling for BE type/architecture safety | Low | **Resolved** |
 | [8](#issue-8-no-centralized-api-client-on-the-frontend) | No centralized API client on the frontend | High | **Resolved** |
 | [9](#issue-9-duplicated-filter-state-logic-across-catalog-pages) | Duplicated filter-state logic across Catalog pages | Medium | **Resolved** |
@@ -132,7 +132,7 @@ This is both an SRP violation (the controller now owns query semantics, which is
 
 ### Issue #7: No static analysis tooling for BE type/architecture safety
 
-**Status: Resolved (2026-06-23).** Added PHPStan/Larastan (level 1 + baseline), Deptrac (`Model` layer isolation), `composer lint` scripts, and CI enforcement via `.github/workflows/ci.yml`.
+**Status: Resolved (2026-06-23, CI wired 2026-07-06).** Added PHPStan/Larastan (level 1 + baseline), Deptrac (`Model` layer isolation), `composer lint` scripts, and CI enforcement via `.github/workflows/ci.yml`.
 
 **Breaks rule:** Not a SOLID/DRY violation per se, but undermines the audit's "extendable easily, strictly follow SOLID" expectation by having no automated guardrail.
 
@@ -191,7 +191,7 @@ This is both an SRP violation (the controller now owns query semantics, which is
 
 ### Issue #11: No ESLint configuration — inconsistent frontend code discipline
 
-**Status: Resolved (2026-06-23).** Added `eslint.config.js` (flat config), `npm run lint` / `lint:fix` / `check`, and CI frontend-lint job.
+**Status: Resolved (2026-06-23, CI wired 2026-07-06).** Added `eslint.config.js` (flat config), `npm run lint` / `lint:fix` / `check`, and ESLint in `.github/workflows/ci.yml`.
 
 **Breaks rule:** Not a principle violation directly, but it is the root cause enabling Issues #9/#10 to go unnoticed, and a React-standard project is expected to have lint enforcement.
 

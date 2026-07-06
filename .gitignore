@@ -33,9 +33,12 @@ Thumbs.db
 
 # --- GitHub / CI artifacts ---
 /coverage
+/coverage.xml
 /.nyc_output
 
 # --- AI / agent ephemeral (never commit) ---
+/plan.md
+/audit*.md
 /ai/plans/*.md
 !/ai/plans/.gitkeep
 .cursor/plans/

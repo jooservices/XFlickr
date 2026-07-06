@@ -1,7 +1,8 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Activity, Camera, Images, Layers, Settings, Workflow } from 'lucide-react';
+import { Activity, Camera, Images, Layers, LayoutGrid, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
+import ApiUsageChart from '@/Components/ApiUsageChart';
 import Breadcrumbs from '@/Components/Breadcrumbs';
 import Card from '@/Components/Card';
 import PageHeading from '@/Components/PageHeading';
@@ -10,6 +11,7 @@ import StatCard from '@/Components/StatCard';
 import AppLayout from '@/Layouts/AppLayout';
 import { apiGet } from '@/lib/apiClient';
 import { flickrAccountPath } from '@/lib/flickrAccount';
+import { resolveDefaultFlickrQuotaNsid } from '@/lib/flickrQuotaAccount';
 import type { DashboardSnapshot, FlickrAccount, PageProps } from '@/types';
 
 interface Props extends PageProps {
@@ -27,7 +29,6 @@ function formatNumber(value: number): string {
 export default function Dashboard() {
     const { snapshot: initialSnapshot } = usePage<Props>().props;
     const [snapshot, setSnapshot] = useState(initialSnapshot);
-    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         setSnapshot(initialSnapshot);
@@ -37,11 +38,9 @@ export default function Dashboard() {
         const controller = new AbortController();
 
         const poll = () => {
-            setLoading(true);
             void apiGet<{ data: DashboardSnapshot }>('/api/dashboard/snapshot', { signal: controller.signal })
                 .then((json) => setSnapshot(json.data))
-                .catch(() => undefined)
-                .finally(() => setLoading(false));
+                .catch(() => undefined);
         };
 
         poll();
@@ -56,6 +55,44 @@ export default function Dashboard() {
     const rows = snapshot.accounts;
     const global = snapshot.global;
     const anyCooldown = snapshot.alerts.any_cooldown;
+    const accountList = useMemo(() => rows.map((row) => row.account), [rows]);
+
+    const [selectedNsid, setSelectedNsid] = useState<string | null>(() =>
+        resolveDefaultFlickrQuotaNsid(accountList),
+    );
+
+    useEffect(() => {
+        setSelectedNsid((current) => {
+            if (current && accountList.some((account) => account.nsid === current)) {
+                return current;
+            }
+
+            return resolveDefaultFlickrQuotaNsid(accountList);
+        });
+    }, [accountList]);
+
+    const selectedAccountRow = useMemo(
+        () => rows.find((row) => row.account.nsid === selectedNsid) ?? null,
+        [rows, selectedNsid],
+    );
+
+    const contactsCount = selectedAccountRow?.contacts_db ?? 0;
+    const photosCount = selectedAccountRow?.photos_db ?? 0;
+    const photosWithSizesCount = selectedAccountRow?.photos_with_sizes ?? 0;
+    const photosetsCount = selectedAccountRow?.photosets_db ?? 0;
+    const galleriesCount = selectedAccountRow?.galleries_db ?? 0;
+
+    const catalogAccountHint = useMemo(() => {
+        if (accountList.length === 0) {
+            return 'No account connected';
+        }
+
+        if (accountList.length > 1 && selectedAccountRow) {
+            return accountLabel(selectedAccountRow.account);
+        }
+
+        return 'Linked to this account';
+    }, [accountList.length, selectedAccountRow]);
 
     const hasAlerts = useMemo(
         () => anyCooldown || global.failed_transfers_24h > 0,
@@ -73,65 +110,58 @@ export default function Dashboard() {
                     subtitle="Monitor crawl progress, catalog growth, and transfer health."
                 />
 
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="text-xs text-slate-500">
-                        {loading ? (
-                            'Refreshing…'
-                        ) : (
-                            <>
-                                Updated <span className="font-medium">{new Date(snapshot.generated_at).toLocaleTimeString()}</span>
-                            </>
-                        )}
+                <div className="space-y-4">
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <StatCard label="Accounts" value={formatNumber(global.accounts)} icon={<Camera className="h-4 w-4" />} tone="slate" />
+                        <StatCard
+                            label="Active crawls"
+                            value={formatNumber(global.runs_running)}
+                            hint={`${formatNumber(global.pending_targets)} pending target(s)`}
+                            icon={<Activity className="h-4 w-4" />}
+                            tone={global.runs_running > 0 ? 'cyan' : 'slate'}
+                        />
+                        <StatCard
+                            label="Transfers"
+                            value={`${formatNumber(global.downloads_active + global.uploads_active)} active`}
+                            hint={`${formatNumber(global.failed_transfers_24h)} failed in 24h`}
+                            icon={<Layers className="h-4 w-4" />}
+                            tone={global.failed_transfers_24h > 0 ? 'rose' : 'slate'}
+                        />
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                        <Link
-                            href="/flickr/accounts"
-                            className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-                        >
-                            <Camera className="h-4 w-4" />
-                            Flickr Accounts
-                        </Link>
-                        <Link
-                            href="/crawl/operations"
-                            className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-                        >
-                            <Workflow className="h-4 w-4" />
-                            Operations
-                        </Link>
-                        <Link
-                            href="/settings"
-                            className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-                        >
-                            <Settings className="h-4 w-4" />
-                            Settings
-                        </Link>
+
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <StatCard
+                            label="Contacts"
+                            value={formatNumber(contactsCount)}
+                            hint={catalogAccountHint}
+                            icon={<Users className="h-4 w-4" />}
+                            tone="emerald"
+                        />
+                        <StatCard
+                            label="Photos"
+                            value={formatNumber(photosCount)}
+                            hint={`${formatNumber(photosWithSizesCount)} with sizes`}
+                            icon={<Images className="h-4 w-4" />}
+                            tone="violet"
+                        />
+                        <StatCard
+                            label="Photosets"
+                            value={formatNumber(photosetsCount)}
+                            hint={catalogAccountHint}
+                            icon={<Layers className="h-4 w-4" />}
+                            tone="cyan"
+                        />
+                        <StatCard
+                            label="Galleries"
+                            value={formatNumber(galleriesCount)}
+                            hint={catalogAccountHint}
+                            icon={<LayoutGrid className="h-4 w-4" />}
+                            tone="amber"
+                        />
                     </div>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <StatCard label="Accounts" value={formatNumber(global.accounts)} icon={<Camera className="h-4 w-4" />} tone="slate" />
-                    <StatCard
-                        label="Active crawls"
-                        value={formatNumber(global.runs_running)}
-                        hint={`${formatNumber(global.pending_targets)} pending target(s)`}
-                        icon={<Activity className="h-4 w-4" />}
-                        tone={global.runs_running > 0 ? 'cyan' : 'slate'}
-                    />
-                    <StatCard
-                        label="Photos (DB)"
-                        value={formatNumber(global.photos_db)}
-                        hint={`${formatNumber(global.photos_with_sizes)} with sizes`}
-                        icon={<Images className="h-4 w-4" />}
-                        tone="violet"
-                    />
-                    <StatCard
-                        label="Transfers"
-                        value={`${formatNumber(global.downloads_active + global.uploads_active)} active`}
-                        hint={`${formatNumber(global.failed_transfers_24h)} failed in 24h`}
-                        icon={<Layers className="h-4 w-4" />}
-                        tone={global.failed_transfers_24h > 0 ? 'rose' : 'slate'}
-                    />
-                </div>
+                <ApiUsageChart accounts={rows.map((row) => row.account)} />
 
                 {hasAlerts ? (
                     <Card title="Alerts" subtitle="Items that may need attention." showFooter={false}>

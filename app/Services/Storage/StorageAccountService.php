@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Storage;
 
+use App\Events\StorageAccountConnected;
+use App\Events\StorageAccountDisconnected;
 use App\Models\StorageAccount;
 use App\Repositories\StorageAccountRepository;
 
@@ -37,7 +39,15 @@ final class StorageAccountService
                 $account->update(['is_default' => true]);
             }
 
-            return $account->fresh() ?? $account;
+            $account = $account->fresh() ?? $account;
+
+            event(new StorageAccountConnected(
+                accountId: $account->id,
+                provider: $provider,
+                label: $account->label,
+            ));
+
+            return $account;
         });
     }
 
@@ -73,6 +83,13 @@ final class StorageAccountService
     {
         $wasDefault = $account->is_default;
         $provider = $account->provider;
+        $accountId = $account->id;
+
+        event(new StorageAccountDisconnected(
+            accountId: $accountId,
+            provider: $provider,
+        ));
+
         $account->delete();
 
         if ($wasDefault) {
@@ -147,7 +164,15 @@ final class StorageAccountService
                 $account->update(['is_default' => true]);
             }
 
-            return $account->fresh() ?? $account;
+            $account = $account->fresh() ?? $account;
+
+            event(new StorageAccountConnected(
+                accountId: $account->id,
+                provider: $provider,
+                label: $account->label,
+            ));
+
+            return $account;
         });
     }
 }

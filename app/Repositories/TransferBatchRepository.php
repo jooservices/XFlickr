@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Enums\TransferBatchStatus;
 use App\Models\TransferBatch;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -38,7 +39,7 @@ final class TransferBatchRepository extends EloquentRepository
             'group_type' => $groupMeta['group_type'],
             'group_id' => $groupMeta['group_id'],
             'group_label' => $groupMeta['group_label'],
-            'status' => 'running',
+            'status' => TransferBatchStatus::Running->value,
             'total_count' => $totalCount,
         ]);
     }
@@ -54,7 +55,7 @@ final class TransferBatchRepository extends EloquentRepository
             'connection_key' => $connection->connection_key,
             'subject_nsid' => $subjectNsid,
             'storage_account_id' => $storageAccountId,
-            'status' => 'running',
+            'status' => TransferBatchStatus::Running->value,
             'total_count' => $totalCount,
         ]);
     }
@@ -62,6 +63,11 @@ final class TransferBatchRepository extends EloquentRepository
     public function findById(int $id): ?TransferBatch
     {
         return $this->newQuery()->find($id);
+    }
+
+    public function lockById(int $id): ?TransferBatch
+    {
+        return $this->newQuery()->lockForUpdate()->find($id);
     }
 
     public function connectionKeyForId(int $id): ?string
@@ -84,7 +90,7 @@ final class TransferBatchRepository extends EloquentRepository
         return $this->newQuery()
             ->where('connection_key', $connectionKey)
             ->where('type', $type)
-            ->where('status', 'running')
+            ->where('status', TransferBatchStatus::Running->value)
             ->count();
     }
 
@@ -101,7 +107,7 @@ final class TransferBatchRepository extends EloquentRepository
         return $this->newQuery()
             ->where('connection_key', $connectionKey)
             ->where('type', 'download')
-            ->where('status', 'running')
+            ->where('status', TransferBatchStatus::Running->value)
             ->whereIn('subject_nsid', $subjectNsids)
             ->get(['subject_nsid', 'completed_count', 'total_count']);
     }
@@ -114,12 +120,12 @@ final class TransferBatchRepository extends EloquentRepository
         return $this->newQuery()->where('connection_key', $connectionKey);
     }
 
-    public function updateCounts(TransferBatch $batch, int $completed, int $failed, string $status): void
+    public function updateCounts(TransferBatch $batch, int $completed, int $failed, TransferBatchStatus $status): void
     {
         $batch->update([
             'completed_count' => $completed,
             'failed_count' => $failed,
-            'status' => $status,
+            'status' => $status->value,
         ]);
     }
 }

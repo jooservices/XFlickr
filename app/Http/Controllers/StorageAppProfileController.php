@@ -6,15 +6,20 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Settings\StoreStorageAppProfileRequest;
 use App\Services\Storage\StorageAppProfileService;
+use App\Support\Observability\AdminActionLogger;
 use Illuminate\Http\RedirectResponse;
 
 final class StorageAppProfileController
 {
-    public function store(StoreStorageAppProfileRequest $request, StorageAppProfileService $profiles): RedirectResponse
+    public function store(StoreStorageAppProfileRequest $request, StorageAppProfileService $profiles, AdminActionLogger $audit): RedirectResponse
     {
         $validated = $request->validated();
 
         $profiles->save($validated);
+
+        $audit->record('settings.storage_app.saved', [
+            'provider' => $validated['provider'] ?? null,
+        ]);
 
         return redirect()
             ->route('settings.index', ['tab' => 'storage'])

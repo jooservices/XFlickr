@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\Flickr;
 
+use App\Enums\StoredFileStatus;
 use App\Repositories\StoredFileRepository;
 use App\Repositories\TransferBatchRepository;
-use Illuminate\Support\Facades\Storage;
 use JOOservices\XFlickrCrawler\Models\Connection;
 
 final class ContactDownloadCountsService
@@ -53,21 +53,17 @@ final class ContactDownloadCountsService
             $downloaded = 0;
 
             foreach ($files as $file) {
-                if ($file->status === 'failed') {
+                if ($file->status === StoredFileStatus::Failed->value) {
                     $failed++;
 
                     continue;
                 }
 
-                if ($file->status !== 'completed') {
+                if ($file->status !== StoredFileStatus::Completed->value) {
                     continue;
                 }
 
                 $downloaded++;
-
-                if ($file->local_path === null || ! Storage::exists($file->local_path)) {
-                    $failed++;
-                }
             }
 
             $counts[$ownerNsid]['total'] = $downloaded;

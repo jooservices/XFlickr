@@ -27,16 +27,17 @@
         "globals": "^17.7.0",
         "laravel-vite-plugin": "^3.0.0",
         "tailwindcss": "^4.0.0",
-        "typescript": "^5.8.3",
+        "typescript": "^6.0.3",
         "typescript-eslint": "^8.48.0",
         "vite": "^8.1.0"
     },
     "dependencies": {
-        "@inertiajs/react": "^2.0.0",
+        "@inertiajs/react": "^3.4.0",
         "clsx": "^2.1.1",
         "lucide-react": "^1.21.0",
         "react": "^19.2.7",
         "react-dom": "^19.2.7",
+        "recharts": "^3.9.0",
         "tailwind-merge": "^3.6.0"
     }
 }

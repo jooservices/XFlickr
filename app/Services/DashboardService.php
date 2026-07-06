@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Repositories\Crawler\CatalogQueryRepository;
+use App\Repositories\Crawler\ContactQueryRepository;
 use App\Repositories\Crawler\CrawlRunQueryRepository;
 use App\Repositories\Crawler\CrawlTargetQueryRepository;
 use App\Repositories\Crawler\PhotoQueryRepository;
@@ -18,6 +20,8 @@ use JOOservices\XFlickrCrawler\Facades\FlickrService;
 final class DashboardService
 {
     public function __construct(
+        private readonly CatalogQueryRepository $catalog,
+        private readonly ContactQueryRepository $contacts,
         private readonly CrawlRunQueryRepository $crawlRuns,
         private readonly CrawlTargetQueryRepository $crawlTargets,
         private readonly PhotoQueryRepository $photos,
@@ -44,8 +48,6 @@ final class DashboardService
                 'accounts' => count($accounts),
                 'runs_running' => $this->crawlRuns->countByConnectionsAndStatus($connectionKeys, 'running'),
                 'pending_targets' => $this->crawlTargets->countPendingForConnections($connectionKeys),
-                'photos_db' => $this->photos->countAll(),
-                'photos_with_sizes' => $this->photos->countWithSizes(),
                 'stored_files' => $this->storedFiles->countAll(),
                 'downloads_active' => $this->batches->countByTypeAndStatus('download', 'running'),
                 'uploads_active' => $this->batches->countByTypeAndStatus('upload', 'running'),
@@ -63,6 +65,11 @@ final class DashboardService
                     'rate_limit' => $rateLimit->present($key),
                     'runs' => $this->crawlRuns->statusCountsForConnection($key),
                     'pending_targets' => $this->crawlTargets->countPendingForConnection($key),
+                    'contacts_db' => $this->contacts->countForConnection($key),
+                    'photos_db' => $this->photos->countForConnection($key),
+                    'photos_with_sizes' => $this->photos->countWithSizesForConnection($key),
+                    'photosets_db' => $this->catalog->countPhotosetsForConnection($key),
+                    'galleries_db' => $this->catalog->countGalleriesForConnection($key),
                     'latest_run' => $latestRun === null ? null : [
                         'id' => $latestRun->id,
                         'crawl_type' => $latestRun->crawl_type,

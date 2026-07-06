@@ -7,7 +7,8 @@ XFlickr respects Flickr API quotas through `jooservices/xflickr-crawler`.
 - Each connected account has a rate-limit budget tracked in Redis.
 - Crawl fetchers check remaining quota before calling Flickr API.
 - When quota is exhausted, the account enters a **cooldown** period.
-- Dashboard shows quota meters and cooldown alerts per account.
+- Dashboard shows quota meters, an hourly API usage chart (last 24 hours with quota reference line), and cooldown alerts per account.
+- The top navbar shows a live Flickr API quota meter (account picker when multiple accounts are connected), refreshed every 5 seconds.
 
 ## User impact
 

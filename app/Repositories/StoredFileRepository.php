@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Enums\StoredFileStatus;
 use App\Models\StoredFile;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -26,7 +27,7 @@ final class StoredFileRepository extends EloquentRepository
         return $this->newQuery()
             ->where('flickr_photo_id', $flickrPhotoId)
             ->where('variant', 'original')
-            ->where('status', 'completed')
+            ->where('status', StoredFileStatus::Completed->value)
             ->exists();
     }
 
@@ -47,15 +48,15 @@ final class StoredFileRepository extends EloquentRepository
             ],
             [
                 'owner_nsid' => $ownerNsid,
-                'status' => 'pending',
-                'original_name' => "{$flickrPhotoId}_original.jpg",
+                'status' => StoredFileStatus::Pending->value,
+                'original_name' => "{$flickrPhotoId}_original",
             ],
         );
     }
 
     public function markDownloading(string $flickrPhotoId): void
     {
-        $this->findOriginalByFlickrPhotoId($flickrPhotoId)?->update(['status' => 'downloading']);
+        $this->findOriginalByFlickrPhotoId($flickrPhotoId)?->update(['status' => StoredFileStatus::Downloading->value]);
     }
 
     /**
@@ -66,7 +67,7 @@ final class StoredFileRepository extends EloquentRepository
         $this->newQuery()
             ->where('flickr_photo_id', $flickrPhotoId)
             ->where('variant', 'original')
-            ->update(array_merge(['status' => 'completed'], $attributes));
+            ->update(array_merge(['status' => StoredFileStatus::Completed->value], $attributes));
     }
 
     public function markPending(string $flickrPhotoId, ?string $errorMessage = null): void
@@ -75,7 +76,7 @@ final class StoredFileRepository extends EloquentRepository
             ->where('flickr_photo_id', $flickrPhotoId)
             ->where('variant', 'original')
             ->update([
-                'status' => 'pending',
+                'status' => StoredFileStatus::Pending->value,
                 'error_message' => $errorMessage,
             ]);
     }
@@ -86,7 +87,7 @@ final class StoredFileRepository extends EloquentRepository
             ->where('flickr_photo_id', $flickrPhotoId)
             ->where('variant', 'original')
             ->update([
-                'status' => 'failed',
+                'status' => StoredFileStatus::Failed->value,
                 'error_message' => $errorMessage,
             ]);
     }
@@ -119,7 +120,7 @@ final class StoredFileRepository extends EloquentRepository
     {
         return $this->newQuery()
             ->where('variant', 'original')
-            ->where('status', 'completed')
+            ->where('status', StoredFileStatus::Completed->value)
             ->selectRaw('owner_nsid as contact_nsid, count(*) as aggregate')
             ->groupBy('owner_nsid');
     }

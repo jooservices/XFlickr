@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Storage;
 
+use App\Models\StorageAccount;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -21,14 +22,14 @@ final class GooglePhotosUploadService
      * @param  array<string, mixed>  $credentials
      * @return array{id: string, path: string, etag: null, name: string, mime_type: string, thumbnail_url: string|null, modified_at: string}
      */
-    public function uploadFile(array $credentials, string $localPath, string $remotePath): array
+    public function uploadFile(StorageAccount $account, array $credentials, string $localPath, string $remotePath): array
     {
         $contents = file_get_contents($localPath);
         if ($contents === false) {
             throw new RuntimeException("Unable to read local file [{$localPath}].");
         }
 
-        $accessToken = $this->tokens->accessToken($credentials);
+        $accessToken = $this->tokens->accessToken($credentials, $account);
         $filename = basename($remotePath) !== '' ? basename($remotePath) : basename($localPath);
 
         $uploadResponse = Http::withToken($accessToken)

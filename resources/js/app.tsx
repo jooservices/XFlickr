@@ -12,7 +12,8 @@ createInertiaApp({
         resolvePageComponent(
             `./Pages/${name}.tsx`,
             import.meta.glob('./Pages/**/*.tsx'),
-        ),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ) as any,
     setup({ el, App, props }) {
         createRoot(el).render(<App {...props} />);
     },

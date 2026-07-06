@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Contracts\StorageDownloadStreamer;
 use App\Enums\StorageDriver;
 use App\Http\Requests\Api\Storage\BrowseStorageRequest;
 use App\Http\Requests\Api\Storage\DeleteStorageItemsRequest;
@@ -18,9 +19,10 @@ use App\Services\Storage\StorageBrowseLocalService;
 use App\Services\Storage\StorageBrowseService;
 use App\Services\Storage\StorageBrowseSyncService;
 use App\Services\Storage\StorageDeleteService;
-use App\Services\Storage\StorageFlysystemFactory;
-use App\Support\Storage\StorageR2Config;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -42,7 +44,7 @@ final class StorageBrowseController
     ): JsonResponse {
         try {
             $driver = StorageDriver::fromRouteSlug($provider);
-        } catch (\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
             return response()->json(['message' => 'Invalid storage provider.'], 422);
         }
 
@@ -83,7 +85,7 @@ final class StorageBrowseController
     ): JsonResponse {
         try {
             $driver = StorageDriver::fromRouteSlug($provider);
-        } catch (\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
             return response()->json(['message' => 'Invalid storage provider.'], 422);
         }
 
@@ -114,7 +116,7 @@ final class StorageBrowseController
     ): JsonResponse {
         try {
             $driver = StorageDriver::fromRouteSlug($provider);
-        } catch (\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
             return response()->json(['message' => 'Invalid storage provider.'], 422);
         }
 
@@ -131,7 +133,7 @@ final class StorageBrowseController
                 $request->itemIds(),
                 $request->containerId(),
             );
-        } catch (\InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         } catch (Throwable $e) {
             return $this->browseErrorResponse($e, $scopes, $account);
@@ -147,7 +149,7 @@ final class StorageBrowseController
         try {
             return $thumbnails->stream($request->accountId(), $request->mediaId());
         } catch (Throwable $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            return $this->storageErrorResponse($e, null, 'Unable to load thumbnail.');
         }
     }
 
@@ -155,15 +157,12 @@ final class StorageBrowseController
         DownloadStorageFileRequest $request,
         string $provider,
         StorageAccountScopeService $scopes,
+        StorageDownloadStreamer $downloads,
     ): StreamedResponse|JsonResponse {
         try {
             $driver = StorageDriver::fromRouteSlug($provider);
-        } catch (\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
             return response()->json(['message' => 'Invalid storage provider.'], 422);
-        }
-
-        if ($driver !== StorageDriver::R2) {
-            return response()->json(['message' => 'Download is not supported for this provider yet.'], 422);
         }
 
         $account = $request->account($driver);
@@ -175,35 +174,25 @@ final class StorageBrowseController
         $remotePath = $request->path();
 
         try {
-            $credentials = $account->credentials ?? [];
-            $config = StorageR2Config::from($credentials);
-            $objectKey = $config->objectKey($remotePath);
-            $disk = app(StorageFlysystemFactory::class)->diskForAccount($account);
-
-            if (! $disk->exists($objectKey)) {
+            $stream = $downloads->openStreamForAccount($account, $remotePath);
+            if ($stream === null) {
                 return response()->json(['message' => 'Remote file not found.'], 404);
             }
 
-            $stream = $disk->readStream($objectKey);
-            if ($stream === false) {
-                return response()->json(['message' => 'Unable to read remote file.'], 422);
-            }
-
-            $filename = basename($remotePath);
-            $mimeType = $disk->mimeType($objectKey) ?: 'application/octet-stream';
-
             return response()->stream(function () use ($stream): void {
-                fpassthru($stream);
+                fpassthru($stream->stream);
 
-                if (is_resource($stream)) {
-                    fclose($stream);
+                if (is_resource($stream->stream)) {
+                    fclose($stream->stream);
                 }
             }, 200, [
-                'Content-Type' => $mimeType,
-                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+                'Content-Type' => $stream->mimeType,
+                'Content-Disposition' => $this->downloadDisposition($stream->filename),
             ]);
-        } catch (Throwable $e) {
+        } catch (InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
+        } catch (Throwable $e) {
+            return $this->storageErrorResponse($e, $account, 'Unable to download file.');
         }
     }
 
@@ -218,11 +207,27 @@ final class StorageBrowseController
 
     private function browseErrorResponse(Throwable $e, StorageAccountScopeService $scopes, StorageAccount $account): JsonResponse
     {
+        return $this->storageErrorResponse($e, $account, 'Unable to browse storage.', $scopes);
+    }
+
+    private function storageErrorResponse(
+        Throwable $e,
+        ?StorageAccount $account,
+        string $clientMessage,
+        ?StorageAccountScopeService $scopes = null,
+    ): JsonResponse {
+        Log::error('Storage API request failed.', [
+            'exception' => $e::class,
+            'message' => $e->getMessage(),
+            'account_id' => $account?->id,
+            'provider' => $account?->provider,
+        ]);
+
         $message = $e->getMessage();
         $needsReauth = str_contains(strtoupper($message), 'PERMISSION_DENIED')
             || str_contains(strtolower($message), 'insufficient');
 
-        if ($needsReauth) {
+        if ($needsReauth && $scopes !== null && $account !== null) {
             return response()->json([
                 'message' => 'This account is missing required permissions. Please reauthorize.',
                 'needs_reauthorization' => true,
@@ -230,6 +235,19 @@ final class StorageBrowseController
             ], 403);
         }
 
-        return response()->json(['message' => $message], 422);
+        return response()->json(['message' => $clientMessage], 422);
+    }
+
+    private function downloadDisposition(string $filename): string
+    {
+        $filename = str_replace(["\0", '/', '\\'], '_', $filename);
+        $fallback = preg_replace('/[^\x20-\x7e]|[%\/\\\\"]/', '_', $filename) ?: 'download';
+        $fallback = trim($fallback);
+
+        return HeaderUtils::makeDisposition(
+            HeaderUtils::DISPOSITION_ATTACHMENT,
+            $filename !== '' ? $filename : 'download',
+            $fallback !== '' ? $fallback : 'download',
+        );
     }
 }

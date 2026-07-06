@@ -30,7 +30,7 @@ final class StorageUploadService
         $credentials = $account->credentials ?? [];
 
         if ($driver === StorageDriver::GooglePhotos) {
-            $result = $this->googlePhotosUpload->uploadFile($credentials, $localPath, $remotePath);
+            $result = $this->googlePhotosUpload->uploadFile($account, $credentials, $localPath, $remotePath);
 
             $this->browseLocal->upsertItem($account, null, [
                 'id' => $result['id'],
@@ -47,7 +47,7 @@ final class StorageUploadService
             ];
         }
 
-        $disk = $this->diskFor($account, $credentials);
+        $disk = $this->diskFor($account);
         $objectKey = $this->objectKey($driver, $credentials, $remotePath);
 
         $stream = fopen($localPath, 'rb');
@@ -72,10 +72,7 @@ final class StorageUploadService
         ];
     }
 
-    /**
-     * @param  array<string, mixed>  $credentials
-     */
-    private function diskFor(StorageAccount $account, array $credentials): Filesystem
+    private function diskFor(StorageAccount $account): Filesystem
     {
         return $this->flysystem->diskForAccount($account);
     }

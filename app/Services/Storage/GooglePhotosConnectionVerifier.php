@@ -63,7 +63,7 @@ final class GooglePhotosConnectionVerifier
         }
 
         try {
-            $accessToken = $this->tokens->accessToken($credentials);
+            $accessToken = $this->tokens->accessToken($credentials, $account);
             $albumResult = $this->collectAlbums($accessToken, $maxPages);
             $mediaResult = $this->collectMediaItems($accessToken, $maxPages);
 

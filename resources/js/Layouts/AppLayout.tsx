@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import {
     Activity,
     Camera,
@@ -8,6 +8,7 @@ import {
     Images,
     LayoutDashboard,
     Layers,
+    LogOut,
     Menu,
     Server,
     Settings,
@@ -16,6 +17,7 @@ import {
 } from 'lucide-react';
 import { type PropsWithChildren, useState } from 'react';
 
+import NavbarRateLimit from '@/Components/NavbarRateLimit';
 import { cn } from '@/lib/cn';
 import type { PageProps } from '@/types';
 
@@ -127,9 +129,13 @@ const topNav = [
 
 export default function AppLayout({ children }: PropsWithChildren) {
     const { props, url } = usePage<PageProps>();
-    const { app, flash } = props;
+    const { app, auth, flash } = props;
     const globalPause = app.global_pause ?? false;
     const [mobileOpen, setMobileOpen] = useState(false);
+
+    function logout() {
+        router.post('/logout');
+    }
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -140,10 +146,10 @@ export default function AppLayout({ children }: PropsWithChildren) {
             ) : null}
 
             <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
-                <div className="flex h-14 items-center lg:divide-x lg:divide-slate-200">
+                <div className="flex min-h-14 items-center lg:divide-x lg:divide-slate-200">
                     <div
                         className={cn(
-                            'flex w-full items-center gap-3 px-4 lg:shrink-0 lg:px-6',
+                            'flex items-center gap-3 px-4 lg:shrink-0 lg:px-6',
                             SIDEBAR_WIDTH,
                         )}
                     >
@@ -162,8 +168,8 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         </Link>
                     </div>
 
-                    <div className="hidden flex-1 items-center px-4 md:flex lg:px-6">
-                        <nav className="flex items-center gap-1">
+                    <div className="flex min-w-0 flex-1 items-center justify-between gap-3 px-3 py-2 md:gap-4 md:px-4 lg:px-6">
+                        <nav className="hidden items-center gap-1 md:flex">
                             {topNav.map((item) => {
                                 const path = url.split('?')[0] ?? '';
                                 const active =
@@ -189,6 +195,23 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 );
                             })}
                         </nav>
+
+                        <NavbarRateLimit />
+
+                        {auth.user ? (
+                            <div className="flex shrink-0 items-center gap-2">
+                                <span className="hidden text-sm text-slate-600 sm:inline">{auth.user.email}</span>
+                                <button
+                                    type="button"
+                                    onClick={logout}
+                                    className="flex items-center gap-1 rounded-md px-2 py-2 text-sm text-slate-600 hover:bg-slate-100"
+                                    title="Sign out"
+                                >
+                                    <LogOut className="h-4 w-4" />
+                                    <span className="hidden sm:inline">Sign out</span>
+                                </button>
+                            </div>
+                        ) : null}
                     </div>
                 </div>
             </header>
@@ -211,7 +234,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
             <div className="lg:flex">
                 <aside
                     className={cn(
-                        'border-b border-slate-200 bg-white lg:border-b-0 lg:border-r',
+                        'border-b border-slate-200 bg-white lg:sticky lg:top-14 lg:max-h-[calc(100vh-3.5rem)] lg:overflow-y-auto lg:self-start lg:border-b-0 lg:border-r',
                         SIDEBAR_WIDTH,
                         mobileOpen ? 'block' : 'hidden lg:block',
                     )}
