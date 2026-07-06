@@ -98,6 +98,7 @@ php artisan config:clear --no-interaction
 # Only the web app container runs migrations (horizon/scheduler share DB but not /tmp locks).
 if [ "${1:-}" = "php" ] && [ "${2:-}" = "artisan" ] && [ "${3:-}" = "serve" ]; then
     php artisan migrate --force --no-interaction
+    php artisan db:seed --class=Database\\Seeders\\AdminUserSeeder --force --no-interaction
     php artisan config-store:ensure-index --no-interaction
     php artisan events:install-indexes --no-interaction
 fi

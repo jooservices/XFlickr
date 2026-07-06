@@ -20,6 +20,7 @@ use App\Services\Storage\StorageBrowseService;
 use App\Services\Storage\StorageBrowseSyncService;
 use App\Services\Storage\StorageDeleteService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -148,7 +149,7 @@ final class StorageBrowseController
         try {
             return $thumbnails->stream($request->accountId(), $request->mediaId());
         } catch (Throwable $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            return $this->storageErrorResponse($e, null, 'Unable to load thumbnail.');
         }
     }
 
@@ -191,7 +192,7 @@ final class StorageBrowseController
         } catch (InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         } catch (Throwable $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            return $this->storageErrorResponse($e, $account, 'Unable to download file.');
         }
     }
 
@@ -206,11 +207,27 @@ final class StorageBrowseController
 
     private function browseErrorResponse(Throwable $e, StorageAccountScopeService $scopes, StorageAccount $account): JsonResponse
     {
+        return $this->storageErrorResponse($e, $account, 'Unable to browse storage.', $scopes);
+    }
+
+    private function storageErrorResponse(
+        Throwable $e,
+        ?StorageAccount $account,
+        string $clientMessage,
+        ?StorageAccountScopeService $scopes = null,
+    ): JsonResponse {
+        Log::error('Storage API request failed.', [
+            'exception' => $e::class,
+            'message' => $e->getMessage(),
+            'account_id' => $account?->id,
+            'provider' => $account?->provider,
+        ]);
+
         $message = $e->getMessage();
         $needsReauth = str_contains(strtoupper($message), 'PERMISSION_DENIED')
             || str_contains(strtolower($message), 'insufficient');
 
-        if ($needsReauth) {
+        if ($needsReauth && $scopes !== null && $account !== null) {
             return response()->json([
                 'message' => 'This account is missing required permissions. Please reauthorize.',
                 'needs_reauthorization' => true,
@@ -218,7 +235,7 @@ final class StorageBrowseController
             ], 403);
         }
 
-        return response()->json(['message' => $message], 422);
+        return response()->json(['message' => $clientMessage], 422);
     }
 
     private function downloadDisposition(string $filename): string

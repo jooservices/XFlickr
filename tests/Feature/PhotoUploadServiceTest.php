@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Jobs\DownloadPhotoJob;
+use App\Jobs\FanOutTransferBatchJob;
 use App\Jobs\UploadPhotoJob;
 use App\Models\StorageAccount;
 use App\Models\StorageUpload;
@@ -56,7 +57,7 @@ final class PhotoUploadServiceTest extends TestCase
             'original_name' => 'p-contact-2_original.jpg',
         ]);
 
-        $queued = app(PhotoUploadService::class)->queueUploads($connection, $storageAccount, 'friend@N01');
+        $queued = app(PhotoUploadService::class)->fanOutUploads($connection, $storageAccount, 'friend@N01');
 
         $this->assertSame(2, $queued);
         $this->assertDatabaseHas('transfer_batches', [
@@ -112,7 +113,7 @@ final class PhotoUploadServiceTest extends TestCase
             'original_name' => 'p-pending_original.jpg',
         ]);
 
-        $queued = app(PhotoUploadService::class)->queueUploads($connection, $storageAccount, 'friend@N01');
+        $queued = app(PhotoUploadService::class)->fanOutUploads($connection, $storageAccount, 'friend@N01');
 
         $this->assertSame(1, $queued);
         $this->assertDatabaseHas('transfer_items', [
@@ -138,7 +139,7 @@ final class PhotoUploadServiceTest extends TestCase
             'title' => 'Needs download',
         ]);
 
-        $queued = app(PhotoUploadService::class)->queueUploads($connection, $storageAccount, 'friend@N01');
+        $queued = app(PhotoUploadService::class)->fanOutUploads($connection, $storageAccount, 'friend@N01');
 
         $this->assertSame(0, $queued);
         $this->assertDatabaseHas('transfer_batches', [
@@ -157,6 +158,25 @@ final class PhotoUploadServiceTest extends TestCase
         ]);
         Bus::assertDispatched(DownloadPhotoJob::class, 1);
         Bus::assertNotDispatched(UploadPhotoJob::class);
+    }
+
+    public function test_it_dispatches_fan_out_job_for_owner_uploads(): void
+    {
+        Bus::fake([FanOutTransferBatchJob::class]);
+
+        $connection = $this->createFlickrConnection(['connection_key' => 'me@N01']);
+        $storageAccount = $this->createStorageAccount();
+
+        Photo::query()->create([
+            'flickr_photo_id' => 'p-async-upload',
+            'owner_nsid' => 'friend@N01',
+            'title' => 'Async upload photo',
+        ]);
+
+        $queued = app(PhotoUploadService::class)->queueUploads($connection, $storageAccount, 'friend@N01');
+
+        $this->assertSame(1, $queued);
+        Bus::assertDispatched(FanOutTransferBatchJob::class);
     }
 
     public function test_it_returns_zero_when_no_pending_photos(): void

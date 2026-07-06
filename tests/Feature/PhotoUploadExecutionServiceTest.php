@@ -28,7 +28,7 @@ final class PhotoUploadExecutionServiceTest extends TestCase
     public function test_it_uploads_completed_local_file(): void
     {
         Storage::fake('local');
-        Storage::disk('local')->put('flickr/friend@N01/photos/photo-1_abc123.jpg', 'jpeg-bytes');
+        Storage::disk('local')->put('flickr/friend@N01/photos/photo-1_abc123.png', 'png-bytes');
 
         Http::fake([
             'photoslibrary.googleapis.com/v1/uploads' => Http::response('upload-token-123', 200),
@@ -36,7 +36,7 @@ final class PhotoUploadExecutionServiceTest extends TestCase
                 'newMediaItemResults' => [[
                     'mediaItem' => [
                         'id' => 'media-item-123',
-                        'filename' => 'photo-1_original.jpg',
+                        'filename' => 'photo-1_original.png',
                     ],
                 ]],
             ], 200),
@@ -62,8 +62,8 @@ final class PhotoUploadExecutionServiceTest extends TestCase
             'owner_nsid' => 'friend@N01',
             'variant' => 'original',
             'status' => 'completed',
-            'local_path' => 'flickr/friend@N01/photos/photo-1_abc123.jpg',
-            'original_name' => 'photo-1_original.jpg',
+            'local_path' => 'flickr/friend@N01/photos/photo-1_abc123.png',
+            'original_name' => 'photo-1_original.png',
         ]);
 
         $batch = TransferBatch::query()->create([
@@ -95,6 +95,16 @@ final class PhotoUploadExecutionServiceTest extends TestCase
         $this->assertSame('media-item-123', StorageUpload::query()->first()->remote_file_id);
         $this->assertSame('completed', $batch->fresh()->status);
         $this->assertSame('completed', TransferItem::query()->first()->status);
+
+        Http::assertSent(function ($request): bool {
+            if (! str_contains((string) $request->url(), 'mediaItems:batchCreate')) {
+                return false;
+            }
+
+            $data = $request->data();
+
+            return ($data['newMediaItems'][0]['simpleMediaItem']['fileName'] ?? '') === 'photo-1_original.png';
+        });
     }
 
     public function test_it_short_circuits_when_already_uploaded(): void

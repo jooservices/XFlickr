@@ -44,5 +44,6 @@ final class StoredFileRepositoryTest extends TestCase
 
         $this->assertSame($first->id, $second->id);
         $this->assertSame('pending', $second->status);
+        $this->assertSame('photo-2_original', $second->original_name);
     }
 }

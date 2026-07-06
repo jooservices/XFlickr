@@ -13,6 +13,7 @@ use App\Repositories\StoredFileRepository;
 use App\Repositories\TransferItemRepository;
 use App\Services\Storage\StorageUploadService;
 use App\Services\Transfer\TransferBatchReconciler;
+use App\Support\FlickrPhotoUrlHelper;
 use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
@@ -61,9 +62,11 @@ final class PhotoUploadExecutionService
 
         $lockKey = "upload_lock:storage_account:{$storageAccountId}";
         $lock = Cache::lock($lockKey, 300);
+        $lockHeld = false;
 
         try {
             $lock->block(60);
+            $lockHeld = true;
 
             $this->storageUploads->markUploading($storedFile->id, $storageAccountId);
             $this->updateItemStatus($batchId, $flickrPhotoId, TransferItemStatus::Processing);
@@ -74,10 +77,11 @@ final class PhotoUploadExecutionService
             }
 
             $fileOwnerNsid = $storedFile->owner_nsid;
+            $extension = FlickrPhotoUrlHelper::resolveExtension((string) $localPath);
             $remoteMetadata = $this->uploadService->uploadStream(
                 $storageAccountId,
                 Storage::path($localPath),
-                "Flickr/{$fileOwnerNsid}/Photos/{$storedFile->flickr_photo_id}_original.jpg",
+                'Flickr/'.$fileOwnerNsid.'/Photos/'.FlickrPhotoUrlHelper::originalNameFor($storedFile->flickr_photo_id, $extension),
             );
 
             $this->storageUploads->markCompletedForAccount($storedFile->id, $storageAccountId, $remoteMetadata);
@@ -94,7 +98,9 @@ final class PhotoUploadExecutionService
 
             throw $e;
         } finally {
-            $lock->release();
+            if ($lockHeld) {
+                $lock->release();
+            }
         }
     }
 

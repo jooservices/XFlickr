@@ -6,13 +6,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Settings\StoreFlickrAppProfileRequest;
 use App\Services\Flickr\FlickrAppProfileService;
+use App\Support\Observability\AdminActionLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\ValidationException;
 use JOOservices\XFlickrCrawler\Exceptions\FlickrAppNotConfiguredException;
 
 final class FlickrAppProfileController
 {
-    public function store(StoreFlickrAppProfileRequest $request, FlickrAppProfileService $profiles): RedirectResponse
+    public function store(StoreFlickrAppProfileRequest $request, FlickrAppProfileService $profiles, AdminActionLogger $audit): RedirectResponse
     {
         $validated = $request->validated();
 
@@ -23,6 +24,10 @@ final class FlickrAppProfileController
                 'profile' => $exception->getMessage(),
             ]);
         }
+
+        $audit->record('settings.flickr_app.saved', [
+            'profile' => $validated['profile'] ?? 'main',
+        ]);
 
         return redirect()
             ->route('settings.index', ['tab' => 'flickr'])

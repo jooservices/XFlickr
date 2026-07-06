@@ -328,6 +328,13 @@ export interface Gallery {
 }
 
 export interface PageProps {
+    auth: {
+        user: {
+            id: number;
+            name: string;
+            email: string;
+        } | null;
+    };
     app: {
         name: string;
         global_pause?: boolean;

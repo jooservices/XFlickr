@@ -113,7 +113,7 @@ final class StorageBrowseTest extends TestCase
         $response = $this->getJson("/api/storage/google-photos/thumbnail?account_id={$account->id}&media_id=media-1");
 
         $response->assertStatus(422);
-        $response->assertJson(['message' => 'Invalid or unauthorized thumbnail domain prefix.']);
+        $response->assertJson(['message' => 'Unable to load thumbnail.']);
         Http::assertNotSent(fn ($request): bool => str_contains($request->url(), '169.254.169.254'));
     }
 

@@ -49,7 +49,7 @@ Crawl jobs are queued via **Laravel Horizon** and respect Flickr rate limits aut
 | PHP 8.5+ | Application runtime |
 | MySQL | Flickr accounts, stored files, transfer tracking |
 | Redis | Queues (Horizon) and crawler rate limiting |
-| MongoDB | App credentials (laravel-config), audit logging, events |
+| MongoDB | App credentials (`laravel-config`), domain events, audit logs |
 | Node.js 20.19+ or 22.12+ | Frontend build (`package.json` `engines`) |
 
 ---
@@ -79,12 +79,13 @@ docker compose up -d vite   # port 5174
 
 ### First-time setup
 
-1. Open **http://localhost:8082/settings**
-2. **Flickr tab** — enter your [Flickr API](https://www.flickr.com/services/apps/create/) key and secret. Set the callback URL to `http://localhost:8082/flickr/callback` (or your `APP_URL` + `/flickr/callback`).
-3. Click **Connect Flickr** and authorize your account.
-4. **Storage tab** — add Google / Microsoft OAuth app credentials (or Cloudflare R2 keys), then connect a storage account.
-5. Go to **Flickr** → pick an account → **Crawl** to index contacts and catalogs.
-6. Use **Download** and **Upload** when you are ready to transfer files.
+1. Sign in at **http://localhost:8082/login** with `admin@local` / `password` (seeded automatically on first Docker start).
+2. Open **http://localhost:8082/settings**
+3. **Flickr tab** — enter your [Flickr API](https://www.flickr.com/services/apps/create/) key and secret. Set the callback URL to `http://localhost:8082/flickr/callback` (or your `APP_URL` + `/flickr/callback`).
+4. Click **Connect Flickr** and authorize your account.
+5. **Storage tab** — add Google / Microsoft OAuth app credentials (or Cloudflare R2 keys), then connect a storage account.
+6. Go to **Flickr** → pick an account → **Crawl** to index contacts and catalogs.
+7. Use **Download** and **Upload** when you are ready to transfer files.
 
 ---
 
@@ -167,8 +168,8 @@ Monitor job progress at **http://localhost:8082/horizon** or the in-app **Operat
 | [`jooservices/xflickr-crawler`](https://packagist.org/packages/jooservices/xflickr-crawler) | Crawling engine — connections, rate limits, fetchers, jobs |
 | [`jooservices/flickr`](https://packagist.org/packages/jooservices/flickr) | Flickr API SDK (OAuth 1.0a, photos, people, upload) |
 | [`jooservices/laravel-config`](https://packagist.org/packages/jooservices/laravel-config) | App credentials stored in MongoDB |
-| [`jooservices/laravel-logging`](https://packagist.org/packages/jooservices/laravel-logging) | Structured audit logging |
-| [`jooservices/laravel-events`](https://packagist.org/packages/jooservices/laravel-events) | Domain event sourcing |
+| [`jooservices/laravel-logging`](https://packagist.org/packages/jooservices/laravel-logging) | Audit logs for settings and credential changes |
+| [`jooservices/laravel-events`](https://packagist.org/packages/jooservices/laravel-events) | Domain events for account connect/disconnect lifecycle |
 | [`jooservices/laravel-repository`](https://packagist.org/packages/jooservices/laravel-repository) | Repository pattern for app models |
 
 ---

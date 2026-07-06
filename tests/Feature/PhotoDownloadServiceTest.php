@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Jobs\DownloadPhotoJob;
+use App\Jobs\FanOutTransferBatchJob;
 use App\Models\TransferBatch;
 use App\Services\Flickr\PhotoDownloadService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -68,7 +69,7 @@ final class PhotoDownloadServiceTest extends TestCase
             'discovered_at' => now(),
         ]);
 
-        $queued = app(PhotoDownloadService::class)->queueDownloads($connection);
+        $queued = app(PhotoDownloadService::class)->fanOutDownloads($connection, 'me@N01');
 
         $this->assertSame(3, $queued);
         $this->assertDatabaseHas('transfer_batches', [
@@ -93,6 +94,56 @@ final class PhotoDownloadServiceTest extends TestCase
         Bus::assertDispatched(DownloadPhotoJob::class, function (DownloadPhotoJob $job) use ($connection): bool {
             return $this->jobConnectionKey($job) === $connection->connection_key;
         });
+    }
+
+    public function test_it_dispatches_fan_out_job_for_owner_downloads(): void
+    {
+        Bus::fake([FanOutTransferBatchJob::class]);
+
+        $connection = $this->createFlickrConnection(['connection_key' => 'me@N01']);
+        Photo::query()->create([
+            'flickr_photo_id' => 'p-async',
+            'owner_nsid' => 'me@N01',
+            'title' => 'Async photo',
+        ]);
+
+        $queued = app(PhotoDownloadService::class)->queueDownloads($connection);
+
+        $this->assertSame(1, $queued);
+        Bus::assertDispatched(FanOutTransferBatchJob::class, function (FanOutTransferBatchJob $job) use ($connection): bool {
+            return $this->fanOutJobConnectionKey($job) === $connection->connection_key;
+        });
+    }
+
+    public function test_it_chunks_large_owner_download_sets(): void
+    {
+        Bus::fake([DownloadPhotoJob::class]);
+
+        $connection = $this->createFlickrConnection(['connection_key' => 'me@N01']);
+
+        for ($index = 1; $index <= 251; $index++) {
+            Photo::query()->create([
+                'flickr_photo_id' => "p-chunk-{$index}",
+                'owner_nsid' => 'me@N01',
+                'title' => "Chunk photo {$index}",
+            ]);
+        }
+
+        $queued = app(PhotoDownloadService::class)->fanOutDownloads($connection, 'me@N01');
+
+        $this->assertSame(1, $queued);
+        $this->assertDatabaseHas('transfer_batches', [
+            'type' => 'download',
+            'total_count' => 251,
+        ]);
+        Bus::assertDispatched(DownloadPhotoJob::class, 251);
+    }
+
+    private function fanOutJobConnectionKey(FanOutTransferBatchJob $job): string
+    {
+        $reflection = new \ReflectionProperty(FanOutTransferBatchJob::class, 'connectionKey');
+
+        return (string) $reflection->getValue($job);
     }
 
     private function jobConnectionKey(DownloadPhotoJob $job): string

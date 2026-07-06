@@ -49,7 +49,7 @@ final class StoredFileRepository extends EloquentRepository
             [
                 'owner_nsid' => $ownerNsid,
                 'status' => StoredFileStatus::Pending->value,
-                'original_name' => "{$flickrPhotoId}_original.jpg",
+                'original_name' => "{$flickrPhotoId}_original",
             ],
         );
     }

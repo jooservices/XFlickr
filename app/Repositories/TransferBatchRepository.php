@@ -65,6 +65,11 @@ final class TransferBatchRepository extends EloquentRepository
         return $this->newQuery()->find($id);
     }
 
+    public function lockById(int $id): ?TransferBatch
+    {
+        return $this->newQuery()->lockForUpdate()->find($id);
+    }
+
     public function connectionKeyForId(int $id): ?string
     {
         $value = $this->newQuery()->whereKey($id)->value('connection_key');

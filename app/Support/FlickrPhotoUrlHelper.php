@@ -156,4 +156,53 @@ final class FlickrPhotoUrlHelper
             $size,
         );
     }
+
+    public static function extensionFromUrl(string $url): ?string
+    {
+        return self::extensionFromPath($url);
+    }
+
+    public static function extensionFromFormat(?string $format): ?string
+    {
+        if ($format === null || trim($format) === '') {
+            return null;
+        }
+
+        return match (strtolower(trim($format))) {
+            'jpg', 'jpeg' => 'jpg',
+            'png' => 'png',
+            'gif' => 'gif',
+            'webp' => 'webp',
+            'mp4' => 'mp4',
+            'mov' => 'mov',
+            default => strtolower(trim($format)),
+        };
+    }
+
+    public static function resolveExtension(string $urlOrPath, ?string $format = null): string
+    {
+        return self::extensionFromPath($urlOrPath)
+            ?? self::extensionFromFormat($format)
+            ?? 'jpg';
+    }
+
+    public static function originalNameFor(string $flickrPhotoId, string $extension): string
+    {
+        return "{$flickrPhotoId}_original.{$extension}";
+    }
+
+    private static function extensionFromPath(string $pathOrUrl): ?string
+    {
+        $path = parse_url($pathOrUrl, PHP_URL_PATH);
+        if (! is_string($path) || $path === '') {
+            $path = $pathOrUrl;
+        }
+
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        if ($extension === '' || ! preg_match('/^[a-z0-9]{1,10}$/', $extension)) {
+            return null;
+        }
+
+        return $extension === 'jpeg' ? 'jpg' : $extension;
+    }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Flickr;
 
 use App\Jobs\DownloadPhotoJob;
+use App\Jobs\FanOutTransferBatchJob;
 use App\Repositories\Crawler\PhotoQueryRepository;
 use App\Repositories\StoredFileRepository;
 use App\Repositories\TransferBatchRepository;
@@ -16,6 +17,8 @@ use JOOservices\XFlickrCrawler\Models\Photo;
 
 final class PhotoDownloadService
 {
+    private const CHUNK_SIZE = 250;
+
     public function __construct(
         private readonly PhotoQueryRepository $photos,
         private readonly StoredFileRepository $storedFiles,
@@ -65,15 +68,23 @@ final class PhotoDownloadService
     }
 
     /**
-     * @return int Number of batches queued
+     * @return int Number of fan-out jobs queued
      */
     public function queueDownloads(Connection $connection, ?string $ownerNsid = null): int
     {
         $ownerNsid = $ownerNsid ?? $connection->connection_key;
 
-        $photos = $this->photos->listByOwnerNsid($ownerNsid);
+        if (! $this->photos->existsForOwnerNsid($ownerNsid)) {
+            return 0;
+        }
 
-        return $this->queuePendingPhotos($connection, $photos, $ownerNsid);
+        FanOutTransferBatchJob::dispatch(
+            transferType: 'download',
+            connectionKey: $connection->connection_key,
+            ownerNsid: $ownerNsid,
+        );
+
+        return 1;
     }
 
     /**
@@ -97,6 +108,34 @@ final class PhotoDownloadService
     public function queueSelectedDownloads(Connection $connection, Collection $photos, string $ownerNsid): int
     {
         return $this->queuePendingPhotos($connection, $photos, $ownerNsid);
+    }
+
+    /**
+     * @return int Number of batches created
+     */
+    public function fanOutDownloads(Connection $connection, string $ownerNsid): int
+    {
+        $pending = collect();
+
+        $this->photos->chunkByOwnerNsid(
+            $ownerNsid,
+            self::CHUNK_SIZE,
+            function (Collection $chunk) use (&$pending): void {
+                $filtered = $chunk->reject(
+                    fn (Photo $photo): bool => $this->storedFiles->hasCompletedOriginal($photo->flickr_photo_id),
+                );
+
+                if ($filtered->isNotEmpty()) {
+                    $pending = $pending->concat($filtered);
+                }
+            },
+        );
+
+        if ($pending->isEmpty()) {
+            return 0;
+        }
+
+        return $this->queuePendingPhotos($connection, $pending, $ownerNsid);
     }
 
     /**
@@ -132,9 +171,12 @@ final class PhotoDownloadService
                 $group['photos']->count(),
             );
 
-            foreach ($group['photos'] as $photo) {
-                $this->items->createPending($batch->id, $photo->flickr_photo_id);
+            $this->items->createPendingBulk(
+                $batch->id,
+                $group['photos']->pluck('flickr_photo_id')->all(),
+            );
 
+            foreach ($group['photos'] as $photo) {
                 DownloadPhotoJob::dispatch(
                     $photo->flickr_photo_id,
                     $photo->owner_nsid,

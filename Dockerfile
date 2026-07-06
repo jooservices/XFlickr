@@ -14,8 +14,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && docker-php-ext-install bcmath intl pcntl pdo_mysql zip \
-    && pecl install mongodb redis \
-    && docker-php-ext-enable mongodb redis \
+    && pecl install mongodb redis pcov \
+    && docker-php-ext-enable mongodb redis pcov \
     && apt-get purge -y --auto-remove $PHPIZE_DEPS \
     && rm -rf /var/lib/apt/lists/*
 

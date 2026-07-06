@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\PhotoTransferExecutionOutcome;
 use App\Jobs\DownloadPhotoJob;
 use App\Models\TransferBatch;
 use App\Models\TransferItem;
+use App\Services\Flickr\PhotoDownloadExecutionService;
 use App\Services\Transfer\TransferBatchReconciler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -145,5 +148,60 @@ final class DownloadPhotoJobTest extends TestCase
         $this->assertSame(2, $batch->failed_count);
         $this->assertSame(0, $batch->completed_count);
         $this->assertSame('failed', $batch->status);
+    }
+
+    public function test_it_releases_without_counting_deferrals_as_failures(): void
+    {
+        $connection = $this->createFlickrConnection(['connection_key' => 'me@N01']);
+
+        Photo::query()->create([
+            'flickr_photo_id' => 'photo-1',
+            'owner_nsid' => 'friend@N01',
+            'title' => 'Test',
+            'secret' => 'abc123',
+            'server' => '65535',
+            'raw_payload' => [],
+        ]);
+
+        $batch = TransferBatch::query()->create([
+            'type' => 'download',
+            'connection_key' => $connection->connection_key,
+            'subject_nsid' => 'friend@N01',
+            'status' => 'running',
+            'total_count' => 1,
+        ]);
+
+        TransferItem::query()->create([
+            'transfer_batch_id' => $batch->id,
+            'flickr_photo_id' => 'photo-1',
+            'status' => 'pending',
+        ]);
+
+        $lock = Cache::lock('download_lock:photo-1', 120);
+        $lock->get();
+
+        $outcome = app(PhotoDownloadExecutionService::class)->execute(
+            'photo-1',
+            'friend@N01',
+            $connection->connection_key,
+            $batch->id,
+            50,
+            3,
+        );
+
+        $this->assertSame(PhotoTransferExecutionOutcome::Deferred, $outcome);
+        $this->assertSame('pending', TransferItem::query()->first()->status);
+        $this->assertSame('running', $batch->fresh()->status);
+
+        $lock->release();
+    }
+
+    public function test_it_has_extended_retry_window(): void
+    {
+        $job = new DownloadPhotoJob('photo-1', 'friend@N01', 'me@N01');
+
+        $this->assertSame(100, $job->tries);
+        $this->assertSame(3, $job->maxExceptions);
+        $this->assertTrue($job->retryUntil() > now()->addHours(5));
     }
 }

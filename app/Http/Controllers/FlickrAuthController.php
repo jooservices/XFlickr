@@ -12,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use JOOservices\Flickr\Exceptions\AuthenticationException;
 use JOOservices\Flickr\Exceptions\ConfigurationException;
 use JOOservices\XFlickrCrawler\Exceptions\FlickrAppNotConfiguredException;
+use Throwable;
 
 final class FlickrAuthController
 {
@@ -41,12 +42,25 @@ final class FlickrAuthController
 
     public function callback(FlickrOAuthCallbackRequest $request, FlickrOAuthService $oauth): RedirectResponse
     {
-        $oauth->complete(
-            $request->oauthToken(),
-            $request->oauthVerifier(),
-            $request->sessionSecret(),
-            $request->appProfile(),
-        );
+        try {
+            $oauth->complete(
+                $request->oauthToken(),
+                $request->oauthVerifier(),
+                $request->sessionSecret(),
+                $request->appProfile(),
+            );
+        } catch (AuthenticationException|ConfigurationException|FlickrAppNotConfiguredException) {
+            return redirect()->route('settings.index', ['tab' => 'flickr'])->with(
+                'error',
+                'Flickr account could not be connected. Check app credentials and try again.',
+            );
+        } catch (Throwable) {
+            return redirect()->route('settings.index', ['tab' => 'flickr'])->with(
+                'error',
+                'Flickr account could not be connected due to an unexpected error.',
+            );
+        }
+
         $request->session()->forget(['flickr_oauth_token', 'flickr_oauth_token_secret', 'flickr_app_profile']);
 
         return redirect()->route('flickr.accounts.index')->with('success', 'Flickr account connected.');

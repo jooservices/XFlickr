@@ -29,6 +29,33 @@ final class TransferItemRepository extends EloquentRepository
         ]);
     }
 
+    /**
+     * @param  list<string>  $flickrPhotoIds
+     */
+    public function createPendingBulk(int $batchId, array $flickrPhotoIds): void
+    {
+        if ($flickrPhotoIds === []) {
+            return;
+        }
+
+        $now = now();
+
+        $rows = array_map(
+            static fn (string $flickrPhotoId): array => [
+                'transfer_batch_id' => $batchId,
+                'flickr_photo_id' => $flickrPhotoId,
+                'status' => TransferItemStatus::Pending->value,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            $flickrPhotoIds,
+        );
+
+        foreach (array_chunk($rows, 500) as $chunk) {
+            $this->newQuery()->insert($chunk);
+        }
+    }
+
     public function updateStatus(int $batchId, string $flickrPhotoId, TransferItemStatus $status, ?string $error = null): void
     {
         $this->newQuery()

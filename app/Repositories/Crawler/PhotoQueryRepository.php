@@ -24,6 +24,30 @@ final class PhotoQueryRepository
             ->get($columns);
     }
 
+    public function existsForOwnerNsid(string $ownerNsid): bool
+    {
+        return Photo::query()
+            ->where('owner_nsid', $ownerNsid)
+            ->exists();
+    }
+
+    /**
+     * @param  list<string>  $columns
+     * @param  callable(Collection<int, Photo>): void  $callback
+     */
+    public function chunkByOwnerNsid(
+        string $ownerNsid,
+        int $chunkSize,
+        callable $callback,
+        array $columns = ['id', 'flickr_photo_id', 'owner_nsid'],
+    ): void {
+        Photo::query()
+            ->where('owner_nsid', $ownerNsid)
+            ->select($columns)
+            ->orderBy('id')
+            ->chunk($chunkSize, $callback);
+    }
+
     /**
      * @param  list<string>  $columns
      */

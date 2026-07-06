@@ -2,29 +2,102 @@ name: CI
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [master, develop]
   pull_request:
-    branches: [main, master, develop]
+    branches: [master, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PHP_VERSION: '8.5'
+  APP_KEY: base64:+uMxrQHiSSnSC9QQV4KkDMmLjTIBbCEe5KZsCUlWuuk=
 
 jobs:
-  quality:
+  security:
+    name: Security Checks
     runs-on: ubuntu-latest
-    env:
-      # Required by docker-compose.test.yml (APP_KEY: ${APP_KEY})
-      APP_KEY: base64:+uMxrQHiSSnSC9QQV4KkDMmLjTIBbCEe5KZsCUlWuuk=
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Setup PHP
+        uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1 # v2.36.0
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, json
+          coverage: none
 
-      - name: Verify AI instruction sync
-        run: php tools/verify-ai-instructions-sync.php
+      - name: Install Composer dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # v4.0.0
+
+      - name: Validate Composer metadata
+        run: composer validate --strict
+
+      - name: Run Composer Audit
+        run: composer audit --locked --abandoned=ignore
+
+  lint:
+    name: Lint - ${{ matrix.tool.name }}
+    runs-on: ubuntu-latest
+    needs: [security]
+    strategy:
+      fail-fast: false
+      matrix:
+        tool:
+          - name: Pint
+            command: lint:pint
+          - name: PHPStan
+            command: lint:phpstan
+          - name: Deptrac
+            command: lint:deptrac
+          - name: AI Instructions
+            command: instructions:verify
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1 # v2.36.0
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, json
+          coverage: none
+
+      - name: Install Composer dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # v4.0.0
+
+      - name: Run ${{ matrix.tool.name }}
+        run: composer ${{ matrix.tool.command }}
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    needs: [security]
+    if: github.event_name == 'pull_request'
+    continue-on-error: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+
+  frontend:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [security]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d34e9f40a47f85df289 # v4.4.0
         with:
-          node-version: "22"
+          node-version: '22'
           cache: npm
 
       - name: Install frontend dependencies
@@ -33,8 +106,47 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Lint - ESLint
+        run: npm run lint
+
       - name: Build frontend assets
         run: npm run build
 
-      - name: Run tests (isolated Docker test stack)
-        run: composer test:docker
+  tests:
+    name: Tests & Coverage
+    runs-on: ubuntu-latest
+    needs: [lint, frontend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5e203e082da934424bdda0397c5c0c0958a2f35 # v3.12.0
+
+      - name: Run tests with coverage (isolated Docker test stack)
+        run: composer test:docker:coverage
+
+      - name: Check coverage threshold
+        run: |
+          COVERAGE=$(php -r "
+            \$xml = simplexml_load_file('coverage.xml');
+            \$metrics = \$xml->project->metrics;
+            \$statements = (int)\$metrics['statements'];
+            \$covered = (int)\$metrics['coveredstatements'];
+            \$percent = \$statements > 0 ? round((\$covered / \$statements) * 100, 2) : 0;
+            echo \$percent;
+          ")
+          echo "Code coverage: ${COVERAGE}%"
+          if (( $(echo "$COVERAGE < 60" | bc -l) )); then
+            echo "::error::Code coverage ${COVERAGE}% is below minimum threshold of 60%"
+            exit 1
+          fi
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: coverage-report
+          path: |
+            coverage/
+            coverage.xml
+          retention-days: 30

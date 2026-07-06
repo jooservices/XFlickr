@@ -24,6 +24,13 @@ final class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
+            'auth' => [
+                'user' => $request->user() === null ? null : [
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                    'email' => $request->user()->email,
+                ],
+            ],
             'app' => [
                 'name' => config('app.name'),
                 'global_pause' => XFlickrConfig::globalPause(),

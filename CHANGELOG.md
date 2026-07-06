@@ -6,12 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-06
+
 ### Added
 
-- Architecture diagrams doc (`docs/00-architecture/architecture-diagrams.md`) — end-to-end flows, crawl, transfer, storage, OAuth, queues, and data stores for presentations.
-- Live Flickr API quota meter in the top navbar with account picker and 5-second refresh.
-- Dashboard hourly API usage chart (last 24 hours, quota reference line, 5-second refresh) with account picker.
-- Dashboard stat cards split into two rows: operations (Accounts, Active crawls, Transfers) and catalog (Contacts, Photos, Photosets, Galleries) for the selected quota account.
+- Session authentication with default admin account (`admin@local` / `password`); all web and API routes require login.
+- Structured audit logging for settings changes via `jooservices/laravel-logging`.
+- Domain events for Flickr and storage account connect/disconnect via `jooservices/laravel-events`.
+- Transfer pipeline v2: atomic batch reconcile with row locks, `CompletedWithErrors` status, chunked async fan-out via `FanOutTransferBatchJob`, and resilient job retry settings.
+- Dynamic media file extensions from Flickr URLs (`FlickrPhotoUrlHelper::resolveExtension()`).
+- Dto-style CI pipeline: security audit, lint matrix (Pint, PHPStan level 6, Deptrac, AI instructions), frontend build, tests with 60% coverage gate.
+- GitHub workflows aligned with `jooservices/dto`: release, semantic-pr, pr-labeler, scorecard, secret-scanning.
+- Branch model documentation (`docs/05-maintenance/github-branch-protection.md`) — `develop` / `master` with dto-style ruleset.
+- Direct dependency on `jooservices/dto ^1.0`.
+- `composer test:docker:coverage` script; pcov in Dockerfile for coverage in test stack.
+- Auth feature tests and `IgnoresAuthentication` test helper.
+
+### Changed
+
+- PHPStan raised to level 6 with baseline (166 entries).
+- Bumped `jooservices/laravel-events ^1.4`, `jooservices/laravel-logging ^1.1`, `jooservices/laravel-repository ^1.3`.
+- Storage browse API returns generic client errors; internal details logged server-side.
+- Flickr OAuth callback failures redirect with flash error instead of raw 500.
+- Horizon dashboard requires authenticated session.
+- Docker entrypoint seeds admin user on first `artisan serve` start.
+
+### Removed
+
+- Deprecated `DownloadContactsPhotosJob` and `UploadContactsPhotosJob` (use services directly).
+- Root-level ephemeral audit outputs moved to `docs/05-maintenance/release-reviews/2026-07-06/`.
+
+### Security
+
+- Horizon dashboard gated behind auth middleware.
+- Storage browse thumbnail errors no longer leak internal validation messages.
+
+[1.1.0]: https://github.com/jooservices/XFlickr/releases/tag/v1.1.0
 
 ## [1.0.0] - 2026-06-23
 

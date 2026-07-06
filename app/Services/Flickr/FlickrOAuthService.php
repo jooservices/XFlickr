@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Flickr;
 
+use App\Events\FlickrAccountConnected;
+use App\Events\FlickrAccountDisconnected;
 use App\Support\Flickr\ConnectionPresenter;
 use Illuminate\Support\Collection;
 use JOOservices\Flickr\Config\FlickrConfig;
@@ -62,7 +64,7 @@ final class FlickrOAuthService
         if ($connection->connection_key === 'unknown' && $accessToken->userNsid !== null) {
             FlickrService::connections()->disconnect('unknown');
 
-            return FlickrService::connections()->register(
+            $connection = FlickrService::connections()->register(
                 connectionKey: $accessToken->userNsid,
                 tokenPayload: $this->tokenPayloadFromAccessToken($accessToken),
                 appProfile: $appProfile,
@@ -71,6 +73,12 @@ final class FlickrOAuthService
                 activate: true,
             );
         }
+
+        event(new FlickrAccountConnected(
+            connectionKey: $connection->connection_key,
+            appProfile: $appProfile,
+            username: $accessToken->username,
+        ));
 
         return $connection;
     }
@@ -82,6 +90,8 @@ final class FlickrOAuthService
         }
 
         FlickrService::connections()->disconnect($connectionKey);
+
+        event(new FlickrAccountDisconnected(connectionKey: $connectionKey));
     }
 
     public function activate(string $connectionKey): void

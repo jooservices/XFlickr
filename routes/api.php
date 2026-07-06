@@ -11,7 +11,7 @@ use App\Http\Controllers\FlickrAccountController;
 use App\Http\Controllers\FlickrContactController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('web')->group(function (): void {
+Route::middleware(['web', 'auth'])->group(function (): void {
     Route::get('/dashboard/snapshot', [DashboardController::class, 'snapshot']);
 
     Route::get('/flickr/rate-limit', [FlickrRateLimitController::class, 'index']);

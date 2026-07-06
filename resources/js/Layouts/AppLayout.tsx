@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import {
     Activity,
     Camera,
@@ -8,6 +8,7 @@ import {
     Images,
     LayoutDashboard,
     Layers,
+    LogOut,
     Menu,
     Server,
     Settings,
@@ -128,9 +129,13 @@ const topNav = [
 
 export default function AppLayout({ children }: PropsWithChildren) {
     const { props, url } = usePage<PageProps>();
-    const { app, flash } = props;
+    const { app, auth, flash } = props;
     const globalPause = app.global_pause ?? false;
     const [mobileOpen, setMobileOpen] = useState(false);
+
+    function logout() {
+        router.post('/logout');
+    }
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -192,6 +197,21 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         </nav>
 
                         <NavbarRateLimit />
+
+                        {auth.user ? (
+                            <div className="flex shrink-0 items-center gap-2">
+                                <span className="hidden text-sm text-slate-600 sm:inline">{auth.user.email}</span>
+                                <button
+                                    type="button"
+                                    onClick={logout}
+                                    className="flex items-center gap-1 rounded-md px-2 py-2 text-sm text-slate-600 hover:bg-slate-100"
+                                    title="Sign out"
+                                >
+                                    <LogOut className="h-4 w-4" />
+                                    <span className="hidden sm:inline">Sign out</span>
+                                </button>
+                            </div>
+                        ) : null}
                     </div>
                 </div>
             </header>
