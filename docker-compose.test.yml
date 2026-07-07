@@ -1,17 +1,20 @@
 # Isolated test stack — ONLY stack for php artisan test / PHPUnit.
-# Dev MySQL (volume mysql-data) must not be touched by RefreshDatabase / migrate:fresh.
-# FORBIDDEN: docker compose exec app php artisan test  (uses dev stack — wipes data)
+# Dev MySQL (xflickr-dev-mysql-data) must not be touched by RefreshDatabase / migrate:fresh.
+# FORBIDDEN: docker exec xflickr-dev-* or docker compose exec app php artisan test
 #
 # Run all tests:
+#   bash scripts/test.sh gate:test
 #   composer test:docker
 #   ./scripts/test-docker.sh
-#   docker compose -f docker-compose.test.yml run --rm test
 #
 # Run a filter:
 #   ./scripts/test-docker.sh --filter=TokenBridgeTest
 #   docker compose -f docker-compose.test.yml run --rm test php artisan test --filter=TokenBridgeTest
 
 name: xflickr-test
+
+include:
+  - docker/compose/volumes-test.yml
 
 x-php-build: &php-build
   build:
@@ -49,6 +52,7 @@ services:
       EVENTS_EVENT_LOG_ENABLED: "true"
     volumes:
       - .:/var/www/html
+      - ../XFlickrCrawler:/var/www/html/vendor/jooservices/xflickr-crawler
     depends_on:
       redis:
         condition: service_healthy
@@ -59,6 +63,8 @@ services:
 
   redis:
     image: redis:7-alpine
+    volumes:
+      - redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 2s
@@ -67,6 +73,8 @@ services:
 
   mongodb:
     image: mongo:7
+    volumes:
+      - mongodb-data:/data/db
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 2s

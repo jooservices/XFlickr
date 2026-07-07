@@ -1,23 +1,24 @@
 # Docker installation
 
-Recommended way to run XFlickr locally.
+Recommended way to run XFlickr locally. **Docker only** — no host PHP or Node required.
 
 ## Prerequisites
 
 - Docker Desktop or Docker Engine + Compose v2
-- Node.js 20.19+ or 22.12+ (for host-side asset builds; optional if building inside container)
 
 ## Steps
 
 ```bash
 cp .env.example .env
-./scripts/docker-up.sh
+bash scripts/dev.sh up
 ```
+
+(`./scripts/docker-up.sh` runs the same command.)
 
 The script:
 
-1. Starts MySQL, Redis, MongoDB, app, Horizon, and scheduler
-2. Runs `composer install` and `npm ci && npm run build`
+1. Starts MySQL, Redis, MongoDB, app, Horizon, scheduler, and frontend (Vite)
+2. Runs `composer install` and `npm ci && npm run build` inside containers
 3. Runs migrations and MongoDB index bootstrap
 
 ## Services
@@ -25,22 +26,20 @@ The script:
 | Service | URL / port |
 |---|---|
 | App | http://localhost:8082 |
+| Vite HMR | http://localhost:5174 |
 | Horizon | http://localhost:8082/horizon |
 | MySQL | `localhost:3308` |
 | Redis | `localhost:6381` |
 | MongoDB | `localhost:27019` |
 
-## Optional: Vite HMR
+## Volume migration
+
+If you previously used `docker-compose.yml` (project `xflickr`), see [Docker stacks](../03-operations/docker-stacks.md#volume-migration).
+
+## Tests (developers / AI)
 
 ```bash
-docker compose up -d vite   # port 5174
+bash scripts/test.sh gate
 ```
 
-## Next step
-
-[First run](first-run.md) — configure Flickr and storage credentials.
-
-## See also
-
-- [Environments](environments.md)
-- [Docker stacks](../03-operations/docker-stacks.md)
+Never run tests on the dev stack. See [Docker safety](../05-maintenance/docker-safety.md).

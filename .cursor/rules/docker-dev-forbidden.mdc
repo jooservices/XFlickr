@@ -1,0 +1,25 @@
+---
+description: Block AI from running commands against the dev Docker stack
+alwaysApply: true
+---
+
+# Dev Docker — hard stops for agents
+
+Before **any** Shell command, verify:
+
+1. **Forbidden** (never run as AI):
+   - `scripts/dev.sh`, `scripts/deploy.sh`
+   - `docker compose` with `docker-compose.dev.yml` or project `xflickr-dev`
+   - **`docker exec xflickr-dev-*`** — any subcommand, including `php artisan test`, `migrate`, `migrate:fresh`
+   - `composer test:docker` directly — use `bash scripts/test.sh gate:test`
+
+2. **Allowed** for tests/quality:
+   - `bash scripts/test.sh` only (`gate`, `gate:lint`, `gate:test`, `gate:ci`, `ensure-hooks`, `verify-hooks`, `up`, `down`, …)
+
+3. **Before commit or push:** run `bash scripts/test.sh gate` / `gate:ci`
+
+4. **`gate:test` fails:** report to the operator. **Do not** workaround by running PHPUnit inside a dev container.
+
+5. **After code changes:** copy operator reload commands from [`ai/skills/operator-dev-docker/SKILL.md`](../../ai/skills/operator-dev-docker/SKILL.md) — do not execute them.
+
+Dev persistent volumes (`xflickr-dev-mysql-data`, `xflickr-dev-mongo-data`, …) are operator-owned. Feature tests use `RefreshDatabase` → `migrate:fresh`; in dev containers Compose sets `DB_HOST=mysql`, which destroys all dev data.

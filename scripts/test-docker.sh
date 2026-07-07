@@ -5,8 +5,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-if docker compose ps --format '{{.Service}}' 2>/dev/null | grep -qx 'app'; then
-    echo "Note: local dev stack is running — tests will use isolated docker-compose.test.yml (dev MySQL is not used)." >&2
+# shellcheck disable=SC1091
+source "${ROOT}/scripts/lib/compose-test.sh"
+
+if docker compose -f docker-compose.dev.yml -p xflickr-dev ps --format '{{.Service}}' 2>/dev/null | grep -qx 'app'; then
+    echo "Note: dev stack is running — tests use isolated docker-compose.test.yml (dev MySQL is not used)." >&2
 fi
 
-exec docker compose -f docker-compose.test.yml run --rm test php artisan test "$@"
+xf_test_compose run --rm test php artisan test "$@"

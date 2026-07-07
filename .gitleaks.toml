@@ -1,0 +1,27 @@
+title = "XFlickr gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "PHPUnit and CI test APP_KEY placeholders"
+paths = [
+  '''phpunit\.xml''',
+  '''\.github/workflows/ci\.yml''',
+  '''\.github/workflows/release\.yml''',
+]
+
+[[allowlists]]
+description = "Example env placeholders"
+paths = [
+  '''\.env\.example''',
+]
+
+[[allowlists]]
+description = "Documentation examples"
+paths = [
+  '''docs/''',
+  '''README\.md''',
+  '''CHANGELOG\.md''',
+  '''audit.*\.md''',
+]

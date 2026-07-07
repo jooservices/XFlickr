@@ -15,45 +15,37 @@ Before **any** `docker compose`, `php artisan`, test, migrate, seed, `mongosh`, 
 
 ## Hard rule (no exceptions)
 
-**Agents NEVER run database-affecting commands on `docker-compose.yml` (local dev stack).**
+**Agents NEVER run database-affecting commands on `docker-compose.dev.yml` (local dev stack).**
 
-**All database work uses `docker-compose.test.yml` only.**
+**All database work uses `docker-compose.test.yml` via `bash scripts/test.sh` only.**
 
-## Data locations (local dev)
+## Two stacks
 
-| Data | Store |
-|---|---|
-| Flickr/storage OAuth client credentials | MongoDB `xflickr` |
-| Connected Flickr/storage accounts | MySQL `xflickr` |
-| Crawled photos, uploads, cache | MySQL `xflickr` |
+| File | Project | Database | Agent use |
+|---|---|---|---|
+| `docker-compose.dev.yml` | `xflickr-dev` | MySQL `xflickr`, MongoDB `xflickr` | **No commands** |
+| `docker-compose.test.yml` | `xflickr-test` | SQLite `:memory:`, MongoDB `xflickr_test` | Tests via `scripts/test.sh` |
 
-## Forbidden on local stack (agents)
+## Forbidden on dev stack (agents)
 
 ```bash
-docker compose exec app php artisan test
+scripts/dev.sh
+docker compose -f docker-compose.dev.yml ...
+docker exec xflickr-dev-app-1 php artisan test
+docker exec xflickr-dev-*   # any command
 docker compose exec app php artisan migrate
-docker compose exec app php artisan migrate:fresh
-docker compose exec app php artisan db:seed
-docker compose exec app php artisan db:wipe
-docker compose exec mongodb mongosh ...
-docker compose exec mysql mysql ...
+composer test:docker        # use scripts/test.sh gate:test instead
 ```
 
-## Permitted on local stack (agents)
+## Permitted (agents only)
 
 ```bash
-docker compose up -d --build
-docker compose logs -f app
-docker compose exec app composer install
-docker compose exec app npm run build
-```
-
-## Tests — test stack only
-
-```bash
-composer test:docker
-./scripts/test-docker.sh --filter=ExampleTest
-docker compose -f docker-compose.test.yml run --rm test php artisan test
+bash scripts/test.sh gate
+bash scripts/test.sh gate:lint
+bash scripts/test.sh gate:test
+bash scripts/test.sh gate:ci
+bash scripts/test.sh up
+bash scripts/test.sh down
 ```
 
 ## User-only maintenance (explicit request required)
@@ -64,12 +56,13 @@ docker compose -f docker-compose.test.yml run --rm test php artisan test
 
 ## Before any Docker command
 
-1. Is it `docker-compose.yml`? → **No DB commands.**
-2. Does it touch MySQL or MongoDB? → **Use test stack or stop.**
+1. Is it dev stack (`docker-compose.dev.yml` / `xflickr-dev`)? → **Stop.**
+2. Does it touch MySQL or MongoDB on dev? → **Use `scripts/test.sh` only.**
 3. Did the user name a maintenance script? → **Run only that script.**
 
 ## Related skills
 
+- `operator-dev-docker`
 - `docker-dev-stack-safety`
 - `database-migration-safety`
 - `testing-and-quality-gates`
@@ -78,4 +71,4 @@ docker compose -f docker-compose.test.yml run --rm test php artisan test
 
 - `AGENTS.md`
 - `docs/05-maintenance/docker-safety.md`
-- `.cursor/rules/docker-dev-stack-safety.mdc`
+- `.cursor/rules/docker-dev-forbidden.mdc`

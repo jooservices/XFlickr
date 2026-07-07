@@ -95,8 +95,29 @@ fi
 
 php artisan config:clear --no-interaction
 
+ensure_admin_password() {
+    if [ -n "${ADMIN_PASSWORD:-}" ]; then
+        return 0
+    fi
+
+    ADMIN_PASSWORD="$(php -r 'echo bin2hex(random_bytes(12));')"
+    export ADMIN_PASSWORD
+
+    printf '%s\n' "$ADMIN_PASSWORD" > /tmp/xflickr-admin-password
+    chmod 600 /tmp/xflickr-admin-password
+
+    echo "============================================================"
+    echo "XFlickr admin account (save this password — shown once):"
+    echo "  email:    ${ADMIN_EMAIL:-admin@local}"
+    echo "  password: ${ADMIN_PASSWORD}"
+    echo "Also written to /tmp/xflickr-admin-password in this container."
+    echo "Set ADMIN_PASSWORD in .env to use a fixed password instead."
+    echo "============================================================"
+}
+
 # Only the web app container runs migrations (horizon/scheduler share DB but not /tmp locks).
 if [ "${1:-}" = "php" ] && [ "${2:-}" = "artisan" ] && [ "${3:-}" = "serve" ]; then
+    ensure_admin_password
     php artisan migrate --force --no-interaction
     php artisan db:seed --class=Database\\Seeders\\AdminUserSeeder --force --no-interaction
     php artisan config-store:ensure-index --no-interaction
@@ -105,10 +126,8 @@ fi
 
 if [ "${1:-}" = "php" ] && [ "${2:-}" = "artisan" ] && [ "${3:-}" = "test" ]; then
     echo "ERROR: Do not run tests in the local dev stack (wipes MySQL dev data via RefreshDatabase)." >&2
-    echo "Use: composer test:docker" >&2
-    echo "Or:  ./scripts/test-docker.sh" >&2
-    echo "Or:  docker compose -f docker-compose.test.yml run --rm test" >&2
-    echo "Note: docker compose exec also bypasses this guard — never exec DB commands on the dev stack." >&2
+    echo "Use: bash scripts/test.sh gate:test" >&2
+    echo "Note: docker exec xflickr-dev-* also bypasses this guard — never exec DB commands on the dev stack." >&2
     exit 1
 fi
 

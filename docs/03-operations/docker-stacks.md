@@ -2,34 +2,42 @@
 
 XFlickr uses two separate Docker Compose files. **Never mix them.**
 
-| File | Purpose | Database |
-|---|---|---|
-| `docker-compose.yml` | Local development — **user data** | MySQL `xflickr`, MongoDB `xflickr` |
-| `docker-compose.test.yml` | Tests and CI only | SQLite `:memory:`, MongoDB `xflickr_test` |
+| File | Project | Purpose | Database |
+|---|---|---|---|
+| `docker-compose.dev.yml` | `xflickr-dev` | Local development — **user data** | MySQL `xflickr`, MongoDB `xflickr` |
+| `docker-compose.test.yml` | `xflickr-test` | Tests and CI only | SQLite `:memory:`, MongoDB `xflickr_test` |
 
 ## Dev stack services
 
-- `app` — PHP-FPM + Nginx (port 8082)
+- `app` — Laravel (port `APP_HOST_PORT`, default 8082)
 - `horizon` — queue worker
 - `scheduler` — Laravel scheduler
+- `frontend` — Node + Vite HMR (port `FRONTEND_HOST_PORT`, default 5174)
 - `mysql`, `redis`, `mongodb`
-- `vite` (optional) — HMR on port 5174
 
-## Bootstrap
+## Bootstrap (operator)
 
 ```bash
-./scripts/docker-up.sh
+bash scripts/dev.sh up          # full start + migrate (recommended)
+bash scripts/dev.sh seed        # up + admin user seed
+bash scripts/dev.sh quick       # start containers only
+bash scripts/dev.sh help        # all commands
 ```
+
+`./scripts/docker-up.sh` is an alias for `bash scripts/dev.sh up`.
+
+## Volume migration
+
+If you previously used `docker-compose.yml` (project `xflickr`), data volumes used names like `xflickr_mysql-data`. The dev stack now uses `xflickr-dev-mysql-data`. Either rename volumes or accept a fresh start.
 
 ## Agent rule (absolute)
 
-AI agents must **never** run tests, migrations, seeds, or any DB command on the dev stack. See [Docker safety](../05-maintenance/docker-safety.md).
+AI agents must **never** touch the dev stack. Use `bash scripts/test.sh` only. See [Docker safety](../05-maintenance/docker-safety.md).
 
-## Tests
+## Tests (AI + CI)
 
 ```bash
-composer test:docker
-./scripts/test-docker.sh --filter=ExampleTest
+bash scripts/test.sh gate:test
 ```
 
 ## User-initiated MongoDB reset

@@ -7,24 +7,27 @@ description: Zero database contact on local dev Docker stack — no exceptions f
 
 ## Purpose
 
-Enforce the absolute rule: local dev stack (`docker-compose.yml`) is **read-only for databases** from an agent's perspective.
+Enforce the absolute rule: local dev stack (`docker-compose.dev.yml`, project `xflickr-dev`) is **off limits for AI agents**.
 
 ## Two stacks
 
-| File | Database | Agent use |
-|---|---|---|
-| `docker-compose.yml` | MySQL `xflickr`, MongoDB `xflickr` | **No DB commands** |
-| `docker-compose.test.yml` | SQLite `:memory:`, MongoDB `xflickr_test` | Tests and migrations |
+| File | Project | Database | Agent use |
+|---|---|---|---|
+| `docker-compose.dev.yml` | `xflickr-dev` | MySQL `xflickr`, MongoDB `xflickr` | **No commands** |
+| `docker-compose.test.yml` | `xflickr-test` | SQLite `:memory:`, MongoDB `xflickr_test` | `scripts/test.sh` only |
 
 ## Why
 
-`docker compose exec` bypasses `docker/entrypoint.sh`. Incident 2026-06-22: agent ran tests on dev stack → `RefreshDatabase` wiped MySQL.
+`docker exec xflickr-dev-*` bypasses `docker/entrypoint.sh`. Incident 2026-06-22: agent ran tests on dev stack → `RefreshDatabase` wiped MySQL. Code guard: `Tests\Support\RefreshDatabaseGuard`.
 
-## Incident recovery
+## AI single entry point
 
-If dev MySQL was wiped: reconnect Flickr/storage accounts in Settings, re-run crawls.
+```bash
+bash scripts/test.sh gate:test
+```
 
 ## Related skills
 
+- `operator-dev-docker`
 - `xflickr-docker-testing`
 - `database-migration-safety`

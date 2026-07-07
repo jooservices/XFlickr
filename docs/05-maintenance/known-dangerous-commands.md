@@ -1,62 +1,60 @@
 # Known dangerous commands
 
-Commands that must **never** be run by AI agents on the local dev stack (`docker-compose.yml`).
+Commands that must **never** be run by AI agents on the local dev stack (`docker-compose.dev.yml`, project `xflickr-dev`).
+
+## Dev stack (forbidden for AI)
+
+```bash
+scripts/dev.sh
+scripts/deploy.sh
+docker compose -f docker-compose.dev.yml ...
+docker exec xflickr-dev-*              # ANY command
+```
 
 ## Tests (wipe MySQL)
 
 ```bash
-docker compose exec app php artisan test    # FORBIDDEN
-php artisan test                            # FORBIDDEN when .env points at dev DB
-composer test                               # FORBIDDEN (runs artisan test locally)
+docker exec xflickr-dev-app-1 php artisan test    # FORBIDDEN
+docker compose exec app php artisan test          # FORBIDDEN
+php artisan test                                  # FORBIDDEN when .env points at dev DB
+composer test:docker                              # use scripts/test.sh gate:test
 ```
 
 Use instead:
 
 ```bash
-composer test:docker
+bash scripts/test.sh gate:test
 ```
 
 ## Migrations and seeds
 
 ```bash
-docker compose exec app php artisan migrate
-docker compose exec app php artisan migrate:fresh
-docker compose exec app php artisan db:seed
-docker compose exec app php artisan db:wipe
+docker exec xflickr-dev-app-1 php artisan migrate
+docker exec xflickr-dev-app-1 php artisan migrate:fresh
+docker exec xflickr-dev-app-1 php artisan db:seed
+docker exec xflickr-dev-app-1 php artisan db:wipe
 ```
 
 ## MongoDB
 
 ```bash
-docker compose exec mongodb mongosh
+docker exec xflickr-dev-mongodb-1 mongosh
 ./scripts/reset-local-mongodb.sh            # USER-EXPLICIT ONLY
-```
-
-## Direct database clients on dev
-
-```bash
-docker compose exec mysql mysql ...
-docker compose exec app php artisan tinker  # when writing to DB
-```
-
-## Config / events stores
-
-```bash
-docker compose exec app php artisan config-store:*
-docker compose exec app php artisan events:*   # when writing indexes/data
 ```
 
 ## Why
 
-`docker compose exec` bypasses `docker/entrypoint.sh`. There is no runtime safety net. A real incident (2026-06-22) wiped dev MySQL when an agent ran tests on the dev stack.
+`docker exec xflickr-dev-*` bypasses `docker/entrypoint.sh`. Code guard: `Tests\Support\RefreshDatabaseGuard`. Incident 2026-06-22 wiped dev MySQL.
 
-## Permitted on dev stack (agents)
+## Permitted (agents only)
 
 ```bash
-docker compose up|down|build|restart|logs|ps|pull
-docker compose exec app composer install
-docker compose exec app npm ci
-docker compose exec app npm run build
+bash scripts/test.sh gate
+bash scripts/test.sh gate:lint
+bash scripts/test.sh gate:test
+bash scripts/test.sh gate:ci
+bash scripts/test.sh up
+bash scripts/test.sh down
 ```
 
 Full details: [Docker safety](docker-safety.md) and [`AGENTS.md`](../../AGENTS.md).

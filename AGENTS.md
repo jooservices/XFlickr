@@ -11,56 +11,45 @@ Read this file before running commands or changing code in this repository.
 
 ---
 
-## ABSOLUTE RULE — local Docker databases (NO EXCEPTIONS)
+## Docker scripts (two stacks)
 
-**AI agents MUST NOT cause any database change on the local dev stack (`docker-compose.yml`).**
+Two public entry points — **AI may only use `test.sh`** (see Docker policy below).
 
-- **No exceptions.** Not for tests. Not for migrations. Not for seeds. Not for debugging. Not for "just verifying". Not for "it should be safe".
-- Applies to **MySQL** (`xflickr`) **and** **MongoDB** (`xflickr`).
-- Applies to **`docker compose exec`** on any local service (`app`, `mysql`, `mongodb`, `horizon`, `scheduler`).
+| Script | Purpose | Who |
+|--------|---------|-----|
+| [`scripts/dev.sh`](scripts/dev.sh) | Dev stack (`docker-compose.dev.yml`, hot reload) | **Operator only** |
+| [`scripts/test.sh`](scripts/test.sh) | Quality gates + isolated test stack | **AI + CI only** |
 
-The only stack agents may use for **any** database work is **`docker-compose.test.yml`** (isolated test stack).
+Internal helpers live under [`scripts/lib/`](scripts/lib/) (`compose-dev.sh`, `compose-test.sh`, `dev/`, `test/`).
 
-### FORBIDDEN on local dev stack (agents — zero exceptions)
+### Docker policy (agents)
 
-Never run via `docker compose` without `-f docker-compose.test.yml`:
+- **Dev = operator local workspace.** Persistent data (MySQL, MongoDB volumes) is **owned by the operator — AI must never touch it.**
+- **AI MAY ONLY run:** `bash scripts/test.sh` (`gate`, `gate:lint`, `gate:test`, `gate:ci`, `ensure-hooks`, `verify-hooks`, `up`, `down`, `down --volumes`)
+- **AI MUST NOT run:** `scripts/dev.sh`, `scripts/deploy.sh`, bare `docker compose` against dev, or **`docker exec xflickr-dev-*`** (any command — including `php artisan test`, `migrate`, `migrate:fresh`). Tests run **only** via `scripts/test.sh` on the **test stack** (`xflickr-test-*`).
+- **If `gate:test` fails:** report to the operator — **never** workaround by running PHPUnit inside a dev container (`RefreshDatabase` + `DB_HOST=mysql` wipes dev MySQL). Code guard: `Tests\Support\RefreshDatabaseGuard`.
+- After implementing changes, **tell the operator** which dev commands to run — see [`ai/skills/operator-dev-docker/SKILL.md`](ai/skills/operator-dev-docker/SKILL.md).
 
-| Category | Examples |
-|---|---|
-| Tests | `php artisan test`, `composer test`, PHPUnit |
-| MySQL destructive | `migrate:fresh`, `migrate:refresh`, `migrate:reset`, `db:wipe`, `db:seed` |
-| MySQL writes | `php artisan migrate`, `php artisan db:*`, tinker with DB writes |
-| MongoDB | `mongosh`, drop database, any write to `xflickr` |
-| Config / events stores | `config-store:*`, `events:*` that write indexes or data |
-| Direct DB clients | `mysql` CLI, `mongosh`, redis FLUSHALL on dev |
-
-`docker compose exec` **bypasses** `docker/entrypoint.sh`. **There is no runtime safety net.**
-
-### PERMITTED on local dev stack (agents only)
-
-- `docker compose up`, `down`, `build`, `restart`, `logs`, `ps`, `pull`
-- `docker compose exec app composer install` (no DB)
-- `docker compose exec app npm ci`, `npm run build` (no DB)
-
-### USER-ONLY maintenance scripts
-
-If the user **explicitly** requests a reset, run **only** the named script:
+**Operator dev reload (no DB impact)** — AI copies this block to the user, does not execute:
 
 ```bash
-./scripts/reset-local-mongodb.sh   # user asked to reset MongoDB
+docker exec xflickr-dev-horizon-1 php artisan horizon:terminate
+bash scripts/dev.sh restart-frontend   # if UI bundle is stale
+bash scripts/dev.sh reload             # rebuild assets + restart workers
 ```
 
-### REQUIRED for tests (only path)
+**Operator stack start:** `bash scripts/dev.sh up` or `seed` — never bare `docker compose -f docker-compose.dev.yml up` (wrong project/volume names).
 
-```bash
-composer test:docker
-./scripts/test-docker.sh --filter=ExampleTest
-docker compose -f docker-compose.test.yml run --rm test php artisan test
-```
+Dev subcommands: `up` (migrate only), `seed`, `refresh` (MySQL schema wipe + admin), `reset-data` / `down --volumes` (all volumes), `down`, `reload`, `restart-frontend`, `refresh-frontend`.
 
-Test stack: sqlite `:memory:`, `MONGODB_DATABASE=xflickr_test` — never dev volumes.
+Test stack uses `docker-compose.test.yml` (project `xflickr-test`). Named volumes: `xflickr-test-*`.
 
-Skills: `xflickr-docker-testing`, `docker-dev-stack-safety`
+### Commit and push (non-negotiable for AI)
+
+1. **Once per clone:** `bash scripts/test.sh ensure-hooks`
+2. **Before every commit:** `bash scripts/test.sh gate` must pass
+3. **Before every push:** `bash scripts/test.sh gate:ci` must pass
+4. **Never** use `SKIP_HOOKS=1` unless the operator explicitly requests a bypass in the same message.
 
 ---
 
@@ -71,7 +60,8 @@ Skills: `xflickr-docker-testing`, `docker-dev-stack-safety`
 - Crawling: `jooservices/xflickr-crawler`
 - App credentials: **MongoDB** via laravel-config (`xflickr_app.*`, `storage_app.*`)
 - Connected accounts: **MySQL** (`flickr_accounts`, `storage_accounts`)
-- Local URL: **http://localhost:8082**
+- Local URL: **http://localhost:8082** (override `APP_HOST_PORT` in `.env`)
+- **Authentication** — all web/API routes require session login. Tests auto-authenticate via `TestCase::authenticateAsAdmin()` unless a test uses `IgnoresAuthentication`. Initial admin password: `ADMIN_PASSWORD` env (see `.env.example`); change with `php artisan xflickr:user:password`.
 
 ## Architecture boundaries
 
@@ -92,9 +82,9 @@ See [Application standards](docs/00-architecture/application-standards.md) and [
 
 ## Non-negotiables
 
-1. **Never touch local dev databases** — see absolute rule above.
-2. **Tests only in test stack** — `composer test:docker`.
-3. **Manual crawl only** — do not add auto-spidering without explicit product decision.
+1. **Never touch local dev databases** — see Docker policy above.
+2. **Tests only via `scripts/test.sh`** — isolated test stack (`sqlite :memory:`, MongoDB `xflickr_test`).
+3. **Spider mode** — opt-in only (`spider.enabled` in runtime config); depth/caps in Settings → General; see [constraints](docs/05-maintenance/constraints.md) and [spider-mode](docs/02-user-guide/spider-mode.md). Manual per-contact crawls remain valid.
 4. **Inspect source first** — do not invent routes, commands, or behavior.
 5. **Minimize scope** — focused diffs; match existing conventions.
 
@@ -103,15 +93,18 @@ See [Application standards](docs/00-architecture/application-standards.md) and [
 Before opening a PR:
 
 ```bash
-composer test:docker
-npm run typecheck          # when frontend changed
-composer instructions:verify
+bash scripts/test.sh gate
+bash scripts/test.sh gate:ci    # before push
 ```
+
+CI enforces **60% PHPUnit coverage** via `gate:ci` / `composer test:docker:coverage`.
 
 **Never:**
 
 ```bash
+docker exec xflickr-dev-app-1 php artisan test
 docker compose exec app php artisan test
+scripts/dev.sh
 ```
 
 ## Skill routing
@@ -119,7 +112,7 @@ docker compose exec app php artisan test
 | Task type | Read first |
 |---|---|
 | Any change | `repo-quality-foundation` |
-| Docker / DB commands | `xflickr-docker-testing`, `docker-dev-stack-safety` |
+| Docker / DB commands | `xflickr-docker-testing`, `docker-dev-stack-safety`, `operator-dev-docker` |
 | Crawl features | `crawler-pipeline-integrity` |
 | Download / upload | `transfer-pipeline-safety` |
 | Storage OAuth / R2 | `storage-driver-safety` |
@@ -142,7 +135,7 @@ Full index: [ai/README.md](ai/README.md)
 ## Change checklist
 
 - [ ] Inspected affected source files
-- [ ] Tests pass: `composer test:docker`
+- [ ] Tests pass: `bash scripts/test.sh gate`
 - [ ] Typecheck passes if frontend changed: `npm run typecheck`
 - [ ] Docs updated for user-visible changes
 - [ ] `CHANGELOG.md` `[Unreleased]` updated if applicable
@@ -168,4 +161,4 @@ Non-trivial features: [AI development workflow](docs/04-development/ai-developme
 - [docs/README.md](docs/README.md) — documentation hub
 - [Contributing](docs/04-development/07-contributing.md)
 - [Known dangerous commands](docs/05-maintenance/known-dangerous-commands.md)
-- [Risks and gaps](docs/05-maintenance/risks-legacy-and-gaps.md)
+- [Risks and gaps](docs/05-maintenance/BACKLOG.md)

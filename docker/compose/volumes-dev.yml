@@ -1,0 +1,14 @@
+# Explicit dev volume names — included by docker-compose.dev.yml only.
+# Prevents Docker Compose default project prefixes (e.g. xflickr_mysql-data vs xflickr-dev-mysql-data).
+# Operator stack only — AI uses test stack volumes (xflickr-test-*).
+volumes:
+  mysql-data:
+    name: xflickr-dev-mysql-data
+  mongodb-data:
+    name: xflickr-dev-mongodb-data
+  redis-data:
+    name: xflickr-dev-redis-data
+  node-modules:
+    name: xflickr-dev-node-modules
+  frontend-node-modules:
+    name: xflickr-dev-frontend-node-modules

@@ -7,7 +7,7 @@ Claude Code entry point. **All rules live in [`AGENTS.md`](AGENTS.md)** — read
 - **Analysis and planning mode by default** for architecture questions — inspect source before proposing changes.
 - Do not implement code during plan-only requests.
 - For non-trivial features, follow [AI development workflow](docs/04-development/ai-development-workflow.md).
-- Never run database commands on the local dev Docker stack (see `AGENTS.md` absolute rule).
+- Never run database commands on the local dev Docker stack (see `AGENTS.md` Docker policy).
 
 ## Quick links
 

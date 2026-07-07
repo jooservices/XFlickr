@@ -1,0 +1,6 @@
+# Explicit test volume names — included by docker-compose.test.yml only (AI + CI).
+volumes:
+  mongodb-data:
+    name: xflickr-test-mongodb-data
+  redis-data:
+    name: xflickr-test-redis-data

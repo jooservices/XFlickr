@@ -1,7 +1,7 @@
-# Local development stack — NEVER run tests or migrate:fresh here.
-# Tests: composer test:docker  OR  docker compose -f docker-compose.test.yml run --rm test
-# Agents: read AGENTS.md and docs/05-maintenance/docker-safety.md before any docker compose exec.
-name: xflickr
+# Local development stack — operator only. NEVER run tests or migrate:fresh here.
+# Tests: bash scripts/test.sh gate:test
+# Agents: read AGENTS.md — use scripts/test.sh only, never dev stack.
+name: xflickr-dev
 
 x-php-build: &php-build
   build:
@@ -13,13 +13,13 @@ x-php-environment: &php-environment
   APP_ENV: local
   APP_KEY: ${APP_KEY}
   APP_DEBUG: "true"
-  APP_URL: http://localhost:8082
+  APP_URL: http://localhost:${APP_HOST_PORT:-8082}
   DB_CONNECTION: mysql
   DB_HOST: mysql
   DB_PORT: "3306"
-  DB_DATABASE: xflickr
-  DB_USERNAME: xflickr
-  DB_PASSWORD: secret
+  DB_DATABASE: ${MYSQL_DATABASE:-xflickr}
+  DB_USERNAME: ${MYSQL_USER:-xflickr}
+  DB_PASSWORD: ${MYSQL_PASSWORD:-secret}
   SESSION_DRIVER: database
   CACHE_STORE: database
   QUEUE_CONNECTION: redis
@@ -27,7 +27,7 @@ x-php-environment: &php-environment
   REDIS_HOST: redis
   REDIS_PORT: "6379"
   HORIZON_NAME: xflickr-horizon
-  FLICKR_CALLBACK_URL: http://localhost:8082/flickr/callback
+  FLICKR_CALLBACK_URL: http://localhost:${APP_HOST_PORT:-8082}/flickr/callback
   MONGODB_URI: mongodb://mongodb:27017
   MONGODB_DATABASE: xflickr
   CONFIG_STORE_CACHE_ENABLED: "true"
@@ -41,6 +41,7 @@ x-php-base: &php-base
     <<: *php-environment
   volumes:
     - .:/var/www/html
+    - ../XFlickrCrawler:/var/www/html/vendor/jooservices/xflickr-crawler
     - node-modules:/var/www/html/node_modules
   entrypoint: ["/var/www/html/docker/entrypoint.sh"]
   depends_on:
@@ -51,21 +52,24 @@ x-php-base: &php-base
     mongodb:
       condition: service_healthy
 
+include:
+  - docker/compose/volumes-dev.yml
+
 services:
   mysql:
     image: mysql:9
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: xflickr
-      MYSQL_USER: xflickr
-      MYSQL_PASSWORD: secret
-      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-xflickr}
+      MYSQL_USER: ${MYSQL_USER:-xflickr}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-secret}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret}
     ports:
-      - "3308:3306"
+      - "${MYSQL_HOST_PORT:-3308}:3306"
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-psecret"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-secret}"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -75,7 +79,9 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     ports:
-      - "6381:6379"
+      - "${REDIS_HOST_PORT:-6381}:6379"
+    volumes:
+      - redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -86,7 +92,7 @@ services:
     image: mongo:7
     restart: unless-stopped
     ports:
-      - "27019:27017"
+      - "${MONGODB_HOST_PORT:-27019}:27017"
     volumes:
       - mongodb-data:/data/db
     healthcheck:
@@ -99,8 +105,11 @@ services:
   app:
     <<: *php-base
     command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+    environment:
+      <<: *php-environment
+      PHP_CLI_SERVER_WORKERS: "4"
     ports:
-      - "8082:8000"
+      - "${APP_HOST_PORT:-8082}:8000"
     healthcheck:
       test: ["CMD", "php", "-r", "exit((int)!@fsockopen('127.0.0.1', 8000));"]
       interval: 10s
@@ -116,27 +125,18 @@ services:
     <<: *php-base
     command: ["php", "artisan", "schedule:work"]
 
-  vite:
-    <<: *php-build
-    restart: unless-stopped
-    command: >
-      sh -lc 'stamp=node_modules/.deps-stamp;
-      if [ ! -f "$$stamp" ] || [ package-lock.json -nt "$$stamp" ]; then npm ci && touch "$$stamp"; fi;
-      npm run dev -- --host 0.0.0.0 --port 5173'
-    environment:
-      <<: *php-environment
-      VITE_DEV_HOST: localhost
-      VITE_DEV_PORT: "5174"
+  frontend:
+    image: node:22-bookworm
+    working_dir: /var/www/html
+    command: sh scripts/docker-dev.sh
     ports:
-      - "5174:5173"
+      - "${FRONTEND_HOST_PORT:-5174}:5173"
+    environment:
+      VITE_DEV_HOST: ${VITE_DEV_HOST:-localhost}
+      VITE_DEV_PORT: ${FRONTEND_HOST_PORT:-5174}
     volumes:
       - .:/var/www/html
-      - node-modules:/var/www/html/node_modules
+      - frontend-node-modules:/var/www/html/node_modules
     depends_on:
       app:
         condition: service_started
-
-volumes:
-  mysql-data:
-  mongodb-data:
-  node-modules:

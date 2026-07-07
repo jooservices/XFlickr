@@ -2,16 +2,22 @@
 
 ## Absolute rule (AI agents)
 
-**NO EXCEPTIONS. Agents must not run any command on the local dev stack (`docker-compose.yml`) that reads, writes, migrates, seeds, tests, wipes, or otherwise modifies MySQL or MongoDB.**
+**NO EXCEPTIONS. Agents must not run any command on the local dev stack (`docker-compose.dev.yml`, project `xflickr-dev`) that reads, writes, migrates, seeds, tests, wipes, or otherwise modifies MySQL or MongoDB.**
 
-The only compose file for database work is **`docker-compose.test.yml`**.
+The only path for database work is **`bash scripts/test.sh`** against **`docker-compose.test.yml`** (project `xflickr-test`).
 
 ## Two stacks
 
-| File | Purpose | Database |
-|------|---------|----------|
-| `docker-compose.yml` | **Local development** — user data | MySQL `xflickr` (volume `mysql-data`), MongoDB `xflickr` (volume `mongodb-data`) |
-| `docker-compose.test.yml` | **Tests only** | SQLite `:memory:`, MongoDB `xflickr_test` |
+| File | Project | Purpose | Database |
+|------|---------|---------|----------|
+| `docker-compose.dev.yml` | `xflickr-dev` | **Local development** — user data | MySQL `xflickr` (volume `xflickr-dev-mysql-data`), MongoDB `xflickr` (`xflickr-dev-mongodb-data`) |
+| `docker-compose.test.yml` | `xflickr-test` | **Tests only** | SQLite `:memory:`, MongoDB `xflickr_test` |
+
+## Named volumes
+
+Dev and test use explicit volume names to prevent cross-contamination. See [`docker/compose/volumes-dev.yml`](../../docker/compose/volumes-dev.yml) and [`volumes-test.yml`](../../docker/compose/volumes-test.yml).
+
+**Migrating from old `docker-compose.yml` (project `xflickr`):** volumes like `xflickr_mysql-data` do not attach to `xflickr-dev-mysql-data`. Rename volumes manually or start fresh with `bash scripts/dev.sh up`.
 
 ## What is stored where
 
@@ -23,30 +29,30 @@ The only compose file for database work is **`docker-compose.test.yml`**.
 | Connected storage accounts | `storage_accounts` | — |
 | Crawled photos, uploads, browse cache | various tables | — |
 
-A MySQL-only wipe leaves MongoDB app profiles visible with **0 accounts**.
-
 ## Incident (2026-06-22)
 
 Agent ran `docker compose exec app php artisan test` on the dev stack. `RefreshDatabase` → `migrate:fresh` → **MySQL wiped**. MongoDB survived until user-requested reset.
 
+Code guard: `Tests\Support\RefreshDatabaseGuard` + `Tests\Concerns\SafeRefreshDatabase`.
+
 ## Forbidden on local dev stack (agents — zero exceptions)
 
-- `php artisan test`, `composer test`
-- `php artisan migrate`, `migrate:fresh`, `migrate:refresh`, `migrate:reset`
-- `php artisan db:seed`, `db:wipe`
+- `scripts/dev.sh`, `scripts/deploy.sh`
+- `docker compose` without test stack
+- **`docker exec xflickr-dev-*`** (any command)
+- `php artisan test`, `composer test:docker` (use `bash scripts/test.sh gate:test`)
+- `php artisan migrate`, `migrate:fresh`, `db:seed`, `db:wipe`
 - `mongosh`, `mysql` CLI against dev
-- `docker compose exec app php artisan …` unless user explicitly approved a named maintenance script
 
-## Permitted on local dev stack (agents)
-
-- `docker compose up`, `build`, `restart`, `logs`, `ps`
-- `composer install`, `npm run build` (no database)
-
-## Tests (correct)
+## Permitted (agents only)
 
 ```bash
-composer test:docker
-./scripts/test-docker.sh --filter=ExampleTest
+bash scripts/test.sh gate
+bash scripts/test.sh gate:lint
+bash scripts/test.sh gate:test
+bash scripts/test.sh gate:ci
+bash scripts/test.sh up
+bash scripts/test.sh down
 ```
 
 ## User-initiated MongoDB reset
@@ -57,14 +63,10 @@ composer test:docker
 ./scripts/reset-local-mongodb.sh
 ```
 
-Drops MongoDB `xflickr`, rebuilds laravel-config and laravel-events indexes, clears config cache.
-
-After reset: re-enter Flickr and storage app credentials in Settings.
-
 ## Recovering after MySQL wipe
 
 1. Reconnect Flickr accounts (Settings → Flickr → Connect)
 2. Reconnect storage providers (Settings → Storage)
 3. Re-run crawls / downloads as needed
 
-Prevent recurrence: **`composer test:docker` only** — never `docker compose exec app php artisan test`.
+Prevent recurrence: **`bash scripts/test.sh gate:test` only** — never `docker exec xflickr-dev-app-1 php artisan test`.
