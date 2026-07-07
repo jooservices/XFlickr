@@ -200,6 +200,16 @@ export interface TransferBatch {
     updated_at: string | null;
 }
 
+export interface TransferItem {
+    id: number;
+    transfer_batch_id: number;
+    flickr_photo_id: string;
+    status: string;
+    error_message: string | null;
+    created_at: string | null;
+    updated_at: string | null;
+}
+
 export interface RateLimitState {
     requests_used: number;
     max_requests_per_hour: number;

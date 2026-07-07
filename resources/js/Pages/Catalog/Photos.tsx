@@ -1,12 +1,15 @@
 import { Head } from '@inertiajs/react';
+import { useState } from 'react';
 
 import Breadcrumbs from '@/Components/Breadcrumbs';
+import Button from '@/Components/Button';
 import CatalogOwnerNsidFilter from '@/Components/CatalogOwnerNsidFilter';
 import ContactNsidLinks from '@/Components/ContactNsidLinks';
 import CrawlActionBar from '@/Components/CrawlActionBar';
 import DataTable from '@/Components/DataTable';
 import FlickrPhotoIdLinks from '@/Components/FlickrPhotoIdLinks';
 import PageHeading from '@/Components/PageHeading';
+import PhotoGrid from '@/Components/PhotoGrid';
 import PhotoMembershipLinks from '@/Components/PhotoMembershipLinks';
 import Thumbnail from '@/Components/Thumbnail';
 import { useCatalogOwnerNsidTable } from '@/hooks/useCatalogOwnerNsidTable';
@@ -20,6 +23,7 @@ interface Props extends PageProps {
 }
 
 export default function CatalogPhotos({ account }: Props) {
+    const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
     const { data: photos, meta, setPage, loading, sortKey, sortDirection, handleSortChange, filterFormProps } =
         useCatalogOwnerNsidTable<Photo>('owner_nsid', {
             fetchPath: '/api/flickr/catalog/photos',
@@ -40,8 +44,27 @@ export default function CatalogPhotos({ account }: Props) {
 
                 <CatalogOwnerNsidFilter {...filterFormProps} />
 
+                <div className="flex gap-2">
+                    <Button
+                        type="button"
+                        variant={viewMode === 'table' ? 'primary' : 'secondary'}
+                        onClick={() => setViewMode('table')}
+                    >
+                        Table
+                    </Button>
+                    <Button
+                        type="button"
+                        variant={viewMode === 'grid' ? 'primary' : 'secondary'}
+                        onClick={() => setViewMode('grid')}
+                    >
+                        Grid
+                    </Button>
+                </div>
+
                 {loading ? (
                     <p className="text-sm text-slate-500">Loading…</p>
+                ) : viewMode === 'grid' ? (
+                    <PhotoGrid photos={photos} />
                 ) : (
                     <DataTable
                         columns={[
