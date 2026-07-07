@@ -4,6 +4,7 @@ import Breadcrumbs from '@/Components/Breadcrumbs';
 import PageHeading from '@/Components/PageHeading';
 import FlickrCredentialsPanel from '@/Components/Settings/FlickrCredentialsPanel';
 import GeneralConfigPanel from '@/Components/Settings/GeneralConfigPanel';
+import OnboardingWizard from '@/Components/Settings/OnboardingWizard';
 import StorageCredentialsPanel from '@/Components/Settings/StorageCredentialsPanel';
 import AppLayout from '@/Layouts/AppLayout';
 import { settingsCrumbs } from '@/lib/breadcrumbs';
@@ -92,6 +93,11 @@ export default function SettingsIndex({
                     breadcrumbs={<Breadcrumbs items={settingsCrumbs(tab)} />}
                     title="Settings"
                     subtitle="Configure runtime options, manage connections, and storage credentials."
+                />
+
+                <OnboardingWizard
+                    hasFlickrAccounts={flickr.accounts.length > 0}
+                    hasStorageAccounts={storage_accounts.length > 0}
                 />
 
                 <div className="flex gap-1 border-b border-slate-200">

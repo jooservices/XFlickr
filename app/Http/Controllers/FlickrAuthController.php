@@ -9,6 +9,7 @@ use App\Http\Requests\Flickr\FlickrConnectionKeyRequest;
 use App\Http\Requests\Flickr\FlickrOAuthCallbackRequest;
 use App\Services\Flickr\FlickrOAuthService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
 use JOOservices\Flickr\Exceptions\AuthenticationException;
 use JOOservices\Flickr\Exceptions\ConfigurationException;
 use JOOservices\XFlickrCrawler\Exceptions\FlickrAppNotConfiguredException;
@@ -54,7 +55,9 @@ final class FlickrAuthController
                 'error',
                 'Flickr account could not be connected. Check app credentials and try again.',
             );
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            Log::warning('Flickr OAuth callback failed.', ['exception' => $exception]);
+
             return redirect()->route('settings.index', ['tab' => 'flickr'])->with(
                 'error',
                 'Flickr account could not be connected due to an unexpected error.',

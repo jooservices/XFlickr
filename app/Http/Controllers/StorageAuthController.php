@@ -15,6 +15,8 @@ use App\Services\Storage\StorageAccountService;
 use App\Services\Storage\StorageOAuthService;
 use App\Services\Storage\StorageR2ConnectionVerifier;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final class StorageAuthController
 {
@@ -26,7 +28,9 @@ final class StorageAuthController
                 $request->accountId(),
                 $request->returnUrl(),
             );
-        } catch (\Throwable) {
+        } catch (Throwable $exception) {
+            Log::warning('Storage OAuth connect failed.', ['exception' => $exception]);
+
             return redirect()->route('settings.index', ['tab' => 'storage'])->with(
                 'error',
                 'Storage OAuth could not be started. Add app credentials for this provider in Settings first.',
@@ -42,7 +46,9 @@ final class StorageAuthController
 
         try {
             $url = $oauth->beginForAccount($account, $returnUrl);
-        } catch (\Throwable) {
+        } catch (Throwable $exception) {
+            Log::warning('Storage OAuth reauthorize failed.', ['exception' => $exception]);
+
             return redirect($returnUrl ?? route('settings.index', ['tab' => 'storage']))->with(
                 'error',
                 'Storage reauthorization could not be started. Check app credentials in Settings.',
@@ -66,7 +72,9 @@ final class StorageAuthController
 
         try {
             $oauth->complete($request->provider(), $request->code());
-        } catch (\Throwable) {
+        } catch (Throwable $exception) {
+            Log::warning('Storage OAuth callback failed.', ['exception' => $exception]);
+
             return redirect($returnUrl)->with('error', 'Storage account could not be connected.');
         }
 
@@ -106,7 +114,9 @@ final class StorageAuthController
 
         try {
             $verifier->verify($credentials);
-        } catch (\Throwable) {
+        } catch (Throwable $exception) {
+            Log::warning('Cloudflare R2 connection verification failed.', ['exception' => $exception]);
+
             return redirect()->route('settings.index', ['tab' => 'storage'])->with(
                 'error',
                 'Cloudflare R2 connection failed. Check bucket, endpoint, and API token permissions.',

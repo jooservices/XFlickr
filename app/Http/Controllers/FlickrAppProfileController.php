@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Settings\DestroyFlickrAppProfileRequest;
 use App\Http\Requests\Settings\StoreFlickrAppProfileRequest;
 use App\Services\Flickr\FlickrAppProfileService;
 use App\Support\Observability\AdminActionLogger;
@@ -32,5 +33,26 @@ final class FlickrAppProfileController
         return redirect()
             ->route('settings.index', ['tab' => 'flickr'])
             ->with('success', 'Flickr app credentials saved.');
+    }
+
+    public function destroy(DestroyFlickrAppProfileRequest $request, FlickrAppProfileService $profiles, AdminActionLogger $audit): RedirectResponse
+    {
+        try {
+            $profile = $profiles->delete($request->profile());
+        } catch (ValidationException $exception) {
+            $message = collect($exception->errors())->flatten()->first();
+
+            return redirect()
+                ->route('settings.index', ['tab' => 'flickr'])
+                ->with('error', is_string($message) ? $message : 'Flickr app profile could not be deleted.');
+        }
+
+        $audit->record('settings.flickr_app.deleted', [
+            'profile' => $profile,
+        ]);
+
+        return redirect()
+            ->route('settings.index', ['tab' => 'flickr'])
+            ->with('success', 'Flickr app profile deleted.');
     }
 }

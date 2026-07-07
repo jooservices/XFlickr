@@ -1,5 +1,5 @@
 import { router, useForm } from '@inertiajs/react';
-import { Plus, X } from 'lucide-react';
+import { Plus, Trash2, X } from 'lucide-react';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 
 import Button from '@/Components/Button';
@@ -29,6 +29,8 @@ export default function FlickrCredentialsPanel({
 }: FlickrCredentialsPanelProps) {
     const [appDialogOpen, setAppDialogOpen] = useState(false);
     const [profilePickerOpen, setProfilePickerOpen] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<FlickrAppSummary | null>(null);
+    const [deleting, setDeleting] = useState(false);
     const [selectedProfile, setSelectedProfile] = useState(apps[0]?.profile ?? 'main');
     const [summaries, setSummaries] = useState<Record<string, CrawlSummary>>({});
 
@@ -122,31 +124,105 @@ export default function FlickrCredentialsPanel({
         window.location.href = `/flickr/oauth?app_profile=${encodeURIComponent(selectedProfile)}`;
     };
 
+    const startOAuth = (profile: string) => {
+        window.location.href = `/flickr/oauth?app_profile=${encodeURIComponent(profile)}`;
+    };
+
+    const confirmDelete = () => {
+        if (!deleteTarget || deleteTarget.accounts_count > 0) {
+            return;
+        }
+
+        setDeleting(true);
+        router.delete(`/settings/flickr-app/${encodeURIComponent(deleteTarget.profile)}`, {
+            preserveScroll: true,
+            onFinish: () => setDeleting(false),
+            onSuccess: () => setDeleteTarget(null),
+        });
+    };
+
+    const formErrorEntries = Object.entries(form.errors).filter(([, message]) => message !== '');
+
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                    <h2 className="text-lg font-semibold text-slate-900">Flickr accounts</h2>
-                    <p className="mt-1 text-sm text-slate-600">Manage Flickr connections and API app credentials.</p>
+        <div className="space-y-8">
+            <div className="space-y-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <h2 className="text-lg font-semibold text-slate-900">Flickr apps</h2>
+                        <p className="mt-1 text-sm text-slate-600">
+                            API key and secret from your Flickr developer app. Required before connecting an account.
+                        </p>
+                    </div>
+                    <Button
+                        variant="secondary"
+                        onClick={() => {
+                            resetForm();
+                            setAppDialogOpen(true);
+                        }}
+                        className="shadow-sm"
+                    >
+                        <Plus className="h-4 w-4" />
+                        Add Flickr app
+                    </Button>
                 </div>
-                <Button
-                    variant="secondary"
-                    onClick={() => {
-                        resetForm();
-                        setAppDialogOpen(true);
-                    }}
-                    className="shadow-sm"
-                >
-                    <Plus className="h-4 w-4" />
-                    Add Flickr app
-                </Button>
+
+                {apps.length === 0 ? (
+                    <p className="text-sm text-slate-600">No Flickr apps configured yet. Add one to continue.</p>
+                ) : (
+                    <div className="grid gap-4">
+                        {apps.map((app) => (
+                            <ProviderCard
+                                key={app.profile}
+                                title={app.label ?? `Profile ${app.profile}`}
+                                subtitle={`Profile: ${app.profile}`}
+                                isConnected={false}
+                                onConnect={() => startOAuth(app.profile)}
+                                extraHeaderActions={
+                                    <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => setDeleteTarget(app)}
+                                        title="Delete app profile"
+                                    >
+                                        <Trash2 className="size-3.5" />
+                                        Delete
+                                    </Button>
+                                }
+                                badges={
+                                    <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                                        {app.api_key_hint}
+                                    </span>
+                                }
+                                quotaFallback={
+                                    <p className="text-xs text-slate-500">
+                                        Callback: {app.callback_url ?? default_callback_url}
+                                    </p>
+                                }
+                            >
+                                <p className="text-xs text-slate-500">
+                                    {app.accounts_count === 0
+                                        ? 'App saved. Connect a Flickr account to use it.'
+                                        : `${app.accounts_count} connected account${app.accounts_count === 1 ? '' : 's'}.`}
+                                </p>
+                            </ProviderCard>
+                        ))}
+                    </div>
+                )}
             </div>
 
-            {accounts.length === 0 ? (
-                <p className="text-sm text-slate-600">
-                    No Flickr accounts yet. Add a Flickr app, then connect an account.
-                </p>
-            ) : (
+            <div className="space-y-6">
+                <div>
+                    <h2 className="text-lg font-semibold text-slate-900">Flickr accounts</h2>
+                    <p className="mt-1 text-sm text-slate-600">OAuth-connected Flickr users tied to an app profile above.</p>
+                </div>
+
+                {accounts.length === 0 ? (
+                    <p className="text-sm text-slate-600">
+                        {apps.length === 0
+                            ? 'No Flickr accounts yet. Add a Flickr app first, then connect an account.'
+                            : 'No Flickr accounts connected yet. Use Connect on an app card above.'}
+                    </p>
+                ) : (
                 <div className="grid gap-4">
                     {accounts.map((account) => (
                         <ProviderCard
@@ -201,23 +277,22 @@ export default function FlickrCredentialsPanel({
                         </ProviderCard>
                     ))}
                 </div>
-            )}
+                )}
+            </div>
 
             {appDialogOpen ? (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
                     <div className="w-full max-w-lg rounded-lg border border-slate-200 bg-white p-6 shadow-xl">
                         <div className="mb-4 flex items-center justify-between">
                             <h3 className="text-lg font-semibold text-slate-900">Flickr app credentials</h3>
-                            {apps.length > 0 ? (
-                                <button
-                                    type="button"
-                                    onClick={() => setAppDialogOpen(false)}
-                                    className="rounded-md p-1 text-slate-500 hover:bg-slate-100"
-                                    aria-label="Close"
-                                >
-                                    <X className="h-5 w-5" />
-                                </button>
-                            ) : null}
+                            <button
+                                type="button"
+                                onClick={() => setAppDialogOpen(false)}
+                                className="rounded-md p-1 text-slate-500 hover:bg-slate-100"
+                                aria-label="Close"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
                         </div>
 
                         <form className="space-y-4" onSubmit={saveApp}>
@@ -225,15 +300,12 @@ export default function FlickrCredentialsPanel({
                                 Credentials are stored in MongoDB via laravel-config (`xflickr_app.{'{profile}'}`).
                             </p>
 
-                            {form.errors.api_key ? (
-                                <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">
-                                    {form.errors.api_key}
-                                </p>
-                            ) : null}
-                            {form.errors.profile ? (
-                                <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">
-                                    {form.errors.profile}
-                                </p>
+                            {formErrorEntries.length > 0 ? (
+                                <div className="space-y-1 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">
+                                    {formErrorEntries.map(([field, message]) => (
+                                        <p key={field}>{message}</p>
+                                    ))}
+                                </div>
                             ) : null}
 
                             <label className="block text-sm">
@@ -291,15 +363,13 @@ export default function FlickrCredentialsPanel({
                             </label>
 
                             <div className="flex justify-end gap-2">
-                                {apps.length > 0 ? (
-                                    <button
-                                        type="button"
-                                        onClick={() => setAppDialogOpen(false)}
-                                        className="rounded-md border border-slate-200 px-4 py-2 text-sm"
-                                    >
-                                        Cancel
-                                    </button>
-                                ) : null}
+                                <button
+                                    type="button"
+                                    onClick={() => setAppDialogOpen(false)}
+                                    className="rounded-md border border-slate-200 px-4 py-2 text-sm"
+                                >
+                                    Cancel
+                                </button>
                                 <button
                                     type="submit"
                                     disabled={form.processing || !form.data.api_key.trim() || !form.data.api_secret.trim()}
@@ -358,6 +428,61 @@ export default function FlickrCredentialsPanel({
                             >
                                 Connect
                             </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+
+            {deleteTarget ? (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+                    <div className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-xl">
+                        <div className="mb-4 flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-slate-900">Delete Flickr app?</h3>
+                            <button
+                                type="button"
+                                onClick={() => setDeleteTarget(null)}
+                                className="rounded-md p-1 text-slate-500 hover:bg-slate-100"
+                                aria-label="Close"
+                                disabled={deleting}
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        <p className="text-sm text-slate-600">
+                            This removes API credentials for{' '}
+                            <span className="font-medium text-slate-900">
+                                {deleteTarget.label ?? `Profile ${deleteTarget.profile}`}
+                            </span>{' '}
+                            (<span className="font-mono text-xs">{deleteTarget.profile}</span>) from MongoDB. This
+                            cannot be undone.
+                        </p>
+
+                        {deleteTarget.accounts_count > 0 ? (
+                            <p className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                                {deleteTarget.accounts_count} Flickr account
+                                {deleteTarget.accounts_count === 1 ? ' is' : 's are'} still linked to this profile.
+                                Disconnect them before deleting the app.
+                            </p>
+                        ) : null}
+
+                        <div className="mt-6 flex justify-end gap-2">
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => setDeleteTarget(null)}
+                                disabled={deleting}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                onClick={confirmDelete}
+                                disabled={deleting || deleteTarget.accounts_count > 0}
+                            >
+                                {deleting ? 'Deleting…' : 'Delete app'}
+                            </Button>
                         </div>
                     </div>
                 </div>

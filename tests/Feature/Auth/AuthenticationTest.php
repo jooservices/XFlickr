@@ -5,15 +5,17 @@ declare(strict_types=1);
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use App\Support\AdminCredentialResolver;
 use Database\Seeders\AdminUserSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use InvalidArgumentException;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\IgnoresAuthentication;
 use Tests\TestCase;
 
 final class AuthenticationTest extends TestCase
 {
     use IgnoresAuthentication;
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_login_screen_can_be_rendered(): void
     {
@@ -78,6 +80,8 @@ final class AuthenticationTest extends TestCase
 
     public function test_admin_user_seeder_creates_default_account(): void
     {
+        config(['admin.password' => 'password']);
+
         $this->seed(AdminUserSeeder::class);
 
         $this->assertDatabaseHas('users', [
@@ -92,5 +96,17 @@ final class AuthenticationTest extends TestCase
 
         $response->assertRedirect(route('dashboard'));
         $this->assertAuthenticated();
+    }
+
+    public function test_admin_user_seeder_rejects_default_password_in_production(): void
+    {
+        config([
+            'app.env' => 'production',
+            'admin.password' => AdminCredentialResolver::FORBIDDEN_PRODUCTION_PASSWORD,
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $this->seed(AdminUserSeeder::class);
     }
 }
