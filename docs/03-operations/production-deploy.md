@@ -1,0 +1,72 @@
+# Production deploy
+
+Install and operate XFlickr on a server with Docker. Production uses **external** MySQL, Redis, and MongoDB — no database containers in the prod stack.
+
+## Prerequisites
+
+- Docker Engine + Compose v2
+- Git
+- External MySQL, Redis, and MongoDB reachable from Docker containers
+
+## First install
+
+```bash
+git clone https://github.com/jooservices/XFlickr.git
+cd XFlickr
+bash scripts/deploy.sh install
+```
+
+The wizard will:
+
+1. Optionally `git pull`
+2. Prompt for `APP_URL`, HTTP port, and admin credentials
+3. Collect MySQL, Redis, and MongoDB host/credentials — **testing each connection before continuing**
+4. Re-prompt until each service is reachable from Docker
+5. Optionally enable HTTPS (self-signed or your own cert/key files)
+6. Write `.env`, build images, and start nginx + app + horizon + scheduler
+
+## Updates
+
+```bash
+bash scripts/deploy.sh update
+```
+
+Pulls latest code, rebuilds frontend assets, runs migrations, refreshes caches, and restarts workers.
+
+## Other commands
+
+```bash
+bash scripts/deploy.sh configure        # Re-run service wizard (preserves APP_KEY)
+bash scripts/deploy.sh configure-ssl    # Update HTTPS settings
+bash scripts/deploy.sh scale 3          # Run 3 Horizon containers
+bash scripts/deploy.sh ps
+bash scripts/deploy.sh logs app
+bash scripts/deploy.sh down
+```
+
+## Horizon workers
+
+| Setting | Where |
+|---|---|
+| Workers per queue type | Settings → General → **Queue** (runtime config) |
+| Horizon container count | `HORIZON_REPLICAS` in `.env` or `bash scripts/deploy.sh scale N` |
+
+Total workers ≈ UI value × replica count.
+
+## Same-host databases
+
+If MySQL/Redis/Mongo run on the same machine as Docker, use `host.docker.internal` (Docker Desktop) or the Docker bridge gateway IP on Linux (often `172.17.0.1`). The wizard suggests this when `localhost` fails from inside a container.
+
+## Flickr OAuth
+
+Register this callback URL in your Flickr app settings (shown at end of wizard):
+
+```
+{APP_URL}/flickr/callback
+```
+
+## See also
+
+- [Docker stacks](docker-stacks.md) — dev / testing / production separation
+- [Deploy overview](deploy.md)
+- [Environments](../01-getting-started/environments.md)

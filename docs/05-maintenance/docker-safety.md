@@ -6,12 +6,14 @@
 
 The only path for database work is **`bash scripts/test.sh`** against **`docker-compose.test.yml`** (project `xflickr-test`).
 
-## Two stacks
+## Two stacks (agents)
 
 | File | Project | Purpose | Database |
 |------|---------|---------|----------|
-| `docker-compose.dev.yml` | `xflickr-dev` | **Local development** — user data | MySQL `xflickr` (volume `xflickr-dev-mysql-data`), MongoDB `xflickr` (`xflickr-dev-mongodb-data`) |
+| `docker-compose.dev.yml` | `xflickr-dev` | **Local development** — user data | MySQL `xflickr`, MongoDB `xflickr` |
 | `docker-compose.test.yml` | `xflickr-test` | **Tests only** | SQLite `:memory:`, MongoDB `xflickr_test` |
+
+Production (`docker-compose.prod.yml`, project `xflickr-prod`) is operator-only via `scripts/deploy.sh` — external databases, not for agents.
 
 ## Named volumes
 

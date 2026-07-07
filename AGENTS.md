@@ -11,16 +11,17 @@ Read this file before running commands or changing code in this repository.
 
 ---
 
-## Docker scripts (two stacks)
+## Docker scripts (three stacks)
 
-Two public entry points — **AI may only use `test.sh`** (see Docker policy below).
+Three public entry points — **AI may only use `test.sh`** (see Docker policy below).
 
 | Script | Purpose | Who |
 |--------|---------|-----|
 | [`scripts/dev.sh`](scripts/dev.sh) | Dev stack (`docker-compose.dev.yml`, hot reload) | **Operator only** |
 | [`scripts/test.sh`](scripts/test.sh) | Quality gates + isolated test stack | **AI + CI only** |
+| [`scripts/deploy.sh`](scripts/deploy.sh) | Production stack (`docker-compose.prod.yml`, install/update wizard) | **Operator only** |
 
-Internal helpers live under [`scripts/lib/`](scripts/lib/) (`compose-dev.sh`, `compose-test.sh`, `dev/`, `test/`).
+Internal helpers live under [`scripts/lib/`](scripts/lib/) (`compose-dev.sh`, `compose-test.sh`, `compose-prod.sh`, `dev/`, `test/`, `deploy/`).
 
 ### Docker policy (agents)
 
@@ -43,6 +44,8 @@ bash scripts/dev.sh reload             # rebuild assets + restart workers
 Dev subcommands: `up` (migrate only), `seed`, `refresh` (MySQL schema wipe + admin), `reset-data` / `down --volumes` (all volumes), `down`, `reload`, `restart-frontend`, `refresh-frontend`.
 
 Test stack uses `docker-compose.test.yml` (project `xflickr-test`). Named volumes: `xflickr-test-*`.
+
+Production stack uses `docker-compose.prod.yml` (project `xflickr-prod`). External databases only — see [Production deploy](docs/03-operations/production-deploy.md).
 
 ### Commit and push (non-negotiable for AI)
 

@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Production Docker stack (`docker-compose.prod.yml`, project `xflickr-prod`) with nginx, scalable Horizon replicas, and external MySQL/Redis/MongoDB.
+- `bash scripts/deploy.sh` production wizard: connectivity validation loop, optional HTTPS, install/update/configure commands.
+- UI-configurable Horizon worker counts (Settings → General → Queue) with `horizon:terminate` on save.
+- `.env.prod.example` and `docs/03-operations/production-deploy.md`.
 - Docker dev/test parity (XCrawlerII model): `docker-compose.dev.yml`, `scripts/test.sh` quality gates, `scripts/dev.sh` operator commands, named volumes (`xflickr-dev-*` / `xflickr-test-*`), dedicated frontend container, `RefreshDatabaseGuard`, `operator-dev-docker` skill, git hooks.
 - `.env.test.example` for test stack port overrides.
 - Admin credential hardening: `ADMIN_PASSWORD` env, random Docker bootstrap password, `xflickr:user:password` command.
@@ -23,6 +27,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `scripts/deploy.sh` is now production-only (no longer aliases `dev.sh reload`). Local reload: `bash scripts/dev.sh reload`.
+
 - Renamed `docker-compose.yml` → `docker-compose.dev.yml` (project `xflickr-dev`). Existing `xflickr_*` volumes do not auto-migrate — see [Docker stacks](docs/03-operations/docker-stacks.md#volume-migration).
 - Bumped `jooservices/xflickr-crawler` to **^1.3.0** for event-driven spider BFS (subject contacts, `ContactsCrawlCompleted`).
 - `AdminUserSeeder` creates admin only on first run — no password overwrite on container restart.
@@ -32,7 +38,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `DownloadCandidateDto` and `OAuthAppConfigDto` wired at resolver and OAuth call sites.
 - AI agents must use `bash scripts/test.sh` only — never `scripts/dev.sh` or `docker exec xflickr-dev-*`.
 - Feature tests use `Tests\Concerns\SafeRefreshDatabase` instead of raw `RefreshDatabase`.
-- `scripts/deploy.sh` deprecated in favor of `bash scripts/dev.sh reload`.
 - Transfer fan-out uses per-chunk set-based exclusion (bounded queries); upload jobs scale `retryUntil` with batch size.
 - Dashboard snapshot uses aggregate queries and 15s cache; dashboard poll interval 15s.
 - Retry/deferral semantics: file-not-ready upload deferrals are not capped at three attempts.

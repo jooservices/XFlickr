@@ -31,10 +31,27 @@ bash scripts/test.sh gate:test
 
 Port overrides: `.env.test.example` (loaded by `scripts/test.sh`).
 
+## Production (operator, server)
+
+| Variable | Production value |
+|---|---|
+| `APP_ENV` | `production` |
+| `APP_DEBUG` | `false` |
+| `APP_URL` | Public URL (IP or hostname) |
+| `DB_HOST` / `REDIS_HOST` / `MONGODB_URI` | External services (wizard-validated) |
+| `HORIZON_REPLICAS` | Horizon container count (default `1`) |
+
+Compose file: `docker-compose.prod.yml` (project `xflickr-prod`)
+
+Install: `bash scripts/deploy.sh install`  
+Update: `bash scripts/deploy.sh update`
+
+Horizon worker counts per queue type: Settings → General → **Queue** (runtime config).
+
+See [Production deploy](../03-operations/production-deploy.md).
+
 ## Production considerations
 
-- Set `APP_DEBUG=false`
-- Use strong database passwords
-- Protect Horizon dashboard (configure `horizon` middleware in `config/horizon.php`)
-- Run Horizon and scheduler via Supervisor or systemd
+- `ADMIN_PASSWORD` required in `.env`
+- Protect Horizon dashboard (auth middleware in `config/horizon.php`)
 - See [Deploy](../03-operations/deploy.md)

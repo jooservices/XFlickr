@@ -9,7 +9,7 @@ description: Deploy script, CHANGELOG cuts, and production checklist.
 
 Guide safe deployment and release documentation.
 
-## Local deploy (no migrations)
+## Local dev reload (no migrations)
 
 ```bash
 bash scripts/dev.sh reload
@@ -17,7 +17,14 @@ bash scripts/dev.sh reload
 
 Rebuilds assets in container, clears caches, restarts app/horizon/scheduler. **Does not migrate.**
 
-(`scripts/deploy.sh` is deprecated — calls `dev.sh reload`.)
+## Production deploy
+
+```bash
+bash scripts/deploy.sh install   # first-time wizard + external DB setup
+bash scripts/deploy.sh update    # git pull + rebuild + migrate + restart
+```
+
+See `docs/03-operations/production-deploy.md`.
 
 ## CHANGELOG
 
@@ -33,15 +40,13 @@ Rebuilds assets in container, clears caches, restarts app/horizon/scheduler. **D
 
 ## Production checklist
 
-1. `composer install --no-dev --optimize-autoloader`
-2. `npm ci && npm run build`
-3. `php artisan migrate --force` (when schema changed — user-initiated)
-4. `php artisan config:cache && php artisan route:cache`
-5. Restart Horizon and scheduler
-6. Verify app + Horizon dashboard
+1. `bash scripts/deploy.sh update` (or manual equivalent)
+2. Verify app and Horizon dashboard
+3. Confirm Flickr callback URL matches `APP_URL`
 
 ## Rules
 
+- Agents do not run `scripts/deploy.sh` or `scripts/dev.sh`.
 - Agents do not run production migrations without explicit user request.
 - Never deploy with `APP_DEBUG=true` in production.
 - Update `CHANGELOG.md` for every release.

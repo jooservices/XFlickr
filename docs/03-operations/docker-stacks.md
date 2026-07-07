@@ -1,11 +1,12 @@
 # Docker stacks
 
-XFlickr uses two separate Docker Compose files. **Never mix them.**
+XFlickr uses three separate Docker Compose files. **Never mix them.**
 
-| File | Project | Purpose | Database |
-|---|---|---|---|
-| `docker-compose.dev.yml` | `xflickr-dev` | Local development — **user data** | MySQL `xflickr`, MongoDB `xflickr` |
-| `docker-compose.test.yml` | `xflickr-test` | Tests and CI only | SQLite `:memory:`, MongoDB `xflickr_test` |
+| File | Project | Script | Purpose | Database |
+|---|---|---|---|---|
+| `docker-compose.dev.yml` | `xflickr-dev` | `scripts/dev.sh` | Local development — **user data** | Bundled MySQL `xflickr`, MongoDB `xflickr` |
+| `docker-compose.test.yml` | `xflickr-test` | `scripts/test.sh` | Tests and CI only | SQLite `:memory:`, MongoDB `xflickr_test` |
+| `docker-compose.prod.yml` | `xflickr-prod` | `scripts/deploy.sh` | Production server | **External** MySQL, Redis, MongoDB |
 
 ## Dev stack services
 
@@ -15,16 +16,31 @@ XFlickr uses two separate Docker Compose files. **Never mix them.**
 - `frontend` — Node + Vite HMR (port `FRONTEND_HOST_PORT`, default 5174)
 - `mysql`, `redis`, `mongodb`
 
+## Production stack services
+
+- `nginx` — reverse proxy (port `HTTP_PORT`, default 80)
+- `app` — Laravel (`artisan serve`, built assets)
+- `horizon` — queue worker (scalable via `HORIZON_REPLICAS`)
+- `scheduler` — Laravel scheduler
+
 ## Bootstrap (operator)
+
+**Dev:**
 
 ```bash
 bash scripts/dev.sh up          # full start + migrate (recommended)
 bash scripts/dev.sh seed        # up + admin user seed
-bash scripts/dev.sh quick       # start containers only
-bash scripts/dev.sh help        # all commands
+bash scripts/dev.sh reload      # rebuild assets + restart (no migrations)
+bash scripts/dev.sh help
 ```
 
-`./scripts/docker-up.sh` is an alias for `bash scripts/dev.sh up`.
+**Production:**
+
+```bash
+bash scripts/deploy.sh install
+bash scripts/deploy.sh update
+bash scripts/deploy.sh help
+```
 
 ## Volume migration
 
@@ -32,7 +48,7 @@ If you previously used `docker-compose.yml` (project `xflickr`), data volumes us
 
 ## Agent rule (absolute)
 
-AI agents must **never** touch the dev stack. Use `bash scripts/test.sh` only. See [Docker safety](../05-maintenance/docker-safety.md).
+AI agents must **never** touch the dev or production stacks. Use `bash scripts/test.sh` only. See [Docker safety](../05-maintenance/docker-safety.md).
 
 ## Tests (AI + CI)
 
@@ -40,10 +56,7 @@ AI agents must **never** touch the dev stack. Use `bash scripts/test.sh` only. S
 bash scripts/test.sh gate:test
 ```
 
-## User-initiated MongoDB reset
+## See also
 
-Only when explicitly requested:
-
-```bash
-./scripts/reset-local-mongodb.sh
-```
+- [Production deploy](production-deploy.md)
+- [Deploy overview](deploy.md)

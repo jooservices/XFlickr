@@ -1,36 +1,40 @@
 # Deploy
 
-Deploy code changes to the local Docker stack without running migrations.
+XFlickr has three Docker stacks. Use the script that matches your environment.
 
-## Script
+| Stack | Reload / deploy | Migrations |
+|---|---|---|
+| **Dev** (local) | `bash scripts/dev.sh reload` | `bash scripts/dev.sh up` (migrate on start) |
+| **Testing** (CI) | `bash scripts/test.sh gate` | Handled by test stack |
+| **Production** (server) | `bash scripts/deploy.sh update` | Included in `update` and first `install` |
+
+## Local dev reload
+
+Rebuild assets and restart workers **without** running migrations:
 
 ```bash
-./scripts/deploy.sh
+bash scripts/dev.sh reload
 ```
 
-The script:
+This:
 
 1. Builds frontend assets (`npm run build`)
 2. Clears Laravel config and view caches
 3. Restarts `app`, `horizon`, and `scheduler` containers
 
-**No database migrations are run.** Run migrations manually only when you intend to change schema:
+## Production
+
+First install and ongoing updates:
 
 ```bash
-# User-initiated only — not for agents on dev stack without explicit approval
-docker compose exec app php artisan migrate
+bash scripts/deploy.sh install
+bash scripts/deploy.sh update
 ```
 
-## Production deploy checklist
-
-1. Pull latest code
-2. `composer install --no-dev --optimize-autoloader`
-3. `npm ci && npm run build`
-4. `php artisan migrate --force` (when schema changed)
-5. `php artisan config:cache && php artisan route:cache && php artisan view:cache`
-6. Restart Horizon and scheduler processes
-7. Verify app and Horizon dashboard
+See [Production deploy](production-deploy.md) for the full wizard, external database setup, and Horizon scaling.
 
 ## See also
 
+- [Docker stacks](docker-stacks.md)
+- [Production deploy](production-deploy.md)
 - [Release and deploy flow](../../ai/skills/release-and-deploy-flow/SKILL.md)
