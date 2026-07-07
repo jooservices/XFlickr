@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Production Docker stack (`docker-compose.prod.yml`, project `xflickr-prod`) with nginx, scalable Horizon replicas, and external MySQL/Redis/MongoDB.
 - `bash scripts/deploy.sh` production wizard: connectivity validation loop, optional HTTPS, install/update/configure commands.
+- Post-deploy verification (`deploy.sh verify`): connections, web readiness, doctor, and worker checks before install completes.
+- Safe release updates for existing deployments: detect running stack, prompt before update, never wipe data.
 - UI-configurable Horizon worker counts (Settings → General → Queue) with `horizon:terminate` on save.
 - `.env.prod.example` and `docs/03-operations/production-deploy.md`.
 - Docker dev/test parity (XCrawlerII model): `docker-compose.dev.yml`, `scripts/test.sh` quality gates, `scripts/dev.sh` operator commands, named volumes (`xflickr-dev-*` / `xflickr-test-*`), dedicated frontend container, `RefreshDatabaseGuard`, `operator-dev-docker` skill, git hooks.

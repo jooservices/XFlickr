@@ -24,20 +24,56 @@ The wizard will:
 4. Re-prompt until each service is reachable from Docker
 5. Optionally enable HTTPS (self-signed or your own cert/key files)
 6. Write `.env`, build images, and start nginx + app + horizon + scheduler
+7. Run post-deploy verification (connections, web ready, workers, doctor)
 
 ## Updates
 
+When a new release is available, run from the project directory on the server:
+
 ```bash
+bash scripts/deploy.sh
+```
+
+Or explicitly:
+
+```bash
+bash scripts/deploy.sh deploy
 bash scripts/deploy.sh update
 ```
 
-Pulls latest code, rebuilds frontend assets, runs migrations, refreshes caches, and restarts workers.
+If containers already exist, the script shows the current deployment, lists incoming commits, and asks before proceeding. The update is **safe for existing data**:
+
+- `git pull --ff-only` only
+- `php artisan migrate --force` (additive migrations — never `migrate:fresh` or `db:wipe`)
+- Rolling container restart — no `down --volumes`
+- External MySQL, Redis, and MongoDB data is never touched
+
+`bash scripts/deploy.sh install` refuses to run when a deployment already exists (use `deploy` or `update` instead).
+
+## Post-deploy verification
+
+After `install`, `update`, and `configure`, the script automatically checks:
+
+| Check | What it validates |
+|---|---|
+| Docker services | `app`, `nginx`, `scheduler`, and `horizon` replicas are running |
+| External connectivity | MySQL, Redis, MongoDB reachable from Docker |
+| Web readiness | `/login` and built frontend assets respond via nginx |
+| Application health | Migrations, `xflickr:doctor`, build manifest inside app container |
+| Background workers | Horizon master and scheduler processes active |
+
+Re-run manually anytime:
+
+```bash
+bash scripts/deploy.sh verify
+```
 
 ## Other commands
 
 ```bash
 bash scripts/deploy.sh configure        # Re-run service wizard (preserves APP_KEY)
 bash scripts/deploy.sh configure-ssl    # Update HTTPS settings
+bash scripts/deploy.sh verify           # Re-run health checks without restarting
 bash scripts/deploy.sh scale 3          # Run 3 Horizon containers
 bash scripts/deploy.sh ps
 bash scripts/deploy.sh logs app
