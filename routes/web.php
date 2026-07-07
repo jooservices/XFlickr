@@ -13,6 +13,7 @@ use App\Http\Controllers\PhotoDownloadController;
 use App\Http\Controllers\PhotoUploadController;
 use App\Http\Controllers\RuntimeConfigController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\SpiderController;
 use App\Http\Controllers\StorageAppProfileController;
 use App\Http\Controllers\StorageAuthController;
 use App\Http\Controllers\StorageBrowseController;
@@ -35,6 +36,7 @@ Route::middleware('auth')->group(function (): void {
     Route::delete('/settings/config/{path}', [RuntimeConfigController::class, 'destroy'])->name('settings.config.destroy');
     Route::post('/settings/config/{path}/reset', [RuntimeConfigController::class, 'reset'])->name('settings.config.reset');
     Route::post('/settings/flickr-app', [FlickrAppProfileController::class, 'store'])->name('settings.flickr-app.store');
+    Route::delete('/settings/flickr-app/{profile}', [FlickrAppProfileController::class, 'destroy'])->name('settings.flickr-app.destroy');
     Route::post('/settings/storage-app', [StorageAppProfileController::class, 'store'])->name('settings.storage-app.store');
 
     Route::get('/contacts', [ContactsController::class, 'index'])->name('contacts.index');
@@ -67,6 +69,9 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/flickr/accounts/{connection}/galleries', [CatalogController::class, 'galleries'])->name('flickr.accounts.galleries');
 
     Route::get('/crawl/operations', [CrawlOperationsController::class, 'index'])->name('crawl.operations');
+
+    Route::post('/flickr/accounts/{connection}/spider/start', [SpiderController::class, 'start'])->name('flickr.spider.start');
+    Route::post('/flickr/accounts/{connection}/spider/stop', [SpiderController::class, 'stop'])->name('flickr.spider.stop');
 
     Route::get('/photos', [CatalogController::class, 'photos'])->name('photos.index');
     Route::get('/photosets', [CatalogController::class, 'photosets'])->name('photosets.index');

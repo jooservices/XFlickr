@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Enums\TransferItemStatus;
 use App\Models\TransferItem;
+use Illuminate\Support\Collection;
 use Jooservices\LaravelRepository\Repositories\EloquentRepository;
 use Jooservices\LaravelRepository\Traits\HasCrud;
 use Jooservices\LaravelRepository\Traits\HasFilter;
@@ -97,6 +98,28 @@ final class TransferItemRepository extends EloquentRepository
             ->count();
     }
 
+    /**
+     * @param  list<string>  $connectionKeys
+     * @return array<string, int>
+     */
+    public function countFailedGroupedByConnectionSince(array $connectionKeys, \DateTimeInterface $since): array
+    {
+        if ($connectionKeys === []) {
+            return [];
+        }
+
+        return $this->newQuery()
+            ->join('transfer_batches', 'transfer_items.transfer_batch_id', '=', 'transfer_batches.id')
+            ->where('transfer_items.status', TransferItemStatus::Failed->value)
+            ->where('transfer_items.created_at', '>=', $since)
+            ->whereIn('transfer_batches.connection_key', $connectionKeys)
+            ->selectRaw('transfer_batches.connection_key, count(*) as aggregate')
+            ->groupBy('transfer_batches.connection_key')
+            ->pluck('aggregate', 'connection_key')
+            ->map(fn (mixed $count): int => (int) $count)
+            ->all();
+    }
+
     public function latestErrorMessage(int $batchId): ?string
     {
         $value = $this->newQuery()
@@ -107,5 +130,29 @@ final class TransferItemRepository extends EloquentRepository
             ->value('error_message');
 
         return $value !== null ? (string) $value : null;
+    }
+
+    public function findForBatch(int $batchId, string $flickrPhotoId): ?TransferItem
+    {
+        $item = $this->newQuery()
+            ->where('transfer_batch_id', $batchId)
+            ->where('flickr_photo_id', $flickrPhotoId)
+            ->first();
+
+        return $item instanceof TransferItem ? $item : null;
+    }
+
+    /**
+     * @return Collection<int, TransferItem>
+     */
+    public function listFailedForBatch(int $batchId, int $limit = 25): Collection
+    {
+        /** @var Collection<int, TransferItem> */
+        return $this->newQuery()
+            ->where('transfer_batch_id', $batchId)
+            ->where('status', TransferItemStatus::Failed->value)
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get(['id', 'flickr_photo_id', 'status', 'error_message', 'updated_at']);
     }
 }

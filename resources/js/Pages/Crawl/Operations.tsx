@@ -1,13 +1,15 @@
-import { Head, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { useMemo } from 'react';
 
 import Breadcrumbs from '@/Components/Breadcrumbs';
+import Button from '@/Components/Button';
 import ContactNsidLinks from '@/Components/ContactNsidLinks';
 import DataTable from '@/Components/DataTable';
 import PageHeading from '@/Components/PageHeading';
 import PageSection from '@/Components/PageSection';
 import ProgressBar from '@/Components/ProgressBar';
 import StatusBadge from '@/Components/StatusBadge';
+import TransferBatchFailures from '@/Components/TransferBatchFailures';
 import { useCrawlOperations } from '@/hooks/useCrawlOperations';
 import { useTableSort } from '@/hooks/useTableSort';
 import AppLayout from '@/Layouts/AppLayout';
@@ -18,15 +20,17 @@ import {
     fetchRunSortValue,
     transferBatchSortValue,
 } from '@/lib/crawlOperations';
+import { flickrAccountPath } from '@/lib/flickrAccount';
 import { sortClientData } from '@/lib/tableSort';
 import type { FlickrAccount, PageProps } from '@/types';
 
 interface Props extends PageProps {
     accounts: FlickrAccount[];
+    spiderEnabled: boolean;
 }
 
 export default function CrawlOperations() {
-    const { accounts } = usePage<Props>().props;
+    const { accounts, spiderEnabled } = usePage<Props>().props;
     const { fetchRuns, downloadBatches, uploadBatches, loading } = useCrawlOperations(accounts);
 
     const fetchSort = useTableSort({ initialSort: 'id', initialDirection: 'desc' });
@@ -70,8 +74,46 @@ export default function CrawlOperations() {
                 <PageHeading
                     breadcrumbs={<Breadcrumbs items={[{ label: 'Operations' }]} />}
                     title="Operations"
-                    subtitle="Active fetch, download, and upload jobs across connected accounts. Auto-refreshes every 5 seconds."
+                    subtitle="Active fetch, download, and upload jobs across connected accounts. Live updates via SSE (falls back to polling)."
                 />
+
+                {spiderEnabled ? (
+                    <PageSection
+                        title="Spider"
+                        description="Opt-in automatic contact expansion with depth and rate-limit caps. Enable spider.enabled in Settings → General runtime config."
+                    >
+                        <div className="flex flex-wrap gap-3">
+                            {accounts.map((account) => (
+                                <div
+                                    key={account.nsid}
+                                    className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900"
+                                >
+                                    <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                                        {accountLabel(account)}
+                                    </span>
+                                    <Button
+                                        type="button"
+                                        variant="primary"
+                                        onClick={() =>
+                                            router.post(flickrAccountPath(account.public_id, '/spider/start'))
+                                        }
+                                    >
+                                        Start
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        onClick={() =>
+                                            router.post(flickrAccountPath(account.public_id, '/spider/stop'))
+                                        }
+                                    >
+                                        Stop
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    </PageSection>
+                ) : null}
 
                 <PageSection
                     title="Fetch"
@@ -228,6 +270,10 @@ export default function CrawlOperations() {
                                                         {batch.sample_error}
                                                     </p>
                                                 ) : null}
+                                                <TransferBatchFailures
+                                                    batch={batch}
+                                                    account={accountByNsid[batch.connection_key]}
+                                                />
                                             </div>
                                         );
                                     },
@@ -307,6 +353,10 @@ export default function CrawlOperations() {
                                                     {' · '}
                                                     {batch.total_count} total
                                                 </p>
+                                                <TransferBatchFailures
+                                                    batch={batch}
+                                                    account={accountByNsid[batch.connection_key]}
+                                                />
                                             </div>
                                         );
                                     },

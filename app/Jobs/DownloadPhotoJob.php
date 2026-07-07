@@ -48,8 +48,6 @@ final class DownloadPhotoJob implements ShouldQueue
             $this->ownerNsid,
             $this->connectionKey,
             $this->batchId,
-            $this->attempts(),
-            $this->maxExceptions,
         );
 
         if ($outcome === PhotoTransferExecutionOutcome::Deferred) {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Enums\TransferType;
 use App\Repositories\Crawler\ConnectionQueryRepository;
 use App\Repositories\StorageAccountRepository;
 use App\Services\Flickr\PhotoDownloadService;
@@ -22,12 +23,14 @@ final class FanOutTransferBatchJob implements ShouldQueue
     use SerializesModels;
 
     public function __construct(
-        private readonly string $transferType,
+        private readonly TransferType $transferType,
         private readonly string $connectionKey,
         private readonly ?string $ownerNsid = null,
         private readonly ?int $storageAccountId = null,
     ) {
-        $this->onQueue($transferType === 'upload' ? 'xflickr-uploads' : 'xflickr-downloads');
+        $this->onQueue(
+            $this->transferType === TransferType::Upload ? 'xflickr-uploads' : 'xflickr-downloads',
+        );
     }
 
     public function handle(
@@ -44,7 +47,7 @@ final class FanOutTransferBatchJob implements ShouldQueue
 
         $ownerNsid = $this->ownerNsid ?? $connection->connection_key;
 
-        if ($this->transferType === 'download') {
+        if ($this->transferType === TransferType::Download) {
             $downloads->fanOutDownloads($connection, $ownerNsid);
 
             return;

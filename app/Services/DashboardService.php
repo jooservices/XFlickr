@@ -35,7 +35,7 @@ final class DashboardService
      */
     public function snapshot(FlickrRateLimitPresenter $rateLimit): array
     {
-        return Cache::remember('xflickr:dashboard:snapshot', 5, function () use ($rateLimit): array {
+        return Cache::remember('xflickr:dashboard:snapshot', 15, function () use ($rateLimit): array {
             $connections = FlickrService::connections()->list();
             $connectionKeys = $connections->map(fn ($connection) => $connection->connection_key)->values()->all();
 
@@ -44,6 +44,20 @@ final class DashboardService
                 ->values()
                 ->all();
 
+            $since = now()->subDay();
+
+            $runStatusByConnection = $this->crawlRuns->statusCountsGroupedByConnection($connectionKeys);
+            $latestRuns = $this->crawlRuns->latestRunsByConnection($connectionKeys);
+            $pendingTargetsByConnection = $this->crawlTargets->countPendingGroupedByConnection($connectionKeys);
+            $contactsByConnection = $this->contacts->countsGroupedByConnection($connectionKeys);
+            $photosByConnection = $this->photos->countsGroupedByConnection($connectionKeys);
+            $photosWithSizesByConnection = $this->photos->countsWithSizesGroupedByConnection($connectionKeys);
+            $photosetsByConnection = $this->catalog->photosetCountsGroupedByConnection($connectionKeys);
+            $galleriesByConnection = $this->catalog->galleryCountsGroupedByConnection($connectionKeys);
+            $downloadsActiveByConnection = $this->batches->countActiveGroupedByConnection($connectionKeys, 'download');
+            $uploadsActiveByConnection = $this->batches->countActiveGroupedByConnection($connectionKeys, 'upload');
+            $failedItemsByConnection = $this->items->countFailedGroupedByConnectionSince($connectionKeys, $since);
+
             $global = [
                 'accounts' => count($accounts),
                 'runs_running' => $this->crawlRuns->countByConnectionsAndStatus($connectionKeys, 'running'),
@@ -51,25 +65,24 @@ final class DashboardService
                 'stored_files' => $this->storedFiles->countAll(),
                 'downloads_active' => $this->batches->countByTypeAndStatus('download', 'running'),
                 'uploads_active' => $this->batches->countByTypeAndStatus('upload', 'running'),
-                'failed_transfers_24h' => $this->items->countFailedSince(now()->subDay()),
+                'failed_transfers_24h' => $this->items->countFailedSince($since),
             ];
 
             $perAccount = [];
             foreach ($connections as $connection) {
                 $key = (string) $connection->connection_key;
-
-                $latestRun = $this->crawlRuns->latestForConnection($key);
+                $latestRun = $latestRuns[$key] ?? null;
 
                 $perAccount[] = [
                     'account' => ConnectionPresenter::toArray($connection),
                     'rate_limit' => $rateLimit->present($key),
-                    'runs' => $this->crawlRuns->statusCountsForConnection($key),
-                    'pending_targets' => $this->crawlTargets->countPendingForConnection($key),
-                    'contacts_db' => $this->contacts->countForConnection($key),
-                    'photos_db' => $this->photos->countForConnection($key),
-                    'photos_with_sizes' => $this->photos->countWithSizesForConnection($key),
-                    'photosets_db' => $this->catalog->countPhotosetsForConnection($key),
-                    'galleries_db' => $this->catalog->countGalleriesForConnection($key),
+                    'runs' => $runStatusByConnection[$key] ?? ['running' => 0, 'completed' => 0, 'failed' => 0],
+                    'pending_targets' => $pendingTargetsByConnection[$key] ?? 0,
+                    'contacts_db' => $contactsByConnection[$key] ?? 0,
+                    'photos_db' => $photosByConnection[$key] ?? 0,
+                    'photos_with_sizes' => $photosWithSizesByConnection[$key] ?? 0,
+                    'photosets_db' => $photosetsByConnection[$key] ?? 0,
+                    'galleries_db' => $galleriesByConnection[$key] ?? 0,
                     'latest_run' => $latestRun === null ? null : [
                         'id' => $latestRun->id,
                         'crawl_type' => $latestRun->crawl_type,
@@ -83,9 +96,9 @@ final class DashboardService
                         'failed_reason' => $latestRun->failed_reason,
                     ],
                     'transfers' => [
-                        'downloads_active' => $this->batches->countActiveForConnection($key, 'download'),
-                        'uploads_active' => $this->batches->countActiveForConnection($key, 'upload'),
-                        'failed_items_24h' => $this->items->countFailedForConnectionSince($key, now()->subDay()),
+                        'downloads_active' => $downloadsActiveByConnection[$key] ?? 0,
+                        'uploads_active' => $uploadsActiveByConnection[$key] ?? 0,
+                        'failed_items_24h' => $failedItemsByConnection[$key] ?? 0,
                     ],
                 ];
             }

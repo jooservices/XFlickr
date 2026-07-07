@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Requests\Api\ListTransferBatchesRequest;
 use App\Models\TransferBatch;
+use App\Services\Transfer\TransferItemRetryService;
 use App\Services\Transfer\TransferProgressQueryService;
 use Illuminate\Http\JsonResponse;
 use JOOservices\XFlickrCrawler\Models\Connection;
@@ -14,6 +15,7 @@ final class TransferProgressController
 {
     public function __construct(
         private readonly TransferProgressQueryService $transferProgress,
+        private readonly TransferItemRetryService $transferRetry,
     ) {}
 
     public function show(Connection $connection, TransferBatch $batch): JsonResponse
@@ -38,5 +40,12 @@ final class TransferProgressController
             $request->direction(),
             $request->limit(),
         ));
+    }
+
+    public function retryItem(Connection $connection, TransferBatch $batch, string $flickrPhotoId): JsonResponse
+    {
+        $this->transferRetry->retry($connection, $batch, $flickrPhotoId);
+
+        return response()->json(['status' => 'queued']);
     }
 }

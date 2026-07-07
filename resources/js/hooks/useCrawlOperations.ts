@@ -16,6 +16,24 @@ interface TransfersResponse {
     data: DownloadTransferBatch[];
 }
 
+interface OperationsSnapshot {
+    fetch_runs: CrawlRun[];
+    download_batches: DownloadTransferBatch[];
+    upload_batches: TransferBatch[];
+}
+
+function applySnapshot(snapshot: OperationsSnapshot): {
+    fetchRuns: CrawlRun[];
+    downloadBatches: DownloadTransferBatch[];
+    uploadBatches: TransferBatch[];
+} {
+    return {
+        fetchRuns: snapshot.fetch_runs ?? [],
+        downloadBatches: snapshot.download_batches ?? [],
+        uploadBatches: snapshot.upload_batches ?? [],
+    };
+}
+
 export function useCrawlOperations(accounts: FlickrAccount[]) {
     const [fetchRuns, setFetchRuns] = useState<CrawlRun[]>([]);
     const [downloadBatches, setDownloadBatches] = useState<DownloadTransferBatch[]>([]);
@@ -62,14 +80,64 @@ export function useCrawlOperations(accounts: FlickrAccount[]) {
     }, [accounts]);
 
     useEffect(() => {
-        void loadOperations();
+        let closed = false;
+        let source: EventSource | null = null;
+        let pollTimer: ReturnType<typeof setInterval> | null = null;
 
-        const interval = setInterval(() => {
-            router.reload({ only: ['accounts'] });
+        const startPolling = () => {
             void loadOperations();
-        }, 5000);
+            pollTimer = setInterval(() => {
+                router.reload({ only: ['accounts'] });
+                void loadOperations();
+            }, 5000);
+        };
 
-        return () => clearInterval(interval);
+        if (typeof EventSource !== 'undefined') {
+            source = new EventSource('/api/operations/stream');
+
+            source.addEventListener('operations', (event) => {
+                try {
+                    const snapshot = JSON.parse((event as MessageEvent<string>).data) as OperationsSnapshot;
+                    const next = applySnapshot(snapshot);
+
+                    if (!closed) {
+                        setFetchRuns(next.fetchRuns);
+                        setDownloadBatches(next.downloadBatches);
+                        setUploadBatches(next.uploadBatches);
+                        setLoading(false);
+                    }
+                } catch {
+                    if (!closed && pollTimer === null) {
+                        source?.close();
+                        startPolling();
+                    }
+                }
+            });
+
+            source.onerror = () => {
+                if (closed) {
+                    return;
+                }
+
+                source?.close();
+                source = null;
+
+                if (pollTimer === null) {
+                    startPolling();
+                }
+            };
+        } else {
+            startPolling();
+        }
+
+        return () => {
+            closed = true;
+            source?.close();
+
+            if (pollTimer !== null) {
+                clearInterval(pollTimer);
+            }
+        };
     }, [loadOperations]);
 
     return {

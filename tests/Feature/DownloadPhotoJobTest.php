@@ -10,19 +10,19 @@ use App\Models\TransferBatch;
 use App\Models\TransferItem;
 use App\Services\Flickr\PhotoDownloadExecutionService;
 use App\Services\Transfer\TransferBatchReconciler;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use JOOservices\XFlickrCrawler\Models\Photo;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;
 
 final class DownloadPhotoJobTest extends TestCase
 {
     use CreatesFlickrConnection;
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_it_delegates_to_execution_service(): void
     {
@@ -185,8 +185,6 @@ final class DownloadPhotoJobTest extends TestCase
             'friend@N01',
             $connection->connection_key,
             $batch->id,
-            50,
-            3,
         );
 
         $this->assertSame(PhotoTransferExecutionOutcome::Deferred, $outcome);

@@ -6,14 +6,14 @@ namespace Tests\Feature;
 
 use App\Models\TransferBatch;
 use App\Models\TransferItem;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;
 
 final class TransferProgressQueryServiceTest extends TestCase
 {
     use CreatesFlickrConnection;
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_active_index_returns_batches_without_reconciling_counts(): void
     {

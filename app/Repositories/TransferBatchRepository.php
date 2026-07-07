@@ -95,6 +95,27 @@ final class TransferBatchRepository extends EloquentRepository
     }
 
     /**
+     * @param  list<string>  $connectionKeys
+     * @return array<string, int>
+     */
+    public function countActiveGroupedByConnection(array $connectionKeys, string $type): array
+    {
+        if ($connectionKeys === []) {
+            return [];
+        }
+
+        return $this->newQuery()
+            ->whereIn('connection_key', $connectionKeys)
+            ->where('type', $type)
+            ->where('status', TransferBatchStatus::Running->value)
+            ->selectRaw('connection_key, count(*) as aggregate')
+            ->groupBy('connection_key')
+            ->pluck('aggregate', 'connection_key')
+            ->map(fn (mixed $count): int => (int) $count)
+            ->all();
+    }
+
+    /**
      * @param  list<string>  $subjectNsids
      * @return Collection<int, TransferBatch>
      */

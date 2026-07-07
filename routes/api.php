@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\CrawlStatusController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\FlickrRateLimitController;
 use App\Http\Controllers\Api\FlickrRateLimitUsageController;
+use App\Http\Controllers\Api\OperationsStreamController;
+use App\Http\Controllers\Api\SpiderStatusController;
 use App\Http\Controllers\Api\StorageBrowseController;
 use App\Http\Controllers\Api\TransferProgressController;
 use App\Http\Controllers\FlickrAccountController;
@@ -13,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['web', 'auth'])->group(function (): void {
     Route::get('/dashboard/snapshot', [DashboardController::class, 'snapshot']);
+    Route::get('/operations/stream', [OperationsStreamController::class, 'stream']);
 
     Route::get('/flickr/rate-limit', [FlickrRateLimitController::class, 'index']);
     Route::get('/flickr/rate-limit/usage', [FlickrRateLimitUsageController::class, 'show']);
@@ -29,10 +32,13 @@ Route::middleware(['web', 'auth'])->group(function (): void {
 
         Route::get('/transfers', [TransferProgressController::class, 'index']);
         Route::get('/transfers/{batch}', [TransferProgressController::class, 'show']);
+        Route::post('/transfers/{batch}/items/{flickrPhotoId}/retry', [TransferProgressController::class, 'retryItem']);
 
         Route::get('/crawl/summary', [CrawlStatusController::class, 'summary']);
         Route::get('/crawl/runs', [CrawlStatusController::class, 'runs']);
         Route::get('/crawl/logs', [CrawlStatusController::class, 'logs']);
+
+        Route::get('/spider/status', [SpiderStatusController::class, 'show']);
     });
 
     Route::prefix('flickr/catalog')->group(function (): void {

@@ -8,14 +8,14 @@ use App\Enums\TransferBatchStatus;
 use App\Models\TransferBatch;
 use App\Models\TransferItem;
 use App\Services\Transfer\TransferBatchReconciler;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;
 
 final class TransferBatchReconcilerTest extends TestCase
 {
     use CreatesFlickrConnection;
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_it_marks_batch_completed_with_errors_when_some_items_failed(): void
     {
