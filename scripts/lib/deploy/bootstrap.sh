@@ -5,6 +5,8 @@ set -o pipefail
 
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/compose-prod.sh"
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/verify.sh"
 
 deploy_bootstrap_stack() {
     local root replicas
@@ -14,7 +16,11 @@ deploy_bootstrap_stack() {
     echo "==> Building and starting production stack (horizon replicas: ${replicas})"
     xf_prod_compose up -d --build --scale "horizon=${replicas}" app horizon scheduler nginx
     xf_prod_compose ps
-    xf_wait_for_app_prod
+
+    if ! deploy_verify_stack; then
+        return 1
+    fi
+
     xf_prod_print_urls
 }
 

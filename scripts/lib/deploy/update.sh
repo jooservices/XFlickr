@@ -5,6 +5,8 @@ set -o pipefail
 
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/compose-prod.sh"
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/verify.sh"
 
 deploy_update_stack() {
     local root replicas
@@ -23,18 +25,20 @@ deploy_update_stack() {
     xf_prod_compose run --rm --no-deps app bash -lc \
         'composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader && npm ci --no-audit --no-fund && npm run build'
 
-    echo "==> Running migrations"
+    echo "==> Running migrations (additive only — no data wipe)"
     xf_prod_compose run --rm --no-deps app php artisan migrate --force --no-interaction
 
     echo "==> Refreshing Laravel caches"
     xf_prod_compose run --rm --no-deps app bash -lc \
         'php artisan config:cache --no-interaction && php artisan route:cache --no-interaction && php artisan view:cache --no-interaction'
 
-    echo "==> Restarting app, horizon (${replicas} replica(s)), scheduler, nginx"
-    xf_prod_compose up -d --scale "horizon=${replicas}" app horizon scheduler nginx
+    echo "==> Restarting containers (rolling — data volumes preserved)"
+    xf_prod_compose up -d --build --scale "horizon=${replicas}" app horizon scheduler nginx
 
-    xf_prod_wait_for_app
-    echo
+    if ! deploy_verify_stack; then
+        return 1
+    fi
+
     echo "Production update complete."
     xf_prod_print_urls
 }
