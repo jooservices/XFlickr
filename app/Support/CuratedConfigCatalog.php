@@ -119,6 +119,33 @@ final class CuratedConfigCatalog
                 'is_core' => true,
                 'sort' => 40,
             ],
+            [
+                'path' => 'horizon.general_max_processes',
+                'label' => 'Horizon general workers (per container)',
+                'type' => 'int',
+                'default' => (int) (config('horizon.environments.production.supervisor-1.maxProcesses') ?? 8),
+                'group' => 'Queue',
+                'is_core' => true,
+                'sort' => 10,
+            ],
+            [
+                'path' => 'horizon.downloads_max_processes',
+                'label' => 'Horizon download workers (per container)',
+                'type' => 'int',
+                'default' => (int) (config('horizon.environments.production.supervisor-downloads.maxProcesses') ?? 4),
+                'group' => 'Queue',
+                'is_core' => true,
+                'sort' => 20,
+            ],
+            [
+                'path' => 'horizon.uploads_max_processes',
+                'label' => 'Horizon upload workers (per container)',
+                'type' => 'int',
+                'default' => (int) (config('horizon.environments.production.supervisor-uploads.maxProcesses') ?? 2),
+                'group' => 'Queue',
+                'is_core' => true,
+                'sort' => 30,
+            ],
         ];
     }
 

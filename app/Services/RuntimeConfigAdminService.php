@@ -6,6 +6,8 @@ namespace App\Services;
 
 use App\Repositories\ConfigEntryRepository;
 use App\Support\CuratedConfigCatalog;
+use App\Support\HorizonRuntimeConfig;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Validation\ValidationException;
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
 use JOOservices\LaravelConfig\Models\Config as ConfigModel;
@@ -15,6 +17,7 @@ final class RuntimeConfigAdminService
     public function __construct(
         private readonly CuratedConfigCatalog $catalog,
         private readonly ConfigEntryRepository $configEntries,
+        private readonly HorizonRuntimeConfig $horizonConfig,
     ) {}
 
     /**
@@ -65,10 +68,18 @@ final class RuntimeConfigAdminService
         $type = trim($data['type']);
         $value = $this->castValue($type, $data['value']);
 
+        if ($this->horizonConfig->isHorizonPath($path)) {
+            $value = $this->horizonConfig->assertValidWorkerCount($value);
+        }
+
         $this->assertAllowedPath($path);
 
         RuntimeConfig::set($path, $value, $type);
         RuntimeConfig::refresh();
+
+        if ($this->horizonConfig->isHorizonPath($path)) {
+            Artisan::call('horizon:terminate');
+        }
     }
 
     public function delete(string $path): void
@@ -105,6 +116,10 @@ final class RuntimeConfigAdminService
         }
 
         $this->deleteStored($path);
+
+        if ($this->horizonConfig->isHorizonPath($path)) {
+            Artisan::call('horizon:terminate');
+        }
     }
 
     private function deleteStored(string $path): void

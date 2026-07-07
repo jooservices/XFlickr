@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Support\HorizonRuntimeConfig;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Horizon\HorizonApplicationServiceProvider;
 
@@ -13,11 +14,31 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
      */
     public function boot(): void
     {
+        $this->applyRuntimeHorizonConfig();
+
         parent::boot();
 
         // Horizon::routeSmsNotificationsTo('15556667777');
         // Horizon::routeMailNotificationsTo('example@example.com');
         // Horizon::routeSlackNotificationsTo('slack-webhook-url', '#channel');
+    }
+
+    private function applyRuntimeHorizonConfig(): void
+    {
+        if (! app()->bound(HorizonRuntimeConfig::class)) {
+            return;
+        }
+
+        /** @var HorizonRuntimeConfig $horizonConfig */
+        $horizonConfig = app(HorizonRuntimeConfig::class);
+        $environment = (string) config('app.env');
+
+        foreach ($horizonConfig->supervisorPaths() as $supervisor => $path) {
+            config()->set(
+                "horizon.environments.{$environment}.{$supervisor}.maxProcesses",
+                $horizonConfig->effectiveMaxProcesses($supervisor),
+            );
+        }
     }
 
     /**

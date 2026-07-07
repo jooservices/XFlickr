@@ -117,4 +117,33 @@ final class RuntimeConfigAdminTest extends TestCase
 
         $response->assertSessionHasErrors('type');
     }
+
+    public function test_storing_horizon_runtime_config_terminates_horizon(): void
+    {
+        Artisan::spy();
+
+        $response = $this->post('/settings/config', [
+            'path' => 'horizon.general_max_processes',
+            'type' => 'int',
+            'value' => '5',
+        ]);
+
+        $response->assertRedirect(route('settings.index', ['tab' => 'general']));
+        $this->assertSame(5, RuntimeConfig::get('horizon.general_max_processes'));
+        Artisan::shouldHaveReceived('call')->with('horizon:terminate');
+    }
+
+    public function test_resetting_horizon_runtime_config_terminates_horizon(): void
+    {
+        RuntimeConfig::set('horizon.general_max_processes', 5, 'int');
+        RuntimeConfig::refresh();
+
+        Artisan::spy();
+
+        $response = $this->post('/settings/config/'.urlencode('horizon.general_max_processes').'/reset');
+
+        $response->assertRedirect(route('settings.index', ['tab' => 'general']));
+        $this->assertFalse(RuntimeConfig::has('horizon.general_max_processes'));
+        Artisan::shouldHaveReceived('call')->with('horizon:terminate');
+    }
 }
