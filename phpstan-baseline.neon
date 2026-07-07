@@ -458,12 +458,6 @@ parameters:
 			path: app/Services/DashboardService.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$crawl_type\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/DashboardService.php
-
-		-
 			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$failed_reason\.$#'
 			identifier: property.notFound
 			count: 1
@@ -477,12 +471,6 @@ parameters:
 
 		-
 			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$started_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/DashboardService.php
-
-		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$subject_nsid\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Services/DashboardService.php
@@ -516,18 +504,6 @@ parameters:
 			identifier: property.notFound
 			count: 2
 			path: app/Services/Flickr/ContactCatalogDetailStatsService.php
-
-		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$crawl_type\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/Flickr/ContactCrawlStateService.php
-
-		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$subject_nsid\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/Flickr/ContactCrawlStateService.php
 
 		-
 			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlTarget\:\:\$last_result_count\.$#'

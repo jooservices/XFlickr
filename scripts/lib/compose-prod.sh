@@ -31,6 +31,9 @@ xf_prod_wait_for_app() {
             echo "Production app did not become ready on http://127.0.0.1:${port}" >&2
             return 1
         fi
+        if [[ $((tries % 15)) -eq 0 ]]; then
+            echo "  ... still waiting (${tries}/90) — check: bash scripts/deploy.sh logs app"
+        fi
         sleep 2
     done
 }

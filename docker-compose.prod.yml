@@ -69,9 +69,6 @@ services:
   horizon:
     <<: *php-base
     command: ["php", "artisan", "horizon"]
-    environment:
-      <<: *php-environment
-      HORIZON_NAME: xflickr-${HOSTNAME}
     depends_on:
       app:
         condition: service_started

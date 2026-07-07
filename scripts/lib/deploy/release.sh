@@ -144,7 +144,13 @@ deploy_dispatch() {
 deploy_install_fresh() {
     local root="$1"
 
-    if deploy_prod_is_deployed "$root"; then
+    if deploy_prod_has_env "$root"; then
+        echo "Configuration found (.env) — finishing install without re-running the wizard."
+        deploy_finish_install "$root" || return 1
+        return 0
+    fi
+
+    if [[ "$(deploy_prod_container_count)" -gt 0 ]]; then
         echo "A production deployment already exists on this host."
         deploy_print_release_summary "$root"
         echo "Use: bash scripts/deploy.sh deploy   (or: bash scripts/deploy.sh update)"

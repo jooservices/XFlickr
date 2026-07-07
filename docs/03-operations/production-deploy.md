@@ -23,10 +23,16 @@ The wizard will:
 3. Collect MySQL, Redis, and MongoDB host/credentials — **testing each connection before continuing** (host `mysql`/`redis-cli`/`mongosh` when available)
 4. Re-prompt until each service is reachable; progress is saved to `storage/.xflickr-deploy-wizard` after each step so you can resume an interrupted install
 5. Optionally enable HTTPS (self-signed or your own cert/key files)
-6. Write `.env`, build images, and start nginx + app + horizon + scheduler
+6. Write `.env`, install PHP dependencies from **Packagist** (`jooservices/xflickr-crawler` ^1.3.0), build frontend assets, and start nginx + app + horizon + scheduler
 7. Run post-deploy verification (connections, web ready, workers, doctor)
 
-If install is interrupted, run `bash scripts/deploy.sh install` again — completed steps are skipped using the saved file (removed after `.env` is written).
+If the wizard already wrote `.env` but the stack failed to start (for example a broken `vendor/` tree), finish without re-entering credentials:
+
+```bash
+bash scripts/deploy.sh finish
+```
+
+If install is interrupted **before** `.env` is written, run `bash scripts/deploy.sh install` again — completed wizard steps are skipped using the saved file (removed after `.env` is written).
 
 ## Updates
 
@@ -74,6 +80,7 @@ bash scripts/deploy.sh verify
 
 ```bash
 bash scripts/deploy.sh configure        # Re-run service wizard (preserves APP_KEY)
+bash scripts/deploy.sh finish             # Complete install using existing .env (no wizard)
 bash scripts/deploy.sh configure-ssl    # Update HTTPS settings
 bash scripts/deploy.sh verify           # Re-run health checks without restarting
 bash scripts/deploy.sh scale 3          # Run 3 Horizon containers

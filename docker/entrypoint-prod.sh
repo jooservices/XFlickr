@@ -3,6 +3,8 @@ set -euo pipefail
 
 cd /var/www/html
 
+git config --global --add safe.directory /var/www/html 2>/dev/null || true
+
 wait_for_mysql() {
     local host="${DB_HOST:-mysql}"
     local port="${DB_PORT:-3306}"
@@ -79,6 +81,12 @@ wait_for_mongodb() {
 if [ ! -f vendor/autoload.php ]; then
     echo "Installing Composer dependencies (production)..."
     composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+fi
+
+if [ ! -f vendor/jooservices/xflickr-crawler/src/XFlickrCrawlerServiceProvider.php ]; then
+    echo "ERROR: jooservices/xflickr-crawler is missing from vendor/." >&2
+    echo "Run on the host: bash scripts/deploy.sh finish" >&2
+    exit 1
 fi
 
 wait_for_mysql

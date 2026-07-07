@@ -7,12 +7,16 @@ cp .env.example .env
 bash scripts/dev.sh up
 ```
 
-Spider mode requires **`jooservices/xflickr-crawler` ^1.3.0**. Check out [XFlickrCrawler](https://github.com/jooservices/XFlickrCrawler) as a sibling directory (`../XFlickrCrawler`), run `composer update jooservices/xflickr-crawler`, then **recreate** dev containers so Compose mounts the crawler into `vendor/`:
+Spider mode requires **`jooservices/xflickr-crawler` ^1.3.0** from Packagist (installed via `composer install`).
+
+To develop the crawler package alongside XFlickr, check out [XFlickrCrawler](https://github.com/jooservices/XFlickrCrawler) as a sibling directory (`../XFlickrCrawler`) and **recreate** dev containers so Compose bind-mounts it over `vendor/jooservices/xflickr-crawler`:
 
 ```bash
 bash scripts/dev.sh down
 bash scripts/dev.sh up
 ```
+
+Production deploy (`bash scripts/deploy.sh`) always uses Packagist — no sibling clone required on the server.
 
 If you see `XFlickrCrawlerServiceProvider.php: No such file or directory` during reload, the stack was started before the crawler mount existed — run the recreate commands above.
 

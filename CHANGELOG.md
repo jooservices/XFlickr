@@ -8,7 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- Production deploy wizard resume: saves progress to `storage/.xflickr-deploy-wizard` (mode `600`) after each completed step; cleared when `.env` is written.
+- `bash scripts/deploy.sh finish` — complete production install from an existing `.env` without re-running the wizard (installs Composer/npm assets, then starts the stack).
+
+### Fixed
+
+- Production deploy installs `jooservices/xflickr-crawler` from **Packagist** (removed default path repository to `../XFlickrCrawler`).
+- Production bootstrap runs `composer install` and `npm run build` **before** starting containers (avoids crash loops in the app entrypoint).
+- Removed `HOSTNAME` Compose warning for Horizon in `docker-compose.prod.yml`.
+- Git “dubious ownership” warning in production containers (`safe.directory` for `/var/www/html`).
+
+### Added
 
 ### Fixed
 

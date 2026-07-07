@@ -26,7 +26,8 @@ usage() {
     cat <<EOF
   bash scripts/deploy.sh                   Detect existing stack → prompt → safe release update
   bash scripts/deploy.sh deploy            Same as default (recommended for repeat deploys)
-  bash scripts/deploy.sh install           First-time install only (refuses if already deployed)
+  bash scripts/deploy.sh install           First-time install (wizard, or finish if .env exists)
+  bash scripts/deploy.sh finish            Complete install using existing .env (no wizard)
   bash scripts/deploy.sh update            Safe release update (git pull + rebuild + migrate)
   bash scripts/deploy.sh configure         Re-run service wizard (preserves APP_KEY)
   bash scripts/deploy.sh configure-ssl     Update HTTPS certificate settings
@@ -58,6 +59,9 @@ case "$cmd" in
         ;;
     install)
         deploy_install_fresh "$ROOT" || exit 1
+        ;;
+    finish|bootstrap)
+        deploy_finish_install "$ROOT" || exit 1
         ;;
     configure)
         deploy_wizard_run "$ROOT" configure || exit 1

@@ -6,6 +6,8 @@ set -o pipefail
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/compose-prod.sh"
 # shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/prepare.sh"
+# shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/verify.sh"
 
 deploy_update_stack() {
@@ -18,12 +20,7 @@ deploy_update_stack() {
         git -C "$root" pull --ff-only
     fi
 
-    echo "==> Rebuilding production images"
-    xf_prod_compose build app
-
-    echo "==> Installing dependencies and building frontend assets"
-    xf_prod_compose run --rm --no-deps app bash -lc \
-        'composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader && npm ci --no-audit --no-fund && npm run build'
+    deploy_prepare_production_app || return 1
 
     echo "==> Running migrations (additive only — no data wipe)"
     xf_prod_compose run --rm --no-deps app php artisan migrate --force --no-interaction

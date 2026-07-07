@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "758f2fa0585976b3345554e5787cb8e8",
+    "content-hash": "511dfaaf899c9b11e28d32ce62c68e80",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -2034,11 +2034,17 @@
         },
         {
             "name": "jooservices/xflickr-crawler",
-            "version": "1.3.0",
+            "version": "v1.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jooservices/XFlickrCrawler.git",
+                "reference": "43a5520b7266c703d73ec05ba76e1461dc600316"
+            },
             "dist": {
-                "type": "path",
-                "url": "../XFlickrCrawler",
-                "reference": "b2e223f9379c8a1731b2127563703e817955cc94"
+                "type": "zip",
+                "url": "https://api.github.com/repos/jooservices/XFlickrCrawler/zipball/43a5520b7266c703d73ec05ba76e1461dc600316",
+                "reference": "43a5520b7266c703d73ec05ba76e1461dc600316",
+                "shasum": ""
             },
             "require": {
                 "jooservices/dto": "^1.2",
@@ -2062,15 +2068,12 @@
             "type": "library",
             "extra": {
                 "laravel": {
-                    "providers": [
-                        "JOOservices\\XFlickrCrawler\\XFlickrCrawlerServiceProvider"
-                    ],
                     "aliases": {
                         "FlickrService": "JOOservices\\XFlickrCrawler\\Facades\\FlickrService"
-                    }
-                },
-                "branch-alias": {
-                    "dev-develop": "1.3.x-dev"
+                    },
+                    "providers": [
+                        "JOOservices\\XFlickrCrawler\\XFlickrCrawlerServiceProvider"
+                    ]
                 }
             },
             "autoload": {
@@ -2078,66 +2081,7 @@
                     "JOOservices\\XFlickrCrawler\\": "src/"
                 }
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "JOOservices\\XFlickrCrawler\\Tests\\": "tests/"
-                }
-            },
-            "scripts": {
-                "test": [
-                    "vendor/bin/phpunit"
-                ],
-                "test:coverage": [
-                    "XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-clover coverage.xml"
-                ],
-                "instructions:verify": [
-                    "php tools/verify-ai-instructions-sync.php"
-                ],
-                "lint:pint": [
-                    "vendor/bin/pint --test"
-                ],
-                "lint:pint:fix": [
-                    "vendor/bin/pint"
-                ],
-                "lint:phpstan": [
-                    "XDEBUG_MODE=off vendor/bin/phpstan analyse --configuration=phpstan.neon --memory-limit=512M"
-                ],
-                "lint:phpcs": [
-                    "vendor/bin/phpcs --standard=phpcs.xml"
-                ],
-                "lint:phpmd": [
-                    "php -d error_reporting=6143 vendor/bin/phpmd src text phpmd.xml"
-                ],
-                "lint:fast": [
-                    "@lint:pint",
-                    "@lint:phpcs",
-                    "@lint:phpstan"
-                ],
-                "lint": [
-                    "@lint:fast"
-                ],
-                "lint:all": [
-                    "@lint",
-                    "@lint:phpmd"
-                ],
-                "lint:fix": [
-                    "@lint:pint:fix"
-                ],
-                "check": [
-                    "@lint:all",
-                    "@test"
-                ],
-                "ci": [
-                    "@lint:all",
-                    "@test:coverage"
-                ],
-                "post-install-cmd": [
-                    "captainhook install --force --skip-existing"
-                ],
-                "post-update-cmd": [
-                    "captainhook install --force --skip-existing"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -2149,9 +2093,9 @@
             ],
             "description": "Standalone Laravel package for queued Flickr crawling with rate limiting and MySQL persistence.",
             "keywords": [
+                "JOOservices",
                 "crawler",
                 "flickr",
-                "jooservices",
                 "laravel",
                 "laravel12",
                 "laravel13",
@@ -2163,10 +2107,7 @@
                 "issues": "https://github.com/jooservices/XFlickrCrawler/issues",
                 "source": "https://github.com/jooservices/XFlickrCrawler"
             },
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
+            "time": "2026-07-06T01:40:06+00:00"
         },
         {
             "name": "justus/flysystem-onedrive",
@@ -3032,16 +2973,16 @@
         },
         {
             "name": "league/flysystem",
-            "version": "3.35.1",
+            "version": "3.35.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/flysystem.git",
-                "reference": "f23af6c5aafd958a7593029a271d77baf5ed793c"
+                "reference": "b277b5dc3d56650b68904117124e79c851e12376"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/flysystem/zipball/f23af6c5aafd958a7593029a271d77baf5ed793c",
-                "reference": "f23af6c5aafd958a7593029a271d77baf5ed793c",
+                "url": "https://api.github.com/repos/thephpleague/flysystem/zipball/b277b5dc3d56650b68904117124e79c851e12376",
+                "reference": "b277b5dc3d56650b68904117124e79c851e12376",
                 "shasum": ""
             },
             "require": {
@@ -3109,9 +3050,9 @@
             ],
             "support": {
                 "issues": "https://github.com/thephpleague/flysystem/issues",
-                "source": "https://github.com/thephpleague/flysystem/tree/3.35.1"
+                "source": "https://github.com/thephpleague/flysystem/tree/3.35.2"
             },
-            "time": "2026-06-25T06:52:23+00:00"
+            "time": "2026-07-06T14:42:07+00:00"
         },
         {
             "name": "league/flysystem-aws-s3-v3",
@@ -8081,16 +8022,16 @@
         },
         {
             "name": "vlucas/phpdotenv",
-            "version": "v5.6.3",
+            "version": "v5.6.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/vlucas/phpdotenv.git",
-                "reference": "955e7815d677a3eaa7075231212f2110983adecc"
+                "reference": "416df702837983f8d5ff48c9c3fee4f5f57b980b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/vlucas/phpdotenv/zipball/955e7815d677a3eaa7075231212f2110983adecc",
-                "reference": "955e7815d677a3eaa7075231212f2110983adecc",
+                "url": "https://api.github.com/repos/vlucas/phpdotenv/zipball/416df702837983f8d5ff48c9c3fee4f5f57b980b",
+                "reference": "416df702837983f8d5ff48c9c3fee4f5f57b980b",
                 "shasum": ""
             },
             "require": {
@@ -8149,7 +8090,7 @@
             ],
             "support": {
                 "issues": "https://github.com/vlucas/phpdotenv/issues",
-                "source": "https://github.com/vlucas/phpdotenv/tree/v5.6.3"
+                "source": "https://github.com/vlucas/phpdotenv/tree/v5.6.4"
             },
             "funding": [
                 {
@@ -8161,7 +8102,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-12-27T19:49:13+00:00"
+            "time": "2026-07-06T19:11:50+00:00"
         },
         {
             "name": "voku/portable-ascii",
