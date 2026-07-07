@@ -1,0 +1,32 @@
+; xflickr-managed
+[program:xflickr-app]
+command=php artisan serve --host=127.0.0.1 --port=__APP_PORT__
+directory=__PROJECT_ROOT__
+user=www-data
+autostart=true
+autorestart=true
+redirect_stderr=true
+stdout_logfile=__LOG_DIR__/app.log
+stopwaitsecs=30
+
+[program:xflickr-horizon]
+process_name=%(program_name)s_%(process_num)02d
+command=php artisan horizon
+directory=__PROJECT_ROOT__
+user=www-data
+autostart=true
+autorestart=true
+numprocs=__HORIZON_REPLICAS__
+redirect_stderr=true
+stdout_logfile=__LOG_DIR__/horizon.log
+stopwaitsecs=3600
+
+[program:xflickr-scheduler]
+command=php artisan schedule:work
+directory=__PROJECT_ROOT__
+user=www-data
+autostart=true
+autorestart=true
+redirect_stderr=true
+stdout_logfile=__LOG_DIR__/scheduler.log
+stopwaitsecs=30

@@ -24,14 +24,16 @@ This:
 
 ## Production
 
-First install and ongoing updates:
+First install and ongoing updates (Docker or Ubuntu 22.04 host — see `DEPLOY_TARGET` in `.env`):
 
 ```bash
 bash scripts/deploy.sh install
 bash scripts/deploy.sh update
 ```
 
-See [Production deploy](production-deploy.md) for the full wizard, external database setup, and Horizon scaling.
+Every install/update runs migrate, cache clear/recache, worker restart, and verification before success.
+
+See [Production deploy](production-deploy.md) for the full wizard, host auto-install, and Horizon scaling.
 
 ## See also
 

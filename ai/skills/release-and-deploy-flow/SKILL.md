@@ -20,9 +20,13 @@ Rebuilds assets in container, clears caches, restarts app/horizon/scheduler. **D
 ## Production deploy
 
 ```bash
-bash scripts/deploy.sh install   # first-time wizard + external DB setup
-bash scripts/deploy.sh update    # git pull + rebuild + migrate + restart
+bash scripts/deploy.sh install   # first-time wizard (Docker or host; DEPLOY_TARGET in .env)
+bash scripts/deploy.sh update    # git pull + finalize (migrate, caches, workers, verify)
 ```
+
+Host target (Ubuntu 22.04): nginx + supervisor; auto-installs PHP stack when missing.
+
+Every install/update runs migrate, optimize clear/recache, horizon terminate, service restart, and **verify before success**.
 
 See `docs/03-operations/production-deploy.md`.
 

@@ -9,45 +9,44 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/wizard.sh"
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/compose-prod.sh"
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/bootstrap.sh"
-
-deploy_prod_has_env() {
-    local root="$1"
-    [[ -f "${root}/.env" ]]
-}
-
-deploy_prod_container_count() {
-    xf_prod_compose ps -a -q 2>/dev/null | wc -l | tr -d ' '
-}
-
-deploy_prod_running_count() {
-    xf_prod_compose ps --status running -q 2>/dev/null | wc -l | tr -d ' '
-}
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/update.sh"
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/mode.sh"
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/prod-state.sh"
 
 deploy_prod_is_deployed() {
     local root="$1"
-
-    if deploy_prod_has_env "$root"; then
-        return 0
-    fi
-
-  [[ "$(deploy_prod_container_count)" -gt 0 ]]
+    local mode
+    mode="$(deploy_resolve_mode "$root")"
+    deploy_prod_is_deployed_for_mode "$root" "$mode"
 }
 
 deploy_print_release_summary() {
     local root="$1"
+    local mode
+    mode="$(deploy_resolve_mode "$root")"
 
     echo
-    echo "==> Existing production deployment detected (project: ${XF_PROD_PROJECT})"
+    echo "==> Existing production deployment detected (target: ${mode})"
     echo
 
     if deploy_prod_has_env "$root"; then
-        echo "  .env: present"
+        echo "  .env: present (DEPLOY_TARGET=${mode})"
     else
         echo "  .env: missing (run install or configure)"
     fi
 
-    echo "  Containers (all):   $(deploy_prod_container_count)"
-    echo "  Containers (running): $(deploy_prod_running_count)"
+    if [[ "$mode" == "host" ]]; then
+        echo "  Supervisor:"
+        supervisorctl status xflickr-app xflickr-horizon xflickr-scheduler 2>/dev/null | sed 's/^/    /' || echo "    (not running)"
+    else
+        echo "  Containers (all):   $(deploy_prod_container_count)"
+        echo "  Containers (running): $(deploy_prod_running_count)"
+        echo
+        xf_prod_compose ps 2>/dev/null || true
+    fi
     echo
 
     if [[ -d "${root}/.git" ]]; then
@@ -72,8 +71,6 @@ deploy_print_release_summary() {
     fi
 
     echo
-    xf_prod_compose ps 2>/dev/null || true
-    echo
 }
 
 deploy_print_safe_update_policy() {
@@ -82,7 +79,9 @@ Safe release update will:
   - git pull --ff-only (no history rewrite)
   - rebuild images and frontend assets
   - run php artisan migrate --force (additive schema changes only)
-  - gracefully restart workers and web containers
+  - clear and rebuild Laravel caches (config, route, view, optimize)
+  - gracefully restart Horizon, scheduler, and web services
+  - verify health before reporting success
 
 It will NOT:
   - remove Docker volumes or external database data
@@ -97,17 +96,6 @@ deploy_confirm_release_update() {
     deploy_prompt_yes_no "Deploy new release now?" "y"
 }
 
-deploy_graceful_worker_shutdown() {
-    if [[ "$(deploy_prod_running_count)" -eq 0 ]]; then
-        return 0
-    fi
-
-    echo "==> Gracefully stopping Horizon workers (horizon:terminate)"
-    xf_prod_compose exec -T app php artisan horizon:terminate --wait 2>/dev/null \
-        || xf_prod_compose exec -T app php artisan horizon:terminate 2>/dev/null \
-        || true
-}
-
 deploy_run_release_update() {
     local root="$1"
 
@@ -117,7 +105,6 @@ deploy_run_release_update() {
     fi
 
     xf_load_root_env "$root"
-    deploy_graceful_worker_shutdown
     deploy_update_stack
 }
 
@@ -143,6 +130,7 @@ deploy_dispatch() {
 
 deploy_install_fresh() {
     local root="$1"
+    local mode
 
     if deploy_prod_has_env "$root"; then
         echo "Configuration found (.env) — finishing install without re-running the wizard."
@@ -150,7 +138,11 @@ deploy_install_fresh() {
         return 0
     fi
 
-    if [[ "$(deploy_prod_container_count)" -gt 0 ]]; then
+    mode="$(deploy_resolve_mode "$root" 1)"
+    export DEPLOY_TARGET="$mode"
+    deploy_assert_mode_consistent "$root" "$mode" || return 1
+
+    if [[ "$mode" == "docker" ]] && [[ "$(deploy_prod_container_count)" -gt 0 ]]; then
         echo "A production deployment already exists on this host."
         deploy_print_release_summary "$root"
         echo "Use: bash scripts/deploy.sh deploy   (or: bash scripts/deploy.sh update)"

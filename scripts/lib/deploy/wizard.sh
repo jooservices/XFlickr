@@ -9,6 +9,8 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/connectivity.sh"
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/state.sh"
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/ssl-selfsigned.sh"
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/mode.sh"
 
 deploy_prompt() {
     local label="$1"
@@ -73,6 +75,23 @@ deploy_confirm() {
     [[ "$value" =~ ^[Yy] ]]
 }
 
+deploy_wizard_step_target() {
+    local default=docker
+
+    if [[ -n "${DEPLOY_TARGET:-}" ]]; then
+        echo "✓ Deploy target: ${DEPLOY_TARGET}"
+        return 0
+    fi
+
+    if ! deploy_can_use_docker_daemon; then
+        default=host
+    fi
+
+    DEPLOY_TARGET=$(deploy_prompt_target "$default")
+    export DEPLOY_TARGET
+    deploy_wizard_step_done target
+}
+
 deploy_wizard_step_general() {
     APP_URL=$(deploy_prompt "Public APP_URL (http://ip-or-host:port)" "${APP_URL:-http://127.0.0.1}")
     APP_URL=$(deploy_normalize_app_url "$APP_URL")
@@ -87,7 +106,7 @@ deploy_wizard_prompt_mysql() {
     while true; do
         echo
         echo "==> MySQL (external)"
-        DB_HOST=$(deploy_prompt "MySQL host" "${DB_HOST:-host.docker.internal}")
+        DB_HOST=$(deploy_prompt "MySQL host" "${DB_HOST:-$(deploy_wizard_default_service_host "${DEPLOY_TARGET:-docker}")}")
         DB_PORT=$(deploy_prompt "MySQL port" "${DB_PORT:-3306}")
         DB_DATABASE=$(deploy_prompt "MySQL database" "${DB_DATABASE:-xflickr}")
         DB_USERNAME=$(deploy_prompt "MySQL username" "${DB_USERNAME:-xflickr}")
@@ -117,7 +136,7 @@ deploy_wizard_prompt_redis() {
     while true; do
         echo
         echo "==> Redis (external)"
-        REDIS_HOST=$(deploy_prompt "Redis host" "${REDIS_HOST:-host.docker.internal}")
+        REDIS_HOST=$(deploy_prompt "Redis host" "${REDIS_HOST:-$(deploy_wizard_default_service_host "${DEPLOY_TARGET:-docker}")}")
         REDIS_PORT=$(deploy_prompt "Redis port" "${REDIS_PORT:-6379}")
 
         if deploy_prompt_yes_no "Does Redis require a password?" "$redis_password_default"; then
@@ -152,7 +171,7 @@ deploy_wizard_prompt_mongodb() {
     while true; do
         echo
         echo "==> MongoDB (external)"
-        MONGODB_HOST=$(deploy_prompt "MongoDB host" "${MONGODB_HOST:-host.docker.internal}")
+        MONGODB_HOST=$(deploy_prompt "MongoDB host" "${MONGODB_HOST:-$(deploy_wizard_default_service_host "${DEPLOY_TARGET:-docker}")}")
         MONGODB_PORT=$(deploy_prompt "MongoDB port" "${MONGODB_PORT:-27017}")
         MONGODB_DATABASE=$(deploy_prompt "MongoDB database" "${MONGODB_DATABASE:-xflickr}")
 
@@ -258,6 +277,8 @@ APP_KEY=${APP_KEY:-}
 APP_DEBUG=false
 APP_URL=${APP_URL}
 
+DEPLOY_TARGET=${DEPLOY_TARGET:-docker}
+
 LOG_CHANNEL=stack
 LOG_STACK=single
 LOG_LEVEL=warning
@@ -334,6 +355,12 @@ deploy_wizard_run() {
         echo "Re-configuring production services (APP_KEY preserved)."
     elif [[ "$mode" == "install" ]]; then
         deploy_wizard_state_load "$root"
+    fi
+
+    if [[ "$mode" == "install" ]] && ! deploy_wizard_step_is_done target; then
+        deploy_wizard_step_target
+    elif [[ -n "${DEPLOY_TARGET:-}" ]]; then
+        echo "✓ Deploy target: ${DEPLOY_TARGET}"
     fi
 
     if [[ "$mode" == "install" ]]; then

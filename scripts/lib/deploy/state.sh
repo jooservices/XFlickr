@@ -57,6 +57,7 @@ deploy_wizard_state_save() {
         printf 'SSL_ENABLED=%q\n' "${SSL_ENABLED:-}"
         printf 'SSL_CERT_PATH=%q\n' "${SSL_CERT_PATH:-}"
         printf 'HORIZON_REPLICAS=%q\n' "${HORIZON_REPLICAS:-}"
+        printf 'DEPLOY_TARGET=%q\n' "${DEPLOY_TARGET:-docker}"
     } >"$state_file"
 
     chmod 600 "$state_file"

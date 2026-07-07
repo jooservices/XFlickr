@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Dual-mode production deploy: choose **Docker** or **host** (`DEPLOY_TARGET` in `.env`) at `bash scripts/deploy.sh install`.
+- Host deploy for Ubuntu 22.04: auto-install PHP 8.5+, Composer, Node, nginx, supervisor; nginx → `artisan serve`; supervisor for Horizon and scheduler.
+- Shared release finalize pipeline: migrate, cache clear/recache, `horizon:terminate`, service restart, and verify-before-complete for all install/update paths.
+- `bash scripts/test.sh gate:deploy-scripts` — deploy shell tests in Ubuntu 22.04 Docker harness (CI job on `ubuntu-22.04`).
+
+### Changed
+
+- Production deploy refactor: `app-init.sh`, `app-release.sh`, `finalize.sh`, mode-specific bootstrap/update/verify modules.
+
+### Added
+
 - `bash scripts/deploy.sh finish` — complete production install from an existing `.env` without re-running the wizard (installs Composer/npm assets, then starts the stack).
 
 ### Fixed

@@ -1,12 +1,46 @@
 # Production deploy
 
-Install and operate XFlickr on a server with Docker. Production uses **external** MySQL, Redis, and MongoDB — no database containers in the prod stack.
+Install and operate XFlickr on a server. Choose **Docker** (default) or **host** (Ubuntu 22.04) at first install. Both use **external** MySQL, Redis, and MongoDB.
 
-## Prerequisites
+## Deploy targets
 
-- Docker Engine + Compose v2 (your user must be able to run `docker ps` — add yourself to the `docker` group if needed)
+| Target | `DEPLOY_TARGET` | Stack |
+|---|---|---|
+| Docker (recommended) | `docker` | nginx + app + horizon + scheduler containers (`xflickr-prod`) |
+| Host | `host` | nginx → `php artisan serve`, supervisor for horizon + scheduler |
+
+```bash
+bash scripts/deploy.sh install   # wizard asks Docker vs host on first run
+```
+
+## Release pipeline (all targets)
+
+Every `install`, `finish`, `update`, `deploy`, and `configure` runs the same finalize steps **before reporting success**:
+
+1. `php artisan migrate --force`
+2. Clear caches (`config`, `route`, `view`, `cache`, `optimize`)
+3. Rebuild caches (`config`, `route`, `view`)
+4. `php artisan horizon:terminate --wait`
+5. Restart web and worker services
+6. Post-deploy verification (`bash scripts/deploy.sh verify` checks)
+
+If verification fails, the script exits with an error and does **not** print “complete”.
+
+## Docker prerequisites
+
+- Docker Engine + Compose v2
 - Git
-- External MySQL, Redis, and MongoDB reachable from Docker containers
+- External MySQL, Redis, and MongoDB reachable from containers
+
+## Host prerequisites (Ubuntu 22.04)
+
+The wizard can auto-install on Ubuntu 22.04:
+
+- PHP 8.5+ with required extensions
+- Composer 2, Node.js 22+
+- nginx, supervisor
+
+Other distros: install prerequisites manually, then run `bash scripts/deploy.sh install` and choose **host**.
 
 ## First install
 
@@ -18,100 +52,70 @@ bash scripts/deploy.sh install
 
 The wizard will:
 
-1. Optionally `git pull`
-2. Prompt for `APP_URL`, HTTP port, and admin credentials (`APP_URL` without `http://` is normalized automatically)
-3. Collect MySQL, Redis, and MongoDB host/credentials — **testing each connection before continuing** (host `mysql`/`redis-cli`/`mongosh` when available)
-4. Re-prompt until each service is reachable; progress is saved to `storage/.xflickr-deploy-wizard` after each step so you can resume an interrupted install
-5. Optionally enable HTTPS (self-signed or your own cert/key files)
-6. Write `.env`, install PHP dependencies from **Packagist** (`jooservices/xflickr-crawler` ^1.3.0), build frontend assets, and start nginx + app + horizon + scheduler
-7. Run post-deploy verification (connections, web ready, workers, doctor)
+1. Choose deploy target (Docker or host)
+2. Optionally `git pull`
+3. Prompt for `APP_URL`, HTTP port, and admin credentials
+4. Collect MySQL, Redis, and MongoDB — **testing each connection before continuing**
+5. Save progress to `storage/.xflickr-deploy-wizard` (resumable until `.env` is written)
+6. Optionally enable HTTPS
+7. Write `.env` (includes `DEPLOY_TARGET`), build assets, start services, run finalize pipeline + verify
 
-If the wizard already wrote `.env` but the stack failed to start (for example a broken `vendor/` tree), finish without re-entering credentials:
+Finish without re-running the wizard:
 
 ```bash
 bash scripts/deploy.sh finish
 ```
 
-If install is interrupted **before** `.env` is written, run `bash scripts/deploy.sh install` again — completed wizard steps are skipped using the saved file (removed after `.env` is written).
-
 ## Updates
 
-When a new release is available, run from the project directory on the server:
-
 ```bash
-bash scripts/deploy.sh
+bash scripts/deploy.sh          # or deploy / update
 ```
 
-Or explicitly:
+Safe updates:
 
-```bash
-bash scripts/deploy.sh deploy
-bash scripts/deploy.sh update
-```
-
-If containers already exist, the script shows the current deployment, lists incoming commits, and asks before proceeding. The update is **safe for existing data**:
-
-- `git pull --ff-only` only
-- `php artisan migrate --force` (additive migrations — never `migrate:fresh` or `db:wipe`)
-- Rolling container restart — no `down --volumes`
-- External MySQL, Redis, and MongoDB data is never touched
-
-`bash scripts/deploy.sh install` refuses to run when a deployment already exists (use `deploy` or `update` instead).
+- `git pull --ff-only`
+- Rebuild assets
+- Migrate + cache clear/recache + worker restart
+- Verify before success message
+- Never `migrate:fresh`, `db:wipe`, or `down --volumes`
 
 ## Post-deploy verification
 
-After `install`, `update`, and `configure`, the script automatically checks:
-
-| Check | What it validates |
-|---|---|
-| Docker services | `app`, `nginx`, `scheduler`, and `horizon` replicas are running |
-| External connectivity | MySQL, Redis, MongoDB reachable from Docker |
-| Web readiness | `/login` and built frontend assets respond via nginx |
-| Application health | Migrations, `xflickr:doctor`, build manifest inside app container |
-| Background workers | Horizon master and scheduler processes active |
-
-Re-run manually anytime:
+| Check | Docker | Host |
+|---|---|---|
+| Services | compose `app`, `nginx`, `horizon`, `scheduler` | supervisor programs |
+| External DBs | MySQL, Redis, MongoDB connectivity | same |
+| Web | `/login`, `/build/manifest.json` via nginx | same |
+| App health | `migrate:status`, `xflickr:doctor` | same |
+| Workers | Horizon + scheduler processes | same |
 
 ```bash
 bash scripts/deploy.sh verify
 ```
 
-## Other commands
+## Commands
 
 ```bash
-bash scripts/deploy.sh configure        # Re-run service wizard (preserves APP_KEY)
-bash scripts/deploy.sh finish             # Complete install using existing .env (no wizard)
-bash scripts/deploy.sh configure-ssl    # Update HTTPS settings
-bash scripts/deploy.sh verify           # Re-run health checks without restarting
-bash scripts/deploy.sh scale 3          # Run 3 Horizon containers
+bash scripts/deploy.sh configure
+bash scripts/deploy.sh configure-ssl
+bash scripts/deploy.sh scale 3
 bash scripts/deploy.sh ps
 bash scripts/deploy.sh logs app
 bash scripts/deploy.sh down
 ```
 
-## Horizon workers
-
-| Setting | Where |
-|---|---|
-| Workers per queue type | Settings → General → **Queue** (runtime config) |
-| Horizon container count | `HORIZON_REPLICAS` in `.env` or `bash scripts/deploy.sh scale N` |
-
-Total workers ≈ UI value × replica count.
-
 ## Same-host databases
 
-If MySQL/Redis/Mongo run on the same machine as Docker, use `host.docker.internal` (Docker Desktop) or the Docker bridge gateway IP on Linux (often `172.17.0.1`). The wizard suggests this when `localhost` fails from inside a container.
+- **Docker**: use `host.docker.internal` or bridge gateway (`172.17.0.1` on Linux)
+- **Host**: use `127.0.0.1` (wizard default)
 
 ## Flickr OAuth
 
-Register this callback URL in your Flickr app settings (shown at end of wizard):
-
-```
-{APP_URL}/flickr/callback
-```
+Register `{APP_URL}/flickr/callback` in your Flickr app settings.
 
 ## See also
 
-- [Docker stacks](docker-stacks.md) — dev / testing / production separation
+- [Docker stacks](docker-stacks.md)
 - [Deploy overview](deploy.md)
-- [Environments](../01-getting-started/environments.md)
+- [Native installation](../01-getting-started/native-installation.md)

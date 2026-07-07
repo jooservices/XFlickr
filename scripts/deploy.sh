@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# XFlickr production Docker deploy — operator only (not for AI agents).
+# XFlickr production deploy — Docker or host (operator only, not for AI agents).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -10,6 +10,8 @@ source "${ROOT}/scripts/lib/common.sh"
 # shellcheck disable=SC1091
 source "${ROOT}/scripts/lib/compose-prod.sh"
 # shellcheck disable=SC1091
+source "${ROOT}/scripts/lib/deploy/mode.sh"
+# shellcheck disable=SC1091
 source "${ROOT}/scripts/lib/deploy/preflight.sh"
 # shellcheck disable=SC1091
 source "${ROOT}/scripts/lib/deploy/wizard.sh"
@@ -19,6 +21,12 @@ source "${ROOT}/scripts/lib/deploy/bootstrap.sh"
 source "${ROOT}/scripts/lib/deploy/update.sh"
 # shellcheck disable=SC1091
 source "${ROOT}/scripts/lib/deploy/release.sh"
+# shellcheck disable=SC1091
+source "${ROOT}/scripts/lib/deploy/verify-docker.sh"
+# shellcheck disable=SC1091
+source "${ROOT}/scripts/lib/deploy/host/verify-host.sh"
+# shellcheck disable=SC1091
+source "${ROOT}/scripts/lib/deploy/host/bootstrap-host.sh"
 
 xf_load_root_env "$ROOT"
 
@@ -26,21 +34,23 @@ usage() {
     cat <<EOF
   bash scripts/deploy.sh                   Detect existing stack → prompt → safe release update
   bash scripts/deploy.sh deploy            Same as default (recommended for repeat deploys)
-  bash scripts/deploy.sh install           First-time install (wizard, or finish if .env exists)
+  bash scripts/deploy.sh install           First-time install (wizard: Docker or host target)
   bash scripts/deploy.sh finish            Complete install using existing .env (no wizard)
   bash scripts/deploy.sh update            Safe release update (git pull + rebuild + migrate)
   bash scripts/deploy.sh configure         Re-run service wizard (preserves APP_KEY)
   bash scripts/deploy.sh configure-ssl     Update HTTPS certificate settings
-  bash scripts/deploy.sh scale <N>         Scale horizon containers to N replicas
+  bash scripts/deploy.sh scale <N>         Scale horizon workers to N replicas
   bash scripts/deploy.sh verify            Re-run post-deploy health checks
-  bash scripts/deploy.sh restart-nginx     Recreate nginx after SSL changes
-  bash scripts/deploy.sh ps|status         Show container status
-  bash scripts/deploy.sh logs [service]    Follow logs (default: all)
-  bash scripts/deploy.sh down              Stop production stack (does not remove volumes or DB data)
+  bash scripts/deploy.sh restart-nginx     Recreate/reload nginx after SSL changes
+  bash scripts/deploy.sh ps|status         Show service status
+  bash scripts/deploy.sh logs [service]    Follow logs (Docker: compose; host: supervisor logs)
+  bash scripts/deploy.sh down              Stop production (containers or supervisor)
+
+  Deploy target is stored as DEPLOY_TARGET=docker|host in .env (chosen at install).
 
   Safe updates never run migrate:fresh, db:wipe, or down --volumes.
+  Every install/update runs migrate, cache clear/recache, worker restart, and verify before success.
 
-  Production stack only (project: xflickr-prod, compose: docker-compose.prod.yml).
   Local dev:  bash scripts/dev.sh
   Tests/CI:   bash scripts/test.sh gate
 
@@ -48,10 +58,21 @@ usage() {
 EOF
 }
 
+deploy_verify_for_mode() {
+    local mode
+    mode="$(deploy_resolve_mode "$ROOT")"
+
+    case "$mode" in
+        host) deploy_verify_host ;;
+        *) deploy_verify_stack ;;
+    esac
+}
+
 cmd="${1:-deploy}"
 shift || true
 
-deploy_preflight "$ROOT" || exit 1
+DEPLOY_MODE="$(deploy_resolve_mode "$ROOT")"
+deploy_preflight "$ROOT" "$DEPLOY_MODE" || exit 1
 
 case "$cmd" in
     deploy|"")
@@ -65,7 +86,7 @@ case "$cmd" in
         ;;
     configure)
         deploy_wizard_run "$ROOT" configure || exit 1
-        echo "Restarting stack to apply configuration..."
+        echo "Applying configuration..."
         deploy_run_release_update "$ROOT" || exit 1
         ;;
     configure-ssl)
@@ -74,7 +95,7 @@ case "$cmd" in
         deploy_restart_nginx
         ;;
     update)
-        if ! deploy_prod_has_env "$ROOT" && [[ "$(deploy_prod_container_count)" -eq 0 ]]; then
+        if ! deploy_prod_has_env "$ROOT" && [[ "$(deploy_prod_container_count)" -eq 0 ]] && ! deploy_host_services_running; then
             echo "ERROR: No production deployment found. Run: bash scripts/deploy.sh install" >&2
             exit 1
         fi
@@ -95,7 +116,7 @@ case "$cmd" in
             exit 1
         fi
         xf_load_root_env "$ROOT"
-        deploy_verify_stack || exit 1
+        deploy_verify_for_mode || exit 1
         ;;
     scale)
         count="${1:-}"
@@ -104,24 +125,38 @@ case "$cmd" in
             exit 1
         fi
         xf_load_root_env "$ROOT"
-        deploy_scale_horizon "$count"
+        deploy_scale_horizon "$count" || exit 1
         ;;
     restart-nginx)
         deploy_restart_nginx
         ;;
     ps|status)
-        xf_prod_compose ps
+        if [[ "$DEPLOY_MODE" == "host" ]]; then
+            supervisorctl status xflickr-app xflickr-horizon xflickr-scheduler 2>/dev/null || true
+        else
+            xf_prod_compose ps
+        fi
         ;;
     logs)
-        if [[ -n "${1:-}" ]]; then
+        if [[ "$DEPLOY_MODE" == "host" ]]; then
+            case "${1:-app}" in
+                horizon) tail -f /var/log/xflickr/horizon.log ;;
+                scheduler) tail -f /var/log/xflickr/scheduler.log ;;
+                *) tail -f /var/log/xflickr/app.log ;;
+            esac
+        elif [[ -n "${1:-}" ]]; then
             xf_prod_compose logs -f "$1"
         else
             xf_prod_compose logs -f
         fi
         ;;
     down)
-        echo "Stopping production stack (containers only — volumes and external databases are kept)."
-        xf_prod_compose down
+        if [[ "$DEPLOY_MODE" == "host" ]]; then
+            deploy_host_down
+        else
+            echo "Stopping production stack (containers only — volumes and external databases are kept)."
+            xf_prod_compose down
+        fi
         ;;
     -h|--help|help)
         usage

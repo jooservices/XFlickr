@@ -9,6 +9,8 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/common.sh"
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/compose-test.sh"
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/prereqs.sh"
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/deploy-gate.sh"
 
 TEST_GATE_FAILED=0
 TEST_COVERAGE_MIN="${TEST_COVERAGE_MIN:-60}"
@@ -176,6 +178,7 @@ test_gate_ci() {
     test_gate_run_step "Lint" test_gate_lint
     test_gate_run_step "Frontend build + Vitest" bash -c "npm ci && npm run typecheck && npm run lint && npm run test && npm run build"
     test_gate_run_step "Coverage" test_gate_coverage
+    test_gate_run_step "Deploy scripts" test_gate_deploy_scripts
 
     if [[ "$TEST_GATE_FAILED" -ne 0 ]]; then
         printf '\nCI gate FAILED\n'

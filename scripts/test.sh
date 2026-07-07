@@ -17,6 +17,7 @@ usage() {
     cat <<'EOF'
   bash scripts/test.sh gate:lint              Lint only (host — no PHPUnit Docker)
   bash scripts/test.sh gate:test              Lint + PHPUnit (Docker) + Vitest
+  bash scripts/test.sh gate:deploy-scripts     Deploy shell scripts (Ubuntu 22.04 container)
   bash scripts/test.sh gate:ci                Canonical CI/pre-push gate
   bash scripts/test.sh gate                   Alias for gate:lint + gate:test
   bash scripts/test.sh setup-hooks            Install .githooks (pre-commit / pre-push)
@@ -45,6 +46,11 @@ case "$cmd" in
         ;;
     gate:test)
         test_gate_test
+        ;;
+    gate:deploy-scripts)
+        # shellcheck disable=SC1091
+        source "${ROOT}/scripts/lib/test/deploy-gate.sh"
+        test_gate_deploy_scripts
         ;;
     gate:ci)
         test_gate_ci
