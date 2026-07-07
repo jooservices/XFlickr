@@ -7,9 +7,9 @@ deploy_preflight() {
     local root="$1"
     local missing=0
 
-    for cmd in docker git; do
-        if ! command -v "$cmd" >/dev/null 2>&1; then
-            echo "ERROR: Required command not found: ${cmd}" >&2
+    for required_cmd in docker git curl; do
+        if ! command -v "$required_cmd" >/dev/null 2>&1; then
+            echo "ERROR: Required command not found: ${required_cmd}" >&2
             missing=1
         fi
     done
