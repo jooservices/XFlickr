@@ -10,12 +10,12 @@ use App\Models\StorageAccount;
 use App\Services\Storage\StorageAccountScopeService;
 use App\Services\Storage\StorageR2ConnectionVerifier;
 use App\Support\Storage\StorageStreamResult;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
 final class StorageR2Test extends TestCase
 {
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_r2_driver_does_not_require_oauth_or_app_credentials(): void
     {

@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Services\Flickr\FlickrPhotoSizeResolver;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use JOOservices\XFlickrCrawler\Models\Photo;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;
 
 final class FlickrPhotoSizeResolverTest extends TestCase
 {
     use CreatesFlickrConnection;
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_it_uses_cached_get_sizes_without_calling_flickr_api(): void
     {
@@ -34,7 +34,7 @@ final class FlickrPhotoSizeResolverTest extends TestCase
 
         $download = app(FlickrPhotoSizeResolver::class)->resolve('photo-1', $connection);
 
-        $this->assertSame('https://example.test/original.jpg', $download['url']);
-        $this->assertSame('original', $download['variant']);
+        $this->assertSame('https://example.test/original.jpg', $download->url);
+        $this->assertSame('original', $download->variant);
     }
 }

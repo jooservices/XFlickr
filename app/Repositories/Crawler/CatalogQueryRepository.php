@@ -7,6 +7,8 @@ namespace App\Repositories\Crawler;
 use App\Support\Query\QuerySorter;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use JOOservices\XFlickrCrawler\Models\ConnectionContact;
 use JOOservices\XFlickrCrawler\Models\Favorite;
 use JOOservices\XFlickrCrawler\Models\Gallery;
@@ -116,6 +118,49 @@ final class CatalogQueryRepository
                     ->select('contact_nsid'),
             )
             ->count();
+    }
+
+    /**
+     * @param  list<string>  $connectionKeys
+     * @return array<string, int>
+     */
+    public function photosetCountsGroupedByConnection(array $connectionKeys): array
+    {
+        return $this->aggregateCatalogGroupedByConnection(Photoset::query(), $connectionKeys);
+    }
+
+    /**
+     * @param  list<string>  $connectionKeys
+     * @return array<string, int>
+     */
+    public function galleryCountsGroupedByConnection(array $connectionKeys): array
+    {
+        return $this->aggregateCatalogGroupedByConnection(Gallery::query(), $connectionKeys);
+    }
+
+    /**
+     * @param  Builder<covariant Model>  $query
+     * @param  list<string>  $connectionKeys
+     * @return array<string, int>
+     */
+    private function aggregateCatalogGroupedByConnection(Builder $query, array $connectionKeys): array
+    {
+        if ($connectionKeys === []) {
+            return [];
+        }
+
+        $model = $query->getModel();
+        $catalogTable = $model->getTable();
+        $contactsTable = (new ConnectionContact)->getTable();
+
+        return DB::table($catalogTable)
+            ->join($contactsTable, "{$catalogTable}.owner_nsid", '=', "{$contactsTable}.contact_nsid")
+            ->whereIn("{$contactsTable}.connection_key", $connectionKeys)
+            ->selectRaw("{$contactsTable}.connection_key, count(*) as aggregate")
+            ->groupBy("{$contactsTable}.connection_key")
+            ->pluck('aggregate', 'connection_key')
+            ->map(fn (mixed $count): int => (int) $count)
+            ->all();
     }
 
     /**

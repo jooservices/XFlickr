@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
 final class XFlickrCrawlConfigTest extends TestCase
 {
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_crawl_config_falls_back_to_file_config_without_invalid_runtime_path(): void
     {

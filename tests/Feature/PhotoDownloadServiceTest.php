@@ -8,20 +8,20 @@ use App\Jobs\DownloadPhotoJob;
 use App\Jobs\FanOutTransferBatchJob;
 use App\Models\TransferBatch;
 use App\Services\Flickr\PhotoDownloadService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use JOOservices\XFlickrCrawler\Models\Gallery;
 use JOOservices\XFlickrCrawler\Models\Photo;
 use JOOservices\XFlickrCrawler\Models\Photoset;
 use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;
 
 final class PhotoDownloadServiceTest extends TestCase
 {
     use CreatesFlickrConnection;
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_it_groups_pending_downloads_by_photoset_gallery_and_loose_photos(): void
     {
@@ -131,10 +131,15 @@ final class PhotoDownloadServiceTest extends TestCase
 
         $queued = app(PhotoDownloadService::class)->fanOutDownloads($connection, 'me@N01');
 
-        $this->assertSame(1, $queued);
+        $this->assertSame(2, $queued);
+        $this->assertDatabaseCount('transfer_batches', 2);
         $this->assertDatabaseHas('transfer_batches', [
             'type' => 'download',
-            'total_count' => 251,
+            'total_count' => 250,
+        ]);
+        $this->assertDatabaseHas('transfer_batches', [
+            'type' => 'download',
+            'total_count' => 1,
         ]);
         Bus::assertDispatched(DownloadPhotoJob::class, 251);
     }

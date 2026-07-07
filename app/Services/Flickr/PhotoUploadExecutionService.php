@@ -15,9 +15,7 @@ use App\Services\Storage\StorageUploadService;
 use App\Services\Transfer\TransferBatchReconciler;
 use App\Support\FlickrPhotoUrlHelper;
 use Exception;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
-use RuntimeException;
 
 final class PhotoUploadExecutionService
 {
@@ -34,21 +32,11 @@ final class PhotoUploadExecutionService
         int $storageAccountId,
         ?int $batchId,
         string $ownerNsid,
-        int $attempt,
-        int $maxAttempts,
     ): PhotoTransferExecutionOutcome {
         $storedFile = $this->storedFiles->findOriginalByFlickrPhotoId($flickrPhotoId);
 
         if ($storedFile === null || $storedFile->status !== StoredFileStatus::Completed->value) {
-            if ($attempt < $maxAttempts) {
-                return PhotoTransferExecutionOutcome::Deferred;
-            }
-
-            $message = "Local file for Flickr photo [{$flickrPhotoId}] is not ready for upload.";
-            $this->updateItemStatus($batchId, $flickrPhotoId, TransferItemStatus::Failed, $message);
-            $this->batchReconciler->reconcile($batchId);
-
-            throw new RuntimeException($message);
+            return PhotoTransferExecutionOutcome::Deferred;
         }
 
         $upload = $this->storageUploads->firstOrCreateForAccount($storedFile->id, $storageAccountId);
@@ -60,14 +48,7 @@ final class PhotoUploadExecutionService
             return PhotoTransferExecutionOutcome::Completed;
         }
 
-        $lockKey = "upload_lock:storage_account:{$storageAccountId}";
-        $lock = Cache::lock($lockKey, 300);
-        $lockHeld = false;
-
         try {
-            $lock->block(60);
-            $lockHeld = true;
-
             $this->storageUploads->markUploading($storedFile->id, $storageAccountId);
             $this->updateItemStatus($batchId, $flickrPhotoId, TransferItemStatus::Processing);
 
@@ -91,16 +72,10 @@ final class PhotoUploadExecutionService
 
             return PhotoTransferExecutionOutcome::Completed;
         } catch (Exception $e) {
-            if ($attempt < $maxAttempts) {
-                $this->storageUploads->markPendingForAccount($storedFile->id, $storageAccountId, $e->getMessage());
-                $this->updateItemStatus($batchId, $flickrPhotoId, TransferItemStatus::Processing, $e->getMessage());
-            }
+            $this->storageUploads->markPendingForAccount($storedFile->id, $storageAccountId, $e->getMessage());
+            $this->updateItemStatus($batchId, $flickrPhotoId, TransferItemStatus::Processing, $e->getMessage());
 
             throw $e;
-        } finally {
-            if ($lockHeld) {
-                $lock->release();
-            }
         }
     }
 

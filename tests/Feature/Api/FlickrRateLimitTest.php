@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;
 
 final class FlickrRateLimitTest extends TestCase
 {
     use CreatesFlickrConnection;
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_rate_limit_snapshot_includes_accounts_and_active_key(): void
     {

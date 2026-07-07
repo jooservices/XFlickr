@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace Tests\Feature\Api;
 
 use Carbon\CarbonImmutable;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use JOOservices\XFlickrCrawler\Enums\ApiOutcome;
 use JOOservices\XFlickrCrawler\Models\ApiLog;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;
 
 final class FlickrRateLimitUsageTest extends TestCase
 {
     use CreatesFlickrConnection;
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_usage_requires_connection_key(): void
     {

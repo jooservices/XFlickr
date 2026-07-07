@@ -6,6 +6,7 @@ namespace App\Services\Storage;
 
 use App\Enums\StorageDriver;
 use App\Repositories\StorageAccountRepository;
+use App\Support\MaskedCredentialHint;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
@@ -44,7 +45,7 @@ final class StorageAppProfileService
                 return [
                     'provider' => $driver->value,
                     'label' => $label !== '' ? $label : $driver->label(),
-                    'client_id_hint' => $this->clientIdHint($clientId),
+                    'client_id_hint' => MaskedCredentialHint::leadingAndTrailing($clientId),
                     'redirect' => $redirect !== '' ? $redirect : $this->defaultRedirectUri($driver),
                     'accounts_count' => $this->accounts->countForProvider($driver->value),
                 ];
@@ -103,14 +104,5 @@ final class StorageAppProfileService
                 $driver->value => $this->defaultRedirectUri($driver),
             ])
             ->all();
-    }
-
-    private function clientIdHint(string $clientId): string
-    {
-        if (strlen($clientId) <= 8) {
-            return str_repeat('•', strlen($clientId));
-        }
-
-        return substr($clientId, 0, 4).'…'.substr($clientId, -4);
     }
 }

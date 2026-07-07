@@ -93,6 +93,53 @@ final class PhotoQueryRepository
             ->count();
     }
 
+    /**
+     * @param  list<string>  $connectionKeys
+     * @return array<string, int>
+     */
+    public function countsGroupedByConnection(array $connectionKeys): array
+    {
+        return $this->aggregatePhotosGroupedByConnection($connectionKeys, withSizes: false);
+    }
+
+    /**
+     * @param  list<string>  $connectionKeys
+     * @return array<string, int>
+     */
+    public function countsWithSizesGroupedByConnection(array $connectionKeys): array
+    {
+        return $this->aggregatePhotosGroupedByConnection($connectionKeys, withSizes: true);
+    }
+
+    /**
+     * @param  list<string>  $connectionKeys
+     * @return array<string, int>
+     */
+    private function aggregatePhotosGroupedByConnection(array $connectionKeys, bool $withSizes): array
+    {
+        if ($connectionKeys === []) {
+            return [];
+        }
+
+        $contactsTable = (new ConnectionContact)->getTable();
+        $photosTable = (new Photo)->getTable();
+
+        $query = DB::table($photosTable)
+            ->join($contactsTable, "{$photosTable}.owner_nsid", '=', "{$contactsTable}.contact_nsid")
+            ->whereIn("{$contactsTable}.connection_key", $connectionKeys)
+            ->selectRaw("{$contactsTable}.connection_key, count(*) as aggregate")
+            ->groupBy("{$contactsTable}.connection_key");
+
+        if ($withSizes) {
+            $query->whereNotNull("{$photosTable}.raw_payload->sizes");
+        }
+
+        return $query
+            ->pluck('aggregate', 'connection_key')
+            ->map(fn (mixed $count): int => (int) $count)
+            ->all();
+    }
+
     public function countWithSizesForOwner(string $ownerNsid): int
     {
         return Photo::query()

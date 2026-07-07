@@ -8,13 +8,13 @@ use App\Enums\StorageDriver;
 use App\Models\StorageAccount;
 use App\Models\StorageRemoteItem;
 use App\Services\Storage\StorageAccountScopeService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
 final class StorageBrowseTest extends TestCase
 {
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_google_photos_driver_includes_read_scope(): void
     {

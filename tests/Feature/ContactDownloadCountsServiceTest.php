@@ -7,14 +7,14 @@ namespace Tests\Feature;
 use App\Models\StoredFile;
 use App\Models\TransferBatch;
 use App\Services\Flickr\ContactDownloadCountsService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;
 
 final class ContactDownloadCountsServiceTest extends TestCase
 {
     use CreatesFlickrConnection;
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_it_counts_downloaded_files_from_status_without_local_disk_check(): void
     {

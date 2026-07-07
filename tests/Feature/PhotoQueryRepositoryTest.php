@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Repositories\Crawler\PhotoQueryRepository;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use JOOservices\XFlickrCrawler\Models\Gallery;
 use JOOservices\XFlickrCrawler\Models\Photo;
 use JOOservices\XFlickrCrawler\Models\Photoset;
 use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
 final class PhotoQueryRepositoryTest extends TestCase
 {
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_photoset_and_gallery_memberships_groups_photo_ids(): void
     {

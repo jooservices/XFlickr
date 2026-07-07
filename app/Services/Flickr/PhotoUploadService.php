@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Flickr;
 
 use App\Enums\StoredFileStatus;
+use App\Enums\TransferType;
 use App\Jobs\FanOutTransferBatchJob;
 use App\Jobs\UploadPhotoJob;
 use App\Models\StorageAccount;
@@ -110,7 +111,7 @@ final class PhotoUploadService
         }
 
         FanOutTransferBatchJob::dispatch(
-            transferType: 'upload',
+            transferType: TransferType::Upload,
             connectionKey: $connection->connection_key,
             ownerNsid: $ownerNsid,
             storageAccountId: $storageAccount->id,
@@ -142,48 +143,61 @@ final class PhotoUploadService
             ? $subjectNsid
             : $connection->connection_key;
 
-        $needsDownload = collect();
-        $readyForUpload = collect();
+        $queuedCount = 0;
 
         $this->photos->chunkByOwnerNsid(
             $ownerNsid,
             self::CHUNK_SIZE,
-            function (Collection $chunk) use ($storageAccount, &$needsDownload, &$readyForUpload): void {
+            function (Collection $chunk) use (
+                $connection,
+                $storageAccount,
+                $subjectNsid,
+                &$queuedCount,
+            ): void {
+                $photoIds = $chunk->pluck('flickr_photo_id')->all();
+                $storedFiles = $this->storedFiles->originalsByFlickrPhotoIds($photoIds);
+                $completedUploadFileIds = $this->storageUploads->completedStoredFileIdsForAccount(
+                    $storedFiles->pluck('id')->all(),
+                    $storageAccount->id,
+                );
+
+                /** @var Collection<int, Photo> $needsDownload */
+                $needsDownload = collect();
+                /** @var Collection<int, Photo> $readyForUpload */
+                $readyForUpload = collect();
+
                 foreach ($chunk as $photo) {
-                    $storedFile = $this->storedFiles->findOriginalByFlickrPhotoId($photo->flickr_photo_id);
+                    $storedFile = $storedFiles->get($photo->flickr_photo_id);
 
-                    if ($storedFile === null) {
+                    if ($storedFile === null || $storedFile->status !== StoredFileStatus::Completed->value) {
                         $needsDownload->push($photo);
 
                         continue;
                     }
 
-                    if ($storedFile->status !== StoredFileStatus::Completed->value) {
-                        $needsDownload->push($photo);
-
-                        continue;
-                    }
-
-                    if (! $this->storageUploads->hasCompleted($storedFile->id, $storageAccount->id)) {
+                    if (! in_array($storedFile->id, $completedUploadFileIds, true)) {
                         $readyForUpload->push($photo);
                     }
+                }
+
+                if ($needsDownload->isNotEmpty()) {
+                    $firstNeedingDownload = $needsDownload->first();
+                    $downloadOwnerNsid = $subjectNsid ?? $firstNeedingDownload->owner_nsid;
+                    $this->downloads->queueSelectedDownloads($connection, $needsDownload, $downloadOwnerNsid);
+                }
+
+                if ($readyForUpload->isNotEmpty()) {
+                    $queuedCount += $this->dispatchUploadBatch(
+                        $connection,
+                        $storageAccount,
+                        $readyForUpload,
+                        $subjectNsid,
+                    );
                 }
             },
         );
 
-        if ($needsDownload->isNotEmpty()) {
-            $firstNeedingDownload = $needsDownload->first();
-            $downloadOwnerNsid = $subjectNsid ?? ($firstNeedingDownload instanceof Photo
-                ? $firstNeedingDownload->owner_nsid
-                : $connection->connection_key);
-            $this->downloads->queueSelectedDownloads($connection, $needsDownload, $downloadOwnerNsid);
-        }
-
-        if ($readyForUpload->isEmpty()) {
-            return 0;
-        }
-
-        return $this->dispatchUploadBatch($connection, $storageAccount, $readyForUpload, $subjectNsid);
+        return $queuedCount;
     }
 
     /**
@@ -223,9 +237,7 @@ final class PhotoUploadService
 
         if ($needsDownload->isNotEmpty()) {
             $firstNeedingDownload = $needsDownload->first();
-            $downloadOwnerNsid = $subjectNsid ?? ($firstNeedingDownload instanceof Photo
-                ? $firstNeedingDownload->owner_nsid
-                : $connection->connection_key);
+            $downloadOwnerNsid = $subjectNsid ?? $firstNeedingDownload->owner_nsid;
             $this->downloads->queueSelectedDownloads($connection, $needsDownload, $downloadOwnerNsid);
         }
 
@@ -263,6 +275,7 @@ final class PhotoUploadService
                 $storageAccount->id,
                 $batch->id,
                 $photo->owner_nsid,
+                $readyForUpload->count(),
             );
         }
 

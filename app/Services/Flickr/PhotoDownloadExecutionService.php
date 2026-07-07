@@ -36,8 +36,6 @@ final class PhotoDownloadExecutionService
         string $ownerNsid,
         string $connectionKey,
         ?int $batchId,
-        int $attempt,
-        int $maxAttempts,
     ): PhotoTransferExecutionOutcome {
         $lockKey = "download_lock:{$flickrPhotoId}";
         $lock = Cache::lock($lockKey, 120);
@@ -72,13 +70,13 @@ final class PhotoDownloadExecutionService
             $this->updateItemStatus($batchId, $flickrPhotoId, TransferItemStatus::Processing);
 
             $download = $this->resolver->resolve($flickrPhotoId, $connection);
-            $finalPath = $this->finalPathFor($flickrPhotoId, $ownerNsid, $photo, $download['url']);
+            $finalPath = $this->finalPathFor($flickrPhotoId, $ownerNsid, $photo, $download->url);
             $partPath = "{$finalPath}.part";
 
             Storage::makeDirectory(dirname($finalPath));
-            $response = Http::timeout(120)->withHeaders([
+            $response = Http::timeout((int) config('xflickr.download.timeout_seconds', 120))->withHeaders([
                 'User-Agent' => 'XFlickr Download Client 1.0',
-            ])->sink(Storage::path($partPath))->get($download['url']);
+            ])->sink(Storage::path($partPath))->get($download->url);
 
             if (! $response->successful()) {
                 throw new Exception('HTTP download failed with status: '.$response->status());
@@ -91,7 +89,7 @@ final class PhotoDownloadExecutionService
             $sha256 = hash_file('sha256', Storage::path($finalPath));
 
             $extension = FlickrPhotoUrlHelper::resolveExtension(
-                $download['url'],
+                $download->url,
                 is_array($photo->raw_payload) ? ($photo->raw_payload['originalformat'] ?? null) : null,
             );
 
@@ -103,7 +101,7 @@ final class PhotoDownloadExecutionService
                 'downloaded_at' => now(),
                 'error_message' => null,
                 'metadata' => [
-                    'download_variant' => $download['variant'],
+                    'download_variant' => $download->variant,
                     'sizes_source' => 'flickr.photos.getSizes',
                 ],
             ]);
@@ -117,10 +115,8 @@ final class PhotoDownloadExecutionService
                 Storage::delete($partPath);
             }
 
-            if ($attempt < $maxAttempts) {
-                $this->storedFiles->markPending($flickrPhotoId, $e->getMessage());
-                $this->updateItemStatus($batchId, $flickrPhotoId, TransferItemStatus::Processing, $e->getMessage());
-            }
+            $this->storedFiles->markPending($flickrPhotoId, $e->getMessage());
+            $this->updateItemStatus($batchId, $flickrPhotoId, TransferItemStatus::Processing, $e->getMessage());
 
             throw $e;
         } finally {

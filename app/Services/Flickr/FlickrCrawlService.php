@@ -27,13 +27,22 @@ final class FlickrCrawlService
         );
     }
 
-    public function crawl(Connection $connection, CrawlType $type, ?string $subjectNsid = null): CrawlRun
-    {
+    public function crawl(
+        Connection $connection,
+        CrawlType $type,
+        ?string $subjectNsid = null,
+        ?int $spiderRunId = null,
+        ?int $spiderFrontierItemId = null,
+    ): CrawlRun {
         $flickrConnection = $this->connection($connection);
         $subject = $subjectNsid ?? $connection->connection_key;
 
         return match ($type) {
-            CrawlType::Contacts => $flickrConnection->contacts(),
+            CrawlType::Contacts => $flickrConnection->contacts(
+                $this->contactsSubject($connection, $subjectNsid),
+                $spiderRunId,
+                $spiderFrontierItemId,
+            ),
             CrawlType::Photos => $flickrConnection->photos($subject),
             CrawlType::Photosets => $flickrConnection->photosets($subject),
             CrawlType::Galleries => $flickrConnection->galleries($subject),
@@ -45,13 +54,33 @@ final class FlickrCrawlService
      * @param  list<CrawlType>  $types
      * @return list<CrawlRun>
      */
-    public function crawlMany(Connection $connection, array $types, ?string $subjectNsid = null): array
-    {
+    public function crawlMany(
+        Connection $connection,
+        array $types,
+        ?string $subjectNsid = null,
+        ?int $spiderRunId = null,
+        ?int $spiderFrontierItemId = null,
+    ): array {
         $runs = [];
         foreach ($types as $type) {
-            $runs[] = $this->crawl($connection, $type, $subjectNsid);
+            $runs[] = $this->crawl(
+                $connection,
+                $type,
+                $subjectNsid,
+                $spiderRunId,
+                $spiderFrontierItemId,
+            );
         }
 
         return $runs;
+    }
+
+    private function contactsSubject(Connection $connection, ?string $subjectNsid): ?string
+    {
+        if ($subjectNsid === null || $subjectNsid === '' || $subjectNsid === $connection->connection_key) {
+            return null;
+        }
+
+        return $subjectNsid;
     }
 }

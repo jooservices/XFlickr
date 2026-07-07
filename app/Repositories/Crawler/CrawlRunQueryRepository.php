@@ -36,6 +36,66 @@ final class CrawlRunQueryRepository
     }
 
     /**
+     * @param  list<string>  $connectionKeys
+     * @return array<string, array{running: int, completed: int, failed: int}>
+     */
+    public function statusCountsGroupedByConnection(array $connectionKeys): array
+    {
+        if ($connectionKeys === []) {
+            return [];
+        }
+
+        $rows = CrawlRun::query()
+            ->whereIn('connection_key', $connectionKeys)
+            ->selectRaw('connection_key, status, count(*) as aggregate')
+            ->groupBy('connection_key', 'status')
+            ->get();
+
+        /** @var array<string, array{running: int, completed: int, failed: int}> $grouped */
+        $grouped = [];
+
+        foreach ($connectionKeys as $key) {
+            $grouped[$key] = ['running' => 0, 'completed' => 0, 'failed' => 0];
+        }
+
+        foreach ($rows as $row) {
+            $key = (string) $row->connection_key;
+            $status = $row->status instanceof CrawlRunStatus ? $row->status->value : (string) $row->status;
+            if (isset($grouped[$key][$status])) {
+                $grouped[$key][$status] = (int) ($row->getAttribute('aggregate') ?? 0);
+            }
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * @param  list<string>  $connectionKeys
+     * @return array<string, CrawlRun>
+     */
+    public function latestRunsByConnection(array $connectionKeys): array
+    {
+        if ($connectionKeys === []) {
+            return [];
+        }
+
+        $runs = CrawlRun::query()
+            ->whereIn('connection_key', $connectionKeys)
+            ->orderByDesc('id')
+            ->get();
+
+        $latest = [];
+        foreach ($runs as $run) {
+            $key = (string) $run->connection_key;
+            if (! isset($latest[$key])) {
+                $latest[$key] = $run;
+            }
+        }
+
+        return $latest;
+    }
+
+    /**
      * @return array{running: int, completed: int, failed: int}
      */
     public function statusCountsForConnection(string $connectionKey): array

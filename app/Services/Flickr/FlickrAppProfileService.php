@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Flickr;
 
 use App\Repositories\Crawler\ConnectionQueryRepository;
+use App\Support\MaskedCredentialHint;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
@@ -42,7 +43,7 @@ final class FlickrAppProfileService
                 return [
                     'profile' => $profile,
                     'label' => $label !== '' ? $label : null,
-                    'api_key_hint' => $this->apiKeyHint($apiKey),
+                    'api_key_hint' => MaskedCredentialHint::leadingAndTrailing($apiKey),
                     'callback_url' => $callbackUrl !== '' ? $callbackUrl : $this->defaultCallbackUrl(),
                     'accounts_count' => $this->connections->countByAppProfile($profile),
                 ];
@@ -81,6 +82,28 @@ final class FlickrAppProfileService
         RuntimeConfig::refresh();
 
         return $profile;
+    }
+
+    public function delete(string $profile): string
+    {
+        $slug = XFlickrConfig::sanitizeProfileSlug($profile);
+
+        if (! RuntimeConfig::has("xflickr_app.{$slug}")) {
+            throw ValidationException::withMessages([
+                'profile' => 'Flickr app profile not found.',
+            ]);
+        }
+
+        if ($this->connections->countByAppProfile($slug) > 0) {
+            throw ValidationException::withMessages([
+                'profile' => 'Disconnect all Flickr accounts using this profile before deleting it.',
+            ]);
+        }
+
+        RuntimeConfig::forget("xflickr_app.{$slug}");
+        RuntimeConfig::refresh();
+
+        return $slug;
     }
 
     public function hasProfiles(): bool
@@ -124,14 +147,5 @@ final class FlickrAppProfileService
         }
 
         return route('flickr.callback', [], true);
-    }
-
-    private function apiKeyHint(string $apiKey): string
-    {
-        if (strlen($apiKey) <= 8) {
-            return str_repeat('•', strlen($apiKey));
-        }
-
-        return substr($apiKey, 0, 4).'…'.substr($apiKey, -4);
     }
 }

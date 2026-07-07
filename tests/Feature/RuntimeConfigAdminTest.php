@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
 final class RuntimeConfigAdminTest extends TestCase
 {
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     protected function setUp(): void
     {
@@ -75,6 +75,21 @@ final class RuntimeConfigAdminTest extends TestCase
 
         $response->assertRedirect(route('settings.index', ['tab' => 'general']));
         $this->assertFalse(RuntimeConfig::has('xflickr.global_pause'));
+    }
+
+    public function test_can_store_spider_runtime_config(): void
+    {
+        $response = $this->post('/settings/config', [
+            'path' => 'spider.enabled',
+            'type' => 'bool',
+            'value' => 'true',
+        ]);
+
+        $response->assertRedirect(route('settings.index', ['tab' => 'general']));
+        $this->assertTrue(RuntimeConfig::get('spider.enabled'));
+
+        RuntimeConfig::forget('spider.enabled');
+        RuntimeConfig::refresh();
     }
 
     public function test_settings_page_includes_runtime_config_payload(): void

@@ -6,13 +6,13 @@ namespace Tests\Feature;
 
 use App\Models\StorageAccount;
 use App\Services\Storage\GooglePhotosUploadService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
 final class GooglePhotosUploadTest extends TestCase
 {
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_uploads_media_item_via_google_photos_api(): void
     {

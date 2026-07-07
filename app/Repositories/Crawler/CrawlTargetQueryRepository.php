@@ -7,6 +7,7 @@ namespace App\Repositories\Crawler;
 use Illuminate\Support\Collection;
 use JOOservices\XFlickrCrawler\Enums\CrawlStatus;
 use JOOservices\XFlickrCrawler\Enums\TaskType;
+use JOOservices\XFlickrCrawler\Models\CrawlRun;
 use JOOservices\XFlickrCrawler\Models\CrawlTarget;
 
 final class CrawlTargetQueryRepository
@@ -32,6 +33,30 @@ final class CrawlTargetQueryRepository
             ->whereHas('crawlRun', fn ($q) => $q->whereIn('connection_key', $connectionKeys))
             ->where('status', 'pending')
             ->count();
+    }
+
+    /**
+     * @param  list<string>  $connectionKeys
+     * @return array<string, int>
+     */
+    public function countPendingGroupedByConnection(array $connectionKeys): array
+    {
+        if ($connectionKeys === []) {
+            return [];
+        }
+
+        $runsTable = (new CrawlRun)->getTable();
+        $targetsTable = (new CrawlTarget)->getTable();
+
+        return CrawlTarget::query()
+            ->join($runsTable, "{$targetsTable}.xflickr_crawl_run_id", '=', "{$runsTable}.id")
+            ->whereIn("{$runsTable}.connection_key", $connectionKeys)
+            ->where("{$targetsTable}.status", 'pending')
+            ->selectRaw("{$runsTable}.connection_key, count(*) as aggregate")
+            ->groupBy("{$runsTable}.connection_key")
+            ->pluck('aggregate', 'connection_key')
+            ->map(fn (mixed $count): int => (int) $count)
+            ->all();
     }
 
     /**

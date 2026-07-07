@@ -9,15 +9,15 @@ use App\Models\StorageAccount;
 use App\Models\StorageRemoteItem;
 use App\Models\StorageUpload;
 use App\Models\StoredFile;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
 final class StorageSyncReconcileTest extends TestCase
 {
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_manual_sync_with_reconcile_drops_missing_items_and_uploads(): void
     {

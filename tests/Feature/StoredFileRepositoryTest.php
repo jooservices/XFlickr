@@ -6,12 +6,12 @@ namespace Tests\Feature;
 
 use App\Models\StoredFile;
 use App\Repositories\StoredFileRepository;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
 final class StoredFileRepositoryTest extends TestCase
 {
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_has_completed_original_returns_false_when_missing(): void
     {

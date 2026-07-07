@@ -6,13 +6,13 @@ namespace Tests\Feature;
 
 use App\Models\StorageAccount;
 use App\Services\Storage\StorageMicrosoftTokenService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
 final class StorageTokenRefreshTest extends TestCase
 {
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_microsoft_token_refresh_persists_updated_credentials(): void
     {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Storage;
 
+use App\Dto\OAuthAppConfigDto;
 use App\Enums\StorageDriver;
 use App\Models\StorageAccount;
 use App\Services\Storage\OAuth\MicrosoftProvider;
@@ -55,8 +56,8 @@ final class StorageOAuthService
             'refresh_token' => $socialUser->refreshToken,
             'expires_in' => $socialUser->expiresIn,
             'token_type' => 'Bearer',
-            'client_id' => $appConfig['client_id'] ?? null,
-            'client_secret' => $appConfig['client_secret'] ?? null,
+            'client_id' => $appConfig->clientId !== '' ? $appConfig->clientId : null,
+            'client_secret' => $appConfig->clientSecret !== '' ? $appConfig->clientSecret : null,
             'granted_scopes' => $driver->defaultScopes(),
         ];
 
@@ -124,15 +125,15 @@ final class StorageOAuthService
     private function provider(StorageDriver $driver): AbstractProvider
     {
         $appConfig = $this->appConfig($driver);
-        $redirect = $appConfig['redirect'] !== '' ? $appConfig['redirect'] : url("/storage/callback/{$driver->value}");
+        $redirect = ($appConfig->redirectUri ?? '') !== '' ? (string) $appConfig->redirectUri : url("/storage/callback/{$driver->value}");
 
         if (! $this->socialite instanceof SocialiteManager) {
             throw new \RuntimeException('Socialite manager does not support explicit provider construction.');
         }
 
         return $this->socialite->buildProvider($this->providerClass($driver), [
-            'client_id' => $appConfig['client_id'],
-            'client_secret' => $appConfig['client_secret'],
+            'client_id' => $appConfig->clientId,
+            'client_secret' => $appConfig->clientSecret,
             'redirect' => $redirect,
         ]);
     }
@@ -149,10 +150,7 @@ final class StorageOAuthService
         };
     }
 
-    /**
-     * @return array<string, string>
-     */
-    private function appConfig(StorageDriver $driver): array
+    private function appConfig(StorageDriver $driver): OAuthAppConfigDto
     {
         $path = "storage_app.{$driver->value}";
         if (! RuntimeConfig::has($path)) {
@@ -164,11 +162,13 @@ final class StorageOAuthService
             throw new \RuntimeException("Storage app credentials for [{$driver->value}] are invalid.");
         }
 
-        return [
-            'client_id' => (string) ($value['client_id'] ?? $value['clientId'] ?? ''),
-            'client_secret' => (string) ($value['client_secret'] ?? $value['clientSecret'] ?? ''),
-            'redirect' => isset($value['redirect']) ? (string) $value['redirect'] : '',
-        ];
+        $config = OAuthAppConfigDto::from($value);
+
+        return new OAuthAppConfigDto(
+            clientId: $config->clientId,
+            clientSecret: $config->clientSecret,
+            redirectUri: isset($value['redirect']) ? (string) $value['redirect'] : $config->redirectUri,
+        );
     }
 
     /**

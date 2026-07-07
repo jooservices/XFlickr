@@ -22,6 +22,42 @@ final class StoredFileRepository extends EloquentRepository
         parent::__construct($model);
     }
 
+    /**
+     * @param  list<string>  $flickrPhotoIds
+     * @return list<string>
+     */
+    public function completedOriginalFlickrPhotoIds(array $flickrPhotoIds): array
+    {
+        if ($flickrPhotoIds === []) {
+            return [];
+        }
+
+        return $this->newQuery()
+            ->whereIn('flickr_photo_id', $flickrPhotoIds)
+            ->where('variant', 'original')
+            ->where('status', StoredFileStatus::Completed->value)
+            ->pluck('flickr_photo_id')
+            ->all();
+    }
+
+    /**
+     * @param  list<string>  $flickrPhotoIds
+     * @return Collection<string, StoredFile>
+     */
+    public function originalsByFlickrPhotoIds(array $flickrPhotoIds): Collection
+    {
+        if ($flickrPhotoIds === []) {
+            return collect();
+        }
+
+        /** @var Collection<string, StoredFile> */
+        return $this->newQuery()
+            ->whereIn('flickr_photo_id', $flickrPhotoIds)
+            ->where('variant', 'original')
+            ->get()
+            ->keyBy('flickr_photo_id');
+    }
+
     public function hasCompletedOriginal(string $flickrPhotoId): bool
     {
         return $this->newQuery()
@@ -33,14 +69,17 @@ final class StoredFileRepository extends EloquentRepository
 
     public function findOriginalByFlickrPhotoId(string $flickrPhotoId): ?StoredFile
     {
-        return $this->newQuery()
+        $stored = $this->newQuery()
             ->where('flickr_photo_id', $flickrPhotoId)
             ->where('variant', 'original')
             ->first();
+
+        return $stored instanceof StoredFile ? $stored : null;
     }
 
     public function firstOrCreateOriginal(string $flickrPhotoId, string $ownerNsid): StoredFile
     {
+        /** @var StoredFile */
         return $this->newQuery()->firstOrCreate(
             [
                 'flickr_photo_id' => $flickrPhotoId,

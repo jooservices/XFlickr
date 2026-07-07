@@ -12,16 +12,16 @@ use App\Models\StorageUpload;
 use App\Models\StoredFile;
 use App\Models\TransferBatch;
 use App\Services\Flickr\PhotoUploadService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use JOOservices\XFlickrCrawler\Models\Photo;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;
 
 final class PhotoUploadServiceTest extends TestCase
 {
     use CreatesFlickrConnection;
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_it_queues_uploads_for_contact_photos(): void
     {

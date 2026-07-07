@@ -9,14 +9,14 @@ use App\Models\StorageAccount;
 use App\Models\StorageRemoteItem;
 use App\Models\StorageUpload;
 use App\Models\StoredFile;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
 final class StorageDeleteTest extends TestCase
 {
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_google_photos_driver_includes_edit_scope(): void
     {

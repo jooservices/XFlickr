@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Flickr;
 
+use App\Dto\DownloadCandidateDto;
 use App\Repositories\Crawler\PhotoQueryRepository;
 use App\Support\FlickrPhotoUrlHelper;
 use JOOservices\XFlickrCrawler\Models\Connection;
@@ -18,10 +19,7 @@ final class FlickrPhotoSizeResolver
         private readonly PhotoQueryRepository $photos,
     ) {}
 
-    /**
-     * @return array{url: string, variant: string}
-     */
-    public function resolve(string $flickrPhotoId, Connection $connection): array
+    public function resolve(string $flickrPhotoId, Connection $connection): DownloadCandidateDto
     {
         $photo = $this->photos->findByFlickrPhotoId($flickrPhotoId);
         if ($photo === null) {
@@ -39,10 +37,7 @@ final class FlickrPhotoSizeResolver
         return $candidate;
     }
 
-    /**
-     * @return array{url: string, variant: string}|null
-     */
-    private function cachedCandidate(Photo $photo): ?array
+    private function cachedCandidate(Photo $photo): ?DownloadCandidateDto
     {
         $payload = is_array($photo->raw_payload) ? $photo->raw_payload : [];
         $sizes = $payload['sizes'] ?? null;
@@ -51,15 +46,21 @@ final class FlickrPhotoSizeResolver
             return null;
         }
 
-        return FlickrPhotoUrlHelper::bestCandidateFromGetSizesList(
+        $best = FlickrPhotoUrlHelper::bestCandidateFromGetSizesList(
             FlickrPhotoUrlHelper::normalizeGetSizesList($sizes),
+        );
+
+        if ($best === null) {
+            return null;
+        }
+
+        return new DownloadCandidateDto(
+            url: $best['url'],
+            variant: $best['variant'],
         );
     }
 
-    /**
-     * @return array{url: string, variant: string}|null
-     */
-    private function fetchAndPersistSizes(Photo $photo, Connection $connection): ?array
+    private function fetchAndPersistSizes(Photo $photo, Connection $connection): ?DownloadCandidateDto
     {
         $photosApi = $this->clientFactory->forConnection($connection->connection_key)->photos();
         $result = FlickrPhotoUrlHelper::fetchSizesFromApi($photosApi, $photo->flickr_photo_id);
@@ -81,6 +82,11 @@ final class FlickrPhotoSizeResolver
             'sizes_fetched_at' => now()->toIso8601String(),
         ]);
 
-        return $result['candidates'][0];
+        $best = $result['candidates'][0];
+
+        return new DownloadCandidateDto(
+            url: $best['url'],
+            variant: $best['variant'],
+        );
     }
 }

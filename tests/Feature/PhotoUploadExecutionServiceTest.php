@@ -12,18 +12,17 @@ use App\Models\StoredFile;
 use App\Models\TransferBatch;
 use App\Models\TransferItem;
 use App\Services\Flickr\PhotoUploadExecutionService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
-use RuntimeException;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;
 
 final class PhotoUploadExecutionServiceTest extends TestCase
 {
     use CreatesFlickrConnection;
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_it_uploads_completed_local_file(): void
     {
@@ -86,8 +85,6 @@ final class PhotoUploadExecutionServiceTest extends TestCase
             $storageAccount->id,
             $batch->id,
             'friend@N01',
-            1,
-            3,
         );
 
         $this->assertSame(PhotoTransferExecutionOutcome::Completed, $outcome);
@@ -157,8 +154,6 @@ final class PhotoUploadExecutionServiceTest extends TestCase
             $storageAccount->id,
             $batch->id,
             'friend@N01',
-            1,
-            3,
         );
 
         $this->assertSame(PhotoTransferExecutionOutcome::Completed, $outcome);
@@ -199,15 +194,13 @@ final class PhotoUploadExecutionServiceTest extends TestCase
             $storageAccount->id,
             $batch->id,
             'friend@N01',
-            1,
-            3,
         );
 
         $this->assertSame(PhotoTransferExecutionOutcome::Deferred, $outcome);
         Bus::assertNotDispatched(DownloadPhotoJob::class);
     }
 
-    public function test_it_fails_upload_item_on_final_attempt_when_local_file_missing(): void
+    public function test_it_defers_when_local_file_missing_even_after_many_readiness_checks(): void
     {
         Bus::fake([DownloadPhotoJob::class]);
 
@@ -235,21 +228,20 @@ final class PhotoUploadExecutionServiceTest extends TestCase
             'status' => 'pending',
         ]);
 
-        $this->expectException(RuntimeException::class);
+        $service = app(PhotoUploadExecutionService::class);
 
-        try {
-            app(PhotoUploadExecutionService::class)->execute(
+        for ($attempt = 1; $attempt <= 5; $attempt++) {
+            $outcome = $service->execute(
                 'photo-1',
                 $storageAccount->id,
                 $batch->id,
                 'friend@N01',
-                3,
-                3,
             );
-        } finally {
-            Bus::assertNotDispatched(DownloadPhotoJob::class);
-            $this->assertSame('failed', TransferItem::query()->first()->status);
-            $this->assertSame('failed', $batch->fresh()->status);
+
+            $this->assertSame(PhotoTransferExecutionOutcome::Deferred, $outcome);
         }
+
+        Bus::assertNotDispatched(DownloadPhotoJob::class);
+        $this->assertSame('pending', TransferItem::query()->first()->status);
     }
 }

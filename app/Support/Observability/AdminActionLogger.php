@@ -13,10 +13,6 @@ final class AdminActionLogger
      */
     public function record(string $action, array $properties = [], ?string $message = null): void
     {
-        if (! class_exists(ActivityLog::class)) {
-            return;
-        }
-
         $log = ActivityLog::audit()
             ->action($action)
             ->properties($properties)

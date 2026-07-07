@@ -6,13 +6,13 @@ namespace Tests\Feature;
 
 use App\Enums\StorageDriver;
 use App\Services\Storage\StorageOAuthService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
 final class StorageOAuthServiceTest extends TestCase
 {
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_google_oauth_provider_is_built_without_mutating_global_config(): void
     {

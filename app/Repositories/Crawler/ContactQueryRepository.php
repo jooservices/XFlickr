@@ -51,6 +51,25 @@ final class ContactQueryRepository
     }
 
     /**
+     * @param  list<string>  $connectionKeys
+     * @return array<string, int>
+     */
+    public function countsGroupedByConnection(array $connectionKeys): array
+    {
+        if ($connectionKeys === []) {
+            return [];
+        }
+
+        return ConnectionContact::query()
+            ->whereIn('connection_key', $connectionKeys)
+            ->selectRaw('connection_key, count(*) as aggregate')
+            ->groupBy('connection_key')
+            ->pluck('aggregate', 'connection_key')
+            ->map(fn (mixed $count): int => (int) $count)
+            ->all();
+    }
+
+    /**
      * @param  list<string>  $nsids
      * @return list<Contact>
      */

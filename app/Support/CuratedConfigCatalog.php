@@ -83,6 +83,42 @@ final class CuratedConfigCatalog
                 'is_core' => true,
                 'sort' => 10,
             ],
+            [
+                'path' => 'spider.enabled',
+                'label' => 'Spider mode enabled',
+                'type' => 'bool',
+                'default' => false,
+                'group' => 'Spider',
+                'is_core' => true,
+                'sort' => 10,
+            ],
+            [
+                'path' => 'spider.max_depth',
+                'label' => 'Spider max depth',
+                'type' => 'int',
+                'default' => 2,
+                'group' => 'Spider',
+                'is_core' => true,
+                'sort' => 20,
+            ],
+            [
+                'path' => 'spider.max_new_contacts_per_run',
+                'label' => 'Spider new contacts per expansion tick',
+                'type' => 'int',
+                'default' => 25,
+                'group' => 'Spider',
+                'is_core' => true,
+                'sort' => 30,
+            ],
+            [
+                'path' => 'spider.max_contacts_total',
+                'label' => 'Spider max contacts per run',
+                'type' => 'int',
+                'default' => 500,
+                'group' => 'Spider',
+                'is_core' => true,
+                'sort' => 40,
+            ],
         ];
     }
 

@@ -20,6 +20,24 @@ final class StorageUploadRepository extends EloquentRepository
         parent::__construct($model);
     }
 
+    /**
+     * @param  list<int>  $storedFileIds
+     * @return list<int>
+     */
+    public function completedStoredFileIdsForAccount(array $storedFileIds, int $storageAccountId): array
+    {
+        if ($storedFileIds === []) {
+            return [];
+        }
+
+        return $this->newQuery()
+            ->where('storage_account_id', $storageAccountId)
+            ->whereIn('stored_file_id', $storedFileIds)
+            ->where('status', StorageUploadStatus::Completed->value)
+            ->pluck('stored_file_id')
+            ->all();
+    }
+
     public function hasCompleted(int $storedFileId, int $storageAccountId): bool
     {
         return $this->newQuery()

@@ -9,18 +9,18 @@ use App\Models\StoredFile;
 use App\Models\TransferBatch;
 use App\Models\TransferItem;
 use App\Services\Flickr\PhotoDownloadExecutionService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use JOOservices\XFlickrCrawler\Models\Photo;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;
 
 final class PhotoDownloadExecutionServiceTest extends TestCase
 {
     use CreatesFlickrConnection;
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_it_downloads_directly_into_flickr_owner_directory(): void
     {
@@ -64,8 +64,6 @@ final class PhotoDownloadExecutionServiceTest extends TestCase
             'friend@N01',
             $connection->connection_key,
             $batch->id,
-            1,
-            3,
         );
 
         $this->assertSame(PhotoTransferExecutionOutcome::Completed, $outcome);
@@ -104,8 +102,6 @@ final class PhotoDownloadExecutionServiceTest extends TestCase
             'friend@N01',
             $connection->connection_key,
             null,
-            1,
-            3,
         );
 
         $this->assertSame(PhotoTransferExecutionOutcome::Completed, $outcome);
@@ -160,8 +156,6 @@ final class PhotoDownloadExecutionServiceTest extends TestCase
             'friend@N01',
             $connection->connection_key,
             $batch->id,
-            1,
-            3,
         );
 
         $this->assertSame(PhotoTransferExecutionOutcome::Completed, $outcome);
@@ -215,8 +209,6 @@ final class PhotoDownloadExecutionServiceTest extends TestCase
             'friend@N01',
             $connection->connection_key,
             $batch->id,
-            1,
-            3,
         );
 
         $verifyLock = Cache::lock('download_lock:photo-1', 120);

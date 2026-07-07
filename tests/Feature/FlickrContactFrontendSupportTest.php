@@ -11,7 +11,6 @@ use App\Models\StoredFile;
 use App\Services\Flickr\ContactCatalogDetailStatsService;
 use App\Services\Flickr\ContactDetailService;
 use App\Services\Flickr\ContactListSorter;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use JOOservices\XFlickrCrawler\Enums\CrawlRunStatus;
@@ -24,13 +23,14 @@ use JOOservices\XFlickrCrawler\Models\Gallery;
 use JOOservices\XFlickrCrawler\Models\Photo;
 use JOOservices\XFlickrCrawler\Models\Photoset;
 use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
+use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;
 
 final class FlickrContactFrontendSupportTest extends TestCase
 {
     use CreatesFlickrConnection;
-    use RefreshDatabase;
+    use SafeRefreshDatabase;
 
     public function test_contacts_index_supports_sort_query_params(): void
     {
