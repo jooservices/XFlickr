@@ -384,17 +384,6 @@ parameters:
 			count: 1
 			path: app/Repositories/StoredFileRepository.php
 
-		-
-			message: '#^Method App\\Repositories\\StoredFileRepository\:\:findOriginalByFlickrPhotoId\(\) should return App\\Models\\StoredFile\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Repositories/StoredFileRepository.php
-
-		-
-			message: '#^Method App\\Repositories\\StoredFileRepository\:\:firstOrCreateOriginal\(\) should return App\\Models\\StoredFile but returns Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Repositories/StoredFileRepository.php
 
 		-
 			message: '#^Method App\\Repositories\\StoredFileRepository\:\:originalsForOwners\(\) should return Illuminate\\Support\\Collection\<int, App\\Models\\StoredFile\> but returns Illuminate\\Database\\Eloquent\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\>\.$#'
@@ -666,11 +655,6 @@ parameters:
 			count: 3
 			path: app/Services/Flickr/PhotoUploadService.php
 
-		-
-			message: '#^Instanceof between JOOservices\\XFlickrCrawler\\Models\\Photo and JOOservices\\XFlickrCrawler\\Models\\Photo will always evaluate to true\.$#'
-			identifier: instanceof.alwaysTrue
-			count: 1
-			path: app/Services/Flickr/PhotoUploadService.php
 
 		-
 			message: '#^Cannot call method toIso8601String\(\) on string\.$#'

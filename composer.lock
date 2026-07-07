@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "33c3372b30c543ec69c17159fc75b221",
+    "content-hash": "758f2fa0585976b3345554e5787cb8e8",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -1527,27 +1527,26 @@
         },
         {
             "name": "jooservices/client",
-            "version": "v1.3.0",
+            "version": "v1.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/jooservices/client.git",
-                "reference": "cd49798adb7e84c15d7ffdabd8797daf3c9324ff"
+                "reference": "6cdfc610a0763ec668577858768c051bc9cff3c4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jooservices/client/zipball/cd49798adb7e84c15d7ffdabd8797daf3c9324ff",
-                "reference": "cd49798adb7e84c15d7ffdabd8797daf3c9324ff",
+                "url": "https://api.github.com/repos/jooservices/client/zipball/6cdfc610a0763ec668577858768c051bc9cff3c4",
+                "reference": "6cdfc610a0763ec668577858768c051bc9cff3c4",
                 "shasum": ""
             },
             "require": {
                 "guzzlehttp/guzzle": "^7.9",
-                "jooservices/dto": "^1.0",
                 "mongodb/laravel-mongodb": "^5.6",
                 "monolog/monolog": "^3.10",
                 "php": "^8.5",
+                "psr/http-client": "^1.0",
                 "psr/log": "^3.0",
-                "psr/simple-cache": "^3.0",
-                "symfony/options-resolver": "^7.0"
+                "psr/simple-cache": "^3.0"
             },
             "require-dev": {
                 "captainhook/captainhook": "^5.25",
@@ -1558,12 +1557,16 @@
                 "phpbench/phpbench": "^1.4",
                 "phpmd/phpmd": "^2.15",
                 "phpstan/phpstan": "^2.0",
+                "phpstan/phpstan-mockery": "^2.0",
                 "phpstan/phpstan-phpunit": "^2.0",
                 "phpstan/phpstan-strict-rules": "^2.0",
-                "phpunit/phpunit": "^12.0",
-                "squizlabs/php_codesniffer": "^3.10",
-                "symfony/filesystem": "^7.4",
-                "symfony/var-dumper": "^7.0"
+                "phpunit/phpunit": "^13.0",
+                "squizlabs/php_codesniffer": "^4.0",
+                "symfony/filesystem": "^7.4|^8.0",
+                "symfony/var-dumper": "^8.0"
+            },
+            "suggest": {
+                "jooservices/dto": "Optional DTO helpers for ResponseWrapper::toDto()"
             },
             "type": "library",
             "autoload": {
@@ -1585,19 +1588,21 @@
             "keywords": [
                 "Guzzle",
                 "JOOservices",
+                "Metrics",
                 "async",
                 "cache",
                 "circuit-breaker",
                 "dto",
                 "http-client",
-                "logging",
-                "retry"
+                "rate-limit",
+                "retry",
+                "tracing"
             ],
             "support": {
                 "issues": "https://github.com/jooservices/client/issues",
                 "source": "https://github.com/jooservices/client"
             },
-            "time": "2026-05-11T12:44:13+00:00"
+            "time": "2026-07-05T16:49:49+00:00"
         },
         {
             "name": "jooservices/dto",
@@ -1667,21 +1672,21 @@
         },
         {
             "name": "jooservices/flickr",
-            "version": "v1.0.0",
+            "version": "v1.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/jooservices/flickr.git",
-                "reference": "372f301dd94381df9c6ada5f288d462c592f7826"
+                "reference": "b48ce5d897ae7d3c33ebca9efcf5d15673c1fe6e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jooservices/flickr/zipball/372f301dd94381df9c6ada5f288d462c592f7826",
-                "reference": "372f301dd94381df9c6ada5f288d462c592f7826",
+                "url": "https://api.github.com/repos/jooservices/flickr/zipball/b48ce5d897ae7d3c33ebca9efcf5d15673c1fe6e",
+                "reference": "b48ce5d897ae7d3c33ebca9efcf5d15673c1fe6e",
                 "shasum": ""
             },
             "require": {
-                "jooservices/client": "^1.2",
-                "jooservices/dto": "^1.0",
+                "jooservices/client": "^1.4",
+                "jooservices/dto": "^1.2",
                 "php": ">=8.5",
                 "psr/simple-cache": "^3.0"
             },
@@ -1695,8 +1700,8 @@
                 "phpstan/phpstan": "^2.0",
                 "phpstan/phpstan-phpunit": "^2.0",
                 "phpstan/phpstan-strict-rules": "^2.0",
-                "phpunit/phpunit": "^12.0",
-                "squizlabs/php_codesniffer": "^3.10"
+                "phpunit/phpunit": "^12.0 || ^13.0",
+                "squizlabs/php_codesniffer": "^4.0"
             },
             "type": "library",
             "autoload": {
@@ -1726,35 +1731,41 @@
                 "issues": "https://github.com/jooservices/flickr/issues",
                 "source": "https://github.com/jooservices/flickr"
             },
-            "time": "2026-05-14T07:24:23+00:00"
+            "time": "2026-07-05T17:44:05+00:00"
         },
         {
             "name": "jooservices/laravel-config",
-            "version": "v1.1.0",
+            "version": "v1.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/jooservices/laravel-config.git",
-                "reference": "2b142b8ec0d88cdd8d512dca11595fb543a2bba0"
+                "reference": "e26a4b72840b29c8a1e3823a05d3a8146de3ff14"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jooservices/laravel-config/zipball/2b142b8ec0d88cdd8d512dca11595fb543a2bba0",
-                "reference": "2b142b8ec0d88cdd8d512dca11595fb543a2bba0",
+                "url": "https://api.github.com/repos/jooservices/laravel-config/zipball/e26a4b72840b29c8a1e3823a05d3a8146de3ff14",
+                "reference": "e26a4b72840b29c8a1e3823a05d3a8146de3ff14",
                 "shasum": ""
             },
             "require": {
-                "illuminate/cache": "^11.0|^12.0",
-                "illuminate/config": "^11.0|^12.0",
-                "illuminate/database": "^11.0|^12.0",
-                "illuminate/support": "^11.0|^12.0",
-                "mongodb/laravel-mongodb": "^4.0|^5.0",
+                "illuminate/cache": "^11.0|^12.0|^13.0",
+                "illuminate/config": "^11.0|^12.0|^13.0",
+                "illuminate/database": "^11.0|^12.0|^13.0",
+                "illuminate/support": "^11.0|^12.0|^13.0",
+                "mongodb/laravel-mongodb": "^5.4",
                 "php": "^8.5"
             },
             "require-dev": {
+                "captainhook/captainhook": "^5.25",
+                "captainhook/plugin-composer": "^5.3",
+                "friendsofphp/php-cs-fixer": "^3.65",
                 "laravel/pint": "^1.0",
-                "orchestra/testbench": "^9.0|^10.0",
+                "orchestra/testbench": "^9.0|^10.0|^11.0",
+                "phpbench/phpbench": "^1.6",
                 "phpmd/phpmd": "^2.13",
                 "phpstan/phpstan": "^2.0",
+                "phpstan/phpstan-phpunit": "^2.0",
+                "phpstan/phpstan-strict-rules": "^2.0",
                 "phpunit/phpunit": "^12.0",
                 "squizlabs/php_codesniffer": "^3.0"
             },
@@ -1792,7 +1803,7 @@
                 "issues": "https://github.com/jooservices/laravel-config/issues",
                 "source": "https://github.com/jooservices/laravel-config"
             },
-            "time": "2026-05-11T23:47:03+00:00"
+            "time": "2026-07-05T23:43:28+00:00"
         },
         {
             "name": "jooservices/laravel-events",
@@ -2023,23 +2034,17 @@
         },
         {
             "name": "jooservices/xflickr-crawler",
-            "version": "1.1.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/jooservices/XFlickrCrawler.git",
-                "reference": "a26ced3deb10af096ae8b86c69e8322370c821a3"
-            },
+            "version": "1.3.0",
             "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/jooservices/XFlickrCrawler/zipball/a26ced3deb10af096ae8b86c69e8322370c821a3",
-                "reference": "a26ced3deb10af096ae8b86c69e8322370c821a3",
-                "shasum": ""
+                "type": "path",
+                "url": "../XFlickrCrawler",
+                "reference": "b2e223f9379c8a1731b2127563703e817955cc94"
             },
             "require": {
-                "jooservices/dto": "^1.0",
+                "jooservices/dto": "^1.2",
                 "jooservices/flickr": "^1.0",
                 "jooservices/laravel-config": "^1.1",
-                "laravel/framework": "^12.0",
+                "laravel/framework": "^12.0|^13.0",
                 "php": "^8.5"
             },
             "require-dev": {
@@ -2048,21 +2053,24 @@
                 "larastan/larastan": "^3.0",
                 "laravel/pint": "^1.18",
                 "mockery/mockery": "^1.6",
-                "orchestra/testbench": "^10.0",
+                "orchestra/testbench": "^10.0|^11.0",
                 "phpmd/phpmd": "^2.15",
                 "phpstan/phpstan": "^2.0",
-                "phpunit/phpunit": "^11.5",
+                "phpunit/phpunit": "^11.5|^12.0",
                 "squizlabs/php_codesniffer": "^3.8"
             },
             "type": "library",
             "extra": {
                 "laravel": {
-                    "aliases": {
-                        "FlickrService": "JOOservices\\XFlickrCrawler\\Facades\\FlickrService"
-                    },
                     "providers": [
                         "JOOservices\\XFlickrCrawler\\XFlickrCrawlerServiceProvider"
-                    ]
+                    ],
+                    "aliases": {
+                        "FlickrService": "JOOservices\\XFlickrCrawler\\Facades\\FlickrService"
+                    }
+                },
+                "branch-alias": {
+                    "dev-develop": "1.3.x-dev"
                 }
             },
             "autoload": {
@@ -2070,7 +2078,66 @@
                     "JOOservices\\XFlickrCrawler\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "autoload-dev": {
+                "psr-4": {
+                    "JOOservices\\XFlickrCrawler\\Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "test": [
+                    "vendor/bin/phpunit"
+                ],
+                "test:coverage": [
+                    "XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-clover coverage.xml"
+                ],
+                "instructions:verify": [
+                    "php tools/verify-ai-instructions-sync.php"
+                ],
+                "lint:pint": [
+                    "vendor/bin/pint --test"
+                ],
+                "lint:pint:fix": [
+                    "vendor/bin/pint"
+                ],
+                "lint:phpstan": [
+                    "XDEBUG_MODE=off vendor/bin/phpstan analyse --configuration=phpstan.neon --memory-limit=512M"
+                ],
+                "lint:phpcs": [
+                    "vendor/bin/phpcs --standard=phpcs.xml"
+                ],
+                "lint:phpmd": [
+                    "php -d error_reporting=6143 vendor/bin/phpmd src text phpmd.xml"
+                ],
+                "lint:fast": [
+                    "@lint:pint",
+                    "@lint:phpcs",
+                    "@lint:phpstan"
+                ],
+                "lint": [
+                    "@lint:fast"
+                ],
+                "lint:all": [
+                    "@lint",
+                    "@lint:phpmd"
+                ],
+                "lint:fix": [
+                    "@lint:pint:fix"
+                ],
+                "check": [
+                    "@lint:all",
+                    "@test"
+                ],
+                "ci": [
+                    "@lint:all",
+                    "@test:coverage"
+                ],
+                "post-install-cmd": [
+                    "captainhook install --force --skip-existing"
+                ],
+                "post-update-cmd": [
+                    "captainhook install --force --skip-existing"
+                ]
+            },
             "license": [
                 "MIT"
             ],
@@ -2082,11 +2149,12 @@
             ],
             "description": "Standalone Laravel package for queued Flickr crawling with rate limiting and MySQL persistence.",
             "keywords": [
-                "JOOservices",
                 "crawler",
                 "flickr",
+                "jooservices",
                 "laravel",
                 "laravel12",
+                "laravel13",
                 "php",
                 "php85",
                 "queue"
@@ -2095,7 +2163,10 @@
                 "issues": "https://github.com/jooservices/XFlickrCrawler/issues",
                 "source": "https://github.com/jooservices/XFlickrCrawler"
             },
-            "time": "2026-06-22T19:37:26+00:00"
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
         },
         {
             "name": "justus/flysystem-onedrive",
@@ -6456,77 +6527,6 @@
                 }
             ],
             "time": "2026-05-23T16:22:37+00:00"
-        },
-        {
-            "name": "symfony/options-resolver",
-            "version": "v7.4.8",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/options-resolver.git",
-                "reference": "2888fcdc4dc2fd5f7c7397be78631e8af12e02b4"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/options-resolver/zipball/2888fcdc4dc2fd5f7c7397be78631e8af12e02b4",
-                "reference": "2888fcdc4dc2fd5f7c7397be78631e8af12e02b4",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=8.2",
-                "symfony/deprecation-contracts": "^2.5|^3"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Symfony\\Component\\OptionsResolver\\": ""
-                },
-                "exclude-from-classmap": [
-                    "/Tests/"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Fabien Potencier",
-                    "email": "fabien@symfony.com"
-                },
-                {
-                    "name": "Symfony Community",
-                    "homepage": "https://symfony.com/contributors"
-                }
-            ],
-            "description": "Provides an improved replacement for the array_replace PHP function",
-            "homepage": "https://symfony.com",
-            "keywords": [
-                "config",
-                "configuration",
-                "options"
-            ],
-            "support": {
-                "source": "https://github.com/symfony/options-resolver/tree/v7.4.8"
-            },
-            "funding": [
-                {
-                    "url": "https://symfony.com/sponsor",
-                    "type": "custom"
-                },
-                {
-                    "url": "https://github.com/fabpot",
-                    "type": "github"
-                },
-                {
-                    "url": "https://github.com/nicolas-grekas",
-                    "type": "github"
-                },
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
-                    "type": "tidelift"
-                }
-            ],
-            "time": "2026-03-24T13:12:05+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",

@@ -44,3 +44,4 @@ Thumbs.db
 .cursor/plans/
 .cursor/tmp/
 *.plan.md
+/test-results
