@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Production bootstrap runs `composer install` and `npm run build` **before** starting containers (avoids crash loops in the app entrypoint).
 - Removed `HOSTNAME` Compose warning for Horizon in `docker-compose.prod.yml`.
 - Git “dubious ownership” warning in production containers (`safe.directory` for `/var/www/html`).
+- Post-deploy worker verification uses `/proc/1/cmdline` instead of `ps` (not installed in the production PHP image).
 
 ### Added
 

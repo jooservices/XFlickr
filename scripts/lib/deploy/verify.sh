@@ -123,9 +123,24 @@ deploy_verify_web() {
     return "$ok"
 }
 
+deploy_container_cmdline() {
+    local service="$1"
+    local pid="${2:-1}"
+
+    xf_prod_compose exec -T "$service" sh -c "tr '\\0' ' ' < /proc/${pid}/cmdline 2>/dev/null || true"
+}
+
+deploy_container_has_artisan_command() {
+    local service="$1" artisan_subcommand="$2"
+    local cmdline
+
+    cmdline="$(deploy_container_cmdline "$service")"
+    [[ "$cmdline" == *"artisan ${artisan_subcommand}"* ]]
+}
+
 deploy_verify_horizon_workers() {
     local expected_replicas="$1"
-    local running_count ok=0
+    local running_count ok=0 horizon_cmd scheduler_cmd
 
     running_count="$(xf_prod_compose ps --status running horizon 2>/dev/null | tail -n +2 | wc -l | tr -d ' ')"
 
@@ -134,17 +149,19 @@ deploy_verify_horizon_workers() {
         return 1
     fi
 
-    if xf_prod_compose exec -T horizon sh -c 'ps -eo args 2>/dev/null | grep -q "[a]rtisan horizon"'; then
+    if deploy_container_has_artisan_command horizon "horizon"; then
         echo "  ✓ Horizon master process active"
     else
-        echo "  ✗ Horizon master process not detected" >&2
+        horizon_cmd="$(deploy_container_cmdline horizon)"
+        echo "  ✗ Horizon master process not detected (pid 1: ${horizon_cmd:-unknown})" >&2
         ok=1
     fi
 
-    if xf_prod_compose exec -T scheduler sh -c 'ps -eo args 2>/dev/null | grep -q "[a]rtisan schedule:work"'; then
+    if deploy_container_has_artisan_command scheduler "schedule:work"; then
         echo "  ✓ Scheduler process active"
     else
-        echo "  ✗ Scheduler process not detected" >&2
+        scheduler_cmd="$(deploy_container_cmdline scheduler)"
+        echo "  ✗ Scheduler process not detected (pid 1: ${scheduler_cmd:-unknown})" >&2
         ok=1
     fi
 
