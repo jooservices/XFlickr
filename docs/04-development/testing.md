@@ -2,17 +2,17 @@
 
 XFlickr uses PHPUnit. All tests run in the **isolated Docker test stack only**.
 
-## Run tests
+## Run tests (AI + CI)
 
 ```bash
-composer test:docker
-./scripts/test-docker.sh --filter=ExampleTest
+bash scripts/test.sh gate:test
+bash scripts/test.sh gate:ci       # before push — includes coverage threshold
 ```
 
-Equivalent:
+Filtered:
 
 ```bash
-docker compose -f docker-compose.test.yml run --rm test
+./scripts/test-docker.sh --filter=AuthenticationTest
 ```
 
 ## Forbidden
@@ -21,13 +21,16 @@ docker compose -f docker-compose.test.yml run --rm test
 
 ```bash
 # FORBIDDEN — wipes dev MySQL via RefreshDatabase
-docker compose exec app php artisan test
+docker exec xflickr-dev-app-1 php artisan test
+scripts/dev.sh
 php artisan test   # when pointed at dev .env
 ```
 
+Use `Tests\Concerns\SafeRefreshDatabase` in feature tests (not raw `Illuminate\Foundation\Testing\RefreshDatabase`).
+
 ## Test stack
 
-- Compose file: `docker-compose.test.yml`
+- Compose file: `docker-compose.test.yml` (project `xflickr-test`)
 - MySQL: SQLite `:memory:`
 - MongoDB: `xflickr_test`
 - Entrypoint: `docker/test-entrypoint.sh`
@@ -35,19 +38,24 @@ php artisan test   # when pointed at dev .env
 ## Writing tests
 
 - Feature tests in `tests/Feature/` for HTTP, jobs, and integration flows.
-- Unit tests in `tests/Unit/` for isolated logic.
-- Use factories and existing test helpers.
+- Unit tests in `tests/Unit/` for isolated logic and DTO hydration.
+- Shared JSON fixtures: `tests/Fixtures/` loaded via `TestCase::loadFixture()`.
+- Use `Event::fake()` for domain event assertions.
 - Mock external APIs (Flickr, cloud storage) — do not call real services in tests.
 
 ## Frontend
 
 ```bash
 npm run typecheck
+npm run test          # Vitest component smoke tests
+npm run test:e2e      # Playwright (requires dev stack + built assets)
 ```
 
-No Jest/Vitest suite yet — TypeScript checking is the frontend gate.
+## Coverage ratchet
+
+CI enforces a **60%** statement coverage minimum via `bash scripts/test.sh gate:ci`.
 
 ## Related
 
-- Skill: `xflickr-docker-testing`, `testing-and-quality-gates`
+- Skill: `xflickr-docker-testing`, `operator-dev-docker`, `testing-and-quality-gates`
 - [Docker stacks](../03-operations/docker-stacks.md)

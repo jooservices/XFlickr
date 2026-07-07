@@ -11,16 +11,17 @@ Prevent accidental schema changes on dev data and ensure safe migrations.
 
 ## Rules
 
-- **Agents:** run migrations only on `docker-compose.test.yml` test stack.
+- **Agents:** never run migrations on dev stack. Validate via `bash scripts/test.sh gate:test` after adding migrations.
 - **Never** `migrate:fresh` or `db:wipe` on local dev stack.
 - New migrations: reversible `down()` when practical.
 - App-owned tables only in `database/migrations/` — do not migrate crawler package tables manually.
-- Test migrations with `composer test:docker` after adding migrations.
 
-## Test stack migration
+## Test stack
+
+Migrations are exercised automatically by PHPUnit in the test container (`sqlite :memory:`).
 
 ```bash
-docker compose -f docker-compose.test.yml run --rm test php artisan migrate --force
+bash scripts/test.sh gate:test
 ```
 
 ## Before adding a migration
@@ -32,4 +33,5 @@ docker compose -f docker-compose.test.yml run --rm test php artisan migrate --fo
 ## Related skills
 
 - `xflickr-docker-testing`
+- `operator-dev-docker`
 - `docker-dev-stack-safety`

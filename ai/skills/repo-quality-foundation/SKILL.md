@@ -21,9 +21,9 @@ Any non-trivial change, documentation sync, or pre-PR readiness check.
 
 - Preserve runtime behavior unless the task explicitly requests code changes.
 - Do not change dependencies without explicit scope.
-- Never run database commands on the local dev Docker stack.
+- Never run dev stack commands — use `bash scripts/test.sh` only.
 - Never commit as Cursor Agent; use `Viet Vu <jooservices@gmail.com>`.
-- Feature work requires `composer test:docker` green before PR.
+- Feature work requires `bash scripts/test.sh gate` green before PR.
 - Non-trivial features follow `docs/04-development/ai-development-workflow.md`.
 - Minimize scope — focused diffs only.
 
@@ -31,7 +31,7 @@ Any non-trivial change, documentation sync, or pre-PR readiness check.
 
 1. Inspect repo state and changed files.
 2. Identify affected docs and skills.
-3. Run `composer test:docker` (and `npm run typecheck` if frontend changed).
+3. Run `bash scripts/test.sh gate` (and `npm run typecheck` if frontend changed).
 4. Run `composer instructions:verify`.
 5. Report skipped checks with reason.
 
@@ -39,6 +39,7 @@ Any non-trivial change, documentation sync, or pre-PR readiness check.
 
 - `architecture-and-design-principles`
 - `xflickr-docker-testing`
+- `operator-dev-docker`
 - `testing-and-quality-gates`
 - `documentation-sync`
 - `review-and-risk-assessment`

@@ -22,7 +22,7 @@ Copilot stubs (index only): [`.github/skills/`](../.github/skills/)
 | **Codex CLI** | `scripts/plan-review.sh` + [`.cursor/prompts/plan-debate-codex.md`](../.cursor/prompts/plan-debate-codex.md) | Plan debate / bug hunt |
 | **Copilot CLI** | `scripts/implementation-review.sh` + [`.cursor/prompts/implementation-audit-copilot.md`](../.cursor/prompts/implementation-audit-copilot.md) | Post-gate diff review |
 
-## Canonical skills (20)
+## Canonical skills (21)
 
 Use `ai/skills/` only — do not duplicate skill bodies elsewhere.
 
@@ -38,8 +38,9 @@ Use `ai/skills/` only — do not duplicate skill bodies elsewhere.
 
 ### Safety (critical)
 
-- [`xflickr-docker-testing`](skills/xflickr-docker-testing/SKILL.md) — test stack only; never dev DB
-- [`docker-dev-stack-safety`](skills/docker-dev-stack-safety/SKILL.md) — zero DB contact on dev stack
+- [`xflickr-docker-testing`](skills/xflickr-docker-testing/SKILL.md) — test stack only; never dev
+- [`docker-dev-stack-safety`](skills/docker-dev-stack-safety/SKILL.md) — zero contact on dev stack
+- [`operator-dev-docker`](skills/operator-dev-docker/SKILL.md) — operator handoff for dev reload
 - [`database-migration-safety`](skills/database-migration-safety/SKILL.md) — migrations on test stack only
 - [`security-hardening`](skills/security-hardening/SKILL.md) — OAuth tokens, credentials, secrets
 
@@ -55,8 +56,8 @@ Use `ai/skills/` only — do not duplicate skill bodies elsewhere.
 
 ### Operations
 
-- [`testing-and-quality-gates`](skills/testing-and-quality-gates/SKILL.md) — `composer test:docker`
-- [`release-and-deploy-flow`](skills/release-and-deploy-flow/SKILL.md) — deploy script, CHANGELOG
+- [`testing-and-quality-gates`](skills/testing-and-quality-gates/SKILL.md) — `bash scripts/test.sh gate`
+- [`release-and-deploy-flow`](skills/release-and-deploy-flow/SKILL.md) — dev reload, CHANGELOG
 
 ## End-to-end workflow (non-trivial features)
 
@@ -66,7 +67,7 @@ Use `ai/skills/` only — do not duplicate skill bodies elsewhere.
 | 2. Audit plan | Grok + Codex | `scripts/plan-review.sh` |
 | 3. Final plan | Cursor | `ai/plans/final_plan.md` → human approval |
 | 4. Implement | Cursor | code changes |
-| 5. Test gate | Cursor | `composer test:docker` |
+| 5. Test gate | Cursor | `bash scripts/test.sh gate` |
 | 6. Review diff | Copilot CLI | `scripts/implementation-review.sh` |
 | 7. Docs sync | Cursor | docs + CHANGELOG |
 | 8. Cleanup | Cursor | delete `ai/plans/*.md` |

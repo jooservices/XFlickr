@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Docker dev/test parity (XCrawlerII model): `docker-compose.dev.yml`, `scripts/test.sh` quality gates, `scripts/dev.sh` operator commands, named volumes (`xflickr-dev-*` / `xflickr-test-*`), dedicated frontend container, `RefreshDatabaseGuard`, `operator-dev-docker` skill, git hooks.
+- `.env.test.example` for test stack port overrides.
+- Admin credential hardening: `ADMIN_PASSWORD` env, random Docker bootstrap password, `xflickr:user:password` command.
+- Real gitleaks secret scanning in CI (replaces no-op workflow).
+- Spider mode (opt-in): event-driven `SpiderPlannerService`, frontier tables, `xflickr:spider:expand`, Operations UI controls; requires crawler ^1.3.0.
+- `jooservices/dto` at call sites: `DownloadCandidateDto` (photo size resolver), `OAuthAppConfigDto` (storage OAuth).
+- `xflickr:doctor` health command.
+- Vitest smoke tests for frontend components; Playwright e2e scaffold.
+- Operations live feed via SSE (`/api/operations/stream`) with polling fallback.
+- Per-item transfer retry API and Operations failed-item drill-down.
+- Catalog photo grid view; Settings onboarding wizard.
+- Maintenance docs: `BACKLOG.md`, `constraints.md`, `DISPOSITION.md`, spider user guide, crawler spider extensions spec.
+
+### Changed
+
+- Renamed `docker-compose.yml` → `docker-compose.dev.yml` (project `xflickr-dev`). Existing `xflickr_*` volumes do not auto-migrate — see [Docker stacks](docs/03-operations/docker-stacks.md#volume-migration).
+- Bumped `jooservices/xflickr-crawler` to **^1.3.0** for event-driven spider BFS (subject contacts, `ContactsCrawlCompleted`).
+- `AdminUserSeeder` creates admin only on first run — no password overwrite on container restart.
+- Operations SSE stream ends after 60s (EventSource reconnects); dev `app` service sets `PHP_CLI_SERVER_WORKERS=4`.
+- Pre-commit hook runs lint only (`gate:lint`); full gate remains on pre-push and CI.
+- `UploadPhotoJob` uses `WithoutOverlapping` per storage account; defers via `retryUntil` without a fixed tries cap.
+- `DownloadCandidateDto` and `OAuthAppConfigDto` wired at resolver and OAuth call sites.
+- AI agents must use `bash scripts/test.sh` only — never `scripts/dev.sh` or `docker exec xflickr-dev-*`.
+- Feature tests use `Tests\Concerns\SafeRefreshDatabase` instead of raw `RefreshDatabase`.
+- `scripts/deploy.sh` deprecated in favor of `bash scripts/dev.sh reload`.
+- Transfer fan-out uses per-chunk set-based exclusion (bounded queries); upload jobs scale `retryUntil` with batch size.
+- Dashboard snapshot uses aggregate queries and 15s cache; dashboard poll interval 15s.
+- Retry/deferral semantics: file-not-ready upload deferrals are not capped at three attempts.
+- OAuth failure logging in storage and Flickr auth controllers.
+- `TransferType` enum replaces string literals in fan-out jobs.
+
+### Security
+
+- Production refuses default `password` for admin seeder and password command.
+
 ## [1.1.0] - 2026-07-06
 
 ### Added

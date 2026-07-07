@@ -47,7 +47,7 @@ Documentation map for operators, developers, and AI agents.
 | [02-user-guide](02-user-guide/dashboard.md) | Operators | UI pages and workflows |
 | [03-operations](03-operations/docker-stacks.md) | Operators, DevOps | Horizon, scheduler, deploy, Docker |
 | [04-development](04-development/setup.md) | Contributors | Standards, testing, PRs, AI workflow |
-| [05-maintenance](05-maintenance/docker-safety.md) | Maintainers, agents | Safety, risks, doc changelog, archive |
+| [05-maintenance](05-maintenance/docker-safety.md) | Maintainers, agents | Safety, [BACKLOG](05-maintenance/BACKLOG.md), doc changelog, archive |
 
 ## Ownership rules
 

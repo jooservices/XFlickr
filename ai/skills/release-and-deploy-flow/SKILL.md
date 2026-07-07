@@ -12,15 +12,24 @@ Guide safe deployment and release documentation.
 ## Local deploy (no migrations)
 
 ```bash
-./scripts/deploy.sh
+bash scripts/dev.sh reload
 ```
 
-Rebuilds assets, clears caches, restarts app/horizon/scheduler. **Does not migrate.**
+Rebuilds assets in container, clears caches, restarts app/horizon/scheduler. **Does not migrate.**
+
+(`scripts/deploy.sh` is deprecated — calls `dev.sh reload`.)
 
 ## CHANGELOG
 
 - Unreleased work: `CHANGELOG.md` `## [Unreleased]` section
 - Release cut: move Unreleased to `## [X.Y.Z] - YYYY-MM-DD` with compare link
+
+## Branch model and GitHub release
+
+- Branches: `develop` (integration), `master` (production), `release/*` (stabilization)
+- Tag `v*.*.*` on `master` triggers `.github/workflows/release.yml` (changelog + GitHub Release)
+- Branch protection: see `docs/05-maintenance/github-branch-protection.md`
+- Semantic PR titles enforced via `.github/workflows/semantic-pr.yml`
 
 ## Production checklist
 

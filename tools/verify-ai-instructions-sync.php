@@ -14,12 +14,14 @@ $files = [
     '.claude/commands/quality-check.md',
     'ai/README.md',
     '.cursor/rules/00-repo-quality-foundation.mdc',
-    '.cursor/rules/docker-dev-stack-safety.mdc',
+    '.cursor/rules/docker-dev-forbidden.mdc',
     '.github/copilot-instructions.md',
     '.github/skills/repo-quality-foundation/SKILL.md',
     '.github/skills/xflickr-docker-testing/SKILL.md',
+    '.github/skills/operator-dev-docker/SKILL.md',
     'ai/skills/repo-quality-foundation/SKILL.md',
     'ai/skills/xflickr-docker-testing/SKILL.md',
+    'ai/skills/operator-dev-docker/SKILL.md',
     'ai/skills/form-request-service-repository/SKILL.md',
 ];
 
@@ -49,13 +51,15 @@ foreach ($files as $file) {
 }
 
 $globalRequiredPatterns = [
-    'composer test docker gate' => '/composer test:docker/i',
-    'forbidden dev stack artisan test' => '/docker compose exec app php artisan test/i',
+    'scripts test sh gate' => '/scripts\/test\.sh/i',
+    'docker compose dev yml' => '/docker-compose\.dev\.yml/i',
+    'docker compose test yml test stack' => '/docker-compose\.test\.yml/i',
+    'forbidden docker exec xflickr dev' => '/docker exec xflickr-dev/i',
+    'operator dev docker skill' => '/operator-dev-docker/i',
     'form request service repository flow' => '/FormRequest.*Service.*Repository/is',
     'viet vu commit authorship' => '/Viet Vu <jooservices@gmail.com>/i',
     'no ai co-authored commits' => '/Co-authored-by/i',
     'manual crawl only or no auto-spider' => '/manual crawl|auto-spider/i',
-    'docker compose test yml test stack' => '/docker-compose\.test\.yml/i',
     'canonical ai skills path' => '/ai\/skills\//i',
 ];
 
@@ -69,6 +73,7 @@ $canonicalSkillStubs = [
     'multi-llm-plan-review',
     'xflickr-docker-testing',
     'docker-dev-stack-safety',
+    'operator-dev-docker',
     'database-migration-safety',
     'security-hardening',
     'form-request-service-repository',

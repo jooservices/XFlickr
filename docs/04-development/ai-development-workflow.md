@@ -16,12 +16,12 @@ Canonical skill: [`../../ai/skills/multi-llm-plan-review/SKILL.md`](../../ai/ski
 
 ## Two Docker stacks
 
-| Stack | Compose file | Use |
-|---|---|---|
-| **Test** | `docker-compose.test.yml` | `composer test:docker` — mandatory quality gate |
-| **Local dev** | `docker-compose.yml` | User data — **agents: no DB commands** |
+| Stack | Compose file | Project | Use |
+|---|---|---|---|
+| **Test** | `docker-compose.test.yml` | `xflickr-test` | `bash scripts/test.sh` — mandatory quality gate |
+| **Local dev** | `docker-compose.dev.yml` | `xflickr-dev` | Operator only — **agents: no commands** |
 
-Never run `php artisan test` or migrations on the local dev stack.
+Never run `scripts/dev.sh` or `docker exec xflickr-dev-*` as an AI agent.
 
 ## Tier routing
 
@@ -43,7 +43,7 @@ Request feature
   → STOP #1: human approves final_plan.md
 
   → Cursor implements
-  → composer test:docker (mandatory)
+  → bash scripts/test.sh gate (mandatory)
   → npm run typecheck (if frontend changed)
   → bash scripts/implementation-review.sh (medium+)
   → Documentation sync + CHANGELOG [Unreleased]

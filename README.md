@@ -1,5 +1,8 @@
 # XFlickr
 
+[![CI](https://github.com/jooservices/XFlickr/actions/workflows/ci.yml/badge.svg)](https://github.com/jooservices/XFlickr/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/jooservices/XFlickr)](https://github.com/jooservices/XFlickr/releases)
+
 **Self-hosted Flickr archive manager** — connect your Flickr accounts, crawl contacts and catalogs on your schedule, download photos to your server, and back them up to cloud storage.
 
 Built with Laravel 12, React 19, and Inertia. Crawling is powered by [`jooservices/xflickr-crawler`](https://packagist.org/packages/jooservices/xflickr-crawler).
@@ -44,13 +47,9 @@ Crawl jobs are queued via **Laravel Horizon** and respect Flickr rate limits aut
 
 ## Requirements
 
-| Component | Purpose |
-|---|---|
-| PHP 8.5+ | Application runtime |
-| MySQL | Flickr accounts, stored files, transfer tracking |
-| Redis | Queues (Horizon) and crawler rate limiting |
-| MongoDB | App credentials (`laravel-config`), domain events, audit logs |
-| Node.js 20.19+ or 22.12+ | Frontend build (`package.json` `engines`) |
+**Docker (recommended):** Docker Engine only — the dev stack runs PHP, Node, MySQL, Redis, and MongoDB in containers.
+
+**Native install (optional):** PHP 8.5+, MySQL, Redis, MongoDB, Node.js 22+.
 
 ---
 
@@ -58,28 +57,33 @@ Crawl jobs are queued via **Laravel Horizon** and respect Flickr rate limits aut
 
 ```bash
 cp .env.example .env
+bash scripts/dev.sh up
+```
+
+Or the shorthand:
+
+```bash
 ./scripts/docker-up.sh
 ```
 
-The script builds containers, installs dependencies, runs migrations, and bootstraps MongoDB indexes.
+`dev.sh` supports `seed`, `quick`, `reload`, `refresh`, `down`, `logs`, and more — run `bash scripts/dev.sh help`.
+
+The script builds containers, installs dependencies, runs migrations, starts Vite HMR, and bootstraps MongoDB indexes.
 
 | Service | URL / port |
 |---|---|
 | **App** | http://localhost:8082 |
+| **Vite HMR** | http://localhost:5174 |
 | **Horizon** | http://localhost:8082/horizon |
 | **MySQL** | `localhost:3308` (user `xflickr` / password `secret` / database `xflickr`) |
 | **Redis** | `localhost:6381` |
 | **MongoDB** | `localhost:27019` (database `xflickr`) |
 
-Optional Vite HMR for frontend development:
-
-```bash
-docker compose up -d vite   # port 5174
-```
+**Migrating from old `docker-compose.yml`:** dev volumes are now prefixed `xflickr-dev-*`. See [Docker stacks](docs/03-operations/docker-stacks.md#volume-migration).
 
 ### First-time setup
 
-1. Sign in at **http://localhost:8082/login** with `admin@local` / `password` (seeded automatically on first Docker start).
+1. Sign in at **http://localhost:8082/login** with `admin@local` and the admin password. On first Docker start, a random password is generated and printed once in the app container logs (or set `ADMIN_PASSWORD` in `.env` before starting). Change it anytime: `php artisan xflickr:user:password admin@local`.
 2. Open **http://localhost:8082/settings**
 3. **Flickr tab** — enter your [Flickr API](https://www.flickr.com/services/apps/create/) key and secret. Set the callback URL to `http://localhost:8082/flickr/callback` (or your `APP_URL` + `/flickr/callback`).
 4. Click **Connect Flickr** and authorize your account.
@@ -178,10 +182,10 @@ Monitor job progress at **http://localhost:8082/horizon** or the in-app **Operat
 
 ### Tests
 
-Use the **isolated test stack** only — never run tests against the local dev stack (they wipe MySQL via `RefreshDatabase`):
+Use the **isolated test stack** only — never run tests against the local dev stack:
 
 ```bash
-composer test:docker
+bash scripts/test.sh gate:test
 ./scripts/test-docker.sh --filter=ExampleTest
 ```
 

@@ -1,6 +1,5 @@
 ---
-description: Baseline repository policy — read AGENTS.md and repo-quality-foundation skill.
-globs:
+description: XFlickr repo quality foundation — read AGENTS.md first
 alwaysApply: true
 ---
 
@@ -12,7 +11,7 @@ Canonical skill: [`ai/skills/repo-quality-foundation/SKILL.md`](../../ai/skills/
 
 Non-negotiables:
 
-- Never touch local dev databases (`docker-compose.yml`)
-- Tests only: `composer test:docker`
+- Never touch local dev stack — AI uses `bash scripts/test.sh` only
+- Tests only: `bash scripts/test.sh gate:test`
 - Minimize scope; inspect source before inventing behavior
 - Commits: `Viet Vu <jooservices@gmail.com>` only
