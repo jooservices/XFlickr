@@ -1,0 +1,6 @@
+# Production stack volumes — project xflickr-prod only.
+volumes:
+  node-modules:
+    name: xflickr-prod-node-modules
+  nginx-certs:
+    name: xflickr-prod-nginx-certs

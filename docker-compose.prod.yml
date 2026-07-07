@@ -1,0 +1,102 @@
+# Production stack — operator only. External MySQL, Redis, MongoDB.
+# Install: bash scripts/deploy.sh install
+# Never mix with xflickr-dev or xflickr-test stacks.
+name: xflickr-prod
+
+x-php-build: &php-build
+  build:
+    context: .
+    dockerfile: Dockerfile
+
+x-php-environment: &php-environment
+  APP_NAME: xflickr
+  APP_ENV: production
+  APP_KEY: ${APP_KEY:-}
+  APP_DEBUG: "false"
+  APP_URL: ${APP_URL}
+  DB_CONNECTION: mysql
+  DB_HOST: ${DB_HOST}
+  DB_PORT: ${DB_PORT:-3306}
+  DB_DATABASE: ${DB_DATABASE}
+  DB_USERNAME: ${DB_USERNAME}
+  DB_PASSWORD: ${DB_PASSWORD}
+  SESSION_DRIVER: database
+  CACHE_STORE: database
+  QUEUE_CONNECTION: redis
+  REDIS_CLIENT: phpredis
+  REDIS_HOST: ${REDIS_HOST}
+  REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+  REDIS_PORT: ${REDIS_PORT:-6379}
+  HORIZON_NAME: ${HORIZON_NAME:-xflickr-horizon}
+  FLICKR_CALLBACK_URL: ${FLICKR_CALLBACK_URL}
+  MONGODB_URI: ${MONGODB_URI}
+  MONGODB_DATABASE: ${MONGODB_DATABASE:-xflickr}
+  CONFIG_STORE_CACHE_ENABLED: "true"
+  EVENTS_EVENTSOURCING_ENABLED: "true"
+  EVENTS_EVENT_LOG_ENABLED: "true"
+  ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@local}
+  ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+
+x-php-base: &php-base
+  <<: *php-build
+  restart: unless-stopped
+  environment:
+    <<: *php-environment
+  volumes:
+    - .:/var/www/html
+    - node-modules:/var/www/html/node_modules
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  entrypoint: ["/var/www/html/docker/entrypoint-prod.sh"]
+
+include:
+  - docker/compose/volumes-prod.yml
+
+services:
+  app:
+    <<: *php-base
+    command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+    environment:
+      <<: *php-environment
+      PHP_CLI_SERVER_WORKERS: "4"
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit((int)!@fsockopen('127.0.0.1', 8000));"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  horizon:
+    <<: *php-base
+    command: ["php", "artisan", "horizon"]
+    environment:
+      <<: *php-environment
+      HORIZON_NAME: xflickr-${HOSTNAME}
+    depends_on:
+      app:
+        condition: service_started
+
+  scheduler:
+    <<: *php-base
+    command: ["php", "artisan", "schedule:work"]
+    depends_on:
+      app:
+        condition: service_started
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:${HTTP_PORT:-80}"
+      - "${HTTPS_PORT:-443}:${HTTPS_PORT:-443}"
+    environment:
+      HTTP_PORT: ${HTTP_PORT:-80}
+      HTTPS_PORT: ${HTTPS_PORT:-443}
+      SSL_ENABLED: ${SSL_ENABLED:-false}
+    volumes:
+      - ./docker/nginx/entrypoint.sh:/docker-entrypoint.d/99-xflickr.sh:ro
+      - ${SSL_CERT_PATH:-./docker/nginx/ssl-empty}:/etc/nginx/ssl:ro
+    entrypoint: ["/bin/sh", "/docker-entrypoint.d/99-xflickr.sh"]
+    depends_on:
+      app:
+        condition: service_started
