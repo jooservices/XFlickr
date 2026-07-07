@@ -19,6 +19,13 @@ deploy_preflight() {
         missing=1
     fi
 
+    if ! docker info >/dev/null 2>&1; then
+        echo "ERROR: Cannot access the Docker daemon." >&2
+        echo "  Add your user to the docker group: sudo usermod -aG docker \$USER" >&2
+        echo "  Then log out and back in (or run: newgrp docker)." >&2
+        missing=1
+    fi
+
     if [[ ! -f "${root}/docker-compose.prod.yml" ]]; then
         echo "ERROR: docker-compose.prod.yml not found in ${root}" >&2
         missing=1

@@ -26,6 +26,7 @@ Thumbs.db
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/.xflickr-deploy-wizard
 /bootstrap/cache/*
 !bootstrap/cache/.gitignore
 

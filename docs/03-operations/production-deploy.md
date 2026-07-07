@@ -4,7 +4,7 @@ Install and operate XFlickr on a server with Docker. Production uses **external*
 
 ## Prerequisites
 
-- Docker Engine + Compose v2
+- Docker Engine + Compose v2 (your user must be able to run `docker ps` — add yourself to the `docker` group if needed)
 - Git
 - External MySQL, Redis, and MongoDB reachable from Docker containers
 
@@ -19,12 +19,14 @@ bash scripts/deploy.sh install
 The wizard will:
 
 1. Optionally `git pull`
-2. Prompt for `APP_URL`, HTTP port, and admin credentials
-3. Collect MySQL, Redis, and MongoDB host/credentials — **testing each connection before continuing**
-4. Re-prompt until each service is reachable from Docker
+2. Prompt for `APP_URL`, HTTP port, and admin credentials (`APP_URL` without `http://` is normalized automatically)
+3. Collect MySQL, Redis, and MongoDB host/credentials — **testing each connection before continuing** (host `mysql`/`redis-cli`/`mongosh` when available)
+4. Re-prompt until each service is reachable; progress is saved to `storage/.xflickr-deploy-wizard` after each step so you can resume an interrupted install
 5. Optionally enable HTTPS (self-signed or your own cert/key files)
 6. Write `.env`, build images, and start nginx + app + horizon + scheduler
 7. Run post-deploy verification (connections, web ready, workers, doctor)
+
+If install is interrupted, run `bash scripts/deploy.sh install` again — completed steps are skipped using the saved file (removed after `.env` is written).
 
 ## Updates
 

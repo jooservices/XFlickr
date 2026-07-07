@@ -6,6 +6,8 @@ set -o pipefail
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/connectivity.sh"
 # shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/state.sh"
+# shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/ssl-selfsigned.sh"
 
 deploy_prompt() {
@@ -31,12 +33,35 @@ deploy_prompt_secret() {
     echo "$value"
 }
 
+deploy_prompt_secret_optional() {
+    local label="$1"
+    local saved="${2:-}"
+    local value
+
+    if [[ -n "$saved" ]]; then
+        read -r -s -p "${label} [Enter to keep saved]: " value
+        echo >&2
+        if [[ -z "$value" ]]; then
+            echo "$saved"
+            return 0
+        fi
+        echo "$value"
+        return 0
+    fi
+
+    deploy_prompt_secret "$label"
+}
+
 deploy_prompt_yes_no() {
     local label="$1"
     local default="${2:-n}"
-    local value
+    local value prompt_suffix="y/N"
 
-    read -r -p "${label} [y/N]: " value
+    if [[ "$default" =~ ^[Yy] ]]; then
+        prompt_suffix="Y/n"
+    fi
+
+    read -r -p "${label} [${prompt_suffix}]: " value
     value="${value:-$default}"
     [[ "$value" =~ ^[Yy] ]]
 }
@@ -48,6 +73,16 @@ deploy_confirm() {
     [[ "$value" =~ ^[Yy] ]]
 }
 
+deploy_wizard_step_general() {
+    APP_URL=$(deploy_prompt "Public APP_URL (http://ip-or-host:port)" "${APP_URL:-http://127.0.0.1}")
+    APP_URL=$(deploy_normalize_app_url "$APP_URL")
+    HTTP_PORT=$(deploy_prompt "HTTP port (nginx)" "${HTTP_PORT:-80}")
+    FLICKR_CALLBACK_URL="${APP_URL%/}/flickr/callback"
+
+    export APP_URL HTTP_PORT FLICKR_CALLBACK_URL
+    deploy_wizard_state_save
+}
+
 deploy_wizard_prompt_mysql() {
     while true; do
         echo
@@ -56,12 +91,15 @@ deploy_wizard_prompt_mysql() {
         DB_PORT=$(deploy_prompt "MySQL port" "${DB_PORT:-3306}")
         DB_DATABASE=$(deploy_prompt "MySQL database" "${DB_DATABASE:-xflickr}")
         DB_USERNAME=$(deploy_prompt "MySQL username" "${DB_USERNAME:-xflickr}")
-        DB_PASSWORD=$(deploy_prompt_secret "MySQL password")
+        DB_PASSWORD=$(deploy_prompt_secret_optional "MySQL password" "${DB_PASSWORD:-}")
+
+        deploy_wizard_state_save
 
         echo "Testing MySQL connection..."
         if deploy_test_mysql "$DB_HOST" "$DB_PORT" "$DB_DATABASE" "$DB_USERNAME" "$DB_PASSWORD"; then
             echo "✓ MySQL connected"
             export DB_HOST DB_PORT DB_DATABASE DB_USERNAME DB_PASSWORD
+            deploy_wizard_step_done mysql
             return 0
         fi
 
@@ -70,22 +108,33 @@ deploy_wizard_prompt_mysql() {
 }
 
 deploy_wizard_prompt_redis() {
+    local redis_password_default="n"
+
+    if [[ "${REDIS_REQUIRES_PASSWORD:-}" == "y" ]]; then
+        redis_password_default="y"
+    fi
+
     while true; do
         echo
         echo "==> Redis (external)"
         REDIS_HOST=$(deploy_prompt "Redis host" "${REDIS_HOST:-host.docker.internal}")
         REDIS_PORT=$(deploy_prompt "Redis port" "${REDIS_PORT:-6379}")
 
-        if deploy_prompt_yes_no "Does Redis require a password?" "n"; then
-            REDIS_PASSWORD=$(deploy_prompt_secret "Redis password")
+        if deploy_prompt_yes_no "Does Redis require a password?" "$redis_password_default"; then
+            REDIS_REQUIRES_PASSWORD="y"
+            REDIS_PASSWORD=$(deploy_prompt_secret_optional "Redis password" "${REDIS_PASSWORD:-}")
         else
+            REDIS_REQUIRES_PASSWORD="n"
             REDIS_PASSWORD=""
         fi
+
+        deploy_wizard_state_save
 
         echo "Testing Redis connection..."
         if deploy_test_redis "$REDIS_HOST" "$REDIS_PORT" "$REDIS_PASSWORD"; then
             echo "✓ Redis connected"
-            export REDIS_HOST REDIS_PORT REDIS_PASSWORD
+            export REDIS_HOST REDIS_PORT REDIS_PASSWORD REDIS_REQUIRES_PASSWORD
+            deploy_wizard_step_done redis
             return 0
         fi
 
@@ -94,6 +143,12 @@ deploy_wizard_prompt_redis() {
 }
 
 deploy_wizard_prompt_mongodb() {
+    local mongodb_auth_default="n"
+
+    if [[ "${MONGODB_REQUIRES_AUTH:-}" == "y" ]]; then
+        mongodb_auth_default="y"
+    fi
+
     while true; do
         echo
         echo "==> MongoDB (external)"
@@ -101,10 +156,12 @@ deploy_wizard_prompt_mongodb() {
         MONGODB_PORT=$(deploy_prompt "MongoDB port" "${MONGODB_PORT:-27017}")
         MONGODB_DATABASE=$(deploy_prompt "MongoDB database" "${MONGODB_DATABASE:-xflickr}")
 
-        if deploy_prompt_yes_no "Does MongoDB require authentication?" "n"; then
+        if deploy_prompt_yes_no "Does MongoDB require authentication?" "$mongodb_auth_default"; then
+            MONGODB_REQUIRES_AUTH="y"
             MONGODB_USERNAME=$(deploy_prompt "MongoDB username" "${MONGODB_USERNAME:-}")
-            MONGODB_PASSWORD=$(deploy_prompt_secret "MongoDB password")
+            MONGODB_PASSWORD=$(deploy_prompt_secret_optional "MongoDB password" "${MONGODB_PASSWORD:-}")
         else
+            MONGODB_REQUIRES_AUTH="n"
             MONGODB_USERNAME=""
             MONGODB_PASSWORD=""
         fi
@@ -113,16 +170,72 @@ deploy_wizard_prompt_mongodb() {
             "$MONGODB_HOST" "$MONGODB_PORT" "$MONGODB_DATABASE" \
             "$MONGODB_USERNAME" "$MONGODB_PASSWORD")
 
+        deploy_wizard_state_save
+
         echo "Testing MongoDB connection..."
         if deploy_test_mongodb "$MONGODB_URI" "$MONGODB_HOST"; then
             echo "✓ MongoDB connected"
             export MONGODB_HOST MONGODB_PORT MONGODB_DATABASE MONGODB_URI
-            export MONGODB_USERNAME MONGODB_PASSWORD
+            export MONGODB_USERNAME MONGODB_PASSWORD MONGODB_REQUIRES_AUTH
+            deploy_wizard_step_done mongodb
             return 0
         fi
 
         echo "MongoDB connection failed. Please correct the values and try again."
     done
+}
+
+deploy_wizard_step_admin() {
+    ADMIN_EMAIL=$(deploy_prompt "Admin email" "${ADMIN_EMAIL:-admin@local}")
+    while [[ -z "${ADMIN_PASSWORD:-}" ]]; do
+        ADMIN_PASSWORD=$(deploy_prompt_secret_optional "Admin password (required)" "${ADMIN_PASSWORD:-}")
+        if [[ -z "$ADMIN_PASSWORD" ]]; then
+            echo "Admin password cannot be empty."
+        fi
+    done
+
+    export ADMIN_EMAIL ADMIN_PASSWORD
+    deploy_wizard_step_done admin
+}
+
+deploy_wizard_step_ssl() {
+    local ssl_default="n"
+
+    SSL_ENABLED="${SSL_ENABLED:-false}"
+    SSL_CERT_PATH="${SSL_CERT_PATH:-./docker/nginx/ssl-empty}"
+
+    if [[ "$SSL_ENABLED" == "true" ]]; then
+        ssl_default="y"
+    fi
+
+    if deploy_prompt_yes_no "Enable HTTPS?" "$ssl_default"; then
+        SSL_ENABLED=true
+        if deploy_prompt_yes_no "Generate a self-signed certificate?" "y"; then
+            local cn cert_dir
+            cn=$(deploy_prompt "Certificate common name (IP or hostname)" "$(echo "$APP_URL" | sed -E 's#https?://([^/:]+).*#\1#')")
+            cert_dir="${DEPLOY_WIZARD_ROOT}/storage/prod-ssl"
+            deploy_generate_self_signed_cert "$cert_dir" "$cn"
+            SSL_CERT_PATH="$cert_dir"
+        else
+            SSL_CERT_PATH=$(deploy_prompt "Path to directory containing cert.pem and key.pem" "${SSL_CERT_PATH:-./docker/nginx/ssl-empty}")
+            if [[ ! -f "${SSL_CERT_PATH}/cert.pem" || ! -f "${SSL_CERT_PATH}/key.pem" ]]; then
+                echo "ERROR: cert.pem and key.pem not found in ${SSL_CERT_PATH}" >&2
+                return 1
+            fi
+        fi
+    else
+        SSL_ENABLED=false
+        SSL_CERT_PATH="./docker/nginx/ssl-empty"
+    fi
+
+    export SSL_ENABLED SSL_CERT_PATH
+    deploy_wizard_step_done ssl
+}
+
+deploy_wizard_step_horizon() {
+    HORIZON_REPLICAS=$(deploy_prompt "Horizon container replicas" "${HORIZON_REPLICAS:-1}")
+    export HORIZON_REPLICAS
+    deploy_wizard_step_done horizon
 }
 
 deploy_wizard_write_env() {
@@ -198,12 +311,15 @@ ADMIN_PASSWORD=${ADMIN_PASSWORD}
 EOF
 
     chmod 600 "$env_file"
+    deploy_wizard_state_clear "$root"
     echo "Wrote ${env_file}"
 }
 
 deploy_wizard_run() {
     local root="$1"
     local mode="${2:-install}"
+
+    DEPLOY_WIZARD_ROOT="$root"
 
     echo "XFlickr production setup wizard"
     echo "External MySQL, Redis, and MongoDB are required."
@@ -216,6 +332,8 @@ deploy_wizard_run() {
         set +a
         PRESERVE_APP_KEY=1
         echo "Re-configuring production services (APP_KEY preserved)."
+    elif [[ "$mode" == "install" ]]; then
+        deploy_wizard_state_load "$root"
     fi
 
     if [[ "$mode" == "install" ]]; then
@@ -228,47 +346,57 @@ deploy_wizard_run() {
         fi
     fi
 
-    APP_URL=$(deploy_prompt "Public APP_URL (http://ip-or-host:port)" "${APP_URL:-http://127.0.0.1}")
-    HTTP_PORT=$(deploy_prompt "HTTP port (nginx)" "${HTTP_PORT:-80}")
-    FLICKR_CALLBACK_URL="${APP_URL%/}/flickr/callback"
+    if [[ "$mode" == "configure" ]] || ! deploy_wizard_step_is_done general; then
+        deploy_wizard_step_general
+        if [[ "$mode" == "install" ]]; then
+            deploy_wizard_step_done general
+        fi
+    else
+        APP_URL=$(deploy_normalize_app_url "${APP_URL}")
+        FLICKR_CALLBACK_URL="${APP_URL%/}/flickr/callback"
+        echo "✓ General settings (saved)"
+    fi
 
-    deploy_wizard_prompt_mysql
-    deploy_wizard_prompt_redis
-    deploy_wizard_prompt_mongodb
+    if [[ "$mode" == "configure" ]] || ! deploy_wizard_step_is_done mysql; then
+        deploy_wizard_prompt_mysql
+    else
+        echo "✓ MySQL (saved)"
+    fi
+
+    if [[ "$mode" == "configure" ]] || ! deploy_wizard_step_is_done redis; then
+        deploy_wizard_prompt_redis
+    else
+        echo "✓ Redis (saved)"
+    fi
+
+    if [[ "$mode" == "configure" ]] || ! deploy_wizard_step_is_done mongodb; then
+        deploy_wizard_prompt_mongodb
+    else
+        echo "✓ MongoDB (saved)"
+    fi
 
     if ! deploy_test_all_services; then
         echo "ERROR: Final connectivity check failed." >&2
         return 1
     fi
 
-    ADMIN_EMAIL=$(deploy_prompt "Admin email" "${ADMIN_EMAIL:-admin@local}")
-    while [[ -z "${ADMIN_PASSWORD:-}" ]]; do
-        ADMIN_PASSWORD=$(deploy_prompt_secret "Admin password (required)")
-        if [[ -z "$ADMIN_PASSWORD" ]]; then
-            echo "Admin password cannot be empty."
-        fi
-    done
-
-    SSL_ENABLED=false
-    SSL_CERT_PATH="./docker/nginx/ssl-empty"
-    if deploy_prompt_yes_no "Enable HTTPS?" "n"; then
-        SSL_ENABLED=true
-        if deploy_prompt_yes_no "Generate a self-signed certificate?" "y"; then
-            local cn cert_dir
-            cn=$(deploy_prompt "Certificate common name (IP or hostname)" "$(echo "$APP_URL" | sed -E 's#https?://([^/:]+).*#\1#')")
-            cert_dir="${root}/storage/prod-ssl"
-            deploy_generate_self_signed_cert "$cert_dir" "$cn"
-            SSL_CERT_PATH="$cert_dir"
-        else
-            SSL_CERT_PATH=$(deploy_prompt "Path to directory containing cert.pem and key.pem" "${SSL_CERT_PATH}")
-            if [[ ! -f "${SSL_CERT_PATH}/cert.pem" || ! -f "${SSL_CERT_PATH}/key.pem" ]]; then
-                echo "ERROR: cert.pem and key.pem not found in ${SSL_CERT_PATH}" >&2
-                return 1
-            fi
-        fi
+    if [[ "$mode" == "configure" ]] || ! deploy_wizard_step_is_done admin; then
+        deploy_wizard_step_admin
+    else
+        echo "✓ Admin account (saved)"
     fi
 
-    HORIZON_REPLICAS=$(deploy_prompt "Horizon container replicas" "${HORIZON_REPLICAS:-1}")
+    if [[ "$mode" == "configure" ]] || ! deploy_wizard_step_is_done ssl; then
+        deploy_wizard_step_ssl || return 1
+    else
+        echo "✓ HTTPS settings (saved)"
+    fi
+
+    if [[ "$mode" == "configure" ]] || ! deploy_wizard_step_is_done horizon; then
+        deploy_wizard_step_horizon
+    else
+        echo "✓ Horizon replicas (saved)"
+    fi
 
     echo
     echo "==> Summary"
@@ -309,7 +437,7 @@ deploy_wizard_configure_ssl() {
         if deploy_prompt_yes_no "Generate a self-signed certificate?" "y"; then
             local cn cert_dir
             cn=$(deploy_prompt "Certificate common name" "$(echo "${APP_URL:-localhost}" | sed -E 's#https?://([^/:]+).*#\1#')")
-            cert_dir="${root}/storage/prod-ssl"
+            cert_dir="${DEPLOY_WIZARD_ROOT}/storage/prod-ssl"
             deploy_generate_self_signed_cert "$cert_dir" "$cn"
             SSL_CERT_PATH="$cert_dir"
         else

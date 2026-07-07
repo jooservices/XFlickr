@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Production deploy wizard resume: saves progress to `storage/.xflickr-deploy-wizard` (mode `600`) after each completed step; cleared when `.env` is written.
+
+### Fixed
+
+- Production deploy wizard: Redis/Mongo connectivity checks no longer fail when Docker pulls images or `redis-cli` prints warnings (accepts `PONG` on last output line).
+- Production deploy wizard: prefer host-native `mysql`/`redis-cli`/`mongosh` for connectivity tests; Docker fallback pulls images quietly.
+- Production deploy preflight: detect Docker daemon permission errors with actionable guidance.
+- `APP_URL` without `http://` or `https://` is normalized automatically during install.
+
+### Added
+
 - Production Docker stack (`docker-compose.prod.yml`, project `xflickr-prod`) with nginx, scalable Horizon replicas, and external MySQL/Redis/MongoDB.
 - `bash scripts/deploy.sh` production wizard: connectivity validation loop, optional HTTPS, install/update/configure commands.
 - Post-deploy verification (`deploy.sh verify`): connections, web readiness, doctor, and worker checks before install completes.
