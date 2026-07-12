@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Api;
+namespace Modules\Operations\Tests\Feature;
 
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;

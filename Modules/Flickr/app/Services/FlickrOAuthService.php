@@ -132,9 +132,16 @@ final class FlickrOAuthService
      */
     public function listAccounts(): Collection
     {
-        return FlickrService::connections()
-            ->list()
+        return $this->listConnections()
             ->map(fn (Connection $connection): array => $this->connectionToArray($connection));
+    }
+
+    /**
+     * @return Collection<int, Connection>
+     */
+    public function listConnections(): Collection
+    {
+        return FlickrService::connections()->list();
     }
 
     public function activeConnection(): ?Connection

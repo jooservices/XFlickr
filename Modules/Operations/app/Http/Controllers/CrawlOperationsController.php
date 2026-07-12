@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace Modules\Operations\Http\Controllers;
 
+use Illuminate\Routing\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Flickr\Services\FlickrOAuthService;
-use Modules\Spider\Support\SpiderRuntimeConfig;
+use Modules\Operations\Services\CrawlOperationsService;
 
-final class CrawlOperationsController
+final class CrawlOperationsController extends Controller
 {
-    public function index(FlickrOAuthService $oauth, SpiderRuntimeConfig $spiderConfig): Response
+    public function __construct(
+        private readonly CrawlOperationsService $operations,
+    ) {}
+
+    public function index(): Response
     {
-        return Inertia::render('Crawl/Operations', [
-            'accounts' => $oauth->listAccounts(),
-            'spiderEnabled' => $spiderConfig->enabled(),
-        ]);
+        return Inertia::render('Crawl/Operations', $this->operations->pageProps());
     }
 }

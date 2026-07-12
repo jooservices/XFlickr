@@ -4,17 +4,21 @@ declare(strict_types=1);
 
 namespace Modules\Operations\Http\Controllers;
 
+use Illuminate\Routing\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Flickr\Services\FlickrRateLimitPresenter;
 use Modules\Operations\Services\DashboardService;
 
-final class DashboardController
+final class DashboardController extends Controller
 {
-    public function index(DashboardService $dashboard, FlickrRateLimitPresenter $rateLimit): Response
+    public function __construct(
+        private readonly DashboardService $dashboard,
+    ) {}
+
+    public function index(): Response
     {
         return Inertia::render('Dashboard', [
-            'snapshot' => $dashboard->snapshot($rateLimit),
+            'snapshot' => $this->dashboard->snapshot(),
         ]);
     }
 }

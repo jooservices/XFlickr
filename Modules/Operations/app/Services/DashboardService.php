@@ -10,12 +10,10 @@ use App\Repositories\Crawler\CrawlRunQueryRepository;
 use App\Repositories\Crawler\CrawlTargetQueryRepository;
 use App\Repositories\Crawler\PhotoQueryRepository;
 use Illuminate\Support\Facades\Cache;
-use JOOservices\XFlickrCrawler\Facades\FlickrService;
+use Modules\Flickr\Services\FlickrOAuthService;
 use Modules\Flickr\Services\FlickrRateLimitPresenter;
 use Modules\Flickr\Support\ConnectionPresenter;
-use Modules\Transfer\Repositories\StoredFileRepository;
-use Modules\Transfer\Repositories\TransferBatchRepository;
-use Modules\Transfer\Repositories\TransferItemRepository;
+use Modules\Transfer\Services\TransferCountsQueryService;
 
 final class DashboardService
 {
@@ -25,24 +23,19 @@ final class DashboardService
         private readonly CrawlRunQueryRepository $crawlRuns,
         private readonly CrawlTargetQueryRepository $crawlTargets,
         private readonly PhotoQueryRepository $photos,
-        private readonly StoredFileRepository $storedFiles,
-        private readonly TransferBatchRepository $batches,
-        private readonly TransferItemRepository $items,
+        private readonly TransferCountsQueryService $transferCounts,
+        private readonly FlickrOAuthService $oauth,
+        private readonly FlickrRateLimitPresenter $rateLimit,
     ) {}
 
     /**
      * @return array<string, mixed>
      */
-    public function snapshot(FlickrRateLimitPresenter $rateLimit): array
+    public function snapshot(): array
     {
-        return Cache::remember('xflickr:dashboard:snapshot', 15, function () use ($rateLimit): array {
-            $connections = FlickrService::connections()->list();
+        return Cache::remember('xflickr:dashboard:snapshot', 15, function (): array {
+            $connections = $this->oauth->listConnections();
             $connectionKeys = $connections->map(fn ($connection) => $connection->connection_key)->values()->all();
-
-            $accounts = $connections
-                ->map(fn ($connection): array => ConnectionPresenter::toArray($connection))
-                ->values()
-                ->all();
 
             $since = now()->subDay();
 
@@ -55,18 +48,18 @@ final class DashboardService
             $photosetsByConnection = $this->catalog->photosetCountsGroupedByConnection($connectionKeys);
             $galleriesByConnection = $this->catalog->galleryCountsGroupedByConnection($connectionKeys);
             $favoritesByConnection = $this->catalog->favoriteCountsGroupedByConnection($connectionKeys);
-            $downloadsActiveByConnection = $this->batches->countActiveGroupedByConnection($connectionKeys, 'download');
-            $uploadsActiveByConnection = $this->batches->countActiveGroupedByConnection($connectionKeys, 'upload');
-            $failedItemsByConnection = $this->items->countFailedGroupedByConnectionSince($connectionKeys, $since);
+            $downloadsActiveByConnection = $this->transferCounts->countActiveBatchesGroupedByConnection($connectionKeys, 'download');
+            $uploadsActiveByConnection = $this->transferCounts->countActiveBatchesGroupedByConnection($connectionKeys, 'upload');
+            $failedItemsByConnection = $this->transferCounts->countFailedItemsGroupedByConnectionSince($connectionKeys, $since);
 
             $global = [
-                'accounts' => count($accounts),
+                'accounts' => $connections->count(),
                 'runs_running' => $this->crawlRuns->countByConnectionsAndStatus($connectionKeys, 'running'),
                 'pending_targets' => $this->crawlTargets->countPendingForConnections($connectionKeys),
-                'stored_files' => $this->storedFiles->countAll(),
-                'downloads_active' => $this->batches->countByTypeAndStatus('download', 'running'),
-                'uploads_active' => $this->batches->countByTypeAndStatus('upload', 'running'),
-                'failed_transfers_24h' => $this->items->countFailedSince($since),
+                'stored_files' => $this->transferCounts->countStoredFiles(),
+                'downloads_active' => $this->transferCounts->countBatchesByTypeAndStatus('download', 'running'),
+                'uploads_active' => $this->transferCounts->countBatchesByTypeAndStatus('upload', 'running'),
+                'failed_transfers_24h' => $this->transferCounts->countFailedItemsSince($since),
             ];
 
             $perAccount = [];
@@ -76,7 +69,7 @@ final class DashboardService
 
                 $perAccount[] = [
                     'account' => ConnectionPresenter::toArray($connection),
-                    'rate_limit' => $rateLimit->present($key),
+                    'rate_limit' => $this->rateLimit->present($key),
                     'runs' => $runStatusByConnection[$key] ?? ['running' => 0, 'completed' => 0, 'failed' => 0],
                     'pending_targets' => $pendingTargetsByConnection[$key] ?? 0,
                     'contacts_db' => $contactsByConnection[$key] ?? 0,

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Api;
+namespace Modules\Operations\Tests\Feature;
 
 use Illuminate\Support\Facades\Cache;
 use JOOservices\XFlickrCrawler\Models\ConnectionContact;

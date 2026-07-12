@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Operations standards parity: constructor DI + thin controllers (`CrawlOperationsService`, `OperationsStreamService`); dashboard uses `TransferCountsQueryService` and Flickr `listConnections()` (one-way `Operations → Flickr|Transfer|Spider`); co-located Operations Feature/Unit tests; architecture guard against reverse Operations imports.
 - Module Artisan commands use `xflickr:<module>:<name>`: `xflickr:auth:reset-password` (was `xflickr:user:password`; class `ResetPasswordCommand`), `xflickr:contacts:full-pass-expand`, `xflickr:flickr:doctor`, `xflickr:flickr:audit-api`, `xflickr:storage:verify-google-photos`. Crawler package commands (`xflickr:dispatch`, `xflickr:prune`, package `xflickr:doctor`) unchanged.
 - `ResetPasswordCommand` delegates to `UserService::resetPassword()` → `UserRepository` (Command → Service → Repository → Model).
 - Auth session login/logout: `LoginRequest` / `LogoutRequest` → `AuthService` (dedicated FormRequest on logout; auth attempt/rate-limit moved out of FormRequest into the service).

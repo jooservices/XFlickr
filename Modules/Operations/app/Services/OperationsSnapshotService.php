@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Modules\Operations\Services;
 
-use JOOservices\XFlickrCrawler\Facades\FlickrService;
-use JOOservices\XFlickrCrawler\Models\Connection;
 use Modules\Flickr\Services\CrawlStatusQueryService;
+use Modules\Flickr\Services\FlickrOAuthService;
 use Modules\Transfer\Services\TransferProgressQueryService;
 
 final class OperationsSnapshotService
 {
     public function __construct(
+        private readonly FlickrOAuthService $oauth,
         private readonly CrawlStatusQueryService $crawlStatus,
         private readonly TransferProgressQueryService $transferProgress,
     ) {}
@@ -29,11 +29,7 @@ final class OperationsSnapshotService
         $downloadBatches = [];
         $uploadBatches = [];
 
-        foreach (FlickrService::connections()->list() as $connection) {
-            if (! $connection instanceof Connection) {
-                continue;
-            }
-
+        foreach ($this->oauth->listConnections() as $connection) {
             $runs = $this->crawlStatus->runs($connection, 'id', 'desc', 10, 1);
 
             foreach ($runs['data'] as $run) {
