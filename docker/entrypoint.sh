@@ -119,7 +119,7 @@ ensure_admin_password() {
 if [ "${1:-}" = "php" ] && [ "${2:-}" = "artisan" ] && [ "${3:-}" = "serve" ]; then
     ensure_admin_password
     php artisan migrate --force --no-interaction
-    php artisan db:seed --class=Database\\Seeders\\AdminUserSeeder --force --no-interaction
+    php artisan db:seed --class=Modules\\Auth\\Database\\Seeders\\AdminUserSeeder --force --no-interaction
     php artisan config-store:ensure-index --no-interaction
     php artisan events:install-indexes --no-interaction
 fi

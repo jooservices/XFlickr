@@ -553,9 +553,9 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
-use App\Models\StoredFile;
-use App\Models\TransferBatch;
-use App\Models\TransferItem;
+use Modules\Transfer\Models\StoredFile;
+use Modules\Transfer\Models\TransferBatch;
+use Modules\Transfer\Models\TransferItem;
 use App\Services\FlickrPhotoSizeResolver;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -702,10 +702,10 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
-use App\Models\StorageUpload;
-use App\Models\StoredFile;
-use App\Models\TransferBatch;
-use App\Models\TransferItem;
+use Modules\Storage\Models\StorageUpload;
+use Modules\Transfer\Models\StoredFile;
+use Modules\Transfer\Models\TransferBatch;
+use Modules\Transfer\Models\TransferItem;
 use App\Services\StorageUploadService;
 use Exception;
 use Illuminate\Bus\Queueable;

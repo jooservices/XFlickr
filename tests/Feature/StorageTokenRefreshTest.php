@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Models\StorageAccount;
-use App\Services\Storage\StorageMicrosoftTokenService;
 use Illuminate\Support\Facades\Http;
+use Modules\Storage\Models\StorageAccount;
+use Modules\Storage\Services\StorageMicrosoftTokenService;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 

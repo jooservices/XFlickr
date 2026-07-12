@@ -10,8 +10,19 @@ export function flickrRootCrumb(): BreadcrumbItem {
     return { label: 'Flickr', href: '/flickr/accounts' };
 }
 
-export function flickrAccountPageCrumbs(account: FlickrAccount): BreadcrumbItem[] {
-    return [flickrRootCrumb(), { label: accountLabel(account) }];
+export function flickrAccountPageCrumbs(
+    account: FlickrAccount,
+    options?: { linkAccount?: boolean },
+): BreadcrumbItem[] {
+    const linkAccount = options?.linkAccount ?? true;
+
+    return [
+        flickrRootCrumb(),
+        {
+            label: accountLabel(account),
+            ...(linkAccount ? { href: flickrAccountPath(account.public_id) } : {}),
+        },
+    ];
 }
 
 export function flickrContactShowCrumbs(account: FlickrAccount, contactLabel: string): BreadcrumbItem[] {
@@ -28,6 +39,26 @@ export function catalogPageCrumbs(pageLabel: string, account?: FlickrAccount | n
     }
 
     return [{ label: 'Dashboard', href: '/dashboard' }, { label: pageLabel }];
+}
+
+export function catalogPhotosetShowCrumbs(
+    photosetTitle: string,
+    options?: {
+        account?: FlickrAccount | null;
+        photosetsHref?: string;
+    },
+): BreadcrumbItem[] {
+    const photosetsHref = options?.photosetsHref ?? (options?.account ? flickrAccountPath(options.account.public_id, '/photosets') : '/photosets');
+
+    if (options?.account) {
+        return [...flickrAccountPageCrumbs(options.account), { label: 'Photosets', href: photosetsHref }, { label: photosetTitle }];
+    }
+
+    return [
+        { label: 'Dashboard', href: '/dashboard' },
+        { label: 'Photosets', href: photosetsHref },
+        { label: photosetTitle },
+    ];
 }
 
 const settingsTabLabels: Record<'general' | 'flickr' | 'storage', string> = {

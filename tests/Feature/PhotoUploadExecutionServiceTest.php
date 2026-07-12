@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Enums\PhotoTransferExecutionOutcome;
-use App\Jobs\DownloadPhotoJob;
-use App\Models\StorageAccount;
-use App\Models\StorageUpload;
-use App\Models\StoredFile;
-use App\Models\TransferBatch;
-use App\Models\TransferItem;
-use App\Services\Flickr\PhotoUploadExecutionService;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Modules\Storage\Models\StorageAccount;
+use Modules\Storage\Models\StorageUpload;
+use Modules\Transfer\Enums\PhotoTransferExecutionOutcome;
+use Modules\Transfer\Jobs\DownloadPhotoJob;
+use Modules\Transfer\Models\StoredFile;
+use Modules\Transfer\Models\TransferBatch;
+use Modules\Transfer\Models\TransferItem;
+use Modules\Transfer\Services\PhotoUploadExecutionService;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;

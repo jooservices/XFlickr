@@ -31,6 +31,14 @@ export function flickrGalleryPageUrl(ownerNsid: string, galleryId: string): stri
     return `https://www.flickr.com/photos/${encodeURIComponent(ownerNsid)}/galleries/${encodeURIComponent(galleryId)}/`;
 }
 
+export function catalogPhotosetShowPath(photosetId: number, accountPublicId?: string | null): string {
+    if (accountPublicId) {
+        return `/flickr/accounts/${encodeURIComponent(accountPublicId)}/photosets/${photosetId}`;
+    }
+
+    return `/photosets/${photosetId}`;
+}
+
 export function catalogPhotosetUrl(ownerNsid: string, accountPublicId?: string | null): string {
     const params = new URLSearchParams({ owner_nsid: ownerNsid });
 

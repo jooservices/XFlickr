@@ -22,26 +22,28 @@ final class CrawlSummaryRateLimitTest extends TestCase
             'app_profile' => 'main',
         ]);
 
-        $response = $this->getJson('/api/flickr/accounts/'.$connection->public_id.'/crawl/summary');
+        $response = $this->getJson('/api/v1/flickr/accounts/'.$connection->public_id.'/crawl/summary');
 
         $response->assertOk();
         $response->assertJsonStructure([
-            'connection_key',
-            'runs' => ['running', 'completed', 'failed'],
-            'pending_targets',
-            'global_pause',
-            'rate_limit' => [
-                'requests_used',
-                'max_requests_per_hour',
-                'requests_remaining',
-                'window_seconds',
-                'window_reset_at',
-                'window_seconds_remaining',
+            'data' => [
+                'connection_key',
+                'runs' => ['running', 'completed', 'failed'],
+                'pending_targets',
                 'global_pause',
-                'cooldown_until',
-                'cooldown_seconds_remaining',
+                'rate_limit' => [
+                    'requests_used',
+                    'max_requests_per_hour',
+                    'requests_remaining',
+                    'window_seconds',
+                    'window_reset_at',
+                    'window_seconds_remaining',
+                    'global_pause',
+                    'cooldown_until',
+                    'cooldown_seconds_remaining',
+                ],
             ],
         ]);
-        $response->assertJsonPath('connection_key', '12037949629@N01');
+        $response->assertJsonPath('data.connection_key', '12037949629@N01');
     }
 }

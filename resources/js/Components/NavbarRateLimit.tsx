@@ -1,10 +1,23 @@
 import RateLimitMeter from '@/Components/RateLimitMeter';
-import { flickrAccountLabel, useFlickrRateLimit } from '@/hooks/useFlickrRateLimit';
+import { flickrAccountLabel } from '@/hooks/useFlickrRateLimit';
 import { cn } from '@/lib/cn';
+import type { FlickrRateLimitSnapshot, RateLimitState } from '@/types';
 
-export default function NavbarRateLimit() {
-    const { snapshot, selectedNsid, setSelectedNsid, selectedRateLimit, loading } = useFlickrRateLimit();
+interface NavbarRateLimitProps {
+    snapshot: FlickrRateLimitSnapshot | null;
+    selectedNsid: string | null;
+    setSelectedNsid: (nsid: string) => void;
+    selectedRateLimit: RateLimitState | null;
+    loading: boolean;
+}
 
+export default function NavbarRateLimit({
+    snapshot,
+    selectedNsid,
+    setSelectedNsid,
+    selectedRateLimit,
+    loading,
+}: NavbarRateLimitProps) {
     if (!snapshot || snapshot.accounts.length === 0) {
         return null;
     }

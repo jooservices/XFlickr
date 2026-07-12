@@ -7,42 +7,42 @@ description: React 19, Inertia 3, and shared UI component patterns for XFlickr.
 
 ## Purpose
 
-Keep frontend pages consistent with existing XFlickr UI patterns.
+Keep frontend pages consistent with XCrawlerII-aligned AppShell / PageShell patterns.
 
 ## Structure
 
 - Pages: `resources/js/Pages/{Feature}/`
-- Shared components: `resources/js/Components/`
-- Layout: `resources/js/Layouts/AppLayout.tsx`
+- Shared components: `resources/js/Components/` (`ui/`, `macros/`, `layout/`)
+- Master layout: `resources/js/Layouts/AppLayout.tsx` → JOO `AppShell`
+- Content layout: `resources/js/Components/layout/page-shell.tsx` → JOO `PageShell*`
 - Types: `resources/js/types.ts`
+- API paths: `resources/js/lib/apiPaths.ts` (`API_V1 = '/api/v1'`)
 
 ## Component rules
 
+- Authenticated pages: `AppLayout` → `PageShell` → Identity / ControlBar / Canvas (not standalone `PageHeading`)
 - Use `Button` / `ActionButton` — not raw `<button>` for actions
-- Use `CrawlActionBar` for crawl/download/upload action groups
-- Use `PageHeading` + `Breadcrumbs` on every page
-- Use `DataTable` for sortable tables
-- Use `Card` / `ProviderCard` for settings panels
-- Use `RateLimitMeter` for API quota display
+- Use crawl/expand macros (`CrawlActionBar`, `ExpandActionBar`) for action groups
+- Use JOO / local `DataTable` for sortable tables; `MetricCard` for stats
+- Use `ProviderCard` for settings connection cards
+- Poll with `usePolledResource` against `/api/v1/*`
 
 ## Inertia patterns
 
 - Typed page props extending `PageProps`
 - `router.post()` with `preserveScroll: true` for actions
-- Poll `/api/*` endpoints for live data (Dashboard, Operations)
+- JSON mutations via `apiClient` (`apiGet` / `apiPost` / `apiPatch` / `apiDelete`)
 
 ## Styling
 
 - Tailwind utilities; `cn()` for conditional classes
-- Slate neutrals, cyan accents for links/active nav
+- Match existing slate neutrals; avoid inventing a parallel design system
 
 ## Before adding UI
 
-1. Check if a shared component already exists
-2. Match analogous pages (Contacts, Catalog, Flickr Index)
-3. Run `npm run typecheck`
+Check existing Components and macros first. Prefer composing PageShell + macros over new page chrome.
 
 ## Related skills
 
-- `docs/04-development/frontend-standards.md`
-- `.cursor/rules/ui-buttons.mdc` (thin pointer)
+- `api-response-standards`
+- `class-purpose-and-module-map`

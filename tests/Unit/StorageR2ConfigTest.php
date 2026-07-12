@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use App\Support\Storage\StorageR2Config;
+use Modules\Storage\Support\StorageR2Config;
 use PHPUnit\Framework\TestCase;
 
 final class StorageR2ConfigTest extends TestCase

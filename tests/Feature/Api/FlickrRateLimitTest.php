@@ -22,7 +22,7 @@ final class FlickrRateLimitTest extends TestCase
             'app_profile' => 'main',
         ]);
 
-        $response = $this->getJson('/api/flickr/rate-limit');
+        $response = $this->getJson('/api/v1/flickr/rate-limit');
 
         $response->assertOk();
         $response->assertJsonStructure([
@@ -50,6 +50,13 @@ final class FlickrRateLimitTest extends TestCase
                             'global_pause',
                             'cooldown_until',
                             'cooldown_seconds_remaining',
+                        ],
+                        'catalog_counts' => [
+                            'contacts_db',
+                            'photos_db',
+                            'photosets_db',
+                            'galleries_db',
+                            'favorites_db',
                         ],
                     ],
                 ],

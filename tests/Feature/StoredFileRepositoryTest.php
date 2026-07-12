@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Models\StoredFile;
-use App\Repositories\StoredFileRepository;
+use Modules\Transfer\Models\StoredFile;
+use Modules\Transfer\Repositories\StoredFileRepository;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
@@ -33,6 +33,22 @@ final class StoredFileRepositoryTest extends TestCase
         $repository = app(StoredFileRepository::class);
 
         $this->assertTrue($repository->hasCompletedOriginal('photo-1'));
+    }
+
+    public function test_find_by_uuid_returns_matching_record(): void
+    {
+        $stored = StoredFile::query()->create([
+            'flickr_photo_id' => 'photo-uuid',
+            'owner_nsid' => 'owner@N01',
+            'variant' => 'original',
+            'status' => 'completed',
+            'original_name' => 'photo-uuid_original.jpg',
+        ]);
+
+        $repository = app(StoredFileRepository::class);
+
+        $this->assertTrue($stored->uuid !== null && $stored->uuid !== '');
+        $this->assertSame($stored->id, $repository->findByUuid((string) $stored->uuid)?->id);
     }
 
     public function test_first_or_create_original_is_idempotent(): void

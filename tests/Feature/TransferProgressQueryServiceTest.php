@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Models\TransferBatch;
-use App\Models\TransferItem;
+use Modules\Transfer\Models\TransferBatch;
+use Modules\Transfer\Models\TransferItem;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;
@@ -40,7 +40,7 @@ final class TransferProgressQueryServiceTest extends TestCase
 
         $originalUpdatedAt = $batch->fresh()->updated_at?->toDateTimeString();
 
-        $response = $this->getJson('/api/flickr/accounts/'.$connection->public_id.'/transfers?active=1');
+        $response = $this->getJson('/api/v1/flickr/accounts/'.$connection->public_id.'/transfers?active=1');
 
         $response->assertOk();
         $response->assertJsonPath('data.0.id', $batch->id);

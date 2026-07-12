@@ -29,6 +29,7 @@ export interface FlickrAccountSummary {
     connected_at: string | null;
     is_active: boolean;
     is_connected: boolean;
+    token_valid?: boolean | null;
     disconnected_at: string | null;
 }
 
@@ -120,6 +121,66 @@ export interface ContactListItem {
     downloads_failed_count: number;
     download_state?: ContactDownloadState;
     crawl_state?: ContactCrawlState;
+    starred?: boolean;
+    note?: string | null;
+    note_preview?: string | null;
+}
+
+export interface ContactAnnotationPayload {
+    nsid: string;
+    note: string | null;
+    starred: boolean;
+    starred_at?: string | null;
+}
+
+export interface ContactGraphNode {
+    nsid: string;
+    label: string;
+    username: string | null;
+    realname: string | null;
+    is_root: boolean;
+    starred: boolean;
+    note_preview: string | null;
+    child_count: number;
+    photos_count: number;
+}
+
+export interface ContactGraphEdge {
+    id: number;
+    from: string;
+    to: string;
+}
+
+export interface ContactGraphMeta {
+    direct_total: number;
+    direct_shown: number;
+    initial_direct_limit: number;
+    load_more_step: number;
+    subject_edges_total: number;
+    subject_edges_shown: number;
+    has_more_direct: boolean;
+}
+
+export interface ContactGraphSnapshot {
+    root_nsid: string;
+    nodes: ContactGraphNode[];
+    edges: ContactGraphEdge[];
+    meta: ContactGraphMeta;
+}
+
+export interface ContactGraphDelta {
+    edges: ContactGraphEdge[];
+    nodes: ContactGraphNode[];
+    max_edge_id: number;
+    done: boolean;
+    crawl_status: string | null;
+}
+
+export interface ContactGraphExpandResult {
+    crawl_run_id: number;
+    status: string;
+    subject_nsid: string;
+    reexpand: boolean;
 }
 
 export interface ContactDownloadState {
@@ -237,12 +298,21 @@ export interface FlickrApiUsageSnapshot {
     rate_limit: RateLimitState;
 }
 
+export interface FlickrCatalogCounts {
+    contacts_db: number;
+    photos_db: number;
+    photosets_db: number;
+    galleries_db: number;
+    favorites_db: number;
+}
+
 export interface FlickrRateLimitSnapshot {
     generated_at: string;
     active_connection_key: string | null;
     accounts: Array<{
         account: FlickrAccount;
         rate_limit: RateLimitState;
+        catalog_counts: FlickrCatalogCounts;
     }>;
 }
 
@@ -272,6 +342,7 @@ export interface DashboardSnapshotAccountRow {
     photos_with_sizes: number;
     photosets_db: number;
     galleries_db: number;
+    favorites_db: number;
     latest_run: CrawlRun | null;
     transfers: {
         downloads_active: number;
@@ -303,6 +374,8 @@ export interface PhotoMembership {
     title: string | null;
 }
 
+export type PhotoDownloadStatus = 'none' | 'pending' | 'downloading' | 'completed' | 'failed';
+
 export interface Photo {
     id: number;
     flickr_photo_id: string;
@@ -313,6 +386,9 @@ export interface Photo {
     farm: number | null;
     photosets?: PhotoMembership[];
     galleries?: PhotoMembership[];
+    download_status?: PhotoDownloadStatus;
+    stored_file_uuid?: string | null;
+    stored_file_view_url?: string | null;
 }
 
 export interface Photoset {
@@ -381,4 +457,39 @@ export interface CustomConfigEntry {
 export interface RuntimeConfigPayload {
     curated: CuratedConfigEntry[];
     custom: CustomConfigEntry[];
+}
+
+export interface ExpandPreviewRunSummary {
+    id: number;
+    status: string;
+    max_depth: number;
+    contacts_discovered: number;
+    contacts_crawled: number;
+}
+
+export interface ExpandPreviewPayload {
+    account: {
+        public_id: string;
+        nsid: string;
+        username: string | null;
+        fullname: string | null;
+    };
+    saved_contacts_count: number;
+    spider: {
+        enabled: boolean;
+        max_depth: number;
+        max_new_contacts_per_run: number;
+        max_contacts_total: number;
+        active: boolean;
+        run: ExpandPreviewRunSummary | null;
+    };
+    full_pass: {
+        max_depth: number;
+        max_contacts_per_batch: number;
+        max_contacts_total: number;
+        saved_contacts_count: number;
+        active: boolean;
+        spider_active: boolean;
+        run: ExpandPreviewRunSummary | null;
+    };
 }

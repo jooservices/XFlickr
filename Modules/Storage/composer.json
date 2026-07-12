@@ -1,0 +1,30 @@
+{
+    "name": "nwidart/storage",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Storage\\": "app/",
+            "Modules\\Storage\\Database\\Factories\\": "database/factories/",
+            "Modules\\Storage\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Storage\\Tests\\": "tests/"
+        }
+    }
+}

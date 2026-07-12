@@ -6,21 +6,33 @@ XFlickr uses React 19, Inertia 3, TypeScript, and Tailwind CSS 4.
 
 ```text
 resources/js/
-├── Components/     # Shared UI (Button, DataTable, CrawlActionBar, etc.)
-├── Pages/          # Inertia pages (one per route)
-├── Layouts/        # AppLayout with sidebar navigation
-├── hooks/          # Reusable React hooks
-├── lib/            # Utilities (cn, tableSort, api helpers)
-└── types.ts        # Shared TypeScript types
+├── Components/
+│   ├── ui/           # Primitives (Button, MetricCard, …)
+│   ├── layout/       # PageShell barrel over @jooservices/react-content
+│   ├── form/         # Form macros
+│   └── macros/       # Domain composites (ContactGraphShell, CrawlActionBar, …)
+├── Layouts/          # AppLayout — master chrome (JOO AppShell)
+├── Pages/            # Inertia pages compose PageShell + macros
+├── hooks/            # usePolledResource, domain hooks
+├── lib/              # apiClient, apiPaths, utilities
+└── types.ts
 ```
+
+## Layout
+
+- **Master:** `Layouts/AppLayout` (JOO `AppShell` from `@jooservices/react-layout`).
+- **Content:** `PageShell*` from `@/Components/layout/page-shell` (`@jooservices/react-content`).
+- Shared: JOO `DataTable`, local cards/stats (`MetricCard`), `Toaster`.
 
 ## Component conventions
 
 - Use shared `Button` and `ActionButton` — not raw `<button>` for actions.
 - Use `CrawlActionBar` for crawl/download/upload action groups.
-- Use `PageHeading` + `Breadcrumbs` on every page.
+- Prefer `PageShell` + `PageShellIdentity` / `PageShellCanvas` on authenticated pages (do not add new `PageHeading` usage).
 - Use `DataTable` for sortable tabular data.
-- Use `Card` / `ProviderCard` for grouped settings panels.
+- Use `Card` / `ProviderCard` / `MetricCard` for panels and stats.
+- API calls: `apiGet`/`apiPost`/`apiPatch`/`apiDelete` against `/api/v1/*`.
+- Poll live surfaces with `usePolledResource`.
 
 See skill: `react-inertia-frontend` and rule `.cursor/rules/ui-buttons.mdc`.
 

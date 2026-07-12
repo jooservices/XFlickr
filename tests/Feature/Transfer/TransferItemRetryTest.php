@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Transfer;
 
-use App\Enums\TransferBatchStatus;
-use App\Enums\TransferItemStatus;
-use App\Jobs\DownloadPhotoJob;
-use App\Models\TransferBatch;
-use App\Models\TransferItem;
 use Illuminate\Support\Facades\Queue;
+use Modules\Transfer\Enums\TransferBatchStatus;
+use Modules\Transfer\Enums\TransferItemStatus;
+use Modules\Transfer\Jobs\DownloadPhotoJob;
+use Modules\Transfer\Models\TransferBatch;
+use Modules\Transfer\Models\TransferItem;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;
@@ -43,10 +43,11 @@ final class TransferItemRetryTest extends TestCase
         ]);
 
         $response = $this->postJson(
-            "/api/flickr/accounts/{$connection->public_id}/transfers/{$batch->id}/items/12345/retry",
+            "/api/v1/flickr/accounts/{$connection->public_id}/transfers/{$batch->id}/items/12345/retries",
         );
 
-        $response->assertOk()->assertJson(['status' => 'queued']);
+        $response->assertAccepted()
+            ->assertJsonPath('data.status', 'queued');
 
         $this->assertDatabaseHas('transfer_items', [
             'transfer_batch_id' => $batch->id,
@@ -75,7 +76,7 @@ final class TransferItemRetryTest extends TestCase
         ]);
 
         $response = $this->postJson(
-            "/api/flickr/accounts/{$connection->public_id}/transfers/{$batch->id}/items/999/retry",
+            "/api/v1/flickr/accounts/{$connection->public_id}/transfers/{$batch->id}/items/999/retries",
         );
 
         $response->assertUnprocessable();

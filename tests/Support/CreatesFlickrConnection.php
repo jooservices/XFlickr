@@ -6,6 +6,10 @@ namespace Tests\Support;
 
 use Illuminate\Support\Str;
 use JOOservices\XFlickrCrawler\Models\Connection;
+use Mockery;
+use Modules\Flickr\Dto\FlickrTokenHealthResult;
+use Modules\Flickr\Services\FlickrTokenHealthService;
+use Tests\TestCase;
 
 trait CreatesFlickrConnection
 {
@@ -41,5 +45,19 @@ trait CreatesFlickrConnection
             'is_active' => true,
             'connected_at' => now(),
         ], $attributes));
+    }
+
+    protected function mockFlickrTokenHealth(bool $valid = true, ?string $errorMessage = null): void
+    {
+        /** @var TestCase $this */
+        $mock = Mockery::mock(FlickrTokenHealthService::class);
+        $mock->shouldReceive('probe')
+            ->andReturn(new FlickrTokenHealthResult(
+                valid: $valid,
+                errorMessage: $valid ? null : ($errorMessage ?? 'Invalid auth token'),
+            ));
+        $mock->shouldReceive('forgetCache')->zeroOrMoreTimes();
+        $mock->shouldReceive('forgetCacheForKey')->zeroOrMoreTimes();
+        $this->app->instance(FlickrTokenHealthService::class, $mock);
     }
 }

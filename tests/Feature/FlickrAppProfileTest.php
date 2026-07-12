@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Services\Flickr\FlickrAppProfileService;
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
+use Modules\Flickr\Services\FlickrAppProfileService;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;

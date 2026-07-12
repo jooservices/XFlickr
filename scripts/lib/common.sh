@@ -90,5 +90,5 @@ xf_print_urls() {
     echo "NEVER on dev stack: docker exec xflickr-dev-*"
     echo
     echo "Admin: admin@local — password from container logs on first boot, or ADMIN_PASSWORD in .env"
-    echo "Change password: docker exec xflickr-dev-app-1 php artisan xflickr:user:password admin@local"
+    echo "Change password: docker exec xflickr-dev-app-1 php artisan xflickr:auth:reset-password admin@local"
 }

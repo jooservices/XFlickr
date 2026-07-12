@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Contracts\StorageDownloadStreamer;
-use App\Services\Storage\StorageDownloadService;
-use App\Support\Flickr\ConnectionPublicIdService;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Flickr\Support\ConnectionPublicIdService;
+use Modules\Storage\Contracts\StorageDownloadStreamer;
+use Modules\Storage\Services\StorageDownloadService;
 
 final class AppServiceProvider extends ServiceProvider
 {

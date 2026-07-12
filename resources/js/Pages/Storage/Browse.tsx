@@ -1,10 +1,9 @@
 import { Head } from '@inertiajs/react';
 import { useMemo } from 'react';
 
-import Breadcrumbs from '@/Components/Breadcrumbs';
 import type { BulkAction } from '@/Components/BulkActionBar';
 import DataTable from '@/Components/DataTable';
-import PageHeading from '@/Components/PageHeading';
+import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
 import StorageReauthorizeBanner from '@/Components/Storage/StorageReauthorizeBanner';
 import Thumbnail from '@/Components/Thumbnail';
 import { useStorageBrowse } from '@/hooks/useStorageBrowse';
@@ -140,9 +139,9 @@ export default function StorageBrowse({
         <AppLayout>
             <Head title={provider_label} />
 
-            <div className="space-y-6">
-                <PageHeading
-                    breadcrumbs={<Breadcrumbs items={storageBrowseCrumbs(provider_label)} />}
+            <PageShell>
+                <PageShellIdentity
+                    breadcrumbs={storageBrowseCrumbs(provider_label)}
                     title={provider_label}
                     subtitle="Cached locally for fast browsing. Syncs from the provider in the background."
                     actions={
@@ -167,7 +166,9 @@ export default function StorageBrowse({
                     }
                 />
 
-                <div className="flex flex-wrap items-center gap-3">
+                <PageShellControlBar
+                    filters={
+                        <div className="flex flex-wrap items-center gap-3">
                     <label className="text-sm text-slate-600" htmlFor="storage-account">
                         Account
                     </label>
@@ -199,9 +200,13 @@ export default function StorageBrowse({
                             Connect in Settings
                         </a>
                     ) : null}
-                </div>
 
-                {containerId && containerTitle ? (
+                        </div>
+                    }
+                />
+
+                <PageShellCanvas className="space-y-6" variant="plain">
+                                {containerId && containerTitle ? (
                     <div className="flex items-center gap-2 text-sm text-slate-600">
                         <button
                             type="button"
@@ -370,7 +375,7 @@ export default function StorageBrowse({
                                     provider_slug === 'r2' && accountId
                                         ? (item: RemoteStorageItem) => (
                                               <a
-                                                  href={`/api/storage/r2/download?account_id=${accountId}&path=${encodeURIComponent(item.path ?? item.id)}`}
+                                                  href={`/api/v1/storage/r2/files/download?account_id=${accountId}&path=${encodeURIComponent(item.path ?? item.id)}`}
                                                   className="text-sm font-medium text-cyan-700 hover:text-cyan-800"
                                               >
                                                   Download
@@ -394,7 +399,8 @@ export default function StorageBrowse({
                         ) : null}
                     </div>
                 ) : null}
-            </div>
+                </PageShellCanvas>
+            </PageShell>
         </AppLayout>
     );
 }

@@ -18,7 +18,7 @@ final class FlickrRateLimitUsageTest extends TestCase
 
     public function test_usage_requires_connection_key(): void
     {
-        $response = $this->getJson('/api/flickr/rate-limit/usage');
+        $response = $this->getJson('/api/v1/flickr/rate-limit/usage');
 
         $response->assertUnprocessable();
         $response->assertJsonValidationErrors(['connection_key']);
@@ -26,7 +26,7 @@ final class FlickrRateLimitUsageTest extends TestCase
 
     public function test_usage_rejects_unknown_connection_key(): void
     {
-        $response = $this->getJson('/api/flickr/rate-limit/usage?connection_key=unknown@N01');
+        $response = $this->getJson('/api/v1/flickr/rate-limit/usage?connection_key=unknown@N01');
 
         $response->assertUnprocessable();
         $response->assertJsonValidationErrors(['connection_key']);
@@ -38,7 +38,7 @@ final class FlickrRateLimitUsageTest extends TestCase
             'connection_key' => '12037949629@N01',
         ]);
 
-        $response = $this->getJson('/api/flickr/rate-limit/usage?connection_key='.$connection->connection_key.'&hours=24');
+        $response = $this->getJson('/api/v1/flickr/rate-limit/usage?connection_key='.$connection->connection_key.'&hours=24');
 
         $response->assertOk();
         $response->assertJsonStructure([
@@ -91,7 +91,7 @@ final class FlickrRateLimitUsageTest extends TestCase
             $this->createApiLog($connection->connection_key, '2026-06-23 08:45:00');
             $this->createApiLog($connection->connection_key, '2026-06-23 10:05:00');
 
-            $response = $this->getJson('/api/flickr/rate-limit/usage?connection_key='.$connection->connection_key.'&hours=3');
+            $response = $this->getJson('/api/v1/flickr/rate-limit/usage?connection_key='.$connection->connection_key.'&hours=3');
 
             $response->assertOk();
             $response->assertJsonPath('data.hours', 3);

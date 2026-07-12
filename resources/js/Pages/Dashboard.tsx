@@ -1,13 +1,11 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Activity, Camera, Images, Layers, LayoutGrid, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import ApiUsageChart from '@/Components/ApiUsageChart';
-import Breadcrumbs from '@/Components/Breadcrumbs';
 import Card from '@/Components/Card';
-import PageHeading from '@/Components/PageHeading';
+import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/layout/page-shell';
 import RateLimitMeter from '@/Components/RateLimitMeter';
-import StatCard from '@/Components/StatCard';
+import MetricCard from '@/Components/ui/MetricCard';
 import AppLayout from '@/Layouts/AppLayout';
 import { apiGet } from '@/lib/apiClient';
 import { flickrAccountPath } from '@/lib/flickrAccount';
@@ -38,7 +36,7 @@ export default function Dashboard() {
         const controller = new AbortController();
 
         const poll = () => {
-            void apiGet<{ data: DashboardSnapshot }>('/api/dashboard/snapshot', { signal: controller.signal })
+            void apiGet<{ data: DashboardSnapshot }>('/api/v1/dashboard/snapshot', { signal: controller.signal })
                 .then((json) => setSnapshot(json.data))
                 .catch(() => undefined);
         };
@@ -103,59 +101,54 @@ export default function Dashboard() {
         <AppLayout>
             <Head title="Dashboard" />
 
-            <div className="space-y-6">
-                <PageHeading
-                    breadcrumbs={<Breadcrumbs items={[{ label: 'Dashboard' }]} />}
+            <PageShell>
+                <PageShellIdentity
+                    breadcrumbs={[{ label: 'Dashboard' }]}
                     title="Dashboard"
                     subtitle="Monitor crawl progress, catalog growth, and transfer health."
                 />
 
+                <PageShellCanvas className="space-y-6" variant="plain">
                 <div className="space-y-4">
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        <StatCard label="Accounts" value={formatNumber(global.accounts)} icon={<Camera className="h-4 w-4" />} tone="slate" />
-                        <StatCard
+                        <MetricCard label="Accounts" value={formatNumber(global.accounts)} tone="slate" />
+                        <MetricCard
                             label="Active crawls"
                             value={formatNumber(global.runs_running)}
                             hint={`${formatNumber(global.pending_targets)} pending target(s)`}
-                            icon={<Activity className="h-4 w-4" />}
                             tone={global.runs_running > 0 ? 'cyan' : 'slate'}
                         />
-                        <StatCard
+                        <MetricCard
                             label="Transfers"
                             value={`${formatNumber(global.downloads_active + global.uploads_active)} active`}
                             hint={`${formatNumber(global.failed_transfers_24h)} failed in 24h`}
-                            icon={<Layers className="h-4 w-4" />}
                             tone={global.failed_transfers_24h > 0 ? 'rose' : 'slate'}
                         />
                     </div>
 
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <StatCard
+                        <MetricCard
                             label="Contacts"
                             value={formatNumber(contactsCount)}
                             hint={catalogAccountHint}
-                            icon={<Users className="h-4 w-4" />}
                             tone="emerald"
                         />
-                        <StatCard
+                        <MetricCard
                             label="Photos"
                             value={formatNumber(photosCount)}
                             hint={`${formatNumber(photosWithSizesCount)} with sizes`}
-                            icon={<Images className="h-4 w-4" />}
                             tone="violet"
                         />
-                        <StatCard
+                        <MetricCard
                             label="Photosets"
                             value={formatNumber(photosetsCount)}
                             hint={catalogAccountHint}
-                            icon={<Layers className="h-4 w-4" />}
                             tone="cyan"
                         />
-                        <StatCard
+                        <MetricCard
                             label="Galleries"
                             value={formatNumber(galleriesCount)}
                             hint={catalogAccountHint}
-                            icon={<LayoutGrid className="h-4 w-4" />}
                             tone="amber"
                         />
                     </div>
@@ -250,7 +243,8 @@ export default function Dashboard() {
                         </div>
                     )}
                 </div>
-            </div>
+                </PageShellCanvas>
+            </PageShell>
         </AppLayout>
     );
 }

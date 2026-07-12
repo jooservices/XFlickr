@@ -32,7 +32,11 @@ return [
     'crawl' => [
         'per_page' => (int) env('XFLICKR_CRAWL_PER_PAGE', 500),
         'dispatch_limit' => (int) env('XFLICKR_DISPATCH_LIMIT', 0),
-        'people_photos_safe_search' => (int) env('XFLICKR_PEOPLE_PHOTOS_SAFE_SEARCH', 1),
+        // 0 = omit filter params on crawl API calls (Flickr default). 1+ applies filters.
+        'safe_search' => (int) env('XFLICKR_CRAWL_SAFE_SEARCH', 0),
+        'privacy_filter' => (int) env('XFLICKR_CRAWL_PRIVACY_FILTER', 0),
+        // Legacy alias — prefer safe_search.
+        'people_photos_safe_search' => (int) env('XFLICKR_PEOPLE_PHOTOS_SAFE_SEARCH', 0),
         'stall_minutes' => (int) env('XFLICKR_STALL_MINUTES', 15),
     ],
 

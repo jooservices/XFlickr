@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
-use App\Support\Flickr\ConnectionPublicIdService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Flickr\Support\ConnectionPublicIdService;
 use Symfony\Component\HttpFoundation\Response;
 
 /**

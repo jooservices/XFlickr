@@ -110,6 +110,22 @@ final class ContactQueryRepository
             ->values();
     }
 
+    /**
+     * @param  list<string>  $nsids
+     * @return list<Contact>
+     */
+    public function listByNsids(array $nsids): array
+    {
+        if ($nsids === []) {
+            return [];
+        }
+
+        return Contact::query()
+            ->whereIn('nsid', $nsids)
+            ->get()
+            ->all();
+    }
+
     public function findByNsid(string $nsid): Contact
     {
         return Contact::query()->where('nsid', $nsid)->firstOrFail();

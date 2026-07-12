@@ -1,16 +1,17 @@
 import { Head } from '@inertiajs/react';
 
-import Breadcrumbs from '@/Components/Breadcrumbs';
 import CatalogOwnerNsidFilter from '@/Components/CatalogOwnerNsidFilter';
 import ContactNsidLinks from '@/Components/ContactNsidLinks';
 import CrawlActionBar from '@/Components/CrawlActionBar';
 import DataTable from '@/Components/DataTable';
 import FlickrPhotosetIdLinks from '@/Components/FlickrPhotosetIdLinks';
-import PageHeading from '@/Components/PageHeading';
+import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
 import Thumbnail from '@/Components/Thumbnail';
 import { useCatalogOwnerNsidTable } from '@/hooks/useCatalogOwnerNsidTable';
 import AppLayout from '@/Layouts/AppLayout';
 import { catalogPageCrumbs } from '@/lib/breadcrumbs';
+import { catalogPhotosetShowPath } from '@/lib/catalog';
+import { crawlSubjectForContact } from '@/lib/crawlSubject';
 import { flickrCollectionThumbnailUrl } from '@/lib/flickrCollection';
 import type { FlickrAccount, PageProps, Photoset } from '@/types';
 
@@ -21,7 +22,7 @@ interface Props extends PageProps {
 export default function CatalogPhotosets({ account }: Props) {
     const { data: photosets, meta, setPage, loading, sortKey, sortDirection, handleSortChange, filterFormProps } =
         useCatalogOwnerNsidTable<Photoset>('owner_nsid', {
-            fetchPath: '/api/flickr/catalog/photosets',
+            fetchPath: '/api/v1/flickr/catalog/photosets',
             initialSort: 'id',
             initialDirection: 'desc',
         });
@@ -30,15 +31,16 @@ export default function CatalogPhotosets({ account }: Props) {
         <AppLayout>
             <Head title="Photosets" />
 
-            <div className="space-y-6">
-                <PageHeading
-                    breadcrumbs={<Breadcrumbs items={catalogPageCrumbs('Photosets', account)} />}
+            <PageShell>
+                <PageShellIdentity
+                    breadcrumbs={catalogPageCrumbs('Photosets', account)}
                     title="Photosets"
                     subtitle="Browse crawled photosets in the catalog."
                 />
 
-                <CatalogOwnerNsidFilter {...filterFormProps} />
+                <PageShellControlBar filters={<CatalogOwnerNsidFilter {...filterFormProps} />} />
 
+                <PageShellCanvas className="space-y-6" variant="plain">
                 {loading ? (
                     <p className="text-sm text-slate-500">Loading…</p>
                 ) : (
@@ -51,6 +53,7 @@ export default function CatalogPhotosets({ account }: Props) {
                                     <Thumbnail
                                         url={flickrCollectionThumbnailUrl(photoset)}
                                         alt={photoset.title || 'Photoset'}
+                                        linkHref={catalogPhotosetShowPath(photoset.id, account?.public_id)}
                                     />
                                 ),
                             },
@@ -104,6 +107,11 @@ export default function CatalogPhotosets({ account }: Props) {
                                           scope="contact"
                                           accountPublicId={account.public_id}
                                           contactNsid={photoset.owner_nsid}
+                                          subjectLabel={crawlSubjectForContact({
+                                              nsid: photoset.owner_nsid,
+                                              username: null,
+                                              realname: photoset.title,
+                                          })}
                                           showCrawl={false}
                                           label="Crawl"
                                       />
@@ -115,7 +123,8 @@ export default function CatalogPhotosets({ account }: Props) {
                         onPageChange={setPage}
                     />
                 )}
-            </div>
+                </PageShellCanvas>
+            </PageShell>
         </AppLayout>
     );
 }

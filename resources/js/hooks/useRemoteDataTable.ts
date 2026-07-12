@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { SortDirection } from '@/Components/DataTable';
 import { apiGet } from '@/lib/apiClient';
@@ -9,12 +9,15 @@ interface ApiListResponse<T> {
     meta: PaginatedMeta;
 }
 
+export type PaginationMode = 'replace' | 'append';
+
 export interface UseRemoteDataTableOptions {
     fetchPath: string;
     initialSort?: string;
     initialDirection?: SortDirection;
     perPage?: number;
     filters?: Record<string, string>;
+    paginationMode?: PaginationMode;
 }
 
 export function useRemoteDataTable<T>({
@@ -23,24 +26,34 @@ export function useRemoteDataTable<T>({
     initialDirection = 'desc',
     perPage = 25,
     filters = {},
+    paginationMode = 'replace',
 }: UseRemoteDataTableOptions) {
     const [data, setData] = useState<T[]>([]);
     const [meta, setMeta] = useState<PaginatedMeta | null>(null);
-    const [page, setPage] = useState(1);
+    const [page, setPageState] = useState(1);
     const [sortKey, setSortKey] = useState(initialSort);
     const [sortDirection, setSortDirection] = useState<SortDirection>(initialDirection);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const appendRef = useRef(false);
 
     const filtersKey = useMemo(() => JSON.stringify(filters), [filters]);
 
     const handleSortChange = useCallback((key: string, direction: SortDirection) => {
+        appendRef.current = false;
         setSortKey(key);
         setSortDirection(direction);
-        setPage(1);
+        setPageState(1);
     }, []);
 
     const load = useCallback(async () => {
-        setLoading(true);
+        const shouldAppend = appendRef.current && paginationMode === 'append';
+
+        if (shouldAppend) {
+            setLoadingMore(true);
+        } else {
+            setLoading(true);
+        }
 
         const params: Record<string, string | number> = {
             page,
@@ -57,7 +70,7 @@ export function useRemoteDataTable<T>({
 
         try {
             const json = await apiGet<ApiListResponse<T>>(fetchPath, { params });
-            setData(json.data);
+            setData((current) => (shouldAppend ? [...current, ...json.data] : json.data));
             setMeta(json.meta);
             if (json.meta.sort) {
                 setSortKey(json.meta.sort);
@@ -66,17 +79,41 @@ export function useRemoteDataTable<T>({
                 setSortDirection(json.meta.direction);
             }
         } finally {
+            appendRef.current = false;
             setLoading(false);
+            setLoadingMore(false);
         }
-    }, [fetchPath, page, perPage, sortKey, sortDirection, filtersKey]);
+    }, [fetchPath, page, perPage, sortKey, sortDirection, filtersKey, paginationMode]);
 
     useEffect(() => {
         void load();
     }, [load]);
 
     const applyFilters = useCallback(() => {
-        setPage(1);
+        appendRef.current = false;
+        setPageState(1);
     }, []);
+
+    const setPage = useCallback((next: number | ((previous: number) => number)) => {
+        appendRef.current = false;
+        setPageState(next);
+    }, []);
+
+    const loadMore = useCallback(() => {
+        if (meta === null || page >= meta.last_page || loading || loadingMore) {
+            return;
+        }
+
+        appendRef.current = true;
+        setPageState((previous) => previous + 1);
+    }, [loading, loadingMore, meta, page]);
+
+    const reset = useCallback(() => {
+        appendRef.current = false;
+        setPageState(1);
+    }, []);
+
+    const hasMore = meta !== null && page < meta.last_page;
 
     return {
         data,
@@ -84,6 +121,10 @@ export function useRemoteDataTable<T>({
         page,
         setPage,
         loading,
+        loadingMore,
+        hasMore,
+        loadMore,
+        reset,
         sortKey,
         sortDirection,
         handleSortChange,

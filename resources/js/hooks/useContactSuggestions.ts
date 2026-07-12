@@ -35,12 +35,12 @@ export function useContactSuggestions(
         setLoading(true);
 
         const timeout = setTimeout(() => {
-            void apiGet<ContactSuggestion[]>(flickrApiAccountPath(accountPublicId, '/contacts/suggest'), {
+            void apiGet<{ data: ContactSuggestion[] }>(flickrApiAccountPath(accountPublicId, '/contacts/suggest'), {
                 params: { search: trimmed },
                 signal: controller.signal,
             })
                 .then((data) => {
-                    setSuggestions(data);
+                    setSuggestions(data.data);
                 })
                 .catch(() => {
                     if (!controller.signal.aborted) {

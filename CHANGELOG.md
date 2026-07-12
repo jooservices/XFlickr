@@ -6,15 +6,75 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Module Artisan commands use `xflickr:<module>:<name>`: `xflickr:auth:reset-password` (was `xflickr:user:password`; class `ResetPasswordCommand`), `xflickr:contacts:full-pass-expand`, `xflickr:flickr:doctor`, `xflickr:flickr:audit-api`, `xflickr:storage:verify-google-photos`. Crawler package commands (`xflickr:dispatch`, `xflickr:prune`, package `xflickr:doctor`) unchanged.
+- `ResetPasswordCommand` delegates to `UserService::resetPassword()` → `UserRepository` (Command → Service → Repository → Model).
+- Auth session login/logout: `LoginRequest` / `LogoutRequest` → `AuthService` (dedicated FormRequest on logout; auth attempt/rate-limit moved out of FormRequest into the service).
+- Prefer meaningful Eloquent model scopes in repositories (e.g. `User::scopeByEmail` used by `UserRepository::findByEmail`).
+- Auth admin user seed moved to `Modules/Auth` (`AdminUserSeeder` via `UserService::ensureUser`); host `DatabaseSeeder` no longer auto-seeds — operators opt in (`dev.sh seed`, entrypoint, deploy, `module:seed Auth`).
+- Auth module PHPUnit suites under `Modules/Auth/tests/{Unit,Feature}` (services + session controller + reset-password command); `phpunit.xml` discovers `Modules/*/tests/*`.
+- Auth register / forgot-reset (token URL, no email) / `users.is_active` + `xflickr:auth:activate-user`; inactive users cannot sign in.
+- JSON API hard-cut to **RESTful `/api/v1/*`** (crawl-runs, contact-graph, storage files/sync-runs, spider-runs/current, expand-previews, transfer retries). Frontend and Feature tests updated; imperative URI verb architecture test added.
+- Introduced `nwidart/laravel-modules` with nine business modules (`Auth`, `Flickr`, `Contacts`, `Catalog`, `Spider`, `Transfer`, `Storage`, `Settings`, `Operations`).
+- All SPA `/api/v1` JSON and web/Inertia routes register from Laravel modules; root `routes/web.php` and `routes/api.php` are stubs.
+- Domain **services**, **repositories**, **FormRequests**, **models**, **jobs**, **listeners**, **commands**, and **enums** live under `Modules/*`. Shared host leftovers: `User`, crawler query repos, FormRequest base/traits, providers/middleware, and shared Support helpers.
+- JSON API controllers extend `JOOservices\LaravelController\Http\Controllers\BaseApiController` and return Laravel `JsonResource` success payloads under `Modules/*/Http/Resources`.
+- Frontend adopts JOO packages `@jooservices/react-layout`, `react-content`, `react-table`; adds `PageShell` barrel, `MetricCard`, `usePolledResource`, and `apiDelete`.
+- `AppLayout` rebuilt on JOO `AppShell`; authenticated pages use `PageShell` (Dashboard, Flickr, Contacts, Catalog, Operations, Storage browse, Settings); contact graph toolbar extracted to `ContactGraphToolbar` macro.
+- Architecture docs and agent skills updated for completed Modules migration (thin `app/` host; domain FormRequests/models/jobs/listeners/commands in modules).
+- Frontend domain macros under `Components/macros/` (`ContactGraphShell`, crawl/expand bars, `AccountOpsCard`, `PhotoGridMacro`, `TransferBatchPanel`); unused `PageHeading` removed.
+- Shared `FrontierExpansion` collaborator used by spider and full-pass planners.
+- `StorageApiLogger` covers browse, thumbnail, and Google Photos connection-verifier HTTP calls (in addition to upload/delete/token refresh).
+- Added Vitest coverage for `usePolledResource`, Playwright guest-shell smokes, and `FanOutTransferBatchJob` warning-path Feature tests.
+
+### Fixed
+
+- `FlickrCrawlService::crawl()` reuses `crawlWithoutHealthCheck()` (DRY).
+- `PhotoDownloadService::queuePendingPhotos()` batches completed-original lookups (no N+1).
+- Contact graph visibility membership uses O(1) set lookups.
+- Expand preview reads `saved_contacts_count` from full-pass planner (no Controller→Repository shortcut); deptrac Controllers may not depend on Repositories.
+- `FanOutTransferBatchJob` logs warnings on missing connection/storage instead of silent returns.
+- Google Photos upload streams file body instead of loading the whole file into memory.
+- Contact photostream crawl could return zero photos when `safe_search=1` filtered the stream or when `people.getPhotos` was not OAuth-signed; crawler now omits visibility filters by default and signs subject-scoped API calls.
+- Centralized crawl query builder (`FlickrCrawlQueryParams`) for all photo/photoset/gallery/favorites list jobs; `safe_search` and `privacy_filter` default to off (0).
+
 ### Added
 
-- Dual-mode production deploy: choose **Docker** or **host** (`DEPLOY_TARGET` in `.env`) at `bash scripts/deploy.sh install`.
+- Flickr OAuth **token health** checks (`flickr.test.login`) after connect and before crawl; invalid tokens block crawls with a reconnect message.
+- Settings Flickr account cards show **Token invalid — Reconnect** when the stored OAuth token cannot call the API (loaded asynchronously).
+- `xflickr:flickr:audit-api` command probes Flickr API methods for a connection and optional contact NSID.
+- `xflickr:flickr:doctor` validates each connected Flickr account token (profile + masked API key hint).
+
+- Contacts graph: **force-directed** layout with small dots and thin edges; **hover popup**, pan/zoom, and **browser fullscreen** (Esc exits fullscreen first, then table).
+- Contact graph **photos_count** visual encoding (dot size and darkness); starred contacts use amber color.
+- Contact graph node panel: **desktop right sidebar** / **mobile bottom card** with photo strip (large single-column scroll, 10 per load), search, and reusable `ContactDetailPanel`.
+- Contact graph **default direct contact cap** (Settings → General → Contact graph; initial limit and load-more step); header **+N contacts** / **Show all** controls.
+- Local contact **Star** and **Note** annotations (table and graph); **Starred only** table filter.
+- API: `GET /contacts/graph`, `GET /contacts/graph/delta`, `POST /contacts/graph/{nsid}/expand`, `PATCH /contacts/{nsid}/annotation`.
+
+- Catalog **Photos** grid: `PhotoGridTile` overlay slots, per-photo download/upload actions, downloaded badge with view link, and infinite scroll; table adds **Downloaded** column.
+- `GET /api/stored-files/{uuid}` — stream locally downloaded originals inline for authenticated users.
+- Catalog photos API includes `download_status`, `stored_file_uuid`, and `stored_file_view_url`.
+- Photoset detail page (`/photosets/{id}`): metadata header and member photo grid; list thumbnails link to detail only.
+- Catalog photos API accepts `photoset_id` to list photos in a set; `GET /api/flickr/catalog/photosets/{id}` returns set metadata.
+
+- `bash scripts/dev.sh reload` syncs npm dependencies in the app container when `package-lock.json` changes before building assets. choose **Docker** or **host** (`DEPLOY_TARGET` in `.env`) at `bash scripts/deploy.sh install`.
 - Host deploy for Ubuntu 22.04: auto-install PHP 8.5+, Composer, Node, nginx, supervisor; nginx → `artisan serve`; supervisor for Horizon and scheduler.
 - Shared release finalize pipeline: migrate, cache clear/recache, `horizon:terminate`, service restart, and verify-before-complete for all install/update paths.
 - `bash scripts/test.sh gate:deploy-scripts` — deploy shell tests in Ubuntu 22.04 Docker harness (CI job on `ubuntu-22.04`).
 
 ### Changed
 
+- Contact crawl UI distinguishes **Fetched · 0 in catalog** (warning) from a successful refetch; catalog **In API** shows `0` after an empty completed crawl instead of `—`.
+- Settings no longer blocks page load on synchronous Flickr token health probes (badge loads via API).
+- Flash success/error messages render as dismissible toasts instead of a full-width banner row.
+- App layout sidebar stretches full viewport height below the header (catalog nav scrolls; live activity pinned at bottom).
+- Contact graph rendering moved to **canvas** with ref-based pan/zoom for smoother interaction at scale.
+- Settings Flickr tab: merged app and account cards into one **Flickr connections** list (Storage-style); account cards show short `public_id`, full UUID in details, and account-scoped **Crawl** actions (same menu as Flickr accounts index).
+- Crawl action dropdown: optional gray header showing target display name and NSID (`Actions for` + title + monospace NSID).
+- **Expand** actions on Settings Flickr account cards: **Auto-expand (Spider)** and **Full contact pass** with confirmation modals and preview API (`full_pass.max_depth` runtime config, default 1).
+- Settings getting-started banner: dismissible with remembered preference (`localStorage`).
 - Production deploy refactor: `app-init.sh`, `app-release.sh`, `finalize.sh`, mode-specific bootstrap/update/verify modules.
 
 ### Added

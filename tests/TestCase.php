@@ -7,6 +7,7 @@ namespace Tests;
 use App\Models\User;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Tests\Concerns\SafeRefreshDatabase;
+use Tests\Support\CreatesFlickrConnection;
 use Tests\Support\IgnoresAuthentication;
 
 abstract class TestCase extends BaseTestCase
@@ -36,6 +37,10 @@ abstract class TestCase extends BaseTestCase
 
         if ($this->shouldAuthenticateForFeatureTests()) {
             $this->authenticateAsAdmin();
+        }
+
+        if (in_array(CreatesFlickrConnection::class, class_uses_recursive(static::class), true)) {
+            $this->mockFlickrTokenHealth();
         }
     }
 

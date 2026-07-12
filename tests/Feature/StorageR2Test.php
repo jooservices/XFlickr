@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Contracts\StorageDownloadStreamer;
-use App\Enums\StorageDriver;
-use App\Models\StorageAccount;
-use App\Services\Storage\StorageAccountScopeService;
-use App\Services\Storage\StorageR2ConnectionVerifier;
-use App\Support\Storage\StorageStreamResult;
+use Modules\Storage\Contracts\StorageDownloadStreamer;
+use Modules\Storage\Enums\StorageDriver;
+use Modules\Storage\Models\StorageAccount;
+use Modules\Storage\Services\StorageAccountScopeService;
+use Modules\Storage\Services\StorageR2ConnectionVerifier;
+use Modules\Storage\Support\StorageStreamResult;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
@@ -86,7 +86,7 @@ final class StorageR2Test extends TestCase
 
     public function test_r2_browse_requires_account_id(): void
     {
-        $response = $this->getJson('/api/storage/r2/browse');
+        $response = $this->getJson('/api/v1/storage/r2/files');
 
         $response->assertStatus(422);
         $response->assertJson(['message' => 'account_id is required.']);
@@ -106,7 +106,7 @@ final class StorageR2Test extends TestCase
             'connected_at' => now(),
         ]);
 
-        $response = $this->getJson('/api/storage/r2/download?account_id='.$account->id);
+        $response = $this->getJson('/api/v1/storage/r2/files/download?account_id='.$account->id);
 
         $response->assertStatus(422);
         $response->assertJson(['message' => 'path is required.']);
@@ -133,7 +133,7 @@ final class StorageR2Test extends TestCase
             }
         });
 
-        $response = $this->get('/api/storage/r2/download?account_id='.$account->id.'&path=photos/image.txt');
+        $response = $this->get('/api/v1/storage/r2/files/download?account_id='.$account->id.'&path=photos/image.txt');
 
         $response->assertOk();
         $this->assertSame('file-bytes', $response->streamedContent());
@@ -161,7 +161,7 @@ final class StorageR2Test extends TestCase
             }
         });
 
-        $response = $this->get('/api/storage/r2/download?account_id='.$account->id.'&path=photos/image.txt');
+        $response = $this->get('/api/v1/storage/r2/files/download?account_id='.$account->id.'&path=photos/image.txt');
 
         $response->assertOk();
         $response->assertHeaderMissing('X-Injected-Header');
@@ -180,7 +180,7 @@ final class StorageR2Test extends TestCase
             }
         });
 
-        $response = $this->getJson('/api/storage/r2/download?account_id='.$account->id.'&path=missing.jpg');
+        $response = $this->getJson('/api/v1/storage/r2/files/download?account_id='.$account->id.'&path=missing.jpg');
 
         $response->assertStatus(404);
         $response->assertJson(['message' => 'Remote file not found.']);
@@ -197,7 +197,7 @@ final class StorageR2Test extends TestCase
             'connected_at' => now(),
         ]);
 
-        $response = $this->getJson('/api/storage/google-drive/download?account_id='.$account->id.'&path=file.jpg');
+        $response = $this->getJson('/api/v1/storage/google-drive/files/download?account_id='.$account->id.'&path=file.jpg');
 
         $response->assertStatus(422);
         $response->assertJson(['message' => 'Download is not supported for this provider yet.']);

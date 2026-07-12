@@ -7,6 +7,7 @@ namespace Tests\Feature\Api;
 use Illuminate\Support\Facades\Cache;
 use JOOservices\XFlickrCrawler\Models\ConnectionContact;
 use JOOservices\XFlickrCrawler\Models\Contact;
+use JOOservices\XFlickrCrawler\Models\Favorite;
 use JOOservices\XFlickrCrawler\Models\Gallery;
 use JOOservices\XFlickrCrawler\Models\Photo;
 use JOOservices\XFlickrCrawler\Models\Photoset;
@@ -94,9 +95,31 @@ final class DashboardSnapshotTest extends TestCase
             'photo_count' => 1,
         ]);
 
+        $favoritePhoto = Photo::query()->forceCreate([
+            'flickr_photo_id' => 'p-fav-1',
+            'owner_nsid' => 'other@N01',
+            'title' => 'Fav photo',
+        ]);
+
+        Favorite::query()->forceCreate([
+            'connection_key' => $connection->connection_key,
+            'subject_nsid' => $alpha->nsid,
+            'xflickr_photo_id' => $favoritePhoto->id,
+            'photo_owner_nsid' => $favoritePhoto->owner_nsid,
+            'discovered_at' => now(),
+        ]);
+
+        Favorite::query()->forceCreate([
+            'connection_key' => 'other-connection@N01',
+            'subject_nsid' => $beta->nsid,
+            'xflickr_photo_id' => $favoritePhoto->id,
+            'photo_owner_nsid' => $favoritePhoto->owner_nsid,
+            'discovered_at' => now(),
+        ]);
+
         Cache::forget('xflickr:dashboard:snapshot');
 
-        $response = $this->getJson('/api/dashboard/snapshot');
+        $response = $this->getJson('/api/v1/dashboard/snapshot');
 
         $response->assertOk();
         $response->assertJsonPath('data.accounts.0.contacts_db', 2);
@@ -104,5 +127,6 @@ final class DashboardSnapshotTest extends TestCase
         $response->assertJsonPath('data.accounts.0.photos_with_sizes', 2);
         $response->assertJsonPath('data.accounts.0.photosets_db', 1);
         $response->assertJsonPath('data.accounts.0.galleries_db', 1);
+        $response->assertJsonPath('data.accounts.0.favorites_db', 1);
     }
 }

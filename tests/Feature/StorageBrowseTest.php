@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Enums\StorageDriver;
-use App\Models\StorageAccount;
-use App\Models\StorageRemoteItem;
-use App\Services\Storage\StorageAccountScopeService;
 use Illuminate\Support\Facades\Http;
+use Modules\Storage\Enums\StorageDriver;
+use Modules\Storage\Models\StorageAccount;
+use Modules\Storage\Models\StorageRemoteItem;
+use Modules\Storage\Services\StorageAccountScopeService;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
@@ -62,7 +62,7 @@ final class StorageBrowseTest extends TestCase
 
     public function test_storage_browse_requires_account_id(): void
     {
-        $response = $this->getJson('/api/storage/google-photos/browse');
+        $response = $this->getJson('/api/v1/storage/google-photos/files');
 
         $response->assertStatus(422);
         $response->assertJson(['message' => 'account_id is required.']);
@@ -80,11 +80,16 @@ final class StorageBrowseTest extends TestCase
             'connected_at' => now(),
         ]);
 
-        $response = $this->getJson("/api/storage/google-photos/browse?account_id={$account->id}");
+        $response = $this->getJson("/api/v1/storage/google-photos/files?account_id={$account->id}");
 
         $response->assertStatus(403);
-        $response->assertJsonPath('needs_reauthorization', true);
-        $response->assertJsonStructure(['reauthorize_url', 'missing_scopes']);
+        $response->assertJsonPath('data.needs_reauthorization', true);
+        $response->assertJsonStructure([
+            'data' => [
+                'reauthorize_url',
+                'missing_scopes',
+            ],
+        ]);
     }
 
     public function test_google_photos_thumbnail_rejects_untrusted_base_url(): void
@@ -110,7 +115,7 @@ final class StorageBrowseTest extends TestCase
             '169.254.169.254/*' => Http::response('metadata', 200),
         ]);
 
-        $response = $this->getJson("/api/storage/google-photos/thumbnail?account_id={$account->id}&media_id=media-1");
+        $response = $this->getJson("/api/v1/storage/google-photos/thumbnail?account_id={$account->id}&media_id=media-1");
 
         $response->assertStatus(422);
         $response->assertJson(['message' => 'Unable to load thumbnail.']);
@@ -160,11 +165,11 @@ final class StorageBrowseTest extends TestCase
                 ]),
         ]);
 
-        $response = $this->getJson("/api/storage/google-photos/browse?account_id={$account->id}&source=provider");
+        $response = $this->getJson("/api/v1/storage/google-photos/files?account_id={$account->id}&source=provider");
 
         $response->assertOk();
-        $response->assertJsonPath('albums.0.title', 'XFlickr Album');
-        $response->assertJsonPath('items.0.name', 'photo.jpg');
+        $response->assertJsonPath('data.albums.0.title', 'XFlickr Album');
+        $response->assertJsonPath('data.items.0.name', 'photo.jpg');
         $response->assertJsonPath('meta.per_page', 25);
     }
 
@@ -191,10 +196,10 @@ final class StorageBrowseTest extends TestCase
             'synced_at' => now(),
         ]);
 
-        $response = $this->getJson("/api/storage/google-photos/browse?account_id={$account->id}");
+        $response = $this->getJson("/api/v1/storage/google-photos/files?account_id={$account->id}");
 
         $response->assertOk();
-        $response->assertJsonPath('items.0.name', 'cached.jpg');
+        $response->assertJsonPath('data.items.0.name', 'cached.jpg');
         $response->assertJsonPath('meta.source', 'local');
         $response->assertJsonPath('meta.item_total', 1);
     }
@@ -230,7 +235,7 @@ final class StorageBrowseTest extends TestCase
             ]),
         ]);
 
-        $response = $this->postJson("/api/storage/google-photos/sync?account_id={$account->id}");
+        $response = $this->postJson("/api/v1/storage/google-photos/sync-runs?account_id={$account->id}");
 
         $response->assertOk();
         $response->assertJsonPath('data.items_synced', 1);
@@ -241,9 +246,9 @@ final class StorageBrowseTest extends TestCase
             'name' => 'synced.jpg',
         ]);
 
-        $browse = $this->getJson("/api/storage/google-photos/browse?account_id={$account->id}");
+        $browse = $this->getJson("/api/v1/storage/google-photos/files?account_id={$account->id}");
         $browse->assertOk();
-        $browse->assertJsonPath('items.0.name', 'synced.jpg');
+        $browse->assertJsonPath('data.items.0.name', 'synced.jpg');
     }
 
     public function test_storage_accounts_endpoint_includes_reauthorization_meta(): void
@@ -255,7 +260,7 @@ final class StorageBrowseTest extends TestCase
             'connected_at' => now(),
         ]);
 
-        $response = $this->getJson('/api/storage/accounts?provider=google_photos');
+        $response = $this->getJson('/api/v1/storage/accounts?provider=google_photos');
 
         $response->assertOk();
         $response->assertJsonPath('data.0.needs_reauthorization', true);

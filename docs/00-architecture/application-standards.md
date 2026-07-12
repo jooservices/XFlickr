@@ -1,55 +1,79 @@
 # Application standards
 
-XFlickr follows a layered request lifecycle for backend code.
+XFlickr follows a layered request lifecycle for backend code. Domain code lives in `Modules/{Name}` (`nwidart/laravel-modules`); thin `app/` is host bootstrap only.
 
 ## Mandated flow
 
 ```
 HTTP Request
-  → Controller (thin — no queries, no validation)
-  → FormRequest (validation + authorization)
-  → Service (business logic)
-  → Repository (persistence queries)
-  → Model / crawler tables
+  → Controller (thin — no queries, no validation, no business logic)
+    → FormRequest (validation + authorization only; dedicated class per action)
+      → Service (business logic)
+        → Repository (persistence queries)
+          → Model / crawler tables
 ```
+
+Artisan: `Command → Service → Repository → Model`. Jobs: `Job → Service` only.
 
 ## Rules
 
 ### Controllers
 
 - One action per route; delegate immediately to Services.
-- No `$request->validate()` inline — use FormRequest classes in `app/Http/Requests/`.
+- No `$request->validate()` inline — use FormRequest classes in `Modules/*/Http/Requests/` (shared base/traits remain under `app/Http/Requests/`).
+- No bare `Illuminate\Http\Request` on mutating actions — always a dedicated FormRequest (including body-less POSTs such as logout).
 - No `Model::query()` or raw DB access.
+- Controllers must not inject Repositories (deptrac).
+- JSON API controllers extend `JOOservices\LaravelController\Http\Controllers\BaseApiController` and return Laravel `JsonResource` payloads via package helpers (`success`, `error`, pagination) — same standard as XCrawlerII.
 
 ### FormRequests
 
-- Live in `app/Http/Requests/` grouped by domain (`Flickr/`, `Storage/`, `Api/`, etc.).
-- Use shared concerns (`NormalizesPagination`, `NormalizesSorting`, `ResolvesCrawlTypes`).
+- Live in `Modules/{Domain}/Http/Requests/` (API subgroup `Api/` when needed).
+- Shared host concerns: `NormalizesPagination`, `NormalizesSorting`, `ResolvesCrawlTypes` in `app/Http/Requests/Concerns/`.
+- Storage account resolution: `Modules/Storage/Http/Requests/Concerns/ResolvesStorageAccount`.
+- No Auth attempts, repository calls, or session mutation inside FormRequests.
 
 ### Services
 
-- Single responsibility; hold business rules.
-- Depend on Repository interfaces, not Eloquent directly.
+- Single responsibility; hold business rules under `Modules/*/Services/`.
+- Depend on Repositories, not Eloquent directly from controllers.
 - Two Services must not depend on each other bidirectionally — use an orchestrator Service for shared workflows.
 
-### Jobs
+### Jobs / Commands
 
-- Jobs are thin wrappers: resolve dependencies, call one Service method.
-- No business logic in `handle()` beyond delegation and error reporting.
+- Jobs are thin wrappers under `Modules/*/Jobs/`: resolve dependencies, call one Service method.
+- Commands are thin under `Modules/*/Console/Commands/`; signatures `xflickr:<module>:<name>`; call Services only.
+- Register Artisan commands on the module `*ServiceProvider::$commands` array.
 
 ### Repositories
 
-- App models: `app/Repositories/`
-- Crawler read models: `app/Repositories/Crawler/`
+- Module-owned: `Modules/*/Repositories/`
+- Shared crawler reads: `app/Repositories/Crawler/`
 - Registered in `RepositoryServiceProvider`.
+- Prefer meaningful Eloquent model scopes for reusable filters (repositories call scopes; they do not re-encode the same `where` everywhere).
+
+### Models
+
+- Casts, relationships, and named local scopes for reusable query fragments.
+- No Service/Repository imports (deptrac Model layer is empty of outbound deps).
 
 ## Dependency injection
 
 - Constructor DI when a dependency is used across most methods of a class.
 - Method-level `app($class)` only when a dependency is used in one method (document why).
 
+## Laravel modules
+
+Nine business modules: Auth, Settings, Operations, Flickr, Contacts, Catalog, Spider, Transfer, Storage.
+
+- SPA JSON APIs: `Modules/*/routes/api.php` under `/api/v1` with `web`+`auth`.
+- Web/Inertia: `Modules/*/routes/web.php` (explicit `auth`/`guest`).
+- Root `routes/web.php` and `routes/api.php` are stubs.
+- Ownership map: [class-purpose-and-module-map](../../ai/skills/class-purpose-and-module-map/SKILL.md).
+
 ## Frontend
 
-- Pages in `resources/js/Pages/` compose shared `Components/`.
-- Use existing `Button`, `CrawlActionBar`, `DataTable`, `PageHeading` patterns.
+- Pages in `resources/js/Pages/` compose shared `Components/` inside **AppShell** (master) + **PageShell** (content).
+- Use JOO packages (`@jooservices/react-layout`, `react-content`, `react-table`) via thin barrels; keep domain macros for crawl/graph/transfer.
+- Poll with `usePolledResource` and `/api/v1` paths from `lib/apiPaths.ts`.
 - See [Frontend standards](../04-development/frontend-standards.md).

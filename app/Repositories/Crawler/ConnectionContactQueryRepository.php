@@ -27,4 +27,11 @@ final class ConnectionContactQueryRepository
             ->map(fn (mixed $nsid): string => (string) $nsid)
             ->all();
     }
+
+    public function countForConnection(string $connectionKey): int
+    {
+        return ConnectionContact::query()
+            ->where('connection_key', $connectionKey)
+            ->count();
+    }
 }

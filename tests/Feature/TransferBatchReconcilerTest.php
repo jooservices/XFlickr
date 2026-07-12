@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Enums\TransferBatchStatus;
-use App\Models\TransferBatch;
-use App\Models\TransferItem;
-use App\Services\Transfer\TransferBatchReconciler;
+use Modules\Transfer\Enums\TransferBatchStatus;
+use Modules\Transfer\Models\TransferBatch;
+use Modules\Transfer\Models\TransferItem;
+use Modules\Transfer\Services\TransferBatchReconciler;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;

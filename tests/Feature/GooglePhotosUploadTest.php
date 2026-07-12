@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Models\StorageAccount;
-use App\Services\Storage\GooglePhotosUploadService;
 use Illuminate\Support\Facades\Http;
+use Modules\Storage\Models\StorageAccount;
+use Modules\Storage\Services\GooglePhotosUploadService;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 

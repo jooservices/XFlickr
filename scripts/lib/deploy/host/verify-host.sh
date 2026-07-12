@@ -57,7 +57,7 @@ deploy_verify_host_app() {
         ok=1
     fi
 
-    if php artisan xflickr:doctor --no-interaction; then
+    if php artisan xflickr:flickr:doctor --no-interaction; then
         echo "  ✓ Application doctor checks passed"
     else
         echo "  ✗ Application doctor checks failed" >&2

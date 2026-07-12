@@ -9,5 +9,5 @@ Scope: ${input}
 
 Rules:
 - Never run database commands on local dev Docker stack
-- Follow Controller → FormRequest → Service → Repository
+- Follow HTTP Request → Controller → FormRequest → Service → Repository → Model
 - Run `composer test:docker` before finishing

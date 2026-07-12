@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { ApiError, apiGet, apiPost } from '@/lib/apiClient';
+import { ApiError, apiGet, apiPost, apiDelete } from '@/lib/apiClient';
 import {
     applyReauthorizationToAccounts,
     isStorageReauthorizationResponse,
@@ -51,7 +51,7 @@ export function useStorageBrowse({
     );
 
     const loadAccounts = useCallback(async () => {
-        const json = await apiGet<{ data: StorageAccount[] }>('/api/storage/accounts', {
+        const json = await apiGet<{ data: StorageAccount[] }>('/api/v1/storage/accounts', {
             params: { provider },
         });
         setAccounts(json.data);
@@ -115,13 +115,13 @@ export function useStorageBrowse({
             }
 
             try {
-                const json = await apiGet<BrowseResponse>(`/api/storage/${providerSlug}/browse`, { params });
+                const json = await apiGet<BrowseResponse>(`/api/v1/storage/${providerSlug}/files`, { params });
 
                 setAlbums((current) =>
-                    options?.appendAlbums ? [...current, ...json.albums] : json.albums,
+                    options?.appendAlbums ? [...current, ...json.data.albums] : json.data.albums,
                 );
-                setItems((current) => (options?.appendItems ? [...current, ...json.items] : json.items));
-                setMeta(json.meta);
+                setItems((current) => (options?.appendItems ? [...current, ...json.data.items] : json.data.items));
+                setMeta(json.meta ?? null);
             } catch (browseError) {
                 if (browseError instanceof ApiError && isStorageReauthorizationResponse(browseError.status, browseError.body as BrowseResponse)) {
                     const payload = browseError.body as BrowseResponse;
@@ -175,7 +175,7 @@ export function useStorageBrowse({
 
             try {
                 const json = await apiPost<SyncResponse>(
-                    `/api/storage/${providerSlug}/sync`,
+                    `/api/v1/storage/${providerSlug}/sync-runs`,
                     {
                         max_batches: options?.maxBatches ?? (options?.manual ? 10 : 3),
                         reconcile: options?.manual === true,
@@ -255,7 +255,7 @@ export function useStorageBrowse({
             setError(null);
 
             try {
-                const json = await apiPost<DeleteResponse>(`/api/storage/${providerSlug}/delete`, {
+                const json = await apiDelete<DeleteResponse>(`/api/v1/storage/${providerSlug}/files`, {
                     account_id: accountId,
                     item_ids: selectedKeys,
                     container_id: containerId ?? undefined,

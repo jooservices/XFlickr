@@ -1,16 +1,16 @@
 import { Head } from '@inertiajs/react';
 
-import Breadcrumbs from '@/Components/Breadcrumbs';
 import CatalogOwnerNsidFilter from '@/Components/CatalogOwnerNsidFilter';
 import ContactNsidLinks from '@/Components/ContactNsidLinks';
 import CrawlActionBar from '@/Components/CrawlActionBar';
 import DataTable from '@/Components/DataTable';
 import FlickrPhotoIdLinks from '@/Components/FlickrPhotoIdLinks';
-import PageHeading from '@/Components/PageHeading';
+import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
 import Thumbnail from '@/Components/Thumbnail';
 import { useCatalogOwnerNsidTable } from '@/hooks/useCatalogOwnerNsidTable';
 import AppLayout from '@/Layouts/AppLayout';
 import { catalogPageCrumbs } from '@/lib/breadcrumbs';
+import { crawlSubjectForContact, crawlSubjectForPhoto } from '@/lib/crawlSubject';
 import { flickrPhotoThumbnailUrl } from '@/lib/flickrPhoto';
 import type { Favorite, FlickrAccount, PageProps } from '@/types';
 
@@ -21,7 +21,7 @@ interface Props extends PageProps {
 export default function CatalogFavorites({ account }: Props) {
     const { data: favorites, meta, setPage, loading, sortKey, sortDirection, handleSortChange, filterFormProps } =
         useCatalogOwnerNsidTable<Favorite>('subject_nsid', {
-            fetchPath: '/api/flickr/catalog/favorites',
+            fetchPath: '/api/v1/flickr/catalog/favorites',
             initialSort: 'id',
             initialDirection: 'desc',
         });
@@ -30,18 +30,23 @@ export default function CatalogFavorites({ account }: Props) {
         <AppLayout>
             <Head title="Favorites" />
 
-            <div className="space-y-6">
-                <PageHeading
-                    breadcrumbs={<Breadcrumbs items={catalogPageCrumbs('Favorites', account)} />}
+            <PageShell>
+                <PageShellIdentity
+                    breadcrumbs={catalogPageCrumbs('Favorites', account)}
                     title="Favorites"
                     subtitle="Browse crawled favorites in the catalog."
                 />
 
-                <CatalogOwnerNsidFilter
-                    {...filterFormProps}
-                    placeholder="Filter by contact NSID"
+                <PageShellControlBar
+                    filters={
+                        <CatalogOwnerNsidFilter
+                            {...filterFormProps}
+                            placeholder="Filter by contact NSID"
+                        />
+                    }
                 />
 
+                <PageShellCanvas className="space-y-6" variant="plain">
                 {loading ? (
                     <p className="text-sm text-slate-500">Loading…</p>
                 ) : (
@@ -120,6 +125,15 @@ export default function CatalogFavorites({ account }: Props) {
                                               scope="photo"
                                               accountPublicId={account.public_id}
                                               flickrPhotoId={favorite.photo.flickr_photo_id}
+                                              subjectLabel={
+                                                  favorite.photo
+                                                      ? crawlSubjectForPhoto(favorite.photo)
+                                                      : crawlSubjectForContact({
+                                                            nsid: favorite.subject_nsid,
+                                                            username: null,
+                                                            realname: null,
+                                                        })
+                                              }
                                               showCrawl={false}
                                               label="Crawl"
                                           />
@@ -131,7 +145,8 @@ export default function CatalogFavorites({ account }: Props) {
                         onPageChange={setPage}
                     />
                 )}
-            </div>
+                </PageShellCanvas>
+            </PageShell>
         </AppLayout>
     );
 }

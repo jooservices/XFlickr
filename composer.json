@@ -11,6 +11,7 @@
         "jooservices/dto": "^1.0",
         "jooservices/flickr": "^1.0",
         "jooservices/laravel-config": "^1.1",
+        "jooservices/laravel-controller": "^1.4.1",
         "jooservices/laravel-events": "^1.4",
         "jooservices/laravel-logging": "^1.1",
         "jooservices/laravel-repository": "^1.3",
@@ -21,7 +22,8 @@
         "laravel/socialite": "^5.28",
         "laravel/tinker": "^3.0",
         "league/flysystem-aws-s3-v3": "^3.25",
-        "masbug/flysystem-google-drive-ext": "^2.5"
+        "masbug/flysystem-google-drive-ext": "^2.5",
+        "nwidart/laravel-modules": "^13.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -111,6 +113,11 @@
     "extra": {
         "laravel": {
             "dont-discover": []
+        },
+        "merge-plugin": {
+            "include": [
+                "Modules/*/composer.json"
+            ]
         }
     },
     "config": {
@@ -119,7 +126,8 @@
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true,
-            "php-http/discovery": true
+            "php-http/discovery": true,
+            "wikimedia/composer-merge-plugin": true
         }
     },
     "minimum-stability": "stable",

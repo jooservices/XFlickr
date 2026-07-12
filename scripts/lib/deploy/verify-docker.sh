@@ -81,7 +81,7 @@ deploy_verify_app_container() {
         ok=1
     fi
 
-    if xf_prod_compose exec -T app php artisan xflickr:doctor --no-interaction; then
+    if xf_prod_compose exec -T app php artisan xflickr:flickr:doctor --no-interaction; then
         echo "  ✓ Application doctor checks passed"
     else
         echo "  ✗ Application doctor checks failed" >&2

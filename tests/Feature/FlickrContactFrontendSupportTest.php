@@ -4,13 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Jobs\DownloadPhotoJob;
-use App\Jobs\UploadPhotoJob;
-use App\Models\StorageAccount;
-use App\Models\StoredFile;
-use App\Services\Flickr\ContactCatalogDetailStatsService;
-use App\Services\Flickr\ContactDetailService;
-use App\Services\Flickr\ContactListSorter;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use JOOservices\XFlickrCrawler\Enums\CrawlRunStatus;
@@ -23,6 +16,13 @@ use JOOservices\XFlickrCrawler\Models\Gallery;
 use JOOservices\XFlickrCrawler\Models\Photo;
 use JOOservices\XFlickrCrawler\Models\Photoset;
 use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
+use Modules\Contacts\Services\ContactCatalogDetailStatsService;
+use Modules\Contacts\Services\ContactDetailService;
+use Modules\Contacts\Services\ContactListSorter;
+use Modules\Storage\Models\StorageAccount;
+use Modules\Transfer\Jobs\DownloadPhotoJob;
+use Modules\Transfer\Jobs\UploadPhotoJob;
+use Modules\Transfer\Models\StoredFile;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;
@@ -129,6 +129,7 @@ final class FlickrContactFrontendSupportTest extends TestCase
                 ->etc())
             ->where('contact.nsid', $contact->nsid)
             ->where('crawl_state.photos.crawled', true)
+            ->where('crawl_state.photos.fetched', 1)
             ->missing('contact_detail'));
 
         $payload = app(ContactDetailService::class)->forShow($connection, $contact->nsid);
@@ -166,7 +167,7 @@ final class FlickrContactFrontendSupportTest extends TestCase
             'discovered_at' => now(),
         ]);
 
-        $response = $this->getJson('/api/flickr/catalog/favorites?subject_nsid='.$contactNsid);
+        $response = $this->getJson('/api/v1/flickr/catalog/favorites?subject_nsid='.$contactNsid);
 
         $response->assertOk();
         $response->assertJsonCount(1, 'data');
@@ -186,7 +187,7 @@ final class FlickrContactFrontendSupportTest extends TestCase
             'title' => 'Zulu photo',
         ]);
 
-        $response = $this->getJson('/api/flickr/catalog/photos?sort=title&direction=asc');
+        $response = $this->getJson('/api/v1/flickr/catalog/photos?sort=title&direction=asc');
 
         $response->assertOk();
         $response->assertJsonPath('meta.sort', 'title');
@@ -227,13 +228,48 @@ final class FlickrContactFrontendSupportTest extends TestCase
             'discovered_at' => now(),
         ]);
 
-        $response = $this->getJson('/api/flickr/catalog/photos?owner_nsid=111@N01');
+        $response = $this->getJson('/api/v1/flickr/catalog/photos?owner_nsid=111@N01');
 
         $response->assertOk();
         $response->assertJsonPath('data.0.photosets.0.flickr_id', 'set-1');
         $response->assertJsonPath('data.0.photosets.0.title', 'Travel set');
         $response->assertJsonPath('data.0.galleries.0.flickr_id', 'gal-1');
         $response->assertJsonPath('data.0.galleries.0.title', 'Best shots');
+    }
+
+    public function test_catalog_photos_api_includes_download_status(): void
+    {
+        $photo = Photo::query()->forceCreate([
+            'flickr_photo_id' => 'p-downloaded',
+            'owner_nsid' => '111@N01',
+            'title' => 'Downloaded photo',
+        ]);
+
+        Photo::query()->forceCreate([
+            'flickr_photo_id' => 'p-none',
+            'owner_nsid' => '111@N01',
+            'title' => 'Not downloaded',
+        ]);
+
+        $stored = StoredFile::query()->forceCreate([
+            'flickr_photo_id' => 'p-downloaded',
+            'owner_nsid' => '111@N01',
+            'variant' => 'original',
+            'status' => 'completed',
+            'local_path' => 'flickr/111@N01/photos/p-downloaded_abc.jpg',
+            'original_name' => 'p-downloaded_original.jpg',
+        ]);
+
+        $response = $this->getJson('/api/v1/flickr/catalog/photos?owner_nsid=111@N01&sort=flickr_photo_id&direction=asc');
+
+        $response->assertOk();
+        $response->assertJsonPath('data.0.flickr_photo_id', 'p-downloaded');
+        $response->assertJsonPath('data.0.download_status', 'completed');
+        $response->assertJsonPath('data.0.stored_file_uuid', $stored->uuid);
+        $response->assertJsonPath('data.0.stored_file_view_url', url('/api/v1/stored-files/'.$stored->uuid));
+        $response->assertJsonPath('data.1.flickr_photo_id', 'p-none');
+        $response->assertJsonPath('data.1.download_status', 'none');
+        $response->assertJsonPath('data.1.stored_file_view_url', null);
     }
 
     public function test_catalog_photosets_and_galleries_api_include_thumbnail_fields(): void
@@ -286,7 +322,7 @@ final class FlickrContactFrontendSupportTest extends TestCase
             ],
         ]);
 
-        $photosets = $this->getJson('/api/flickr/catalog/photosets?owner_nsid=111@N01&sort=flickr_photoset_id&direction=asc');
+        $photosets = $this->getJson('/api/v1/flickr/catalog/photosets?owner_nsid=111@N01&sort=flickr_photoset_id&direction=asc');
         $photosets->assertOk();
         $photosets->assertJsonPath('data.0.flickr_photoset_id', 'set-cover');
         $photosets->assertJsonPath('data.0.primary_photo_id', 'primary-photo');
@@ -297,11 +333,108 @@ final class FlickrContactFrontendSupportTest extends TestCase
         $photosets->assertJsonPath('data.1.primary_secret', 'cover-secret');
         $photosets->assertJsonPath('data.1.primary_server', '42');
 
-        $galleries = $this->getJson('/api/flickr/catalog/galleries?owner_nsid=111@N01');
+        $galleries = $this->getJson('/api/v1/flickr/catalog/galleries?owner_nsid=111@N01');
         $galleries->assertOk();
         $galleries->assertJsonPath('data.0.primary_photo_id', 'gal-primary');
         $galleries->assertJsonPath('data.0.primary_secret', 'gal-secret');
         $galleries->assertJsonPath('data.0.primary_server', '9');
+    }
+
+    public function test_catalog_photos_api_filters_by_photoset_id(): void
+    {
+        $photoset = Photoset::query()->forceCreate([
+            'flickr_photoset_id' => 'set-filter',
+            'owner_nsid' => '111@N01',
+            'title' => 'Filtered set',
+            'photo_count' => 2,
+        ]);
+
+        $inSetOne = Photo::query()->forceCreate([
+            'flickr_photo_id' => 'p-in-1',
+            'owner_nsid' => '111@N01',
+            'title' => 'In set one',
+        ]);
+        $inSetTwo = Photo::query()->forceCreate([
+            'flickr_photo_id' => 'p-in-2',
+            'owner_nsid' => '111@N01',
+            'title' => 'In set two',
+        ]);
+        $outside = Photo::query()->forceCreate([
+            'flickr_photo_id' => 'p-out',
+            'owner_nsid' => '111@N01',
+            'title' => 'Outside set',
+        ]);
+
+        foreach ([$inSetOne, $inSetTwo] as $photo) {
+            DB::table(XFlickrConfig::table('photoset_photo'))->insert([
+                'xflickr_photoset_id' => $photoset->id,
+                'xflickr_photo_id' => $photo->id,
+                'discovered_at' => now(),
+            ]);
+        }
+
+        $response = $this->getJson('/api/v1/flickr/catalog/photos?photoset_id='.$photoset->id.'&sort=flickr_photo_id&direction=asc');
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+        $response->assertJsonPath('data.0.flickr_photo_id', 'p-in-1');
+        $response->assertJsonPath('data.1.flickr_photo_id', 'p-in-2');
+        $this->assertNotContains($outside->flickr_photo_id, collect($response->json('data'))->pluck('flickr_photo_id')->all());
+    }
+
+    public function test_catalog_photoset_show_api_returns_presented_photoset(): void
+    {
+        $photoset = Photoset::query()->forceCreate([
+            'flickr_photoset_id' => 'set-show',
+            'owner_nsid' => '111@N01',
+            'title' => 'Show set',
+            'photo_count' => 3,
+        ]);
+
+        $response = $this->getJson('/api/v1/flickr/catalog/photosets/'.$photoset->id);
+
+        $response->assertOk();
+        $response->assertJsonPath('data.id', $photoset->id);
+        $response->assertJsonPath('data.flickr_photoset_id', 'set-show');
+        $response->assertJsonPath('data.title', 'Show set');
+    }
+
+    public function test_photoset_show_page_renders_inertia(): void
+    {
+        $photoset = Photoset::query()->forceCreate([
+            'flickr_photoset_id' => 'set-page',
+            'owner_nsid' => '111@N01',
+            'title' => 'Page set',
+            'photo_count' => 1,
+        ]);
+
+        $response = $this->get('/photosets/'.$photoset->id);
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Catalog/Photosets/Show')
+            ->where('photoset.id', $photoset->id)
+            ->where('photoset.title', 'Page set'));
+    }
+
+    public function test_account_scoped_photoset_show_page_renders_inertia(): void
+    {
+        $connection = $this->createFlickrConnection();
+        $photoset = Photoset::query()->forceCreate([
+            'flickr_photoset_id' => 'set-account',
+            'owner_nsid' => '111@N01',
+            'title' => 'Account scoped set',
+            'photo_count' => 1,
+        ]);
+
+        $response = $this->get('/flickr/accounts/'.$connection->public_id.'/photosets/'.$photoset->id);
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Catalog/Photosets/Show')
+            ->where('account.public_id', $connection->public_id)
+            ->where('photoset.id', $photoset->id)
+            ->where('photoset.title', 'Account scoped set'));
     }
 
     public function test_contacts_bulk_crawl_requires_selection(): void
@@ -393,5 +526,49 @@ final class FlickrContactFrontendSupportTest extends TestCase
         $this->assertSame(0, $stats['photos']['db']);
         $this->assertSame(0, $stats['photos']['with_sizes']);
         $this->assertNull($stats['photos']['in_api']);
+    }
+
+    public function test_detail_stats_returns_zero_in_api_after_empty_completed_crawl(): void
+    {
+        $connection = $this->createFlickrConnection();
+        $contactNsid = '555@N01';
+
+        CrawlRun::query()->forceCreate([
+            'connection_key' => $connection->connection_key,
+            'crawl_type' => CrawlType::Photos->value,
+            'subject_nsid' => $contactNsid,
+            'status' => CrawlRunStatus::Completed,
+            'photos_discovered' => 0,
+            'started_at' => now(),
+            'completed_at' => now(),
+        ]);
+
+        $stats = app(ContactCatalogDetailStatsService::class)->forContact($connection, $contactNsid);
+
+        $this->assertSame(0, $stats['photos']['in_api']);
+    }
+
+    public function test_contact_crawl_is_blocked_when_token_invalid(): void
+    {
+        $connection = $this->createFlickrConnection();
+        $contact = Contact::query()->forceCreate([
+            'nsid' => '777@N01',
+            'username' => 'blocked',
+            'realname' => 'Blocked',
+        ]);
+
+        ConnectionContact::query()->forceCreate([
+            'connection_key' => $connection->connection_key,
+            'contact_nsid' => $contact->nsid,
+        ]);
+
+        $this->mockFlickrTokenHealth(valid: false);
+
+        $response = $this->post('/flickr/accounts/'.$connection->public_id.'/contacts/'.$contact->nsid.'/crawl', [
+            'types' => ['photos'],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
     }
 }

@@ -25,7 +25,7 @@ Help users **own their Flickr data** by:
 ```
 Browser (React 19 + Inertia)
     ↓
-Laravel Controllers + FormRequests
+HTTP Request → Controller → FormRequest
     ↓
 Services (business logic)
     ↓
@@ -33,6 +33,8 @@ Repositories (persistence queries)
     ↓
 Models / crawler package tables
 ```
+
+**Auth** (`Modules/Auth`): session login/logout, registration (inactive until `xflickr:auth:activate-user`), self-serve password reset (hashed token in DB + flashed URL; email not sent yet), and admin force-reset CLI. Layering: FormRequests → `AuthService` / `UserService` → repositories → `User`.
 
 Background work runs through Laravel Horizon queues.
 

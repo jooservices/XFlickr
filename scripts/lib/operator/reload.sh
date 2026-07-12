@@ -7,6 +7,9 @@ set -o pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/compose-dev.sh"
 
 dev_reload_stack() {
+    echo "==> Syncing frontend dependencies in app container"
+    xf_dev_compose exec -T app sh scripts/docker-npm-sync.sh
+
     echo "==> Building frontend assets in app container"
     xf_dev_compose exec -T app npm run build
     xf_dev_compose exec -T app rm -f public/hot

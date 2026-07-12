@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Dto;
 
-use App\Dto\DownloadCandidateDto;
-use App\Dto\OAuthAppConfigDto;
+use Modules\Settings\Dto\OAuthAppConfigDto;
+use Modules\Transfer\Dto\DownloadCandidateDto;
 use PHPUnit\Framework\TestCase;
 
 final class DtoHydrationTest extends TestCase

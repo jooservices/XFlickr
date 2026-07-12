@@ -105,7 +105,7 @@ deploy_app_first_boot() {
     fi
 
     deploy_app_ensure_app_key || return 1
-    deploy_artisan_run db:seed --class=Database\\Seeders\\AdminUserSeeder --force --no-interaction
+    deploy_artisan_run db:seed --class=Modules\\Auth\\Database\\Seeders\\AdminUserSeeder --force --no-interaction
     deploy_artisan_run config-store:ensure-index --no-interaction
     deploy_artisan_run events:install-indexes --no-interaction
 }

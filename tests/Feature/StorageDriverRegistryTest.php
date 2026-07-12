@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Contracts\Storage\StorageBrowseDriver;
-use App\Contracts\Storage\StorageDeleteDriver;
-use App\Enums\StorageDriver;
-use App\Services\Storage\StorageDriverRegistry;
+use Modules\Storage\Contracts\StorageBrowseDriver;
+use Modules\Storage\Contracts\StorageDeleteDriver;
+use Modules\Storage\Enums\StorageDriver;
+use Modules\Storage\Services\StorageDriverRegistry;
 use Tests\TestCase;
 
 final class StorageDriverRegistryTest extends TestCase

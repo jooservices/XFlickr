@@ -32,6 +32,24 @@ final class FlickrAccountListingTest extends TestCase
             ->where('accounts.0.is_connected', true));
     }
 
+    public function test_flickr_account_show_page_renders_account_detail_placeholder(): void
+    {
+        $connection = $this->createFlickrConnection([
+            'connection_key' => 'me@N01',
+            'username' => 'me',
+            'fullname' => 'Test Account',
+        ]);
+
+        $response = $this->get('/flickr/accounts/'.$connection->public_id);
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Flickr/Show')
+            ->where('account.public_id', $connection->public_id)
+            ->where('account.nsid', 'me@N01')
+            ->where('account.username', 'me'));
+    }
+
     public function test_crawl_operations_page_lists_presented_accounts(): void
     {
         $connection = $this->createFlickrConnection([

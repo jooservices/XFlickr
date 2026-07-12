@@ -1,0 +1,11 @@
+{
+    "name": "Flickr",
+    "alias": "flickr",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Flickr\\Providers\\FlickrServiceProvider"
+    ],
+    "files": []
+}

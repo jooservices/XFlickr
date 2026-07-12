@@ -1,0 +1,92 @@
+import { Loader2, Maximize, Minimize, X } from 'lucide-react';
+import type { ReactNode } from 'react';
+
+import Button from '@/Components/Button';
+
+export type ContactGraphToolbarProps = {
+    directShown: number;
+    directTotal: number;
+    nodeCount: number;
+    hasMoreDirect: boolean;
+    loadMoreStep: number;
+    loadingMore: boolean;
+    isBrowserFullscreen: boolean;
+    onLoadMore: (nextLimit: number) => void;
+    onShowAll: () => void;
+    onToggleFullscreen: () => void;
+    onExit: () => void;
+    currentDirectLimit: number;
+};
+
+export default function ContactGraphToolbar({
+    directShown,
+    directTotal,
+    nodeCount,
+    hasMoreDirect,
+    loadMoreStep,
+    loadingMore,
+    isBrowserFullscreen,
+    onLoadMore,
+    onShowAll,
+    onToggleFullscreen,
+    onExit,
+    currentDirectLimit,
+}: ContactGraphToolbarProps): ReactNode {
+    return (
+        <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3">
+            <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-slate-900">Contact graph</p>
+                <p className="truncate text-xs text-slate-500">
+                    {directShown.toLocaleString()} / {directTotal.toLocaleString()} direct contacts ·{' '}
+                    {nodeCount.toLocaleString()} nodes · drag to pan · scroll to zoom
+                </p>
+                <p className="mt-0.5 text-[11px] text-slate-400">
+                    Dot size &amp; darkness = photos indexed · ★ = starred
+                </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+                {hasMoreDirect ? (
+                    <>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            disabled={loadingMore}
+                            onClick={() => onLoadMore(currentDirectLimit + loadMoreStep)}
+                        >
+                            {loadingMore ? (
+                                <>
+                                    <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                                    Loading…
+                                </>
+                            ) : (
+                                `+${loadMoreStep} contacts`
+                            )}
+                        </Button>
+                        <Button type="button" variant="secondary" size="sm" disabled={loadingMore} onClick={onShowAll}>
+                            Show all
+                        </Button>
+                    </>
+                ) : null}
+                <span className="hidden text-xs text-slate-500 lg:inline">Esc → exit fullscreen / table</span>
+                <Button type="button" variant="secondary" size="sm" onClick={onToggleFullscreen}>
+                    {isBrowserFullscreen ? (
+                        <>
+                            <Minimize className="mr-1 h-4 w-4" />
+                            Exit fullscreen
+                        </>
+                    ) : (
+                        <>
+                            <Maximize className="mr-1 h-4 w-4" />
+                            Fullscreen
+                        </>
+                    )}
+                </Button>
+                <Button type="button" variant="secondary" size="sm" onClick={onExit}>
+                    <X className="mr-1 h-4 w-4" />
+                    Table
+                </Button>
+            </div>
+        </header>
+    );
+}

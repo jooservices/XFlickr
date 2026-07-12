@@ -1,0 +1,11 @@
+{
+    "name": "Spider",
+    "alias": "spider",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Spider\\Providers\\SpiderServiceProvider"
+    ],
+    "files": []
+}

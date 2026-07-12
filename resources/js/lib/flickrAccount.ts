@@ -11,7 +11,9 @@ export function flickrAccountPath(publicId: string, suffix = ''): string {
 }
 
 export function flickrApiAccountPath(publicId: string, suffix = ''): string {
-    return `/api/flickr/accounts/${flickrAccountKey(publicId)}${suffix}`;
+    const normalized = suffix === '' || suffix.startsWith('/') ? suffix : `/${suffix}`;
+
+    return `/api/v1/flickr/accounts/${flickrAccountKey(publicId)}${normalized}`;
 }
 
 export function flickrContactPath(publicId: string, contactNsid: string, suffix = ''): string {

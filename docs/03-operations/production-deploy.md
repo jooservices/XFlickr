@@ -87,7 +87,7 @@ Safe updates:
 | Services | compose `app`, `nginx`, `horizon`, `scheduler` | supervisor programs |
 | External DBs | MySQL, Redis, MongoDB connectivity | same |
 | Web | `/login`, `/build/manifest.json` via nginx | same |
-| App health | `migrate:status`, `xflickr:doctor` | same |
+| App health | `migrate:status`, `xflickr:flickr:doctor` | same |
 | Workers | Horizon + scheduler processes | same |
 
 ```bash

@@ -14,6 +14,7 @@ use JOOservices\XFlickrCrawler\Models\Favorite;
 use JOOservices\XFlickrCrawler\Models\Gallery;
 use JOOservices\XFlickrCrawler\Models\Photo;
 use JOOservices\XFlickrCrawler\Models\Photoset;
+use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
 
 final class CatalogQueryRepository
 {
@@ -33,9 +34,32 @@ final class CatalogQueryRepository
         private readonly QuerySorter $sorter,
     ) {}
 
-    public function paginatePhotos(?string $ownerNsid, string $sort, string $direction, int $perPage, int $page): LengthAwarePaginator
+    public function findPhotoset(int $id): ?Photoset
     {
+        return Photoset::query()->find($id);
+    }
+
+    public function paginatePhotos(
+        ?string $ownerNsid,
+        ?int $photosetId,
+        string $sort,
+        string $direction,
+        int $perPage,
+        int $page,
+    ): LengthAwarePaginator {
         $query = Photo::query();
+
+        if ($photosetId !== null) {
+            $pivotTable = XFlickrConfig::table('photoset_photo');
+
+            $query->whereIn('id', function ($subquery) use ($pivotTable, $photosetId): void {
+                $subquery
+                    ->from($pivotTable)
+                    ->select('xflickr_photo_id')
+                    ->where('xflickr_photoset_id', $photosetId);
+            });
+        }
+
         if ($ownerNsid !== null && $ownerNsid !== '') {
             $query->where('owner_nsid', $ownerNsid);
         }
@@ -136,6 +160,25 @@ final class CatalogQueryRepository
     public function galleryCountsGroupedByConnection(array $connectionKeys): array
     {
         return $this->aggregateCatalogGroupedByConnection(Gallery::query(), $connectionKeys);
+    }
+
+    /**
+     * @param  list<string>  $connectionKeys
+     * @return array<string, int>
+     */
+    public function favoriteCountsGroupedByConnection(array $connectionKeys): array
+    {
+        if ($connectionKeys === []) {
+            return [];
+        }
+
+        return Favorite::query()
+            ->whereIn('connection_key', $connectionKeys)
+            ->selectRaw('connection_key, count(*) as aggregate')
+            ->groupBy('connection_key')
+            ->pluck('aggregate', 'connection_key')
+            ->map(fn (mixed $count): int => (int) $count)
+            ->all();
     }
 
     /**

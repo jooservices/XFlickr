@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Flickr;
 
-use App\Enums\SpiderFrontierStatus;
-use App\Enums\SpiderRunStatus;
-use App\Models\SpiderFrontierItem;
-use App\Models\SpiderRun;
-use App\Services\Flickr\SpiderPlannerService;
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
 use JOOservices\XFlickrCrawler\Events\ContactsCrawlCompleted;
+use Modules\Spider\Enums\SpiderFrontierStatus;
+use Modules\Spider\Enums\SpiderRunStatus;
+use Modules\Spider\Models\SpiderFrontierItem;
+use Modules\Spider\Models\SpiderRun;
+use Modules\Spider\Services\SpiderPlannerService;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;

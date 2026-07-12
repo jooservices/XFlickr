@@ -15,6 +15,18 @@ export type ApiRequestOptions = {
     headers?: HeadersInit;
 };
 
+/** Standard JSON envelope from jooservices/laravel-controller BaseApiController. */
+export type ApiEnvelope<T = unknown, TMeta = Record<string, unknown>> = {
+    success: boolean;
+    code: number;
+    message: string;
+    data: T;
+    errors?: unknown;
+    meta?: TMeta;
+    warnings?: string[] | Record<string, string>;
+    trace_id?: string;
+};
+
 function buildUrl(path: string, params?: ApiRequestOptions['params']): string {
     if (!params) {
         return path;
@@ -98,6 +110,50 @@ export async function apiPost<T>(
         path,
         {
             method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                ...csrfHeaders(),
+                ...options.headers,
+            },
+            body: body === undefined ? undefined : JSON.stringify(body),
+            signal: options.signal,
+        },
+        options.params,
+    );
+}
+
+export async function apiPatch<T>(
+    path: string,
+    body?: unknown,
+    options: ApiRequestOptions = {},
+): Promise<T> {
+    return request<T>(
+        path,
+        {
+            method: 'PATCH',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                ...csrfHeaders(),
+                ...options.headers,
+            },
+            body: body === undefined ? undefined : JSON.stringify(body),
+            signal: options.signal,
+        },
+        options.params,
+    );
+}
+
+export async function apiDelete<T>(
+    path: string,
+    body?: unknown,
+    options: ApiRequestOptions = {},
+): Promise<T> {
+    return request<T>(
+        path,
+        {
+            method: 'DELETE',
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',

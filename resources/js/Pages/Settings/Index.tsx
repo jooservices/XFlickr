@@ -1,7 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 
-import Breadcrumbs from '@/Components/Breadcrumbs';
-import PageHeading from '@/Components/PageHeading';
+import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
 import FlickrCredentialsPanel from '@/Components/Settings/FlickrCredentialsPanel';
 import GeneralConfigPanel from '@/Components/Settings/GeneralConfigPanel';
 import OnboardingWizard from '@/Components/Settings/OnboardingWizard';
@@ -88,34 +87,39 @@ export default function SettingsIndex({
         <AppLayout>
             <Head title="Settings" />
 
-            <div className="space-y-6">
-                <PageHeading
-                    breadcrumbs={<Breadcrumbs items={settingsCrumbs(tab)} />}
+            <PageShell>
+                <PageShellIdentity
+                    breadcrumbs={settingsCrumbs(tab)}
                     title="Settings"
                     subtitle="Configure runtime options, manage connections, and storage credentials."
                 />
 
+                <PageShellControlBar
+                    tabs={
+                        <div className="flex gap-1">
+                            {tabs.map((item) => (
+                                <button
+                                    key={item.key}
+                                    type="button"
+                                    onClick={() => setTab(item.key)}
+                                    className={`border-b-2 px-4 py-2 text-sm font-medium ${
+                                        tab === item.key
+                                            ? 'border-slate-900 text-slate-900'
+                                            : 'border-transparent text-slate-500 hover:text-slate-700'
+                                    }`}
+                                >
+                                    {item.label}
+                                </button>
+                            ))}
+                        </div>
+                    }
+                />
+
+                <PageShellCanvas className="space-y-6" variant="plain">
                 <OnboardingWizard
                     hasFlickrAccounts={flickr.accounts.length > 0}
                     hasStorageAccounts={storage_accounts.length > 0}
                 />
-
-                <div className="flex gap-1 border-b border-slate-200">
-                    {tabs.map((item) => (
-                        <button
-                            key={item.key}
-                            type="button"
-                            onClick={() => setTab(item.key)}
-                            className={`border-b-2 px-4 py-2 text-sm font-medium ${
-                                tab === item.key
-                                    ? 'border-slate-900 text-slate-900'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700'
-                            }`}
-                        >
-                            {item.label}
-                        </button>
-                    ))}
-                </div>
 
                 {tab === 'general' && (
                     <GeneralConfigPanel
@@ -141,7 +145,8 @@ export default function SettingsIndex({
                         drivers={storage_drivers}
                     />
                 )}
-            </div>
+                </PageShellCanvas>
+            </PageShell>
         </AppLayout>
     );
 }

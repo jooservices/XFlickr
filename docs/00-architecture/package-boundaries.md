@@ -1,24 +1,28 @@
 # Package boundaries
 
-XFlickr is a **host application**. The crawling engine is a separate Composer package.
+XFlickr is a **host application**. The crawling engine is a separate Composer package. Business domains live in `Modules/` (`nwidart/laravel-modules`).
 
 ## Ownership table
 
 | Concern | Owner | Location |
 |---|---|---|
-| Flickr OAuth connect/disconnect | XFlickr app | `FlickrAuthController`, `flickr_accounts` |
-| App credentials (API keys) | XFlickr + laravel-config | Settings UI, MongoDB |
+| Flickr OAuth connect/disconnect | **Flickr** module | `Modules/Flickr` (controllers, OAuth service, events) |
+| App credentials (API keys) | **Settings** + laravel-config | Settings UI, MongoDB |
 | Crawl runs, targets, fetchers | `jooservices/xflickr-crawler` | Package jobs, `xflickr_crawl_*` tables |
 | Catalog data (photos, contacts) | `jooservices/xflickr-crawler` | `xflickr_photos`, `xflickr_contacts`, etc. |
-| Local download tracking | XFlickr app | `stored_files`, `DownloadPhotoJob` |
-| Cloud upload tracking | XFlickr app | `storage_uploads`, `UploadPhotoJob` |
-| Transfer batch progress | XFlickr app | `transfer_batches`, `transfer_items` |
-| Storage browse/sync | XFlickr app | `StorageBrowseService`, remote item tables |
+| Catalog UI / API | **Catalog** module | `Modules/Catalog` |
+| Contacts / graph / full-pass | **Contacts** module | `Modules/Contacts` |
+| Spider frontier | **Spider** module | `Modules/Spider` |
+| Local download tracking | **Transfer** module | `Modules/Transfer` (`stored_files`, `DownloadPhotoJob`) |
+| Cloud upload tracking | **Transfer** + **Storage** | `Modules/Transfer` + `Modules/Storage` |
+| Storage browse/sync / provider HTTP | **Storage** module | `Modules/Storage` |
+| Operations dashboard | **Operations** module | `Modules/Operations` |
 | Rate limiting | `jooservices/xflickr-crawler` | Redis-backed limiter |
+| Shared crawler reads | Host `app/` | `app/Repositories/Crawler/*` |
 
 ## Bridge: connection_key
 
-Connected Flickr accounts bridge to the crawler via `connection_key` (typically the account NSID). The `FlickrAccountObserver` synchronizes credentials with crawler `Connection` records.
+Connected Flickr accounts bridge to the crawler via `connection_key` (typically the account NSID). Public IDs and presenters live under `Modules/Flickr/Support`.
 
 ## What the app must not do
 

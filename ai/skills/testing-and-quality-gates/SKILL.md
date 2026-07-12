@@ -42,10 +42,12 @@ bash scripts/test.sh gate:test -- # not supported; use:
 
 ## Writing tests
 
-- Feature tests: `tests/Feature/` — use `Tests\Concerns\SafeRefreshDatabase`, not raw `RefreshDatabase`
-- Unit tests: `tests/Unit/` for isolated logic
+- Feature tests: `tests/Feature/` and `Modules/*/tests/Feature/` — use `Tests\Concerns\SafeRefreshDatabase`, not raw `RefreshDatabase`
+- Unit tests: `tests/Unit/` and `Modules/*/tests/Unit/` for isolated logic (module services under `Modules/{Name}/Tests/Unit`)
+- Module Auth example: `Modules/Auth/tests/Unit/Services/*`, `Modules/Auth/tests/Feature/*`
 - Mock Flickr and cloud storage APIs — no real external calls
 - Use test stack only (`docker-compose.test.yml` via `scripts/test.sh`)
+- Prefer happy / unhappy / security / edge cases for Services (rate limits, production password bans, idempotent seeders)
 
 ## Related skills
 

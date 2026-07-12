@@ -18,7 +18,7 @@ _None — spider unblocked by crawler 1.3.0._
 
 | ID | Item | Resolved in | Evidence |
 |----|------|-------------|----------|
-| N-01 | Default admin credential / rotation | v1.2.0 | `ADMIN_PASSWORD`, `xflickr:user:password`, `AdminUserSeeder` first-create only |
+| N-01 | Default admin credential / rotation | v1.2.0 | `ADMIN_PASSWORD`, `xflickr:auth:reset-password`, Auth `AdminUserSeeder` first-create only (optional / explicit class) |
 | N-02 | Unused `jooservices/dto` | v1.2.0 | `DownloadCandidateDto`, `OAuthAppConfigDto` wired at call sites |
 | N-03 | Spider mode | v1.2.0 | Crawler 1.3.0 + event-driven `SpiderPlannerService` |
 | N-04 | Secret-scanning CI stub | v1.2.0 | `.github/workflows/secret-scanning.yml` + gitleaks |
@@ -29,4 +29,4 @@ _None — spider unblocked by crawler 1.3.0._
 | N-10 | Silent OAuth catch blocks | v1.2.0 | `Log::warning` in auth controllers |
 | F-07 | Reconciler race | v1.1.0 | `TransferBatchReconciler` transaction |
 | F-10 | Dashboard per-account loop (partial) | v1.2.0 | Bulk aggregate maps |
-| S-11 | `xflickr:doctor` health command | v1.2.0 | `DoctorCommand` |
+| S-11 | `xflickr:flickr:doctor` health command | v1.2.0 | `DoctorCommand` |

@@ -1,18 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { apiGet } from '@/lib/apiClient';
+import { usePolledResource } from '@/hooks/usePolledResource';
 import {
     resolveDefaultFlickrQuotaNsid,
     writeStoredFlickrQuotaNsid,
 } from '@/lib/flickrQuotaAccount';
-import type { FlickrRateLimitSnapshot, RateLimitState } from '@/types';
-
-const POLL_INTERVAL_MS = 5000;
+import type { FlickrCatalogCounts, FlickrRateLimitSnapshot, RateLimitState } from '@/types';
 
 export function useFlickrRateLimit() {
-    const [snapshot, setSnapshot] = useState<FlickrRateLimitSnapshot | null>(null);
+    const { data, loading } = usePolledResource<{ data: FlickrRateLimitSnapshot }>('/api/v1/flickr/rate-limit');
+    const snapshot = data?.data ?? null;
     const [selectedNsid, setSelectedNsidState] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
 
     const setSelectedNsid = useCallback((nsid: string) => {
         setSelectedNsidState(nsid);
@@ -20,39 +18,21 @@ export function useFlickrRateLimit() {
     }, []);
 
     useEffect(() => {
-        const controller = new AbortController();
+        if (!snapshot) {
+            return;
+        }
 
-        const poll = () => {
-            setLoading(true);
-            void apiGet<{ data: FlickrRateLimitSnapshot }>('/api/flickr/rate-limit', {
-                signal: controller.signal,
-            })
-                .then((json) => {
-                    setSnapshot(json.data);
+        setSelectedNsidState((current) => {
+            if (current && snapshot.accounts.some((row) => row.account.nsid === current)) {
+                return current;
+            }
 
-                    setSelectedNsidState((current) => {
-                        if (current && json.data.accounts.some((row) => row.account.nsid === current)) {
-                            return current;
-                        }
-
-                        return resolveDefaultFlickrQuotaNsid(
-                            json.data.accounts.map((row) => row.account),
-                            json.data.active_connection_key,
-                        );
-                    });
-                })
-                .catch(() => undefined)
-                .finally(() => setLoading(false));
-        };
-
-        poll();
-        const interval = setInterval(poll, POLL_INTERVAL_MS);
-
-        return () => {
-            controller.abort();
-            clearInterval(interval);
-        };
-    }, []);
+            return resolveDefaultFlickrQuotaNsid(
+                snapshot.accounts.map((row) => row.account),
+                snapshot.active_connection_key,
+            );
+        });
+    }, [snapshot]);
 
     const selectedRateLimit = useMemo((): RateLimitState | null => {
         if (!snapshot || !selectedNsid) {
@@ -62,11 +42,20 @@ export function useFlickrRateLimit() {
         return snapshot.accounts.find((row) => row.account.nsid === selectedNsid)?.rate_limit ?? null;
     }, [snapshot, selectedNsid]);
 
+    const selectedCatalogCounts = useMemo((): FlickrCatalogCounts | null => {
+        if (!snapshot || !selectedNsid) {
+            return null;
+        }
+
+        return snapshot.accounts.find((row) => row.account.nsid === selectedNsid)?.catalog_counts ?? null;
+    }, [snapshot, selectedNsid]);
+
     return {
         snapshot,
         selectedNsid,
         setSelectedNsid,
         selectedRateLimit,
+        selectedCatalogCounts,
         loading,
     };
 }

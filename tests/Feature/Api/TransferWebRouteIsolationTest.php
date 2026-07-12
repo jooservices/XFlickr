@@ -17,7 +17,7 @@ final class TransferWebRouteIsolationTest extends TestCase
     {
         $connection = $this->createFlickrConnection();
 
-        $this->postJson('/api/flickr/accounts/'.$connection->public_id.'/download')->assertNotFound();
-        $this->postJson('/api/flickr/accounts/'.$connection->public_id.'/upload')->assertNotFound();
+        $this->postJson('/api/v1/flickr/accounts/'.$connection->public_id.'/download')->assertNotFound();
+        $this->postJson('/api/v1/flickr/accounts/'.$connection->public_id.'/upload')->assertNotFound();
     }
 }

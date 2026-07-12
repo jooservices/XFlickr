@@ -6,12 +6,27 @@ export interface StorageReauthorizationPayload {
     missing_scopes?: StorageAccount['missing_scopes'];
 }
 
+function reauthorizationFields(payload: unknown): StorageReauthorizationPayload {
+    if (!payload || typeof payload !== 'object') {
+        return {};
+    }
+
+    const body = payload as Record<string, unknown>;
+    if (body.data && typeof body.data === 'object') {
+        return body.data as StorageReauthorizationPayload;
+    }
+
+    return body as StorageReauthorizationPayload;
+}
+
 export function applyReauthorizationToAccounts(
     accounts: StorageAccount[],
     accountId: number,
-    payload: StorageReauthorizationPayload,
+    payload: unknown,
 ): StorageAccount[] {
-    if (!payload.needs_reauthorization || !payload.reauthorize_url) {
+    const fields = reauthorizationFields(payload);
+
+    if (!fields.needs_reauthorization || !fields.reauthorize_url) {
         return accounts;
     }
 
@@ -20,16 +35,19 @@ export function applyReauthorizationToAccounts(
             ? {
                   ...entry,
                   needs_reauthorization: true,
-                  missing_scopes: payload.missing_scopes ?? entry.missing_scopes,
-                  reauthorize_url: payload.reauthorize_url ?? entry.reauthorize_url,
+                  missing_scopes: fields.missing_scopes ?? entry.missing_scopes,
+                  reauthorize_url: fields.reauthorize_url ?? entry.reauthorize_url,
               }
             : entry,
     );
 }
 
-export function isStorageReauthorizationResponse(
-    status: number,
-    payload: StorageReauthorizationPayload,
-): payload is StorageReauthorizationPayload & { needs_reauthorization: true; reauthorize_url: string } {
-    return status === 403 && payload.needs_reauthorization === true && typeof payload.reauthorize_url === 'string';
+export function isStorageReauthorizationResponse(status: number, payload: unknown): boolean {
+    const fields = reauthorizationFields(payload);
+
+    return (
+        status === 403 &&
+        fields.needs_reauthorization === true &&
+        typeof fields.reauthorize_url === 'string'
+    );
 }

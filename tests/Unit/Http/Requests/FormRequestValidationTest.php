@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Http\Requests;
 
-use App\Enums\StorageDriver;
-use App\Http\Requests\Flickr\BeginFlickrOAuthRequest;
-use App\Http\Requests\Flickr\CrawlFlickrAccountRequest;
-use App\Http\Requests\Settings\RuntimeConfigPathRequest;
-use App\Http\Requests\Settings\StoreFlickrAppProfileRequest;
-use App\Http\Requests\Storage\BeginStorageOAuthRequest;
-use App\Http\Requests\Storage\ReauthorizeStorageRequest;
-use App\Http\Requests\Storage\StorageOAuthCallbackRequest;
-use App\Http\Requests\Transfer\QueuePhotoDownloadRequest;
-use App\Http\Requests\Transfer\QueuePhotoUploadRequest;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Validator;
+use Modules\Flickr\Http\Requests\BeginFlickrOAuthRequest;
+use Modules\Flickr\Http\Requests\CrawlFlickrAccountRequest;
+use Modules\Settings\Http\Requests\RuntimeConfigPathRequest;
+use Modules\Settings\Http\Requests\StoreFlickrAppProfileRequest;
+use Modules\Storage\Enums\StorageDriver;
+use Modules\Storage\Http\Requests\BeginStorageOAuthRequest;
+use Modules\Storage\Http\Requests\ReauthorizeStorageRequest;
+use Modules\Storage\Http\Requests\StorageOAuthCallbackRequest;
+use Modules\Transfer\Http\Requests\QueuePhotoDownloadRequest;
+use Modules\Transfer\Http\Requests\QueuePhotoUploadRequest;
 use Tests\TestCase;
 
 final class FormRequestValidationTest extends TestCase
@@ -32,7 +32,7 @@ final class FormRequestValidationTest extends TestCase
 
     public function test_crawl_account_request_coerces_string_types_to_array(): void
     {
-        $request = CrawlFlickrAccountRequest::create('/crawl', 'POST', ['types' => 'photos']);
+        $request = CrawlFlickrAccountRequest::create('/crawl-runs', 'POST', ['types' => 'photos']);
         $request->setContainer($this->app);
         $request->validateResolved();
 

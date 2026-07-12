@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Enums\StorageDriver;
-use App\Services\Storage\StorageOAuthService;
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
+use Modules\Storage\Enums\StorageDriver;
+use Modules\Storage\Services\StorageOAuthService;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 

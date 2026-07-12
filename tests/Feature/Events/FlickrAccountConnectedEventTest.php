@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Events;
 
-use App\Events\FlickrAccountConnected;
 use Illuminate\Support\Facades\Event;
+use Modules\Flickr\Events\FlickrAccountConnected;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 

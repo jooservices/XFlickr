@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Enums\PhotoTransferExecutionOutcome;
-use App\Jobs\DownloadPhotoJob;
-use App\Models\TransferBatch;
-use App\Models\TransferItem;
-use App\Services\Flickr\PhotoDownloadExecutionService;
-use App\Services\Transfer\TransferBatchReconciler;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use JOOservices\XFlickrCrawler\Models\Photo;
+use Modules\Transfer\Enums\PhotoTransferExecutionOutcome;
+use Modules\Transfer\Jobs\DownloadPhotoJob;
+use Modules\Transfer\Models\TransferBatch;
+use Modules\Transfer\Models\TransferItem;
+use Modules\Transfer\Services\PhotoDownloadExecutionService;
+use Modules\Transfer\Services\TransferBatchReconciler;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;

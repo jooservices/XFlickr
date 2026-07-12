@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use App\Support\FlickrPhotoUrlHelper;
+use Modules\Flickr\Support\FlickrPhotoUrlHelper;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 

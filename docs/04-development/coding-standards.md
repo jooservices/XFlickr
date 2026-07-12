@@ -4,19 +4,19 @@ XFlickr follows Laravel conventions with project-specific layering rules.
 
 ## Backend layering
 
-Mandatory flow: `Controller → FormRequest → Service → Repository → Model`
+Mandatory flow: `HTTP Request → Controller → FormRequest → Service → Repository → Model`
 
-See [Application standards](../00-architecture/application-standards.md).
+Artisan: `Command → Service → Repository → Model`. See [Application standards](../00-architecture/application-standards.md).
 
 ### Controllers
 
 - Thin — delegate to Services immediately.
-- Group by feature area (`Flickr/`, `Storage/`, `Api/`).
-- No inline validation, no query building.
+- Dedicated FormRequest per action (including body-less logout).
+- No inline validation, no query building, no business logic.
 
 ### FormRequests
 
-- One per meaningful input action.
+- One per meaningful input action (validation + authorize + accessors only).
 - Shared concerns in `app/Http/Requests/Concerns/`.
 
 ### Services
@@ -24,15 +24,22 @@ See [Application standards](../00-architecture/application-standards.md).
 - Single responsibility; no bidirectional Service dependencies.
 - Constructor DI for widely used dependencies.
 
-### Jobs
+### Jobs / Commands
 
 - Delegate all business logic to Services.
 - `handle()` should be a thin call to a Service method.
+- Command signatures: `xflickr:<module-alias>:<name>`.
 
 ### Repositories
 
 - All Eloquent/DB queries live here.
 - Crawler table reads: `app/Repositories/Crawler/`.
+- Reuse meaningful **model scopes** instead of repeating raw `where` clauses (e.g. `->byEmail($email)`).
+
+### Models
+
+- Local scopes for reusable, named filters (`scopeByEmail`, ownership, status).
+- No business orchestration or container calls.
 
 ## PHP style
 

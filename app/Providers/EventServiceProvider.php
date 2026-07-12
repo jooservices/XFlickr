@@ -4,18 +4,15 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Listeners\Spider\HandleContactsCrawlCompleted;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use JOOservices\XFlickrCrawler\Events\ContactsCrawlCompleted;
 
+/**
+ * Host event map is empty — domain listeners register on module EventServiceProviders.
+ */
 final class EventServiceProvider extends ServiceProvider
 {
     /**
      * @var array<class-string, list<class-string>>
      */
-    protected $listen = [
-        ContactsCrawlCompleted::class => [
-            HandleContactsCrawlCompleted::class,
-        ],
-    ];
+    protected $listen = [];
 }

@@ -9,7 +9,7 @@ Self-hosted Flickr archive manager — Laravel 12, React 19, Inertia 3.
 ## Non-negotiables
 
 1. Tests only: `bash scripts/test.sh gate:test` — never `docker exec xflickr-dev-*` or `scripts/dev.sh`
-2. Backend flow: `Controller → FormRequest → Service → Repository`
+2. Backend flow: `HTTP Request → Controller → FormRequest → Service → Repository → Model` (Commands → Service; dedicated FormRequest per HTTP action)
 3. Jobs delegate to Services only
 4. Manual crawl only — no auto-spidering
 5. Minimize scope; inspect source before inventing routes or commands

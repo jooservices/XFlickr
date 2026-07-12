@@ -33,6 +33,7 @@ x-php-environment: &php-environment
   CONFIG_STORE_CACHE_ENABLED: "true"
   EVENTS_EVENTSOURCING_ENABLED: "true"
   EVENTS_EVENT_LOG_ENABLED: "true"
+  VITE_CACHE_DIR: /tmp/xflickr-vite-cache
 
 x-php-base: &php-base
   <<: *php-build
@@ -134,6 +135,7 @@ services:
     environment:
       VITE_DEV_HOST: ${VITE_DEV_HOST:-localhost}
       VITE_DEV_PORT: ${FRONTEND_HOST_PORT:-5174}
+      VITE_CACHE_DIR: /tmp/xflickr-vite-cache
     volumes:
       - .:/var/www/html
       - frontend-node-modules:/var/www/html/node_modules

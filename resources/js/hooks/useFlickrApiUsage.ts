@@ -21,7 +21,7 @@ export function useFlickrApiUsage(connectionKey: string | null, hours = 24) {
 
         const poll = () => {
             setLoading(true);
-            void apiGet<{ data: FlickrApiUsageSnapshot }>('/api/flickr/rate-limit/usage', {
+            void apiGet<{ data: FlickrApiUsageSnapshot }>('/api/v1/flickr/rate-limit/usage', {
                 signal: controller.signal,
                 params: {
                     connection_key: connectionKey,

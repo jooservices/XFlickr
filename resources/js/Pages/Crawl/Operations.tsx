@@ -1,11 +1,10 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { useMemo } from 'react';
 
-import Breadcrumbs from '@/Components/Breadcrumbs';
 import Button from '@/Components/Button';
 import ContactNsidLinks from '@/Components/ContactNsidLinks';
 import DataTable from '@/Components/DataTable';
-import PageHeading from '@/Components/PageHeading';
+import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/layout/page-shell';
 import PageSection from '@/Components/PageSection';
 import ProgressBar from '@/Components/ProgressBar';
 import StatusBadge from '@/Components/StatusBadge';
@@ -31,7 +30,7 @@ interface Props extends PageProps {
 
 export default function CrawlOperations() {
     const { accounts, spiderEnabled } = usePage<Props>().props;
-    const { fetchRuns, downloadBatches, uploadBatches, loading } = useCrawlOperations(accounts);
+    const { fetchRuns, downloadBatches, uploadBatches, loading } = useCrawlOperations();
 
     const fetchSort = useTableSort({ initialSort: 'id', initialDirection: 'desc' });
     const downloadSort = useTableSort({ initialSort: 'id', initialDirection: 'desc' });
@@ -70,13 +69,14 @@ export default function CrawlOperations() {
         <AppLayout>
             <Head title="Operations" />
 
-            <div className="space-y-8">
-                <PageHeading
-                    breadcrumbs={<Breadcrumbs items={[{ label: 'Operations' }]} />}
+            <PageShell>
+                <PageShellIdentity
+                    breadcrumbs={[{ label: 'Operations' }]}
                     title="Operations"
                     subtitle="Active fetch, download, and upload jobs across connected accounts. Live updates via SSE (falls back to polling)."
                 />
 
+                <PageShellCanvas className="space-y-8" variant="plain">
                 {spiderEnabled ? (
                     <PageSection
                         title="Spider"
@@ -383,7 +383,8 @@ export default function CrawlOperations() {
                         Monitoring {accounts.length} account{accounts.length === 1 ? '' : 's'}.
                     </p>
                 )}
-            </div>
+                </PageShellCanvas>
+            </PageShell>
         </AppLayout>
     );
 }

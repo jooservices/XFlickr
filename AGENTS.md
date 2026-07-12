@@ -64,21 +64,35 @@ Production stack uses `docker-compose.prod.yml` (project `xflickr-prod`). Extern
 - App credentials: **MongoDB** via laravel-config (`xflickr_app.*`, `storage_app.*`)
 - Connected accounts: **MySQL** (`flickr_accounts`, `storage_accounts`)
 - Local URL: **http://localhost:8082** (override `APP_HOST_PORT` in `.env`)
-- **Authentication** — all web/API routes require session login. Tests auto-authenticate via `TestCase::authenticateAsAdmin()` unless a test uses `IgnoresAuthentication`. Initial admin password: `ADMIN_PASSWORD` env (see `.env.example`); change with `php artisan xflickr:user:password`.
+- **Authentication** — all web/API routes require session login. Tests auto-authenticate via `TestCase::authenticateAsAdmin()` unless a test uses `IgnoresAuthentication`. Initial admin password: `ADMIN_PASSWORD` env (see `.env.example`); change with `php artisan xflickr:auth:reset-password`.
 
 ## Architecture boundaries
 
 Mandatory backend flow:
 
 ```
-Controller → FormRequest → Service → Repository → Model
+HTTP Request → Controller → FormRequest → Service → Repository → Model
 ```
 
-Jobs delegate business logic to Services only.
+Same layering for Artisan: `Command → Service → Repository → Model` (no business logic in commands). Jobs call Services only.
+
+JSON API is **RESTful under `/api/v1/*`** (no imperative URI verbs). Business domains live in `Modules/{Name}` (`nwidart/laravel-modules`); thin `app/` is host bootstrap (providers, middleware, shared FormRequest traits, crawler query repos, `User`).
+
+| Module | Owns |
+|---|---|
+| **Auth** | Session login/logout (`LoginRequest` / `LogoutRequest`, `AuthService`); register (inactive until activated); self-serve password reset token URL (no email yet); CLI `xflickr:auth:activate-user` / `xflickr:auth:reset-password`; optional admin seed (`AdminUserSeeder`) |
+| **Settings** | Runtime config / app profiles |
+| **Operations** | Dashboard, ops snapshot/stream |
+| **Flickr** | OAuth, accounts, crawl-runs, rate-limit, token-health |
+| **Contacts** | Contacts, annotations, contact-graph, full-pass |
+| **Catalog** | Photos / photosets / galleries / favorites |
+| **Spider** | Spider runs / frontier |
+| **Transfer** | Download / upload / stored-files |
+| **Storage** | Storage OAuth, browse, sync, delete |
 
 | Layer | Owns |
 |---|---|
-| XFlickr app | OAuth, downloads, uploads, storage browse, transfer tracking, Settings UI |
+| XFlickr app / Modules | OAuth, downloads, uploads, storage browse, transfer tracking, Settings UI |
 | `jooservices/xflickr-crawler` | Crawl runs, fetchers, rate limits, catalog tables |
 
 See [Application standards](docs/00-architecture/application-standards.md) and [Package boundaries](docs/00-architecture/package-boundaries.md).

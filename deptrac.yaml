@@ -1,6 +1,7 @@
 deptrac:
   paths:
     - ./app
+    - ./Modules
 
   layers:
     - name: Model
@@ -11,18 +12,26 @@ deptrac:
       collectors:
         - type: classLike
           value: App\\Services\\.*
+        - type: classLike
+          value: Modules\\.*\\Services\\.*
     - name: Controller
       collectors:
         - type: classLike
           value: App\\Http\\Controllers\\.*
+        - type: classLike
+          value: Modules\\.*\\Http\\Controllers\\.*
     - name: Repository
       collectors:
         - type: classLike
           value: App\\Repositories\\.*
+        - type: classLike
+          value: Modules\\.*\\Repositories\\.*
     - name: Job
       collectors:
         - type: classLike
           value: App\\Jobs\\.*
+        - type: classLike
+          value: Modules\\.*\\Jobs\\.*
 
   ruleset:
     # Primary audit guard: Models must not import Services, Repositories, Controllers, or Jobs.
@@ -40,4 +49,3 @@ deptrac:
     Controller:
       - Service
       - Model
-      - Repository

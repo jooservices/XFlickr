@@ -1,0 +1,50 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Modules\Settings\Http\Controllers;
+
+use App\Support\Observability\AdminActionLogger;
+use Illuminate\Http\RedirectResponse;
+use Modules\Settings\Http\Requests\RuntimeConfigPathRequest;
+use Modules\Settings\Http\Requests\StoreRuntimeConfigRequest;
+use Modules\Settings\Services\RuntimeConfigAdminService;
+
+final class RuntimeConfigController
+{
+    public function store(StoreRuntimeConfigRequest $request, RuntimeConfigAdminService $configAdmin, AdminActionLogger $audit): RedirectResponse
+    {
+        $validated = $request->validated();
+
+        $configAdmin->upsert($validated);
+
+        $audit->record('settings.runtime_config.saved', [
+            'path' => $validated['path'] ?? null,
+            'type' => $validated['type'] ?? null,
+        ]);
+
+        return redirect()->route('settings.index', ['tab' => 'general'])->with('success', 'Configuration saved.');
+    }
+
+    public function destroy(RuntimeConfigPathRequest $request, RuntimeConfigAdminService $configAdmin, AdminActionLogger $audit): RedirectResponse
+    {
+        $configAdmin->delete($request->configPath());
+
+        $audit->record('settings.runtime_config.deleted', [
+            'path' => $request->configPath(),
+        ]);
+
+        return redirect()->route('settings.index', ['tab' => 'general'])->with('success', 'Configuration deleted.');
+    }
+
+    public function reset(RuntimeConfigPathRequest $request, RuntimeConfigAdminService $configAdmin, AdminActionLogger $audit): RedirectResponse
+    {
+        $configAdmin->resetToDefault($request->configPath());
+
+        $audit->record('settings.runtime_config.reset', [
+            'path' => $request->configPath(),
+        ]);
+
+        return redirect()->route('settings.index', ['tab' => 'general'])->with('success', 'Configuration reset to default.');
+    }
+}

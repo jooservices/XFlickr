@@ -7,13 +7,14 @@ import RateLimitMeter from '@/Components/RateLimitMeter';
 import type { RateLimitState } from '@/types';
 
 export interface ProviderCardProps {
-    title: string;
+    title: ReactNode;
     subtitle?: string | null;
     isConnected: boolean;
     onConnect?: () => void;
     onDisconnect?: () => void;
     rateLimit?: RateLimitState | null;
     quotaFallback?: ReactNode;
+    footer?: ReactNode;
     badges?: ReactNode;
     extraHeaderActions?: ReactNode;
     children?: ReactNode;
@@ -28,6 +29,7 @@ export default function ProviderCard({
     onDisconnect,
     rateLimit,
     quotaFallback,
+    footer: footerOverride,
     badges,
     extraHeaderActions,
     children,
@@ -51,11 +53,16 @@ export default function ProviderCard({
         </>
     );
 
-    const footer = rateLimit ? (
-        <RateLimitMeter rateLimit={rateLimit} compact />
-    ) : (
-        quotaFallback ?? <p className="text-xs text-slate-400">No quota data</p>
-    );
+    const footer =
+        footerOverride !== undefined
+            ? footerOverride
+            : rateLimit
+              ? (
+                    <RateLimitMeter rateLimit={rateLimit} compact />
+                )
+              : (
+                    quotaFallback ?? <p className="text-xs text-slate-400">No quota data</p>
+                );
 
     return (
         <Card

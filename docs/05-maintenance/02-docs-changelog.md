@@ -2,6 +2,11 @@
 
 Record of significant documentation and AI governance changes (not package releases).
 
+## 2026-07-11 (modules migration complete)
+
+- Architecture docs (`application-standards`, `package-boundaries`, `repository-structure`) and `AGENTS.md` updated for nine `Modules/*` domains; thin `app/` host only.
+- Frontend skill prefers `AppShell` + `PageShell` over `PageHeading`; crawl listeners register on module `EventServiceProvider`s.
+
 ## 2026-06-23 (architecture diagrams)
 
 - Added `docs/00-architecture/architecture-diagrams.md` — Mermaid charts for end-to-end journey, system context, manual crawl, download/upload, storage browse, OAuth, Horizon queues, and data stores.

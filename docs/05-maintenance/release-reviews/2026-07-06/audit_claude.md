@@ -85,7 +85,7 @@ Reference standard: `jooservices/dto`. Stack: Laravel 12 app (PHP 8.5, Inertia 3
 - Deprecated-but-kept: `DownloadContactsPhotosJob` / `UploadContactsPhotosJob` correctly annotated `@deprecated ... kept for in-flight queue jobs` — remove in the next major.
 - Code smell: `FlickrOAuthService::complete()` registers a connection under key `'unknown'` then disconnects and re-registers when `userNsid` arrives (`FlickrOAuthService.php:57-76`) — the workaround belongs in the `jooservices/flickr` SDK.
 
-**Package/app boundary:** correct overall. One leak in reverse: `App\Support\FlickrPhotoUrlHelper` (159 ln) implements `flickr.photos.getSizes` parsing/candidate selection — generic Flickr SDK logic that should live in `jooservices/flickr`.
+**Package/app boundary:** correct overall. One leak in reverse: `Modules\Flickr\Support\FlickrPhotoUrlHelper` (159 ln) implements `flickr.photos.getSizes` parsing/candidate selection — generic Flickr SDK logic that should live in `jooservices/flickr`.
 
 ---
 
@@ -94,7 +94,7 @@ Reference standard: `jooservices/dto`. Stack: Laravel 12 app (PHP 8.5, Inertia 3
 **Good DTO usage**
 
 - SDK boundary: `jooservices/flickr` DTOs consumed properly (`AccessTokenData`, `FlickrConfig` in `FlickrOAuthService`).
-- `App\Support\Storage\StorageR2Config` — hand-rolled readonly config DTO with validation and unit tests (`tests/Unit/StorageR2ConfigTest.php`). Model for others.
+- `Modules\Storage\Support\StorageR2Config` — hand-rolled readonly config DTO with validation and unit tests (`tests/Unit/StorageR2ConfigTest.php`). Model for others.
 - `App\Services\Transfer\TransferQueueResult` — typed result object instead of ad-hoc arrays.
 - FormRequest boundary is exemplary: one request class per action (`app/Http/Requests/**`), typed accessor methods (`$request->driver()`, `->accountId()`, `->returnUrl()`), validation stays in requests, services receive scalars/models. FormRequest is not replaced by DTOs — matches the required Laravel boundary.
 

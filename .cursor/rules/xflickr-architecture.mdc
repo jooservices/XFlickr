@@ -8,10 +8,13 @@ alwaysApply: false
 
 Read [`AGENTS.md`](../../AGENTS.md) and skill [`ai/skills/form-request-service-repository/SKILL.md`](../../ai/skills/form-request-service-repository/SKILL.md).
 
-Flow: `Controller → FormRequest → Service → Repository → Model`
+Flow: `HTTP Request → Controller → FormRequest → Service → Repository → Model`
+
+Artisan: `Command → Service → Repository → Model`. Jobs → Service only.
 
 - Crawl logic: `jooservices/xflickr-crawler` package only
 - Spider mode: opt-in (`spider.enabled` runtime config); see `SpiderPlannerService` and `docs/02-user-guide/spider-mode.md`
-- Jobs delegate to Services
+- Auth module owns session login/logout + password reset (`Modules/Auth`)
+- Dedicated FormRequest required on every mutating action (including body-less logout)
 
 Module map: [`ai/skills/class-purpose-and-module-map/SKILL.md`](../../ai/skills/class-purpose-and-module-map/SKILL.md)

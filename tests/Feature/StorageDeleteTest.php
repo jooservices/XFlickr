@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Enums\StorageDriver;
-use App\Models\StorageAccount;
-use App\Models\StorageRemoteItem;
-use App\Models\StorageUpload;
-use App\Models\StoredFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Modules\Storage\Enums\StorageDriver;
+use Modules\Storage\Models\StorageAccount;
+use Modules\Storage\Models\StorageRemoteItem;
+use Modules\Storage\Models\StorageUpload;
+use Modules\Transfer\Models\StoredFile;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
@@ -27,7 +27,7 @@ final class StorageDeleteTest extends TestCase
 
     public function test_storage_delete_requires_account_id(): void
     {
-        $response = $this->postJson('/api/storage/google-photos/delete', [
+        $response = $this->deleteJson('/api/v1/storage/google-photos/files', [
             'item_ids' => ['media-1'],
         ]);
 
@@ -39,7 +39,7 @@ final class StorageDeleteTest extends TestCase
     {
         $account = $this->googlePhotosAccount();
 
-        $response = $this->postJson('/api/storage/google-photos/delete', [
+        $response = $this->deleteJson('/api/v1/storage/google-photos/files', [
             'account_id' => $account->id,
             'item_ids' => [],
         ]);
@@ -59,21 +59,21 @@ final class StorageDeleteTest extends TestCase
             'connected_at' => now(),
         ]);
 
-        $response = $this->postJson('/api/storage/google-photos/delete', [
+        $response = $this->deleteJson('/api/v1/storage/google-photos/files', [
             'account_id' => $account->id,
             'item_ids' => ['media-1'],
             'container_id' => 'album-1',
         ]);
 
         $response->assertStatus(403);
-        $response->assertJsonPath('needs_reauthorization', true);
+        $response->assertJsonPath('data.needs_reauthorization', true);
     }
 
     public function test_google_photos_delete_requires_container_id(): void
     {
         $account = $this->googlePhotosAccount();
 
-        $response = $this->postJson('/api/storage/google-photos/delete', [
+        $response = $this->deleteJson('/api/v1/storage/google-photos/files', [
             'account_id' => $account->id,
             'item_ids' => ['media-1'],
         ]);
@@ -103,7 +103,7 @@ final class StorageDeleteTest extends TestCase
             'photoslibrary.googleapis.com/v1/albums/album-1:batchRemoveMediaItems' => Http::response(null, 200),
         ]);
 
-        $response = $this->postJson('/api/storage/google-photos/delete', [
+        $response = $this->deleteJson('/api/v1/storage/google-photos/files', [
             'account_id' => $account->id,
             'item_ids' => ['media-1'],
             'container_id' => 'album-1',
@@ -154,7 +154,7 @@ final class StorageDeleteTest extends TestCase
             'photoslibrary.googleapis.com/v1/albums/album-1:batchRemoveMediaItems' => Http::response(null, 200),
         ]);
 
-        $response = $this->postJson('/api/storage/google-photos/delete', [
+        $response = $this->deleteJson('/api/v1/storage/google-photos/files', [
             'account_id' => $account->id,
             'item_ids' => ['media-1'],
             'container_id' => 'album-1',
@@ -218,7 +218,7 @@ final class StorageDeleteTest extends TestCase
             'graph.microsoft.com/v1.0/me/drive/items/item-1' => Http::response(null, 204),
         ]);
 
-        $response = $this->postJson('/api/storage/onedrive/delete', [
+        $response = $this->deleteJson('/api/v1/storage/onedrive/files', [
             'account_id' => $account->id,
             'item_ids' => ['item-1'],
         ]);
@@ -257,10 +257,10 @@ final class StorageDeleteTest extends TestCase
             ]),
         ]);
 
-        $response = $this->getJson("/api/storage/google-photos/browse?account_id={$account->id}&source=provider");
+        $response = $this->getJson("/api/v1/storage/google-photos/files?account_id={$account->id}&source=provider");
 
         $response->assertOk();
-        $response->assertJsonPath('items.0.web_url', 'https://photos.google.com/lr/photo/abc');
+        $response->assertJsonPath('data.items.0.web_url', 'https://photos.google.com/lr/photo/abc');
     }
 
     private function googlePhotosAccount(): StorageAccount

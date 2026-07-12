@@ -1,11 +1,12 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Breadcrumbs from '@/Components/Breadcrumbs';
 import type { BulkAction } from '@/Components/BulkActionBar';
 import ContactCatalogCell from '@/Components/ContactCatalogCell';
 import ContactDownloadCell from '@/Components/ContactDownloadCell';
 import ContactNsidLinks from '@/Components/ContactNsidLinks';
+import ContactAnnotationActions from '@/Components/Contacts/ContactAnnotationActions';
+import ContactViewModeToggle, { type ContactViewMode } from '@/Components/Contacts/ContactViewModeToggle';
 import ContactsSearchFilter from '@/Components/ContactsSearchFilter';
 import CrawlActionBar from '@/Components/CrawlActionBar';
 import CrawlTypeMenu, {
@@ -14,15 +15,25 @@ import CrawlTypeMenu, {
     bulkUploadActionIcon,
 } from '@/Components/CrawlTypeMenu';
 import DataTable from '@/Components/DataTable';
-import PageHeading from '@/Components/PageHeading';
+import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
+import ContactGraphShell from '@/Components/macros/ContactGraphShell';
 import { useTableSelection } from '@/hooks/useTableSelection';
 import AppLayout from '@/Layouts/AppLayout';
 import { apiGet } from '@/lib/apiClient';
-import { flickrAccountPageCrumbs } from '@/lib/breadcrumbs';
+import { accountLabel, flickrAccountPageCrumbs } from '@/lib/breadcrumbs';
 import { catalogOwnerUrl } from '@/lib/catalog';
 import { CONTACT_CATALOG_COLUMNS } from '@/lib/contactCatalog';
+import { crawlSubjectForContact } from '@/lib/crawlSubject';
 import { flickrAccountPath, flickrApiAccountPath } from '@/lib/flickrAccount';
-import type { ContactListItem, CrawlType, CrawlTypeState, FlickrAccount, PageProps, PaginatedMeta } from '@/types';
+import type {
+    ContactAnnotationPayload,
+    ContactListItem,
+    CrawlType,
+    CrawlTypeState,
+    FlickrAccount,
+    PageProps,
+    PaginatedMeta,
+} from '@/types';
 
 interface Props extends PageProps {
     account: FlickrAccount;
@@ -32,6 +43,8 @@ interface Props extends PageProps {
         search: string;
         sort: string;
         direction: 'asc' | 'desc';
+        starred_only?: boolean;
+        view?: ContactViewMode;
     };
 }
 
@@ -66,6 +79,8 @@ function isContactSelectable(contact: ContactListItem): boolean {
 export default function ContactsIndex({ account, contacts: initialContacts, meta, filters }: Props) {
     const [draft, setDraft] = useState(filters.search);
     const [contacts, setContacts] = useState(initialContacts);
+    const viewMode: ContactViewMode = filters.view === 'graph' ? 'graph' : 'table';
+    const starredOnly = filters.starred_only ?? false;
 
     useEffect(() => {
         setContacts(initialContacts);
@@ -77,31 +92,34 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
 
     const hasActiveSearch = filters.search.trim().length > 0;
 
+    const navigateWithFilters = useCallback(
+        (overrides: Partial<{ search: string; sort: string; direction: 'asc' | 'desc'; starred_only: boolean; view: ContactViewMode; page?: number }>) => {
+            router.get(
+                flickrAccountPath(account.public_id, '/contacts'),
+                {
+                    search: (overrides.search ?? filters.search) || undefined,
+                    sort: overrides.sort ?? filters.sort,
+                    direction: overrides.direction ?? filters.direction,
+                    starred_only: (overrides.starred_only ?? starredOnly) || undefined,
+                    view: (overrides.view ?? viewMode) === 'table' ? undefined : overrides.view ?? viewMode,
+                    page: overrides.page && overrides.page > 1 ? overrides.page : undefined,
+                },
+                { preserveScroll: true, replace: true },
+            );
+        },
+        [account.public_id, filters.search, filters.sort, filters.direction, starredOnly, viewMode],
+    );
+
     const applySearch = useCallback(() => {
-        router.get(
-            flickrAccountPath(account.public_id, '/contacts'),
-            {
-                search: draft || undefined,
-                sort: filters.sort,
-                direction: filters.direction,
-            },
-            { preserveScroll: true, replace: true },
-        );
-    }, [account.public_id, draft, filters.sort, filters.direction]);
+        navigateWithFilters({ search: draft, page: 1 });
+    }, [draft, navigateWithFilters]);
 
     const clearSearch = useCallback(() => {
         setDraft('');
-        router.get(
-            flickrAccountPath(account.public_id, '/contacts'),
-            {
-                sort: filters.sort,
-                direction: filters.direction,
-            },
-            { preserveScroll: true, replace: true },
-        );
-    }, [account.public_id, filters.sort, filters.direction]);
+        navigateWithFilters({ search: '', page: 1 });
+    }, [navigateWithFilters]);
 
-    const selectionClearKey = `${filters.search}|${filters.sort}|${filters.direction}|${meta.current_page}`;
+    const selectionClearKey = `${filters.search}|${filters.sort}|${filters.direction}|${starredOnly}|${viewMode}|${meta.current_page}`;
 
     const selection = useTableSelection({
         rowKey: (contact) => contact.nsid,
@@ -130,13 +148,13 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
         const controller = new AbortController();
 
         const poll = () => {
-            void apiGet<{ contacts: ContactListItem[] }>(
+            void apiGet<{ data: { contacts: ContactListItem[] } }>(
                 flickrApiAccountPath(account.public_id, '/contacts/progress'),
                 { params: { nsids: contactNsids }, signal: controller.signal },
             )
                 .then((data) => {
                     setContacts((current) => {
-                        const updates = new Map(data.contacts.map((contact) => [contact.nsid, contact]));
+                        const updates = new Map(data.data.contacts.map((contact) => [contact.nsid, contact]));
 
                         return current.map((contact) => updates.get(contact.nsid) ?? contact);
                     });
@@ -205,29 +223,30 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
     );
 
     const goToPage = (page: number) => {
-        router.get(
-            flickrAccountPath(account.public_id, '/contacts'),
-            {
-                search: filters.search || undefined,
-                sort: filters.sort,
-                direction: filters.direction,
-                page: page > 1 ? page : undefined,
-            },
-            { preserveScroll: true },
-        );
+        navigateWithFilters({ page });
     };
 
     const handleSortChange = (key: string, direction: 'asc' | 'desc') => {
-        router.get(
-            flickrAccountPath(account.public_id, '/contacts'),
-            {
-                search: filters.search || undefined,
-                sort: key,
-                direction,
-            },
-            { preserveScroll: true },
-        );
+        navigateWithFilters({ sort: key, direction, page: 1 });
     };
+
+    const handleAnnotationUpdated = useCallback((contactNsid: string, payload: ContactAnnotationPayload) => {
+        setContacts((current) =>
+            current.map((contact) =>
+                contact.nsid === contactNsid
+                    ? {
+                          ...contact,
+                          starred: payload.starred,
+                          note: payload.note,
+                          note_preview:
+                              payload.note && payload.note.length > 80
+                                  ? `${payload.note.slice(0, 77)}...`
+                                  : payload.note,
+                      }
+                    : contact,
+            ),
+        );
+    }, []);
 
     const catalogPaths: Record<string, string> = {
         photos: '/photos',
@@ -240,86 +259,143 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
         <AppLayout>
             <Head title={`Contacts — ${account.username ?? account.nsid}`} />
 
-            <div className="space-y-6">
-                <PageHeading
-                    breadcrumbs={<Breadcrumbs items={flickrAccountPageCrumbs(account)} />}
+            {viewMode === 'graph' ? (
+                <ContactGraphShell
+                    accountPublicId={account.public_id}
+                    rootNsid={account.nsid}
+                    accountLabel={accountLabel(account)}
+                    onExit={() => navigateWithFilters({ view: 'table' })}
+                />
+            ) : null}
+
+            {viewMode === 'table' ? (
+            <PageShell>
+                <PageShellIdentity
+                    breadcrumbs={[...flickrAccountPageCrumbs(account), { label: 'Contacts' }]}
                     title="Contacts"
                     subtitle={`${meta.total} contacts linked to this account.`}
                 />
 
-                <ContactsSearchFilter
-                    accountPublicId={account.public_id}
-                    value={draft}
-                    onChange={setDraft}
-                    onSubmit={applySearch}
-                    onClear={hasActiveSearch ? clearSearch : undefined}
+                <PageShellControlBar
+                    filters={
+                        <ContactsSearchFilter
+                            accountPublicId={account.public_id}
+                            value={draft}
+                            onChange={setDraft}
+                            onSubmit={applySearch}
+                            onClear={hasActiveSearch ? clearSearch : undefined}
+                        />
+                    }
+                    actions={
+                        <div className="flex flex-wrap items-center gap-3">
+                            <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                                <input
+                                    type="checkbox"
+                                    checked={starredOnly}
+                                    onChange={(event) =>
+                                        navigateWithFilters({ starred_only: event.target.checked, page: 1 })
+                                    }
+                                    className="rounded border-slate-300 text-cyan-700 focus:ring-cyan-600"
+                                />
+                                Starred only
+                            </label>
+                            <ContactViewModeToggle
+                                value={viewMode}
+                                onChange={(mode) => navigateWithFilters({ view: mode, page: 1 })}
+                            />
+                        </div>
+                    }
                 />
 
+                <PageShellCanvas className="space-y-6" variant="plain">
                 <DataTable
-                    columns={[
-                        {
-                            key: 'nsid',
-                            label: 'NSID',
-                            sortable: true,
-                            render: (contact) => (
-                                <ContactNsidLinks
-                                    nsid={contact.nsid}
-                                    accountPublicId={account.public_id}
-                                    username={contact.username}
-                                    realname={contact.realname}
-                                />
-                            ),
-                        },
-                        ...CONTACT_CATALOG_COLUMNS.map((column) => ({
-                            key: column.key,
-                            label: column.label,
-                            sortable: true,
-                            render: (contact: ContactListItem) => (
-                                <CountLink
-                                    href={catalogOwnerUrl(catalogPaths[column.key] ?? '/photos', contact.nsid)}
-                                    count={contact[column.countKey]}
-                                    state={contact.crawl_state?.[column.key]}
-                                />
-                            ),
-                        })),
-                        {
-                            key: 'downloads_count',
-                            label: 'Downloads',
-                            sortable: true,
-                            render: (contact) => (
-                                <ContactDownloadCell
-                                    count={contact.downloads_count}
-                                    failedCount={contact.downloads_failed_count}
-                                    state={contact.download_state}
-                                />
-                            ),
-                        },
-                    ]}
-                    data={contacts}
-                    rowKey={(contact) => contact.nsid}
-                    sortKey={filters.sort}
-                    sortDirection={filters.direction}
-                    onSortChange={handleSortChange}
-                    emptyMessage={
-                        filters.search
-                            ? 'No contacts match your search.'
-                            : 'No contacts yet. Run a contacts crawl first.'
-                    }
-                    actionsColumn={(contact) => (
-                        <CrawlActionBar
-                            scope="contact"
-                            accountPublicId={account.public_id}
-                            contactNsid={contact.nsid}
-                            typeStates={contact.crawl_state ?? {}}
-                        />
-                    )}
-                    meta={meta}
-                    onPageChange={goToPage}
-                    selection={selection.tableSelection}
-                    bulkActions={bulkActions}
-                    onBulkClear={selection.clear}
-                />
-            </div>
+                        columns={[
+                            {
+                                key: 'starred',
+                                label: '',
+                                render: (contact) => (
+                                    <ContactAnnotationActions
+                                        accountPublicId={account.public_id}
+                                        contactNsid={contact.nsid}
+                                        starred={contact.starred ?? false}
+                                        note={contact.note ?? null}
+                                        onUpdated={(payload) => handleAnnotationUpdated(contact.nsid, payload)}
+                                    />
+                                ),
+                            },
+                            {
+                                key: 'nsid',
+                                label: 'NSID',
+                                sortable: true,
+                                render: (contact) => (
+                                    <div className="space-y-1">
+                                        <ContactNsidLinks
+                                            nsid={contact.nsid}
+                                            accountPublicId={account.public_id}
+                                            username={contact.username}
+                                            realname={contact.realname}
+                                        />
+                                        {contact.note_preview ? (
+                                            <p className="max-w-xs truncate text-xs text-slate-500">{contact.note_preview}</p>
+                                        ) : null}
+                                    </div>
+                                ),
+                            },
+                            ...CONTACT_CATALOG_COLUMNS.map((column) => ({
+                                key: column.key,
+                                label: column.label,
+                                sortable: true,
+                                render: (contact: ContactListItem) => (
+                                    <CountLink
+                                        href={catalogOwnerUrl(catalogPaths[column.key] ?? '/photos', contact.nsid)}
+                                        count={contact[column.countKey]}
+                                        state={contact.crawl_state?.[column.key]}
+                                    />
+                                ),
+                            })),
+                            {
+                                key: 'downloads_count',
+                                label: 'Downloads',
+                                sortable: true,
+                                render: (contact) => (
+                                    <ContactDownloadCell
+                                        count={contact.downloads_count}
+                                        failedCount={contact.downloads_failed_count}
+                                        state={contact.download_state}
+                                    />
+                                ),
+                            },
+                        ]}
+                        data={contacts}
+                        rowKey={(contact) => contact.nsid}
+                        sortKey={filters.sort}
+                        sortDirection={filters.direction}
+                        onSortChange={handleSortChange}
+                        emptyMessage={
+                            starredOnly
+                                ? 'No starred contacts yet.'
+                                : filters.search
+                                  ? 'No contacts match your search.'
+                                  : 'No contacts yet. Run a contacts crawl first.'
+                        }
+                        actionsColumn={(contact) => (
+                            <CrawlActionBar
+                                scope="contact"
+                                accountPublicId={account.public_id}
+                                contactNsid={contact.nsid}
+                                subjectLabel={crawlSubjectForContact(contact)}
+                                typeStates={contact.crawl_state ?? {}}
+                            />
+                        )}
+                        meta={meta}
+                        onPageChange={goToPage}
+                        selection={selection.tableSelection}
+                        bulkActions={bulkActions}
+                        onBulkClear={selection.clear}
+                    />
+                </PageShellCanvas>
+            </PageShell>
+            ) : null}
         </AppLayout>
     );
 }

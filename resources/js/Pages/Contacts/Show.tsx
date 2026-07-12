@@ -1,14 +1,14 @@
 import { Head } from '@inertiajs/react';
 
 import ActionBar from '@/Components/ActionBar';
-import Breadcrumbs from '@/Components/Breadcrumbs';
 import Card from '@/Components/Card';
 import CatalogStatCard from '@/Components/CatalogStatCard';
 import ContactSwitcher from '@/Components/ContactSwitcher';
 import CrawlActionBar from '@/Components/CrawlActionBar';
-import PageHeading from '@/Components/PageHeading';
+import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/layout/page-shell';
 import AppLayout from '@/Layouts/AppLayout';
 import { flickrContactShowCrumbs } from '@/lib/breadcrumbs';
+import { crawlSubjectForContact } from '@/lib/crawlSubject';
 import type { Contact, ContactCatalogStats, ContactCrawlState, FlickrAccount, PageProps } from '@/types';
 
 interface Props extends PageProps {
@@ -55,14 +55,10 @@ export default function ContactsShow({ account, contact, catalog_stats, crawl_st
         <AppLayout>
             <Head title={displayName} />
 
-            <div className="space-y-6">
-                <PageHeading
-                    breadcrumbs={
-                        <Breadcrumbs
-                            items={flickrContactShowCrumbs(account, contact.username ?? contact.nsid)}
-                        />
-                    }
-                    title={<span className="font-mono">{contact.nsid}</span>}
+            <PageShell>
+                <PageShellIdentity
+                    breadcrumbs={flickrContactShowCrumbs(account, contact.username ?? contact.nsid)}
+                    title={contact.nsid}
                     subtitle={`${contact.realname || contact.username || contact.nsid}${
                         contact.username ? ` · @${contact.username}` : ''
                     }`}
@@ -77,12 +73,15 @@ export default function ContactsShow({ account, contact, catalog_stats, crawl_st
                                 scope="contact"
                                 accountPublicId={account.public_id}
                                 contactNsid={contact.nsid}
+                                subjectLabel={crawlSubjectForContact(contact)}
                                 typeStates={crawl_state}
                                 size="md"
                             />
                         </ActionBar>
                     }
                 />
+
+                <PageShellCanvas className="space-y-6" variant="plain">
 
                 <Card title="Detail">
                     <dl className="grid gap-3 text-sm sm:grid-cols-2">
@@ -131,7 +130,8 @@ export default function ContactsShow({ account, contact, catalog_stats, crawl_st
                         sublines={<span>In API: {formatInApi(catalog_stats.galleries.in_api)}</span>}
                     />
                 </div>
-            </div>
+                </PageShellCanvas>
+            </PageShell>
         </AppLayout>
     );
 }

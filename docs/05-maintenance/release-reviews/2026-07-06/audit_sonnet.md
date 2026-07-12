@@ -375,7 +375,7 @@ The `StoredFile`, `TransferItem`, and `StorageUpload` models all use status stri
 - `ContactDownloadCountsService`: `'failed'`, `'completed'`
 - `TransferBatchReconciler`: `'completed'`, `'failed'`, `'running'`
 
-There is already an `App\Enums\PhotoTransferExecutionOutcome` enum in the codebase — but it is only used for job return values, not for the actual status strings written to the database.
+There is already an `Modules\Transfer\Enums\PhotoTransferExecutionOutcome` enum in the codebase — but it is only used for job return values, not for the actual status strings written to the database.
 
 **How to fix**: Create PHP 8.1 backed string enums:
 

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Models\StoredFile;
-use App\Models\TransferBatch;
-use App\Services\Flickr\ContactDownloadCountsService;
+use Modules\Contacts\Services\ContactDownloadCountsService;
+use Modules\Transfer\Models\StoredFile;
+use Modules\Transfer\Models\TransferBatch;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;

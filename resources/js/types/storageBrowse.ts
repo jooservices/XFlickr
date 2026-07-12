@@ -6,8 +6,10 @@ import type {
 } from '@/types';
 
 export interface BrowseResponse {
-    albums: RemoteStorageAlbum[];
-    items: RemoteStorageItem[];
+    data: {
+        albums: RemoteStorageAlbum[];
+        items: RemoteStorageItem[];
+    };
     meta: StorageBrowseMeta;
     needs_reauthorization?: boolean;
     reauthorize_url?: string;

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Support;
 
-use App\Support\SpiderRuntimeConfig;
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
+use Modules\Spider\Support\SpiderRuntimeConfig;
 use Tests\TestCase;
 
 final class SpiderRuntimeConfigTest extends TestCase

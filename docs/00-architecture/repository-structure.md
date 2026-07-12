@@ -4,49 +4,57 @@ Architecture diagrams (flows, queues, OAuth): [Architecture diagrams](architectu
 
 ```text
 XFlickr/
-├── app/
-│   ├── Enums/              # StorageDriver, crawl types
+├── app/                        # Host bootstrap only
 │   ├── Http/
-│   │   ├── Controllers/    # Web + API controllers (thin)
-│   │   └── Requests/       # FormRequest validation
-│   ├── Jobs/               # Queue jobs (delegate to Services)
-│   ├── Models/             # Eloquent models (app-owned tables)
-│   ├── Providers/          # Service providers
-│   ├── Repositories/       # Persistence layer
-│   │   └── Crawler/        # Read models for xflickr-crawler tables
-│   └── Services/           # Business logic
-│       ├── Catalog/
-│       ├── Crawl/
-│       ├── Flickr/
-│       ├── Storage/
-│       └── Transfer/
-├── config/                 # Laravel + horizon + package configs
-├── database/migrations/    # App-owned MySQL migrations
-├── docs/                   # Numbered documentation (00–05)
-├── ai/skills/              # Canonical AI skills
+│   │   ├── Controllers/        # Empty base Controller
+│   │   ├── Middleware/
+│   │   └── Requests/           # Shared FormRequest base + cross-module traits
+│   ├── Models/                 # User only
+│   ├── Providers/              # App / Horizon / Repository / Event
+│   ├── Repositories/Crawler/   # Shared crawler table reads
+│   └── Support/                # Shared host helpers (config catalog, query sort, …)
+├── Modules/                    # Business domains (nwidart/laravel-modules)
+│   ├── Auth/
+│   ├── Settings/
+│   ├── Operations/
+│   ├── Flickr/
+│   ├── Contacts/
+│   ├── Catalog/
+│   ├── Spider/
+│   ├── Transfer/
+│   └── Storage/
+│       # Each module: Http/, Services/, Repositories/, Models/,
+│       # Jobs/, routes/{web,api}.php, optional Console/, Listeners/
+├── config/
+├── database/migrations/        # App-owned MySQL migrations
+├── docs/
+├── ai/skills/
 ├── resources/js/
-│   ├── Components/         # Shared React components
-│   ├── Pages/              # Inertia page components
-│   ├── hooks/              # React hooks
-│   └── lib/                # Utilities
+│   ├── Components/             # ui/, macros/, layout/page-shell
+│   ├── Pages/                  # Inertia pages (AppShell + PageShell)
+│   ├── hooks/
+│   └── lib/                    # apiClient, apiPaths, toast
 ├── routes/
-│   ├── web.php             # Inertia routes
-│   ├── api.php             # JSON API routes
-│   └── console.php         # Scheduler
-├── scripts/                # Docker and deploy scripts
-└── tests/                  # PHPUnit feature + unit tests
+│   ├── web.php                 # Stub — modules own web routes
+│   ├── api.php                 # Stub — modules own /api/v1 routes
+│   └── console.php             # Scheduler
+├── scripts/
+└── tests/                      # PHPUnit + Vitest + Playwright smokes
 ```
 
-## Controller grouping
+## Module ownership (controllers)
 
-| Area | Controllers |
+| Area | Module |
 |---|---|
-| Flickr OAuth | `FlickrAuthController`, `FlickrAccountController`, `FlickrContactController` |
-| Catalog | `CatalogController`, `Api\CatalogController` |
-| Transfers | `PhotoDownloadController`, `PhotoUploadController` |
-| Storage | `StorageAuthController`, `StorageBrowseController`, `Api/StorageBrowseController` |
-| Settings | `SettingsController`, `RuntimeConfigController`, profile controllers |
-| Monitoring | `DashboardController`, `CrawlOperationsController`, API status controllers |
+| Login / logout / register / password reset / optional admin seed / activate CLI | Auth (`AuthService`, `UserService`, `AdminUserSeeder`) |
+| Flickr OAuth / accounts / crawl / rate-limit / token-health | Flickr |
+| Contacts / annotations / contact-graph / full-pass | Contacts |
+| Catalog photosets / photos / galleries / favorites | Catalog |
+| Spider start/stop / status | Spider |
+| Download / upload / stored-files / transfer progress | Transfer |
+| Storage OAuth / browse / sync / delete | Storage |
+| Settings / runtime config / app profiles | Settings |
+| Dashboard / operations snapshot/stream | Operations |
 
 ## Frontend pages
 

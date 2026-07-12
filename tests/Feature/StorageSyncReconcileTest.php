@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Enums\StorageDriver;
-use App\Models\StorageAccount;
-use App\Models\StorageRemoteItem;
-use App\Models\StorageUpload;
-use App\Models\StoredFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Modules\Storage\Enums\StorageDriver;
+use Modules\Storage\Models\StorageAccount;
+use Modules\Storage\Models\StorageRemoteItem;
+use Modules\Storage\Models\StorageUpload;
+use Modules\Transfer\Models\StoredFile;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
@@ -75,7 +75,7 @@ final class StorageSyncReconcileTest extends TestCase
             ]),
         ]);
 
-        $response = $this->postJson("/api/storage/google-photos/sync?account_id={$account->id}", [
+        $response = $this->postJson("/api/v1/storage/google-photos/sync-runs?account_id={$account->id}", [
             'reconcile' => true,
             'max_batches' => 10,
         ]);
@@ -131,14 +131,14 @@ final class StorageSyncReconcileTest extends TestCase
                 ]),
         ]);
 
-        $first = $this->postJson("/api/storage/google-photos/sync?account_id={$account->id}", [
+        $first = $this->postJson("/api/v1/storage/google-photos/sync-runs?account_id={$account->id}", [
             'max_batches' => 1,
         ]);
         $first->assertOk();
         $first->assertJsonPath('data.items_complete', false);
         $first->assertJsonPath('data.has_more', true);
 
-        $second = $this->postJson("/api/storage/google-photos/sync?account_id={$account->id}", [
+        $second = $this->postJson("/api/v1/storage/google-photos/sync-runs?account_id={$account->id}", [
             'max_batches' => 1,
         ]);
         $second->assertOk();
@@ -188,7 +188,7 @@ final class StorageSyncReconcileTest extends TestCase
                 ]),
         ]);
 
-        $response = $this->postJson("/api/storage/google-photos/sync?account_id={$account->id}", [
+        $response = $this->postJson("/api/v1/storage/google-photos/sync-runs?account_id={$account->id}", [
             'max_batches' => 2,
         ]);
 
@@ -213,7 +213,7 @@ final class StorageSyncReconcileTest extends TestCase
             },
         ]);
 
-        $response = $this->postJson("/api/storage/google-photos/sync?account_id={$account->id}", [
+        $response = $this->postJson("/api/v1/storage/google-photos/sync-runs?account_id={$account->id}", [
             'max_batches' => 1,
         ]);
 
@@ -250,7 +250,7 @@ final class StorageSyncReconcileTest extends TestCase
             ]),
         ]);
 
-        $response = $this->postJson("/api/storage/google-photos/sync?account_id={$account->id}", [
+        $response = $this->postJson("/api/v1/storage/google-photos/sync-runs?account_id={$account->id}", [
             'max_batches' => 3,
         ]);
 

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Services\Flickr\FlickrPhotoSizeResolver;
 use JOOservices\XFlickrCrawler\Models\Photo;
+use Modules\Flickr\Services\FlickrPhotoSizeResolver;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;

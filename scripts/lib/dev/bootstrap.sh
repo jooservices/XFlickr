@@ -6,7 +6,7 @@ set -o pipefail
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/compose-dev.sh"
 
-ADMIN_SEEDER='Database\\Seeders\\AdminUserSeeder'
+ADMIN_SEEDER='Modules\\Auth\\Database\\Seeders\\AdminUserSeeder'
 
 xf_dev_ensure_env() {
     local root="$1"
@@ -16,7 +16,7 @@ xf_dev_ensure_env() {
         echo "Created .env from .env.example"
     fi
 
-    chmod +x "${root}/docker/entrypoint.sh" "${root}/docker/test-entrypoint.sh" "${root}/scripts/docker-dev.sh"
+    chmod +x "${root}/docker/entrypoint.sh" "${root}/docker/test-entrypoint.sh" "${root}/scripts/docker-dev.sh" "${root}/scripts/docker-npm-sync.sh"
 }
 
 xf_dev_core_services() {
@@ -37,7 +37,7 @@ xf_dev_prepare_deps() {
     xf_dev_compose exec -T app composer install --no-interaction --prefer-dist
 
     echo "==> Installing frontend dependencies and building assets in app container"
-    xf_dev_compose exec -T app npm ci
+    xf_dev_compose exec -T app sh scripts/docker-npm-sync.sh
     xf_dev_compose exec -T app npm run build
     xf_dev_compose exec -T app rm -f public/hot
 }

@@ -2,6 +2,7 @@ import { ChevronDown, Download, Heart, Images, Layers, LayoutGrid, Play, Upload,
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import CrawlActionMenuHeader from '@/Components/CrawlActionMenuHeader';
 import { cn } from '@/lib/cn';
 import {
     CONTACTS_DISCOVERY_CRAWL_OPTION,
@@ -10,7 +11,10 @@ import {
     UPLOAD_OPTION,
     type CrawlTypeOption,
 } from '@/lib/contactCatalog';
+import type { CrawlSubjectLabel } from '@/lib/crawlSubject';
 import type { CrawlType, CrawlTypeState } from '@/types';
+
+export type { CrawlSubjectLabel };
 
 interface CrawlDropdownProps {
     onCrawl?: (types: CrawlType[]) => void;
@@ -20,6 +24,7 @@ interface CrawlDropdownProps {
     includeContactsDiscovery?: boolean;
     showCrawlOptions?: boolean;
     typeStates?: Partial<Record<CrawlType, CrawlTypeState>>;
+    subjectLabel?: CrawlSubjectLabel;
     label?: string;
     size?: 'sm' | 'md';
     variant?: 'default' | 'primary';
@@ -33,6 +38,34 @@ const crawlIcons: Record<CrawlType, typeof Users> = {
     galleries: LayoutGrid,
 };
 
+function crawlFetchedLabel(state: CrawlTypeState | undefined): string | null {
+    if (!state?.crawled || state.processing) {
+        return null;
+    }
+
+    if (state.fetched === 0) {
+        return 'Fetched · 0 in catalog';
+    }
+
+    return 'Already fetched · refetch';
+}
+
+function crawlStatusClass(state: CrawlTypeState | undefined, disabled: boolean): string {
+    if (disabled || state?.processing) {
+        return 'cursor-not-allowed opacity-60';
+    }
+
+    if (state?.crawled && state.fetched === 0) {
+        return 'text-amber-800 hover:bg-amber-50';
+    }
+
+    if (state?.crawled) {
+        return 'text-emerald-800 hover:bg-emerald-50';
+    }
+
+    return 'text-slate-700 hover:bg-slate-50';
+}
+
 export default function CrawlDropdown({
     onCrawl,
     onDownload,
@@ -41,6 +74,7 @@ export default function CrawlDropdown({
     includeContactsDiscovery = false,
     showCrawlOptions = true,
     typeStates = {},
+    subjectLabel,
     label = 'Crawl',
     size = 'sm',
     variant = 'default',
@@ -55,6 +89,7 @@ export default function CrawlDropdown({
     const availableTypes = allTypes.filter((type) => !typeStates[type]?.processing);
     const allProcessing = options.length > 0 && availableTypes.length === 0;
     const allCrawled = options.every((option) => typeStates[option.value]?.crawled);
+    const allFetchedEmpty = allCrawled && options.every((option) => (typeStates[option.value]?.fetched ?? 0) === 0);
 
     const updateMenuPosition = () => {
         const button = buttonRef.current;
@@ -87,7 +122,7 @@ export default function CrawlDropdown({
         }
 
         updateMenuPosition();
-    }, [open, onDownload, onUpload, options.length, includeContactsDiscovery, showCrawlOptions]);
+    }, [open, onDownload, onUpload, options.length, includeContactsDiscovery, showCrawlOptions, subjectLabel?.nsid]);
 
     useEffect(() => {
         if (!open) {
@@ -158,7 +193,7 @@ export default function CrawlDropdown({
         const Icon = iconOverride ?? crawlIcons[option.value];
         const state = typeStates[option.value];
         const isProcessing = state?.processing ?? false;
-        const isCrawled = state?.crawled ?? false;
+        const fetchedLabel = crawlFetchedLabel(state);
 
         return (
             <button
@@ -168,9 +203,7 @@ export default function CrawlDropdown({
                 onClick={onClick}
                 className={cn(
                     'flex w-full gap-2 px-3 py-2 text-left',
-                    (disabled || isProcessing) && 'cursor-not-allowed opacity-60',
-                    !disabled && !isProcessing && isCrawled && 'text-emerald-800 hover:bg-emerald-50',
-                    !disabled && !isProcessing && !isCrawled && 'text-slate-700 hover:bg-slate-50',
+                    crawlStatusClass(state, disabled),
                     extraClass,
                 )}
             >
@@ -180,8 +213,15 @@ export default function CrawlDropdown({
                     <span className="block text-xs text-slate-500">{option.description}</span>
                     {isProcessing ? (
                         <span className="mt-0.5 block text-xs text-slate-400">Processing…</span>
-                    ) : isCrawled ? (
-                        <span className="mt-0.5 block text-xs text-emerald-600">Already fetched · refetch</span>
+                    ) : fetchedLabel ? (
+                        <span
+                            className={cn(
+                                'mt-0.5 block text-xs',
+                                state?.fetched === 0 ? 'text-amber-600' : 'text-emerald-600',
+                            )}
+                        >
+                            {fetchedLabel}
+                        </span>
                     ) : null}
                 </span>
             </button>
@@ -196,8 +236,10 @@ export default function CrawlDropdown({
                     ? { position: 'fixed', top: menuPosition.top, left: menuPosition.left }
                     : { position: 'fixed', top: -9999, left: -9999, visibility: 'hidden' as const }
             }
-            className="z-50 min-w-52 overflow-hidden rounded-md border border-slate-200 bg-white py-1 shadow-lg"
+            className="z-50 min-w-52 overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg"
         >
+            {subjectLabel ? <CrawlActionMenuHeader subject={subjectLabel} /> : null}
+            <div className="py-1">
             {showCrawlOptions && includeContactsDiscovery && !exclude.includes('contacts') && (
                 <>
                     {renderMenuItem(CONTACTS_DISCOVERY_CRAWL_OPTION, () => selectCrawl(['contacts']))}
@@ -213,9 +255,11 @@ export default function CrawlDropdown({
                         'flex w-full gap-2 px-3 py-2 text-left',
                         allProcessing
                             ? 'cursor-not-allowed opacity-60'
-                            : allCrawled
-                              ? 'text-emerald-800 hover:bg-emerald-50'
-                              : 'text-slate-900 hover:bg-slate-50',
+                            : allCrawled && allFetchedEmpty
+                              ? 'text-amber-800 hover:bg-amber-50'
+                              : allCrawled
+                                ? 'text-emerald-800 hover:bg-emerald-50'
+                                : 'text-slate-900 hover:bg-slate-50',
                     )}
                 >
                     <Layers className="mt-0.5 size-4 shrink-0 text-slate-400" />
@@ -223,7 +267,14 @@ export default function CrawlDropdown({
                         <span className="block text-sm font-medium">All</span>
                         <span className="block text-xs text-slate-500">Run all catalog crawls</span>
                         {!allProcessing && allCrawled ? (
-                            <span className="mt-0.5 block text-xs text-emerald-600">Already fetched · refetch</span>
+                            <span
+                                className={cn(
+                                    'mt-0.5 block text-xs',
+                                    allFetchedEmpty ? 'text-amber-600' : 'text-emerald-600',
+                                )}
+                            >
+                                {allFetchedEmpty ? 'Fetched · 0 in catalog' : 'Already fetched · refetch'}
+                            </span>
                         ) : null}
                     </span>
                 </button>
@@ -255,6 +306,7 @@ export default function CrawlDropdown({
                     )}
                 </>
             )}
+            </div>
         </div>
     ) : null;
 

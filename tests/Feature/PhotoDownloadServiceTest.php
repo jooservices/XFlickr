@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Jobs\DownloadPhotoJob;
-use App\Jobs\FanOutTransferBatchJob;
-use App\Models\TransferBatch;
-use App\Services\Flickr\PhotoDownloadService;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use JOOservices\XFlickrCrawler\Models\Gallery;
 use JOOservices\XFlickrCrawler\Models\Photo;
 use JOOservices\XFlickrCrawler\Models\Photoset;
 use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
+use Modules\Transfer\Jobs\DownloadPhotoJob;
+use Modules\Transfer\Jobs\FanOutTransferBatchJob;
+use Modules\Transfer\Models\TransferBatch;
+use Modules\Transfer\Services\PhotoDownloadService;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;

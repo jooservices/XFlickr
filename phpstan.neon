@@ -6,4 +6,17 @@ parameters:
     level: 6
     paths:
         - app
+        - Modules/Auth
+        - Modules/Settings
+        - Modules/Operations
+        - Modules/Storage
+        - Modules/Flickr
+        - Modules/Contacts
+        - Modules/Catalog
+        - Modules/Spider
+        - Modules/Transfer
+    excludePaths:
+        - Modules/*/resources/*
+        - Modules/*/database/*
+        - Modules/*/tests/*
     treatPhpDocTypesAsCertain: false
