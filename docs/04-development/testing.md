@@ -80,7 +80,9 @@ $connection = $this->createFlickrConnection(['connection_key' => 'me@N01']);
 $response->assertInertia(fn ($page) => $page->where('accounts.0.nsid', 'me@N01'));
 ```
 
-- Shared JSON fixtures: `tests/Fixtures/` loaded via `TestCase::loadFixture()`.
+- Shared JSON fixtures: `tests/Fixtures/` loaded via host `TestCase::loadFixture()`.
+- Module fixtures: each module TestCase exposes `loadModuleFixture()` / `loadJsonFixture()` reading `Modules/{Name}/tests/Fixtures/` (named to avoid clashing with host `loadFixture()` which returns decoded JSON arrays). Prefer fixture files for non-trivial 3rd-party payloads (≥ ~15 lines or nested envelopes the parser exercises). Tiny 3–4-key stubs may stay inline.
+- Mock **only** 3rd-party wire (Http::fake, Guzzle MockHandler into SDKs, FakeFlickrTransport, Socialite). Do not Mockery own services/repositories — use real collaborators or sanctioned fakes (in-memory Flysystem via Storage `bindInMemoryDisk()`, crawler `StubFlickrPermitAcquirer`).
 - Use `Event::fake()` for domain event assertions.
 - Mock external APIs (Flickr, cloud storage) — do not call real services in tests.
 
@@ -89,8 +91,11 @@ $response->assertInertia(fn ($page) => $page->where('accounts.0.nsid', 'me@N01')
 ```bash
 npm run typecheck
 npm run test          # Vitest component smoke tests
+npm run test:coverage # Vitest with lib/ + hooks/ coverage thresholds
 npm run test:e2e      # Playwright (requires dev stack + built assets)
 ```
+
+Frontend coverage is enforced on a curated pure-logic allowlist under `resources/js/lib/**` and `resources/js/hooks/**` (see `vitest.config.ts` `coverage.include`, ≥90% lines via `npm run test:coverage`). Integration-heavy hooks (storage browse, operations stream, graph canvas) and Components/Pages sit outside that floor — covered by targeted component tests and Playwright smokes. Expand the allowlist as more unit tests land.
 
 ### Playwright smoke (T2)
 
