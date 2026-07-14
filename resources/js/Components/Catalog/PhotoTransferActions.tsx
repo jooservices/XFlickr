@@ -7,14 +7,22 @@ import { flickrAccountPath } from '@/lib/flickrAccount';
 interface PhotoTransferActionsProps {
     accountPublicId: string;
     flickrPhotoId: string;
+    onDownloadQueued?: (flickrPhotoId: string) => void;
 }
 
-export default function PhotoTransferActions({ accountPublicId, flickrPhotoId }: PhotoTransferActionsProps) {
+export default function PhotoTransferActions({
+    accountPublicId,
+    flickrPhotoId,
+    onDownloadQueued,
+}: PhotoTransferActionsProps) {
     const startDownload = () => {
         router.post(
             flickrAccountPath(accountPublicId, '/download'),
             { flickr_photo_id: flickrPhotoId },
-            { preserveScroll: true },
+            {
+                preserveScroll: true,
+                onSuccess: () => onDownloadQueued?.(flickrPhotoId),
+            },
         );
     };
 

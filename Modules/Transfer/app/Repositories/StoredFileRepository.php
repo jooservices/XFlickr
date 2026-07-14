@@ -6,6 +6,7 @@ namespace Modules\Transfer\Repositories;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Jooservices\LaravelRepository\Repositories\EloquentRepository;
 use Jooservices\LaravelRepository\Traits\HasCrud;
 use Jooservices\LaravelRepository\Traits\HasFilter;
@@ -101,6 +102,86 @@ final class StoredFileRepository extends EloquentRepository
                 'original_name' => "{$flickrPhotoId}_original",
             ],
         );
+    }
+
+    /**
+     * Ensure original StoredFile rows exist as pending for queued downloads.
+     * Leaves completed and downloading rows unchanged.
+     *
+     * @param  list<array{flickr_photo_id: string, owner_nsid: string}>  $rows
+     */
+    public function ensurePendingOriginals(array $rows): void
+    {
+        if ($rows === []) {
+            return;
+        }
+
+        $byPhotoId = [];
+        foreach ($rows as $row) {
+            $flickrPhotoId = $row['flickr_photo_id'];
+            if ($flickrPhotoId === '') {
+                continue;
+            }
+            $byPhotoId[$flickrPhotoId] = $row;
+        }
+
+        if ($byPhotoId === []) {
+            return;
+        }
+
+        $existing = $this->originalsByFlickrPhotoIds(array_keys($byPhotoId));
+        $toInsert = [];
+        $toRepend = [];
+        $now = now();
+
+        foreach ($byPhotoId as $flickrPhotoId => $row) {
+            $stored = $existing->get($flickrPhotoId);
+
+            if ($stored === null) {
+                $toInsert[] = [
+                    'uuid' => (string) Str::uuid(),
+                    'flickr_photo_id' => $flickrPhotoId,
+                    'owner_nsid' => $row['owner_nsid'],
+                    'variant' => 'original',
+                    'status' => StoredFileStatus::Pending->value,
+                    'original_name' => "{$flickrPhotoId}_original",
+                    'dedup_key' => "flickr:{$flickrPhotoId}:original",
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+
+                continue;
+            }
+
+            if (in_array($stored->status, [
+                StoredFileStatus::Completed->value,
+                StoredFileStatus::Downloading->value,
+                StoredFileStatus::Pending->value,
+            ], true)) {
+                continue;
+            }
+
+            $toRepend[] = $flickrPhotoId;
+        }
+
+        foreach (array_chunk($toInsert, 500) as $chunk) {
+            $this->newQuery()->insertOrIgnore($chunk);
+        }
+
+        if ($toRepend !== []) {
+            $this->newQuery()
+                ->whereIn('flickr_photo_id', $toRepend)
+                ->where('variant', 'original')
+                ->whereNotIn('status', [
+                    StoredFileStatus::Completed->value,
+                    StoredFileStatus::Downloading->value,
+                ])
+                ->update([
+                    'status' => StoredFileStatus::Pending->value,
+                    'error_message' => null,
+                    'updated_at' => $now,
+                ]);
+        }
     }
 
     public function markDownloading(string $flickrPhotoId): void

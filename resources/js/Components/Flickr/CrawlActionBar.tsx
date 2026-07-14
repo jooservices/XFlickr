@@ -21,6 +21,7 @@ export interface CrawlActionBarProps {
     showDownload?: boolean;
     showUpload?: boolean;
     label?: string;
+    onDownloadQueued?: () => void;
 }
 
 export default function CrawlActionBar({
@@ -36,6 +37,7 @@ export default function CrawlActionBar({
     showDownload = true,
     showUpload = true,
     label,
+    onDownloadQueued,
 }: CrawlActionBarProps) {
     const { app } = usePage<PageProps>().props;
     const crawlPaused = app.global_pause ?? false;
@@ -70,7 +72,10 @@ export default function CrawlActionBar({
                   ? { contact_nsid: contactNsid }
                   : {};
 
-        router.post(flickrAccountPath(accountPublicId, '/download'), payload, { preserveScroll: true });
+        router.post(flickrAccountPath(accountPublicId, '/download'), payload, {
+            preserveScroll: true,
+            onSuccess: () => onDownloadQueued?.(),
+        });
     };
 
     const startUpload = () => {

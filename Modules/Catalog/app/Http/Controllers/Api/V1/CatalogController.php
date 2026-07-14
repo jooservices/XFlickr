@@ -11,7 +11,9 @@ use Modules\Catalog\Http\Requests\Api\Catalog\ListFavoritesRequest;
 use Modules\Catalog\Http\Requests\Api\Catalog\ListGalleriesRequest;
 use Modules\Catalog\Http\Requests\Api\Catalog\ListPhotosetsRequest;
 use Modules\Catalog\Http\Requests\Api\Catalog\ListPhotosRequest;
+use Modules\Catalog\Http\Requests\Api\Catalog\PhotoDownloadProgressRequest;
 use Modules\Catalog\Http\Resources\CatalogRowResource;
+use Modules\Catalog\Http\Resources\PhotoDownloadProgressResource;
 use Modules\Catalog\Services\CatalogQueryService;
 
 final class CatalogController extends BaseApiController
@@ -30,6 +32,13 @@ final class CatalogController extends BaseApiController
             $request->perPage(),
             $request->page(),
         ));
+    }
+
+    public function photosProgress(PhotoDownloadProgressRequest $request): JsonResponse
+    {
+        return $this->success(PhotoDownloadProgressResource::make([
+            'photos' => $this->catalog->photoDownloadProgress($request->flickrPhotoIds()),
+        ]));
     }
 
     public function showPhotoset(int $photoset): JsonResponse

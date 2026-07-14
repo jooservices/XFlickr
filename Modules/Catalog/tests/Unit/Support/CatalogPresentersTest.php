@@ -70,6 +70,35 @@ final class CatalogPresentersTest extends TestCase
         $this->assertStringContainsString('/api/v1/stored-files/', (string) $presented[0]['stored_file_view_url']);
     }
 
+    public function test_photo_presenter_download_progress_covers_pending_and_missing(): void
+    {
+        $ownerNsid = FlickrNsid::fake();
+        $photo = Photo::query()->forceCreate(array_merge(PhotoFactory::new()->definition(), [
+            'owner_nsid' => $ownerNsid,
+        ]));
+        $missingId = (string) fake()->unique()->numerify('#########');
+
+        StoredFile::query()->create([
+            'flickr_photo_id' => $photo->flickr_photo_id,
+            'owner_nsid' => $ownerNsid,
+            'variant' => 'original',
+            'status' => StoredFileStatus::Pending->value,
+            'original_name' => $photo->flickr_photo_id.'_original',
+        ]);
+
+        $progress = app(PhotoCatalogPresenter::class)->presentDownloadProgress([
+            $photo->flickr_photo_id,
+            $missingId,
+            '',
+        ]);
+
+        $this->assertCount(2, $progress);
+        $this->assertSame(StoredFileStatus::Pending->value, $progress[0]['download_status']);
+        $this->assertNull($progress[0]['stored_file_view_url']);
+        $this->assertSame('none', $progress[1]['download_status']);
+        $this->assertSame($missingId, $progress[1]['flickr_photo_id']);
+    }
+
     public function test_collection_presenter_uses_raw_payload_primary_photo(): void
     {
         $photoset = Photoset::query()->create([

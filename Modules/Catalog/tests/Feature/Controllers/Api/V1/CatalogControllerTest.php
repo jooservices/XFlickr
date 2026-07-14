@@ -12,6 +12,8 @@ use Modules\Crawler\Models\Favorite;
 use Modules\Crawler\Models\Gallery;
 use Modules\Crawler\Models\Photo;
 use Modules\Crawler\Models\Photoset;
+use Modules\Transfer\Enums\StoredFileStatus;
+use Modules\Transfer\Models\StoredFile;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\Support\FlickrNsid;
@@ -35,6 +37,74 @@ final class CatalogControllerTest extends TestCase
         $response->assertOk();
         $response->assertJsonPath('meta.total', 1);
         $response->assertJsonPath('data.0.flickr_photo_id', $photo->flickr_photo_id);
+    }
+
+    public function test_photos_progress_returns_empty_without_ids(): void
+    {
+        $response = $this->getJson('/api/v1/flickr/catalog/photos/progress');
+
+        $response->assertOk();
+        $response->assertJsonPath('data.photos', []);
+    }
+
+    public function test_photos_progress_returns_download_meta_for_ids(): void
+    {
+        $ownerNsid = FlickrNsid::fake();
+        $pendingPhoto = Photo::query()->forceCreate(array_merge(PhotoFactory::new()->definition(), [
+            'owner_nsid' => $ownerNsid,
+        ]));
+        $completedPhoto = Photo::query()->forceCreate(array_merge(PhotoFactory::new()->definition(), [
+            'owner_nsid' => $ownerNsid,
+        ]));
+        $missingId = (string) fake()->unique()->numerify('#########');
+
+        StoredFile::query()->create([
+            'flickr_photo_id' => $pendingPhoto->flickr_photo_id,
+            'owner_nsid' => $ownerNsid,
+            'variant' => 'original',
+            'status' => StoredFileStatus::Pending->value,
+            'original_name' => $pendingPhoto->flickr_photo_id.'_original',
+        ]);
+
+        $completed = StoredFile::query()->create([
+            'flickr_photo_id' => $completedPhoto->flickr_photo_id,
+            'owner_nsid' => $ownerNsid,
+            'variant' => 'original',
+            'status' => StoredFileStatus::Completed->value,
+            'original_name' => $completedPhoto->flickr_photo_id.'_original.jpg',
+        ]);
+
+        $response = $this->getJson(
+            '/api/v1/flickr/catalog/photos/progress?ids='.implode(',', [
+                $pendingPhoto->flickr_photo_id,
+                $completedPhoto->flickr_photo_id,
+                $missingId,
+            ]),
+        );
+
+        $response->assertOk();
+        $response->assertJsonCount(3, 'data.photos');
+        $response->assertJsonFragment([
+            'flickr_photo_id' => $pendingPhoto->flickr_photo_id,
+            'download_status' => StoredFileStatus::Pending->value,
+            'stored_file_view_url' => null,
+        ]);
+        $response->assertJsonFragment([
+            'flickr_photo_id' => $completedPhoto->flickr_photo_id,
+            'download_status' => StoredFileStatus::Completed->value,
+            'stored_file_uuid' => $completed->uuid,
+        ]);
+        $response->assertJsonFragment([
+            'flickr_photo_id' => $missingId,
+            'download_status' => 'none',
+            'stored_file_uuid' => null,
+            'stored_file_view_url' => null,
+        ]);
+        $this->assertStringContainsString(
+            '/api/v1/stored-files/'.$completed->uuid,
+            (string) collect($response->json('data.photos'))
+                ->firstWhere('flickr_photo_id', $completedPhoto->flickr_photo_id)['stored_file_view_url'],
+        );
     }
 
     public function test_photos_endpoint_falls_back_to_default_sort_for_unknown_column(): void

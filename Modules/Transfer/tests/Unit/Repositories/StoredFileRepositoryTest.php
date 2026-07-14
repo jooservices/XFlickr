@@ -65,6 +65,51 @@ final class StoredFileRepositoryTest extends TestCase
         $this->assertSame('photo-2_original', $second->original_name);
     }
 
+    public function test_ensure_pending_originals_inserts_and_repends_failed(): void
+    {
+        $owner = FlickrNsid::fake();
+        $failedId = (string) fake()->unique()->numerify('#########');
+        $newId = (string) fake()->unique()->numerify('#########');
+        $downloadingId = (string) fake()->unique()->numerify('#########');
+
+        StoredFile::query()->create([
+            'flickr_photo_id' => $failedId,
+            'owner_nsid' => $owner,
+            'variant' => 'original',
+            'status' => StoredFileStatus::Failed->value,
+            'original_name' => "{$failedId}_original",
+            'error_message' => 'boom',
+        ]);
+        StoredFile::query()->create([
+            'flickr_photo_id' => $downloadingId,
+            'owner_nsid' => $owner,
+            'variant' => 'original',
+            'status' => StoredFileStatus::Downloading->value,
+            'original_name' => "{$downloadingId}_original",
+        ]);
+
+        app(StoredFileRepository::class)->ensurePendingOriginals([
+            ['flickr_photo_id' => $failedId, 'owner_nsid' => $owner],
+            ['flickr_photo_id' => $newId, 'owner_nsid' => $owner],
+            ['flickr_photo_id' => $downloadingId, 'owner_nsid' => $owner],
+        ]);
+
+        $this->assertDatabaseHas('stored_files', [
+            'flickr_photo_id' => $newId,
+            'variant' => 'original',
+            'status' => StoredFileStatus::Pending->value,
+        ]);
+        $this->assertDatabaseHas('stored_files', [
+            'flickr_photo_id' => $failedId,
+            'status' => StoredFileStatus::Pending->value,
+            'error_message' => null,
+        ]);
+        $this->assertDatabaseHas('stored_files', [
+            'flickr_photo_id' => $downloadingId,
+            'status' => StoredFileStatus::Downloading->value,
+        ]);
+    }
+
     public function test_completed_original_flickr_photo_ids_and_originals_by_ids(): void
     {
         StoredFile::query()->create([

@@ -13,10 +13,12 @@ import FlickrPhotoIdLinks from '@/Components/Flickr/PhotoIdLinks';
 import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/Layout/page-shell';
 import type { BulkAction } from '@/Components/ui/BulkActionBar';
 import BusyRegion from '@/Components/ui/BusyRegion';
-import Button from '@/Components/ui/Button';
 import DataTable from '@/Components/ui/DataTable';
+import EmptyState from '@/Components/ui/EmptyState';
+import SegmentedControl from '@/Components/ui/SegmentedControl';
 import Thumbnail from '@/Components/ui/Thumbnail';
 import { useCatalogOwnerNsidTable } from '@/hooks/useCatalogOwnerNsidTable';
+import { isLiveDownloadStatus, usePhotoDownloadProgress } from '@/hooks/usePhotoDownloadProgress';
 import { useTableSelection } from '@/hooks/useTableSelection';
 import AppLayout from '@/Layouts/AppLayout';
 import { catalogPageCrumbs } from '@/lib/breadcrumbs';
@@ -30,7 +32,7 @@ interface Props extends PageProps {
 }
 
 function isPhotoSelectable(photo: Photo): boolean {
-    return (photo.download_status ?? 'none') !== 'downloading';
+    return !isLiveDownloadStatus(photo.download_status ?? 'none');
 }
 
 export default function CatalogPhotos({ account }: Props) {
@@ -50,6 +52,7 @@ export default function CatalogPhotos({ account }: Props) {
         handleSortChange,
         filterFormProps,
         appliedOwnerNsid,
+        patchData,
     } = useCatalogOwnerNsidTable<Photo>('owner_nsid', {
         fetchPath: '/api/v1/flickr/catalog/photos',
         initialSort: 'id',
@@ -57,6 +60,8 @@ export default function CatalogPhotos({ account }: Props) {
         perPage: viewMode === 'grid' ? 48 : 25,
         paginationMode: viewMode === 'grid' ? 'append' : 'replace',
     });
+
+    const { markPhotosPending } = usePhotoDownloadProgress(photos, patchData);
 
     const liveSelectedPhoto = useMemo(() => {
         if (selectedPhoto === null) {
@@ -86,10 +91,14 @@ export default function CatalogPhotos({ account }: Props) {
                 select_all?: boolean;
                 owner_nsid?: string;
             },
+            onQueued?: () => void,
         ) => {
             router.post(url, data, {
                 preserveScroll: true,
-                onSuccess: () => selection.clear(),
+                onSuccess: () => {
+                    selection.clear();
+                    onQueued?.();
+                },
             });
         },
         [selection],
@@ -113,6 +122,7 @@ export default function CatalogPhotos({ account }: Props) {
                         isMatching
                             ? { select_all: true, owner_nsid: ownerFilter }
                             : { flickr_photo_ids: selectedKeys },
+                        () => markPhotosPending(isMatching ? 'visible' : selectedKeys),
                     );
                 },
             },
@@ -130,7 +140,7 @@ export default function CatalogPhotos({ account }: Props) {
                 },
             },
         ];
-    }, [account?.public_id, ownerFilter, postBulk]);
+    }, [account?.public_id, markPhotosPending, ownerFilter, postBulk]);
 
     const switchViewMode = useCallback(
         (mode: 'table' | 'grid') => {
@@ -158,22 +168,14 @@ export default function CatalogPhotos({ account }: Props) {
                 <PageShellControlBar
                     filters={<CatalogOwnerNsidFilter {...filterFormProps} />}
                     actions={
-                        <div className="flex gap-2">
-                            <Button
-                                type="button"
-                                variant={viewMode === 'table' ? 'primary' : 'secondary'}
-                                onClick={() => switchViewMode('table')}
-                            >
-                                Table
-                            </Button>
-                            <Button
-                                type="button"
-                                variant={viewMode === 'grid' ? 'primary' : 'secondary'}
-                                onClick={() => switchViewMode('grid')}
-                            >
-                                Grid
-                            </Button>
-                        </div>
+                        <SegmentedControl
+                            value={viewMode}
+                            options={[
+                                { value: 'table', label: 'Table' },
+                                { value: 'grid', label: 'Grid' },
+                            ]}
+                            onChange={switchViewMode}
+                        />
                     }
                 />
 
@@ -187,6 +189,7 @@ export default function CatalogPhotos({ account }: Props) {
                             loadingMore={loadingMore}
                             onLoadMore={loadMore}
                             onPhotoClick={setSelectedPhoto}
+                            onDownloadQueued={(flickrPhotoId) => markPhotosPending([flickrPhotoId])}
                         />
                     </BusyRegion>
                 ) : (
@@ -269,7 +272,16 @@ export default function CatalogPhotos({ account }: Props) {
                         sortKey={sortKey}
                         sortDirection={sortDirection}
                         onSortChange={handleSortChange}
-                        emptyMessage="No photos found."
+                        emptyMessage={
+                            <EmptyState
+                                title="No photos found."
+                                description={
+                                    ownerFilter
+                                        ? `No photos match owner NSID “${ownerFilter}”.`
+                                        : 'Crawl photos for a contact or clear filters to see the catalog.'
+                                }
+                            />
+                        }
                         selection={account?.public_id ? selection.tableSelection : undefined}
                         bulkActions={account?.public_id ? bulkActions : undefined}
                         onBulkClear={account?.public_id ? selection.clear : undefined}
@@ -284,6 +296,7 @@ export default function CatalogPhotos({ account }: Props) {
                                           subjectLabel={crawlSubjectForPhoto(photo)}
                                           showCrawl={false}
                                           label="Actions"
+                                          onDownloadQueued={() => markPhotosPending([photo.flickr_photo_id])}
                                       />
                                   )
                                 : undefined
@@ -302,6 +315,7 @@ export default function CatalogPhotos({ account }: Props) {
                 onSelectPhoto={setSelectedPhoto}
                 accountPublicId={account?.public_id}
                 onClose={() => setSelectedPhoto(null)}
+                onDownloadQueued={(flickrPhotoId) => markPhotosPending([flickrPhotoId])}
             />
         </AppLayout>
     );

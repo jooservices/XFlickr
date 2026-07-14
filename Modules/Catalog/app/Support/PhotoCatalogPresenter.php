@@ -63,6 +63,39 @@ final class PhotoCatalogPresenter
     }
 
     /**
+     * @param  list<string>  $flickrPhotoIds
+     * @return list<array{
+     *     flickr_photo_id: string,
+     *     download_status: string,
+     *     stored_file_uuid: string|null,
+     *     stored_file_view_url: string|null
+     * }>
+     */
+    public function presentDownloadProgress(array $flickrPhotoIds): array
+    {
+        $ids = array_values(array_unique(array_filter(
+            $flickrPhotoIds,
+            static fn (mixed $id): bool => is_string($id) && $id !== '',
+        )));
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $storedByFlickrPhotoId = $this->storedFiles->originalsByFlickrPhotoIds($ids);
+
+        return array_map(
+            function (string $flickrPhotoId) use ($storedByFlickrPhotoId): array {
+                return array_merge(
+                    ['flickr_photo_id' => $flickrPhotoId],
+                    $this->presentDownloadMeta($storedByFlickrPhotoId->get($flickrPhotoId)),
+                );
+            },
+            $ids,
+        );
+    }
+
+    /**
      * @return array{download_status: string, stored_file_uuid: string|null, stored_file_view_url: string|null}
      */
     private function presentDownloadMeta(?StoredFile $stored): array

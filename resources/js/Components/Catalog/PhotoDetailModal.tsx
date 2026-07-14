@@ -23,6 +23,7 @@ interface PhotoDetailModalProps {
     onSelectPhoto?: (photo: Photo) => void;
     accountPublicId?: string | null;
     onClose: () => void;
+    onDownloadQueued?: (flickrPhotoId: string) => void;
 }
 
 export default function PhotoDetailModal({
@@ -31,6 +32,7 @@ export default function PhotoDetailModal({
     onSelectPhoto,
     accountPublicId,
     onClose,
+    onDownloadQueued,
 }: PhotoDetailModalProps) {
     const { app } = usePage<PageProps>().props;
     const crawlPaused = app.global_pause ?? false;
@@ -74,12 +76,17 @@ export default function PhotoDetailModal({
             return;
         }
 
+        const flickrPhotoId = photo.flickr_photo_id;
+
         router.post(
             flickrAccountPath(accountPublicId, '/download'),
-            { flickr_photo_id: photo.flickr_photo_id },
-            { preserveScroll: true },
+            { flickr_photo_id: flickrPhotoId },
+            {
+                preserveScroll: true,
+                onSuccess: () => onDownloadQueued?.(flickrPhotoId),
+            },
         );
-    }, [accountPublicId, crawlPaused, photo]);
+    }, [accountPublicId, crawlPaused, onDownloadQueued, photo]);
 
     useEffect(() => {
         if (photo === null) {
@@ -218,6 +225,7 @@ export default function PhotoDetailModal({
                             subjectLabel={crawlSubjectForPhoto(photo)}
                             showCrawl={false}
                             label="Actions"
+                            onDownloadQueued={() => onDownloadQueued?.(photo.flickr_photo_id)}
                         />
                     ) : null}
                 </div>

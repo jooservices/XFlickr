@@ -227,6 +227,15 @@ final class PhotoDownloadService
                 $group['photos']->pluck('flickr_photo_id')->all(),
             );
 
+            $this->storedFiles->ensurePendingOriginals(
+                $group['photos']->map(
+                    static fn (Photo $photo): array => [
+                        'flickr_photo_id' => $photo->flickr_photo_id,
+                        'owner_nsid' => $photo->owner_nsid,
+                    ],
+                )->values()->all(),
+            );
+
             foreach ($group['photos'] as $photo) {
                 DownloadPhotoJob::dispatch(
                     $photo->flickr_photo_id,

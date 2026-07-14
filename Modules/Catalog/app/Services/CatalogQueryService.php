@@ -60,6 +60,20 @@ final class CatalogQueryService
     }
 
     /**
+     * @param  list<string>  $flickrPhotoIds
+     * @return list<array{
+     *     flickr_photo_id: string,
+     *     download_status: string,
+     *     stored_file_uuid: string|null,
+     *     stored_file_view_url: string|null
+     * }>
+     */
+    public function photoDownloadProgress(array $flickrPhotoIds): array
+    {
+        return $this->photoPresenter->presentDownloadProgress($flickrPhotoIds);
+    }
+
+    /**
      * @return array{data: list<array<string, mixed>>, meta: array<string, mixed>}
      */
     public function photosets(?string $ownerNsid, string $sort, string $direction, int $perPage, int $page): array

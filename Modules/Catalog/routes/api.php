@@ -7,6 +7,7 @@ use Modules\Catalog\Http\Controllers\Api\V1\CatalogController;
 
 Route::prefix('v1')->group(function (): void {
     Route::prefix('flickr/catalog')->group(function (): void {
+        Route::get('/photos/progress', [CatalogController::class, 'photosProgress']);
         Route::get('/photos', [CatalogController::class, 'photos']);
         Route::get('/photosets', [CatalogController::class, 'photosets']);
         Route::get('/photosets/{photoset}', [CatalogController::class, 'showPhotoset']);

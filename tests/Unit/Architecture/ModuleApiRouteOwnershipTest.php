@@ -30,6 +30,7 @@ final class ModuleApiRouteOwnershipTest extends TestCase
             '/api/v1/flickr/accounts/{connection}/spider-runs/current',
             '/api/v1/flickr/accounts/{connection}/transfers',
             '/api/v1/flickr/catalog/photos',
+            '/api/v1/flickr/catalog/photos/progress',
             '/api/v1/stored-files/{uuid}',
             '/api/v1/storage/accounts',
             '/api/v1/storage/{provider}/files',

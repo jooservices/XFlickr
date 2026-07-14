@@ -2,6 +2,7 @@ import DownloadedBadge from '@/Components/Catalog/DownloadedBadge';
 import PhotoDownloadingOverlay from '@/Components/Catalog/PhotoDownloadingOverlay';
 import PhotoFailedBadge from '@/Components/Catalog/PhotoFailedBadge';
 import PhotoGridTile from '@/Components/Catalog/PhotoGridTile';
+import PhotoQueuedBadge from '@/Components/Catalog/PhotoQueuedBadge';
 import PhotoTransferActions from '@/Components/Catalog/PhotoTransferActions';
 import LoadingIndicator from '@/Components/ui/LoadingIndicator';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
@@ -15,6 +16,7 @@ interface PhotoGridMacroProps {
     loadingMore?: boolean;
     onLoadMore?: () => void;
     onPhotoClick?: (photo: Photo) => void;
+    onDownloadQueued?: (flickrPhotoId: string) => void;
 }
 
 export default function PhotoGridMacro({
@@ -24,6 +26,7 @@ export default function PhotoGridMacro({
     loadingMore = false,
     onLoadMore,
     onPhotoClick,
+    onDownloadQueued,
 }: PhotoGridMacroProps) {
     const sentinelRef = useInfiniteScroll({
         hasMore,
@@ -54,6 +57,7 @@ export default function PhotoGridMacro({
                                     <PhotoTransferActions
                                         accountPublicId={accountPublicId}
                                         flickrPhotoId={photo.flickr_photo_id}
+                                        onDownloadQueued={onDownloadQueued}
                                     />
                                 ) : undefined
                             }
@@ -62,7 +66,13 @@ export default function PhotoGridMacro({
                                     <DownloadedBadge href={photo.stored_file_view_url} />
                                 ) : undefined
                             }
-                            topLeft={downloadStatus === 'failed' ? <PhotoFailedBadge /> : undefined}
+                            topLeft={
+                                downloadStatus === 'failed' ? (
+                                    <PhotoFailedBadge />
+                                ) : downloadStatus === 'pending' ? (
+                                    <PhotoQueuedBadge />
+                                ) : undefined
+                            }
                             center={downloadStatus === 'downloading' ? <PhotoDownloadingOverlay /> : undefined}
                             bottomRow={
                                 <span className="truncate text-xs text-white drop-shadow">{photo.title || 'Untitled'}</span>

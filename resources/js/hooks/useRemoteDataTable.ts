@@ -120,6 +120,10 @@ export function useRemoteDataTable<T>({
 
     const hasMore = meta !== null && page < meta.last_page;
 
+    const patchData = useCallback((updater: (current: T[]) => T[]) => {
+        setData(updater);
+    }, []);
+
     return {
         data,
         meta,
@@ -135,5 +139,6 @@ export function useRemoteDataTable<T>({
         handleSortChange,
         reload: load,
         applyFilters,
+        patchData,
     };
 }

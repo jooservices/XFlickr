@@ -190,6 +190,11 @@ final class PhotoDownloadServiceTest extends TestCase
             'subject_nsid' => 'friend@N01',
             'total_count' => 1,
         ]);
+        $this->assertDatabaseHas('stored_files', [
+            'flickr_photo_id' => 'p-single',
+            'variant' => 'original',
+            'status' => 'pending',
+        ]);
         Bus::assertDispatched(DownloadPhotoJob::class, 1);
     }
 

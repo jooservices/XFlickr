@@ -1,4 +1,4 @@
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Clock, Loader2 } from 'lucide-react';
 
 import type { PhotoDownloadStatus } from '@/types';
 
@@ -8,6 +8,15 @@ interface PhotoDownloadedCellProps {
 }
 
 export default function PhotoDownloadedCell({ status, viewUrl }: PhotoDownloadedCellProps) {
+    if (status === 'pending') {
+        return (
+            <div className="flex items-center gap-1.5 text-amber-700">
+                <Clock className="size-3.5 shrink-0" />
+                <span className="text-xs">Queued</span>
+            </div>
+        );
+    }
+
     if (status === 'downloading') {
         return (
             <div className="flex items-center gap-1.5 text-blue-700">

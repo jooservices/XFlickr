@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Catalog Photos **Downloaded** column live status: Queued → Downloading… → View/Failed. Queuing a download creates `stored_files` as `pending` immediately; `GET /api/v1/flickr/catalog/photos/progress?ids=` polls visible live rows (Contacts-style) without a full table reload.
 - FS-1 app-shell command palette (⌘K / Ctrl+K): jump to nav/storage/settings destinations and contact suggestions for the selected Flickr account; header “Jump to” trigger on `sm+`.
 - FS-2 Contacts **Import from URL**: paste a Flickr people/photostream/photo page URL → `flickr.urls.lookupUser` / `photos.getInfo` resolve NSID, link via `FlickrCatalogService`, optional crawl, redirect to contact show. REST shape: `POST …/contacts` with `source: url` (not `/contacts/import`).
 - FS-7 first-run onboarding checklist: progress steps (connect Flickr → first crawl → optional storage) with checkmarks; auto-hides after Flickr + first crawl; shown on Dashboard, Connections, and Settings.
