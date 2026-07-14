@@ -1,25 +1,2 @@
 parameters:
-	ignoreErrors:
-		-
-			message: '#^Method Modules\\Flickr\\Events\\FlickrAccountConnected\:\:aggregateId\(\) never returns null so it can be removed from the return type\.$#'
-			identifier: return.unusedType
-			count: 1
-			path: Modules/Flickr/app/Events/FlickrAccountConnected.php
-
-		-
-			message: '#^Method Modules\\Flickr\\Events\\FlickrAccountDisconnected\:\:aggregateId\(\) never returns null so it can be removed from the return type\.$#'
-			identifier: return.unusedType
-			count: 1
-			path: Modules/Flickr/app/Events/FlickrAccountDisconnected.php
-
-		-
-			message: '#^Method Modules\\Storage\\Events\\StorageAccountConnected\:\:aggregateId\(\) never returns null so it can be removed from the return type\.$#'
-			identifier: return.unusedType
-			count: 1
-			path: Modules/Storage/app/Events/StorageAccountConnected.php
-
-		-
-			message: '#^Method Modules\\Storage\\Events\\StorageAccountDisconnected\:\:aggregateId\(\) never returns null so it can be removed from the return type\.$#'
-			identifier: return.unusedType
-			count: 1
-			path: Modules/Storage/app/Events/StorageAccountDisconnected.php
+	ignoreErrors: []

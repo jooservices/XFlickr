@@ -22,7 +22,7 @@ final class FlickrAccountDisconnected implements EventSourcingInterface
         ];
     }
 
-    public function aggregateId(): ?string
+    public function aggregateId(): string
     {
         return $this->connectionKey;
     }

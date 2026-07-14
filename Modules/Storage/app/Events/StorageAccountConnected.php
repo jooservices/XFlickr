@@ -26,7 +26,7 @@ final class StorageAccountConnected implements EventSourcingInterface
         ];
     }
 
-    public function aggregateId(): ?string
+    public function aggregateId(): string
     {
         return (string) $this->accountId;
     }

@@ -83,7 +83,7 @@
         "lint:pint": "vendor/bin/pint --test",
         "lint:pint:fix": "vendor/bin/pint",
         "lint:phpstan": "XDEBUG_MODE=off vendor/bin/phpstan analyse --configuration=phpstan.neon --memory-limit=512M",
-        "lint:phpstan:baseline": "XDEBUG_MODE=off vendor/bin/phpstan analyse --configuration=phpstan.neon --memory-limit=512M --generate-baseline=phpstan-baseline.neon",
+        "lint:phpstan:baseline": "XDEBUG_MODE=off vendor/bin/phpstan analyse --configuration=phpstan.neon --memory-limit=512M --generate-baseline=phpstan-baseline.neon --allow-empty-baseline",
         "lint:deptrac": "vendor/bin/deptrac analyse --config-file=deptrac.yaml",
         "lint": [
             "@lint:pint",
