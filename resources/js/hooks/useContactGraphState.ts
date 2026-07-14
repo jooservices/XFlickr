@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, typ
 import { drawContactGraph, useContactGraphCanvas } from '@/hooks/useContactGraphCanvas';
 import { useElementSize } from '@/hooks/useElementSize';
 import { useGraphPanZoom } from '@/hooks/useGraphPanZoom';
-import { apiGet, apiPost } from '@/lib/apiClient';
+import { apiGet, apiPost, ApiError } from '@/lib/apiClient';
 import {
     initialPanForBounds,
     initialZoomForBounds,
@@ -306,8 +306,12 @@ export function useContactGraphState({
                     );
                     setNotes(initialNotes);
                 }
-            } catch {
-                setError('Unable to load contact graph.');
+            } catch (error) {
+                const message =
+                    error instanceof ApiError && error.message.trim() !== ''
+                        ? error.message
+                        : 'Unable to load contact graph.';
+                setError(message);
             } finally {
                 setLoading(false);
                 setLoadingMore(false);

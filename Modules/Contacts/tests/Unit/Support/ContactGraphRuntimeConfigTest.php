@@ -64,4 +64,14 @@ final class ContactGraphRuntimeConfigTest extends TestCase
         $this->assertSame(250, $config->initialDirectLimit());
         $this->assertSame(50, $config->loadMoreStep());
     }
+
+    public function test_resolve_direct_limit_caps_show_all(): void
+    {
+        $config = app(ContactGraphRuntimeConfig::class);
+
+        $this->assertSame(100, $config->resolveDirectLimit(100, 10_000));
+        $this->assertSame(500, $config->resolveDirectLimit(0, 10_000));
+        $this->assertSame(40, $config->resolveDirectLimit(0, 40));
+        $this->assertSame(0, $config->resolveDirectLimit(50, 0));
+    }
 }

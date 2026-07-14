@@ -130,6 +130,24 @@ final class ContactQueryRepository
             ->all();
     }
 
+    /**
+     * Lightweight contact rows for graph / list UI (avoids hydrating raw_payload).
+     *
+     * @param  list<string>  $nsids
+     * @return list<Contact>
+     */
+    public function listSummariesByNsids(array $nsids): array
+    {
+        if ($nsids === []) {
+            return [];
+        }
+
+        return Contact::query()
+            ->whereIn('nsid', $nsids)
+            ->get(['nsid', 'username', 'realname'])
+            ->all();
+    }
+
     public function findByNsid(string $nsid): Contact
     {
         return Contact::query()->where('nsid', $nsid)->firstOrFail();

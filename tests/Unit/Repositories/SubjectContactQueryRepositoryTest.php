@@ -45,6 +45,33 @@ final class SubjectContactQueryRepositoryTest extends TestCase
         $this->assertSame($contact, $edges[0]['contact_nsid']);
     }
 
+    public function test_list_edges_for_subjects_filters_and_counts(): void
+    {
+        $connection = $this->createFlickrConnection();
+        $subjectA = FlickrNsid::fake();
+        $subjectB = FlickrNsid::fake();
+        $contact = FlickrNsid::fake();
+
+        SubjectContact::query()->forceCreate([
+            'connection_key' => $connection->connection_key,
+            'subject_nsid' => $subjectA,
+            'contact_nsid' => $contact,
+        ]);
+        SubjectContact::query()->forceCreate([
+            'connection_key' => $connection->connection_key,
+            'subject_nsid' => $subjectB,
+            'contact_nsid' => FlickrNsid::fake(),
+        ]);
+
+        $edges = $this->repository->listEdgesForSubjects($connection->connection_key, [$subjectA]);
+
+        $this->assertCount(1, $edges);
+        $this->assertSame($subjectA, $edges[0]['subject_nsid']);
+        $this->assertSame(2, $this->repository->countForConnection($connection->connection_key));
+        $grouped = $this->repository->countsGroupedBySubjects($connection->connection_key, [$subjectA]);
+        $this->assertSame([$subjectA => 1], $grouped);
+    }
+
     public function test_list_edges_for_subject_since_filters_by_id(): void
     {
         $connection = $this->createFlickrConnection();

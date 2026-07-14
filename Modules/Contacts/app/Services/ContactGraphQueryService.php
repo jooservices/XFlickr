@@ -57,9 +57,9 @@ final class ContactGraphQueryService
     public function snapshot(Connection $connection, int $directLimit): array
     {
         $rootNsid = $connection->connection_key;
-        $allDirectNsids = $this->connectionContacts->nsidsForConnection($rootNsid);
-        $directTotal = count($allDirectNsids);
-        $selectedDirectNsids = $this->selectDirectContactNsids($connection, $allDirectNsids, $directLimit);
+        $directTotal = $this->connectionContacts->countForConnection($rootNsid);
+        $effectiveLimit = $this->graphConfig->resolveDirectLimit($directLimit, $directTotal);
+        $selectedDirectNsids = $this->selectDirectContactNsids($connection, $effectiveLimit, $directTotal);
         $visibleNsids = array_values(array_unique([$rootNsid, ...$selectedDirectNsids]));
         $visibleSet = array_fill_keys($visibleNsids, true);
 
@@ -74,14 +74,15 @@ final class ContactGraphQueryService
             ];
         }
 
-        $allSubjectEdges = $this->subjectContacts->listEdgesForConnection($rootNsid);
+        $subjectEdges = $this->subjectContacts->listEdgesForSubjects(
+            $rootNsid,
+            $selectedDirectNsids,
+            ContactGraphRuntimeConfig::MAX_SUBJECT_EDGES_PER_SUBJECT,
+            ContactGraphRuntimeConfig::MAX_SUBJECT_EDGES_TOTAL,
+        );
         $subjectEdgesShown = 0;
 
-        foreach ($allSubjectEdges as $edge) {
-            if (! isset($visibleSet[$edge['subject_nsid']])) {
-                continue;
-            }
-
+        foreach ($subjectEdges as $edge) {
             $edges[] = [
                 'id' => (int) $edge['id'],
                 'from' => $edge['subject_nsid'],
@@ -106,7 +107,7 @@ final class ContactGraphQueryService
                 'direct_shown' => $directShown,
                 'initial_direct_limit' => $this->graphConfig->initialDirectLimit(),
                 'load_more_step' => $this->graphConfig->loadMoreStep(),
-                'subject_edges_total' => count($allSubjectEdges),
+                'subject_edges_total' => $this->subjectContacts->countForConnection($rootNsid),
                 'subject_edges_shown' => $subjectEdgesShown,
                 'has_more_direct' => $directShown < $directTotal,
             ],
@@ -154,52 +155,55 @@ final class ContactGraphQueryService
     }
 
     /**
-     * @param  list<string>  $allDirectNsids
      * @return list<string>
      */
-    private function selectDirectContactNsids(Connection $connection, array $allDirectNsids, int $directLimit): array
+    private function selectDirectContactNsids(Connection $connection, int $directLimit, int $directTotal): array
     {
-        if ($allDirectNsids === [] || $directLimit === 0 || count($allDirectNsids) <= $directLimit) {
-            return $allDirectNsids;
+        if ($directTotal === 0 || $directLimit === 0) {
+            return [];
         }
 
         $connectionKey = $connection->connection_key;
-        $starredSet = array_fill_keys(
-            array_intersect(
-                $this->annotationRecords->starredContactNsids($connectionKey),
-                $allDirectNsids,
-            ),
-            true,
-        );
-        $starred = array_keys($starredSet);
 
-        $photoCounts = $this->stats->catalogCountsFor($connection, $allDirectNsids);
+        if ($directTotal <= $directLimit) {
+            return $this->connectionContacts->nsidsForConnectionExcept($connectionKey, [], $directTotal);
+        }
 
-        $rest = array_values(array_filter(
-            $allDirectNsids,
-            fn (string $nsid): bool => ! isset($starredSet[$nsid]),
-        ));
-
-        usort(
-            $rest,
-            function (string $left, string $right) use ($photoCounts): int {
-                $leftPhotos = $photoCounts[$left]['photos'] ?? 0;
-                $rightPhotos = $photoCounts[$right]['photos'] ?? 0;
-
-                if ($leftPhotos !== $rightPhotos) {
-                    return $rightPhotos <=> $leftPhotos;
-                }
-
-                return $left <=> $right;
-            },
+        $starredDirect = $this->connectionContacts->filterNsidsForConnection(
+            $connectionKey,
+            $this->annotationRecords->starredContactNsids($connectionKey),
         );
 
-        $remainingSlots = max(0, $directLimit - count($starred));
+        if (count($starredDirect) > $directLimit) {
+            $starredDirect = array_slice($starredDirect, 0, $directLimit);
+        }
 
-        return array_values(array_unique([
-            ...$starred,
-            ...array_slice($rest, 0, $remainingSlots),
-        ]));
+        $remainingSlots = max(0, $directLimit - count($starredDirect));
+        if ($remainingSlots === 0) {
+            return $starredDirect;
+        }
+
+        $rankedWithPhotos = $this->stats->topNsidsByPhotoCountForConnection(
+            $connectionKey,
+            $starredDirect,
+            $remainingSlots,
+        );
+
+        if (count($rankedWithPhotos) >= $remainingSlots) {
+            return array_values(array_unique([
+                ...$starredDirect,
+                ...array_slice($rankedWithPhotos, 0, $remainingSlots),
+            ]));
+        }
+
+        $selected = array_values(array_unique([...$starredDirect, ...$rankedWithPhotos]));
+        $fill = $this->connectionContacts->nsidsForConnectionExcept(
+            $connectionKey,
+            $selected,
+            $remainingSlots - count($rankedWithPhotos),
+        );
+
+        return array_values(array_unique([...$selected, ...$fill]));
     }
 
     /**
@@ -209,7 +213,11 @@ final class ContactGraphQueryService
     {
         if ($subjectNsid === $rootNsid) {
             $edges = [];
-            foreach ($this->connectionContacts->nsidsForConnection($rootNsid) as $contactNsid) {
+            foreach ($this->connectionContacts->nsidsForConnectionExcept(
+                $rootNsid,
+                [],
+                ContactGraphRuntimeConfig::MAX_SHOW_ALL_DIRECT,
+            ) as $contactNsid) {
                 $edges[] = [
                     'id' => 0,
                     'from' => $rootNsid,
@@ -335,7 +343,7 @@ final class ContactGraphQueryService
                     'note_preview' => null,
                 ],
                 $context['childCounts'][$nsid] ?? 0,
-                $context['photoCounts'][$nsid]['photos'] ?? 0,
+                $context['photoCounts'][$nsid] ?? 0,
             );
         }
 
@@ -348,7 +356,7 @@ final class ContactGraphQueryService
      *     contactMap: array<string, Contact>,
      *     annotationMap: array<string, array{note: mixed, starred: bool, note_preview: string|null}>,
      *     childCounts: array<string, int>,
-     *     photoCounts: array<string, array{photos: int}>
+     *     photoCounts: array<string, int>
      * }
      */
     private function loadNodeBuildContext(Connection $connection, string $rootNsid, array $nodeNsids): array
@@ -358,7 +366,7 @@ final class ContactGraphQueryService
             fn (string $nsid): bool => $nsid !== $rootNsid,
         ));
 
-        $contacts = $this->contacts->listByNsids($contactNsids);
+        $contacts = $this->contacts->listSummariesByNsids($contactNsids);
 
         /** @var array<string, Contact> $contactMap */
         $contactMap = [];
@@ -373,7 +381,7 @@ final class ContactGraphQueryService
                 $contactNsids,
             ),
             'childCounts' => $this->childCounts($connection->connection_key, $rootNsid, $nodeNsids),
-            'photoCounts' => $this->stats->catalogCountsFor($connection, $contactNsids),
+            'photoCounts' => $this->stats->photoCountsFor($contactNsids),
         ];
     }
 
@@ -382,7 +390,7 @@ final class ContactGraphQueryService
      *     contactMap: array<string, Contact>,
      *     annotationMap: array<string, array{note: mixed, starred: bool, note_preview: string|null}>,
      *     childCounts: array<string, int>,
-     *     photoCounts: array<string, array{photos: int}>
+     *     photoCounts: array<string, int>
      * }  $context
      * @return array{
      *     nsid: string,
@@ -398,8 +406,7 @@ final class ContactGraphQueryService
      */
     private function mapRootNodeRow(Connection $connection, string $rootNsid, array $context): array
     {
-        $rootPhotoRow = $this->stats->catalogCountsFor($connection, [$rootNsid]);
-        $rootPhotos = $rootPhotoRow[$rootNsid]['photos'] ?? 0;
+        $rootPhotos = $this->stats->photoCountsFor([$rootNsid])[$rootNsid] ?? 0;
 
         return [
             'nsid' => $rootNsid,
@@ -454,14 +461,18 @@ final class ContactGraphQueryService
      */
     private function childCounts(string $connectionKey, string $rootNsid, array $nodeNsids): array
     {
-        $counts = [];
+        $subjectNsids = array_values(array_filter(
+            $nodeNsids,
+            fn (string $nsid): bool => $nsid !== $rootNsid,
+        ));
+        $counts = $this->subjectContacts->countsGroupedBySubjects($connectionKey, $subjectNsids);
 
-        foreach ($nodeNsids as $nsid) {
-            if ($nsid === $rootNsid) {
-                $counts[$nsid] = $this->connectionContacts->countForConnection($connectionKey);
-            } else {
-                $counts[$nsid] = $this->subjectContacts->countForSubject($connectionKey, $nsid);
-            }
+        if (in_array($rootNsid, $nodeNsids, true)) {
+            $counts[$rootNsid] = $this->connectionContacts->countForConnection($connectionKey);
+        }
+
+        foreach ($subjectNsids as $nsid) {
+            $counts[$nsid] ??= 0;
         }
 
         return $counts;

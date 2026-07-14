@@ -186,6 +186,69 @@ final class PhotoQueryRepository
     }
 
     /**
+     * Owners ranked by photo count descending (owners with zero photos are omitted).
+     *
+     * @param  list<string>  $ownerNsids
+     * @return list<string>
+     */
+    public function topOwnerNsidsByPhotoCount(array $ownerNsids, int $limit): array
+    {
+        if ($ownerNsids === [] || $limit <= 0) {
+            return [];
+        }
+
+        return Photo::query()
+            ->whereIn('owner_nsid', $ownerNsids)
+            ->groupBy('owner_nsid')
+            ->selectRaw('owner_nsid, count(*) as photo_count')
+            ->orderByDesc('photo_count')
+            ->orderBy('owner_nsid')
+            ->limit($limit)
+            ->pluck('owner_nsid')
+            ->map(fn (mixed $nsid): string => (string) $nsid)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Rank connection contacts by indexed photo count without loading all NSIDs into PHP.
+     *
+     * @param  list<string>  $excludeNsids
+     * @return list<string>
+     */
+    public function topOwnerNsidsByPhotoCountForConnection(
+        string $connectionKey,
+        array $excludeNsids,
+        int $limit,
+    ): array {
+        if ($limit <= 0) {
+            return [];
+        }
+
+        $contactsTable = (new ConnectionContact)->getTable();
+        $photosTable = (new Photo)->getTable();
+
+        $query = Photo::query()
+            ->join($contactsTable, $photosTable.'.owner_nsid', '=', $contactsTable.'.contact_nsid')
+            ->where($contactsTable.'.connection_key', $connectionKey)
+            ->groupBy($photosTable.'.owner_nsid')
+            ->selectRaw($photosTable.'.owner_nsid as owner_nsid, count(*) as photo_count')
+            ->orderByDesc('photo_count')
+            ->orderBy($photosTable.'.owner_nsid')
+            ->limit($limit);
+
+        if ($excludeNsids !== []) {
+            $query->whereNotIn($photosTable.'.owner_nsid', $excludeNsids);
+        }
+
+        return $query
+            ->pluck('owner_nsid')
+            ->map(fn (mixed $nsid): string => (string) $nsid)
+            ->values()
+            ->all();
+    }
+
+    /**
      * @param  list<int>  $internalPhotoIds
      * @return array{photoset_rows: Collection<int, mixed>, gallery_rows: Collection<int, mixed>}
      */

@@ -65,6 +65,48 @@ final class ContactStatsService
     }
 
     /**
+     * @param  list<string>  $contactNsids
+     * @return array<string, int>
+     */
+    public function photoCountsFor(array $contactNsids): array
+    {
+        if ($contactNsids === []) {
+            return [];
+        }
+
+        $counts = array_fill_keys($contactNsids, 0);
+
+        foreach (array_chunk($contactNsids, 500) as $chunk) {
+            foreach ($this->photos->countsByOwnerNsids($chunk) as $nsid => $count) {
+                $counts[$nsid] = $count;
+            }
+        }
+
+        return $counts;
+    }
+
+    /**
+     * @param  list<string>  $contactNsids
+     * @return list<string>
+     */
+    public function topNsidsByPhotoCount(array $contactNsids, int $limit): array
+    {
+        return $this->photos->topOwnerNsidsByPhotoCount($contactNsids, $limit);
+    }
+
+    /**
+     * @param  list<string>  $excludeNsids
+     * @return list<string>
+     */
+    public function topNsidsByPhotoCountForConnection(
+        string $connectionKey,
+        array $excludeNsids,
+        int $limit,
+    ): array {
+        return $this->photos->topOwnerNsidsByPhotoCountForConnection($connectionKey, $excludeNsids, $limit);
+    }
+
+    /**
      * @return array{
      *     photos: array{db: int, with_sizes: int, in_api: int|null},
      *     photosets: array{db: int, in_api: int|null},
