@@ -10,12 +10,15 @@ use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Modules\Crawler\Models\Connection;
 use Modules\Crawler\Models\Photo as CrawlerPhoto;
+use Modules\Flickr\Dto\DownloadCandidateDto;
 use Modules\Flickr\Services\FlickrAccountsService;
 use Modules\Flickr\Support\FlickrPhotoUrlHelper;
 use Modules\Transfer\Enums\PhotoTransferExecutionOutcome;
 use Modules\Transfer\Enums\StoredFileStatus;
 use Modules\Transfer\Enums\TransferItemStatus;
+use Modules\Transfer\Models\StoredFile;
 use Modules\Transfer\Repositories\StoredFileRepository;
 use Modules\Transfer\Repositories\TransferItemRepository;
 use Modules\Transfer\Support\DownloadRuntimeConfig;
@@ -49,19 +52,9 @@ final class PhotoDownloadExecutionService
         $partPath = null;
 
         try {
-            $connection = $this->connections->findByConnectionKey($connectionKey);
-            if ($connection === null) {
-                throw new RuntimeException("Flickr connection [{$connectionKey}] was not found.");
-            }
+            $candidate = $this->resolveCandidate($flickrPhotoId, $ownerNsid, $connectionKey);
 
-            $photo = $this->photos->findByFlickrPhotoId($flickrPhotoId);
-            if ($photo === null) {
-                throw new RuntimeException("Photo [{$flickrPhotoId}] was not found in catalog.");
-            }
-
-            $storedFile = $this->storedFiles->firstOrCreateOriginal($flickrPhotoId, $ownerNsid);
-
-            if ($storedFile->status === StoredFileStatus::Completed->value) {
+            if ($candidate['storedFile']->status === StoredFileStatus::Completed->value) {
                 $this->markItemCompleted($batchId, $flickrPhotoId);
                 $this->batchReconciler->reconcile($batchId);
 
@@ -71,42 +64,12 @@ final class PhotoDownloadExecutionService
             $this->storedFiles->markDownloading($flickrPhotoId);
             $this->updateItemStatus($batchId, $flickrPhotoId, TransferItemStatus::Processing);
 
-            $download = $this->flickr->resolvePhotoSize($flickrPhotoId, $connection);
-            $finalPath = $this->finalPathFor($flickrPhotoId, $ownerNsid, $photo, $download->url);
+            $download = $this->flickr->resolvePhotoSize($flickrPhotoId, $candidate['connection']);
+            $finalPath = $this->finalPathFor($flickrPhotoId, $ownerNsid, $candidate['photo'], $download->url);
             $partPath = "{$finalPath}.part";
 
-            Storage::makeDirectory(dirname($finalPath));
-            $response = Http::timeout($this->downloadConfig->timeoutSeconds())->withHeaders([
-                'User-Agent' => 'XFlickr Download Client 1.0',
-            ])->sink(Storage::path($partPath))->get($download->url);
-
-            if (! $response->successful()) {
-                throw new Exception('HTTP download failed with status: '.$response->status());
-            }
-
-            Storage::move($partPath, $finalPath);
+            $this->persistStoredFile($flickrPhotoId, $ownerNsid, $candidate['photo'], $download, $finalPath, $partPath);
             $partPath = null;
-
-            $size = Storage::size($finalPath);
-            $sha256 = hash_file('sha256', Storage::path($finalPath));
-
-            $extension = FlickrPhotoUrlHelper::resolveExtension(
-                $download->url,
-                is_array($photo->raw_payload) ? ($photo->raw_payload['originalformat'] ?? null) : null,
-            );
-
-            $this->storedFiles->markCompleted($flickrPhotoId, [
-                'local_path' => $finalPath,
-                'original_name' => FlickrPhotoUrlHelper::originalNameFor($flickrPhotoId, $extension),
-                'bytes' => $size,
-                'content_sha256' => $sha256,
-                'downloaded_at' => now(),
-                'error_message' => null,
-                'metadata' => [
-                    'download_variant' => $download->variant,
-                    'sizes_source' => 'flickr.photos.getSizes',
-                ],
-            ]);
 
             $this->markItemCompleted($batchId, $flickrPhotoId);
             $this->batchReconciler->reconcile($batchId);
@@ -131,6 +94,71 @@ final class PhotoDownloadExecutionService
         $this->storedFiles->markFailed($flickrPhotoId, $errorMessage);
         $this->updateItemStatus($batchId, $flickrPhotoId, TransferItemStatus::Failed, $errorMessage);
         $this->batchReconciler->reconcile($batchId);
+    }
+
+    /**
+     * @return array{connection: Connection, photo: CrawlerPhoto, storedFile: StoredFile}
+     */
+    private function resolveCandidate(string $flickrPhotoId, string $ownerNsid, string $connectionKey): array
+    {
+        $connection = $this->connections->findByConnectionKey($connectionKey);
+        if ($connection === null) {
+            throw new RuntimeException("Flickr connection [{$connectionKey}] was not found.");
+        }
+
+        $photo = $this->photos->findByFlickrPhotoId($flickrPhotoId);
+        if ($photo === null) {
+            throw new RuntimeException("Photo [{$flickrPhotoId}] was not found in catalog.");
+        }
+
+        $storedFile = $this->storedFiles->firstOrCreateOriginal($flickrPhotoId, $ownerNsid);
+
+        return [
+            'connection' => $connection,
+            'photo' => $photo,
+            'storedFile' => $storedFile,
+        ];
+    }
+
+    private function persistStoredFile(
+        string $flickrPhotoId,
+        string $ownerNsid,
+        CrawlerPhoto $photo,
+        DownloadCandidateDto $download,
+        string $finalPath,
+        string $partPath,
+    ): void {
+        Storage::makeDirectory(dirname($finalPath));
+        $response = Http::timeout($this->downloadConfig->timeoutSeconds())->withHeaders([
+            'User-Agent' => 'XFlickr Download Client 1.0',
+        ])->sink(Storage::path($partPath))->get($download->url);
+
+        if (! $response->successful()) {
+            throw new Exception('HTTP download failed with status: '.$response->status());
+        }
+
+        Storage::move($partPath, $finalPath);
+
+        $size = Storage::size($finalPath);
+        $sha256 = hash_file('sha256', Storage::path($finalPath));
+
+        $extension = FlickrPhotoUrlHelper::resolveExtension(
+            $download->url,
+            is_array($photo->raw_payload) ? ($photo->raw_payload['originalformat'] ?? null) : null,
+        );
+
+        $this->storedFiles->markCompleted($flickrPhotoId, [
+            'local_path' => $finalPath,
+            'original_name' => FlickrPhotoUrlHelper::originalNameFor($flickrPhotoId, $extension),
+            'bytes' => $size,
+            'content_sha256' => $sha256,
+            'downloaded_at' => now(),
+            'error_message' => null,
+            'metadata' => [
+                'download_variant' => $download->variant,
+                'sizes_source' => 'flickr.photos.getSizes',
+            ],
+        ]);
     }
 
     private function finalPathFor(string $flickrPhotoId, string $ownerNsid, CrawlerPhoto $photo, string $downloadUrl): string

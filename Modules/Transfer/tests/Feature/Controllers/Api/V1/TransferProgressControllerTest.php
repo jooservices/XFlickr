@@ -52,4 +52,28 @@ final class TransferProgressControllerTest extends TestCase
         $this->assertSame('running', $batch->status);
         $this->assertSame($originalUpdatedAt, $batch->updated_at?->toDateTimeString());
     }
+
+    public function test_show_returns_batch_detail_payload(): void
+    {
+        $connection = $this->createFlickrConnection();
+        $batch = TransferBatch::factory()->create([
+            'connection_key' => $connection->connection_key,
+            'type' => 'download',
+            'status' => 'running',
+            'total_count' => 1,
+        ]);
+        TransferItem::factory()->create([
+            'transfer_batch_id' => $batch->id,
+            'flickr_photo_id' => (string) fake()->unique()->numerify('#########'),
+            'status' => 'pending',
+        ]);
+
+        $response = $this->getJson(
+            '/api/v1/flickr/accounts/'.$connection->public_id.'/transfers/'.$batch->id,
+        );
+
+        $response->assertOk();
+        $response->assertJsonPath('data.batch.id', $batch->id);
+        $response->assertJsonCount(1, 'data.items');
+    }
 }

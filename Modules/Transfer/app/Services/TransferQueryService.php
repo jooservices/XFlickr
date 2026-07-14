@@ -8,18 +8,55 @@ use App\Support\Query\QuerySorter;
 use Modules\Crawler\Models\Connection;
 use Modules\Transfer\Enums\TransferBatchStatus;
 use Modules\Transfer\Models\TransferBatch;
+use Modules\Transfer\Repositories\StoredFileRepository;
 use Modules\Transfer\Repositories\TransferBatchRepository;
+use Modules\Transfer\Repositories\TransferItemRepository;
 
-final class TransferProgressQueryService
+final class TransferQueryService
 {
     /** @var list<string> */
     private const BATCH_SORTS = ['id', 'type', 'subject_nsid', 'status', 'total_count', 'completed_count', 'failed_count', 'created_at'];
 
     public function __construct(
+        private readonly StoredFileRepository $storedFiles,
         private readonly TransferBatchRepository $batches,
+        private readonly TransferItemRepository $items,
         private readonly TransferBatchReconciler $batchReconciler,
         private readonly QuerySorter $sorter,
     ) {}
+
+    public function countStoredFiles(): int
+    {
+        return $this->storedFiles->countAll();
+    }
+
+    public function countBatchesByTypeAndStatus(string $type, string $status): int
+    {
+        return $this->batches->countByTypeAndStatus($type, $status);
+    }
+
+    /**
+     * @param  list<string>  $connectionKeys
+     * @return array<string, int>
+     */
+    public function countActiveBatchesGroupedByConnection(array $connectionKeys, string $type): array
+    {
+        return $this->batches->countActiveGroupedByConnection($connectionKeys, $type);
+    }
+
+    public function countFailedItemsSince(\DateTimeInterface $since): int
+    {
+        return $this->items->countFailedSince($since);
+    }
+
+    /**
+     * @param  list<string>  $connectionKeys
+     * @return array<string, int>
+     */
+    public function countFailedItemsGroupedByConnectionSince(array $connectionKeys, \DateTimeInterface $since): array
+    {
+        return $this->items->countFailedGroupedByConnectionSince($connectionKeys, $since);
+    }
 
     /**
      * @return array{batch: array<string, mixed>, items: mixed}|null

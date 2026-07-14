@@ -8,23 +8,23 @@ use Modules\Transfer\Enums\TransferBatchStatus;
 use Modules\Transfer\Enums\TransferItemStatus;
 use Modules\Transfer\Models\TransferBatch;
 use Modules\Transfer\Models\TransferItem;
-use Modules\Transfer\Services\TransferProgressQueryService;
+use Modules\Transfer\Services\TransferQueryService;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;
 
-final class TransferProgressQueryServiceTest extends TestCase
+final class TransferQueryServiceTest extends TestCase
 {
     use CreatesFlickrConnection;
     use SafeRefreshDatabase;
 
-    private TransferProgressQueryService $service;
+    private TransferQueryService $service;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->service = app(TransferProgressQueryService::class);
+        $this->service = app(TransferQueryService::class);
     }
 
     public function test_show_returns_null_for_foreign_batch(): void

@@ -18,7 +18,7 @@ final class OperationsStreamService
     private const int DEFAULT_POLL_INTERVAL_SECONDS = 0;
 
     public function __construct(
-        private readonly OperationsSnapshotService $operations,
+        private readonly SnapshotService $operations,
         private readonly int $maxStreamSeconds = self::DEFAULT_MAX_STREAM_SECONDS,
         private readonly int $pollIntervalSeconds = self::DEFAULT_POLL_INTERVAL_SECONDS,
     ) {}
@@ -34,7 +34,7 @@ final class OperationsStreamService
 
             while (! connection_aborted() && (time() - $startedAt) < $maxStreamSeconds) {
                 // SSE payload stays the raw snapshot; HTTP JSON endpoints use the controller envelope.
-                $payload = json_encode($operations->snapshot(), JSON_THROW_ON_ERROR);
+                $payload = json_encode($operations->operations(), JSON_THROW_ON_ERROR);
 
                 echo "event: operations\n";
                 echo 'data: '.$payload."\n\n";

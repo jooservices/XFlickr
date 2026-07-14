@@ -13,12 +13,12 @@ use Modules\Transfer\Http\Resources\TransferBatchResource;
 use Modules\Transfer\Http\Resources\TransferRetryAcceptedResource;
 use Modules\Transfer\Models\TransferBatch;
 use Modules\Transfer\Services\TransferItemRetryService;
-use Modules\Transfer\Services\TransferProgressQueryService;
+use Modules\Transfer\Services\TransferQueryService;
 
 final class TransferProgressController extends BaseApiController
 {
     public function __construct(
-        private readonly TransferProgressQueryService $transferProgress,
+        private readonly TransferQueryService $transferProgress,
         private readonly TransferItemRetryService $transferRetry,
     ) {}
 

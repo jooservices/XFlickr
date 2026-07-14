@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\Operations\Tests\Feature\Controllers\Api\V1;
 
-use Modules\Operations\Services\OperationsSnapshotService;
 use Modules\Operations\Services\OperationsStreamService;
+use Modules\Operations\Services\SnapshotService;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;
@@ -22,7 +22,7 @@ final class OperationsStreamControllerTest extends TestCase
         $this->app->instance(
             OperationsStreamService::class,
             new OperationsStreamService(
-                app(OperationsSnapshotService::class),
+                app(SnapshotService::class),
                 maxStreamSeconds: 1,
                 pollIntervalSeconds: 0,
             ),
