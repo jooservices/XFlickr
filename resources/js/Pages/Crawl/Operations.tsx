@@ -49,7 +49,7 @@ export default function CrawlOperations() {
         <AppLayout>
             <Head title="Operations" />
 
-            <PageShell>
+            <PageShell data-testid="operations-page">
                 <PageShellIdentity
                     breadcrumbs={[{ label: 'Operations' }]}
                     title="Operations"

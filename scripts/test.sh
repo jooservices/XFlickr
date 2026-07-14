@@ -12,6 +12,8 @@ source "${ROOT}/scripts/lib/common.sh"
 source "${ROOT}/scripts/lib/compose-test.sh"
 # shellcheck disable=SC1091
 source "${ROOT}/scripts/lib/test/gate.sh"
+# shellcheck disable=SC1091
+source "${ROOT}/scripts/lib/test/demo-seed.sh"
 
 usage() {
     cat <<'EOF'
@@ -26,6 +28,7 @@ usage() {
   bash scripts/test.sh up                     Start test stack services
   bash scripts/test.sh down                   Stop test stack
   bash scripts/test.sh down --volumes         Stop test stack and remove volumes
+  bash scripts/test.sh e2e:prep               Print Playwright + demo seed instructions (operator)
 
 Workflow:
   Clone      → ensure-hooks (once)
@@ -78,6 +81,9 @@ case "$cmd" in
         else
             xf_test_compose down
         fi
+        ;;
+    e2e:prep)
+        xf_demo_seed_instructions
         ;;
     -h|--help|help)
         usage

@@ -55,7 +55,7 @@ export default function OperationsTransfersPanel({
     );
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8" data-testid="operations-transfers-panel">
             <PageSection
                 title="Download"
                 description="Photo downloads from Flickr into local storage, grouped by owner NSID and photoset or gallery when known."

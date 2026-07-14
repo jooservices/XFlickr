@@ -7,6 +7,7 @@ set -o pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/compose-dev.sh"
 
 ADMIN_SEEDER='Modules\\Auth\\Database\\Seeders\\AdminUserSeeder'
+DEMO_SEEDER='Database\\Seeders\\DemoDatasetSeeder'
 
 xf_dev_ensure_env() {
     local root="$1"
@@ -51,8 +52,15 @@ xf_dev_bootstrap_migrate() {
 }
 
 xf_dev_bootstrap_seed() {
+    local seed_demo="${1:-0}"
+
     echo "==> Seeding admin user"
     xf_dev_compose exec -T app php artisan db:seed --class="${ADMIN_SEEDER}" --force --no-interaction
+
+    if [[ "${seed_demo}" == "1" ]]; then
+        echo "==> Seeding demo dataset (Flickr contacts, catalog, transfers, storage cache)"
+        xf_dev_compose exec -T app php artisan db:seed --class="${DEMO_SEEDER}" --force --no-interaction
+    fi
 }
 
 xf_dev_bootstrap_refresh() {
@@ -78,14 +86,29 @@ xf_dev_up() {
 }
 
 xf_dev_seed() {
-    local root
+    local root seed_demo=0 arg
+
+    while [[ $# -gt 0 ]]; do
+        arg="$1"
+        shift
+        case "$arg" in
+            --demo)
+                seed_demo=1
+                ;;
+            *)
+                echo "Unknown seed option: ${arg}" >&2
+                return 1
+                ;;
+        esac
+    done
+
     root="$(xf_script_root)"
 
     xf_dev_ensure_env "$root"
     xf_dev_start_stack
     xf_dev_prepare_deps
     xf_dev_bootstrap_migrate
-    xf_dev_bootstrap_seed
+    xf_dev_bootstrap_seed "${seed_demo}"
     xf_wait_for_app
     xf_wait_for_frontend
     xf_print_urls

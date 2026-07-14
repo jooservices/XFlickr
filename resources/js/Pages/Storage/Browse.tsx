@@ -140,7 +140,7 @@ export default function StorageBrowse({
         <AppLayout>
             <Head title={provider_label} />
 
-            <PageShell>
+            <PageShell data-testid="storage-browse-page">
                 <PageShellIdentity
                     breadcrumbs={storageBrowseCrumbs(provider_label)}
                     title={provider_label}

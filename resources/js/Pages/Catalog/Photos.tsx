@@ -148,7 +148,7 @@ export default function CatalogPhotos({ account }: Props) {
         <AppLayout>
             <Head title="Photos" />
 
-            <PageShell>
+            <PageShell data-testid="catalog-photos-page">
                 <PageShellIdentity
                     breadcrumbs={catalogPageCrumbs('Photos', account)}
                     title="Photos"

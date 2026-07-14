@@ -92,6 +92,28 @@ npm run test          # Vitest component smoke tests
 npm run test:e2e      # Playwright (requires dev stack + built assets)
 ```
 
+### Playwright smoke (T2)
+
+Browser E2E targets the **operator dev stack** (`http://localhost:8082` by default), not the isolated PHPUnit test stack.
+
+Prep demo data (operator — factory seeder is idempotent; wipe with `bash scripts/dev.sh refresh` first):
+
+```bash
+bash scripts/dev.sh seed --demo
+```
+
+Run smokes (set `ADMIN_PASSWORD` from `.env` when not using the local/testing default):
+
+```bash
+npm run build
+ADMIN_PASSWORD=your-password npm run test:e2e
+# optional: PLAYWRIGHT_BASE_URL=http://localhost:8082
+```
+
+Printed checklist: `bash scripts/test.sh e2e:prep` (does not touch the docker stacks).
+
+Specs live under `tests/e2e/` (`contacts`, `catalog`, `transfers`, `storage`) and reuse `tests/e2e/helpers/auth.ts` for admin login.
+
 ## Coverage ratchet
 
 CI enforces a **95%** statement coverage minimum via `bash scripts/test.sh gate:ci`.

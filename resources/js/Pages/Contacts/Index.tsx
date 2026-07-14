@@ -284,7 +284,7 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
             ) : null}
 
             {viewMode === 'table' ? (
-            <PageShell>
+            <PageShell data-testid="contacts-page">
                 <PageShellIdentity
                     breadcrumbs={[...flickrAccountPageCrumbs(account), { label: 'Contacts' }]}
                     title="Contacts"

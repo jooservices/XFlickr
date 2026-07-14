@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- FS-11 demo dataset seeder (`Database\Seeders\DemoDatasetSeeder`): one Flickr connection, ~30 contacts, ~100 photos across two photosets and one gallery, completed/failed download batches, and a Google Photos account with local browse cache. Operator path: `bash scripts/dev.sh seed --demo` (instructions: `bash scripts/test.sh e2e:prep`).
+- T2 Playwright smoke specs: `tests/e2e/contacts.spec.ts`, `catalog.spec.ts`, `transfers.spec.ts`, `storage.spec.ts` with shared `tests/e2e/helpers/auth.ts`; sparse `data-testid` hooks on Contacts, Catalog Photos, Operations transfers, and Storage browse pages. `PLAYWRIGHT_BASE_URL` env override in `playwright.config.ts`.
+- Feature test `DemoDatasetSeederTest` for seeder counts and idempotency.
+
 ### Changed
 
 - F3 PascalCase domain dirs: dissolved `Components/macros/` into module-aligned folders (`Contacts/Graph/`, `Flickr/`, `Catalog/`, `Transfer/`); barrel re-exports updated.

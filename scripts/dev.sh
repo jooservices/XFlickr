@@ -24,6 +24,7 @@ usage() {
     cat <<EOF
   bash scripts/dev.sh up                  Start stack + migrate only (no seed)
   bash scripts/dev.sh seed                Same as up + seed admin user
+  bash scripts/dev.sh seed --demo         Same as seed + factory demo dataset (Playwright / UI smoke)
   bash scripts/dev.sh quick               Start services only (skip composer/npm/migrate)
   bash scripts/dev.sh refresh             Reset MySQL schema (migrate:fresh) + admin seed only
   bash scripts/dev.sh reset-data          Stop stack + wipe ALL dev volumes
@@ -54,7 +55,7 @@ case "$cmd" in
         xf_dev_up
         ;;
     seed)
-        xf_dev_seed
+        xf_dev_seed "$@"
         ;;
     quick|start)
         xf_dev_quick

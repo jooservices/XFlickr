@@ -66,7 +66,7 @@ Or the shorthand:
 ./scripts/docker-up.sh
 ```
 
-`dev.sh` supports `seed`, `quick`, `reload`, `refresh`, `down`, `logs`, and more — run `bash scripts/dev.sh help`.
+`dev.sh` supports `seed`, `seed --demo` (admin + factory demo dataset for UI/Playwright), `quick`, `reload`, `refresh`, `down`, `logs`, and more — run `bash scripts/dev.sh help`.
 
 The script builds containers, installs dependencies, runs migrations, starts Vite HMR, and bootstraps MongoDB indexes.
 
@@ -90,6 +90,8 @@ The script builds containers, installs dependencies, runs migrations, starts Vit
 5. **Storage** — add Google / Microsoft OAuth app credentials (or Cloudflare R2 keys), then connect a storage account.
 6. Go to **Connections** → **Flickr** → pick an account → **Crawl** to index contacts and catalogs.
 7. Use **Download** and **Upload** when you are ready to transfer files.
+
+**Demo dataset (optional):** `bash scripts/dev.sh seed --demo` seeds a Flickr connection, contacts, catalog photos, transfer batches, and a local storage browse cache for UI smoke tests. See [Testing](docs/04-development/testing.md#playwright-smoke-t2).
 
 ---
 
