@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\Flickr\Services;
 
+use App\Support\ThirdPartyApiLogger;
+use Illuminate\Support\Facades\Log;
 use Modules\Crawler\Enums\CrawlType;
 use Modules\Crawler\Facades\FlickrService;
 use Modules\Crawler\FlickrConnection;
@@ -104,11 +106,21 @@ final class FlickrCrawlService
 
     private function assertCrawlAllowed(Connection $connection): void
     {
+        $connectionKeyFp = ThirdPartyApiLogger::fingerprint($connection->connection_key);
+
         if (XFlickrConfig::globalPause()) {
+            Log::warning('Crawl blocked by global pause.', [
+                'connection_key_fp' => $connectionKeyFp,
+            ]);
+
             throw GlobalCrawlPauseException::active();
         }
 
         if (! $this->tokenHealth->probe($connection, useCache: true)->valid) {
+            Log::warning('Crawl blocked by invalid Flickr token.', [
+                'connection_key_fp' => $connectionKeyFp,
+            ]);
+
             throw FlickrTokenInvalidException::forConnection($connection);
         }
     }

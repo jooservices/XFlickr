@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\Storage\Tests\Unit\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Services\GooglePhotosUploadService;
 use Tests\Concerns\SafeRefreshDatabase;
@@ -16,6 +17,8 @@ final class GooglePhotosUploadTest extends TestCase
 
     public function test_uploads_media_item_via_google_photos_api(): void
     {
+        Log::spy();
+
         Http::fake([
             'photoslibrary.googleapis.com/v1/uploads' => Http::response('upload-token-123', 200),
             'photoslibrary.googleapis.com/v1/mediaItems:batchCreate' => Http::response([
@@ -61,5 +64,11 @@ final class GooglePhotosUploadTest extends TestCase
 
         Http::assertSent(fn ($request) => $request->url() === 'https://photoslibrary.googleapis.com/v1/uploads');
         Http::assertSent(fn ($request) => $request->url() === 'https://photoslibrary.googleapis.com/v1/mediaItems:batchCreate');
+
+        Log::shouldHaveReceived('info')
+            ->withArgs(fn (string $message, array $context): bool => $message === 'Third-party API call succeeded.'
+                && ($context['url'] ?? null) === 'https://photoslibrary.googleapis.com/v1/mediaItems:batchCreate'
+                && ($context['upload_token_present'] ?? null) === true
+                && ! array_key_exists('upload_token', $context));
     }
 }

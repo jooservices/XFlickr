@@ -18,6 +18,7 @@ final class GooglePhotosUploadService
 
     public function __construct(
         private readonly StorageGoogleTokenService $tokens,
+        private readonly StorageApiLogger $apiLogger,
     ) {}
 
     /**
@@ -45,7 +46,7 @@ final class GooglePhotosUploadService
                 ])
                 ->withBody($body, 'application/octet-stream')
                 ->post(self::UPLOAD_URL);
-            app(StorageApiLogger::class)->logRequest(
+            $this->apiLogger->logRequest(
                 'google_photos',
                 'POST',
                 self::UPLOAD_URL,
@@ -67,6 +68,7 @@ final class GooglePhotosUploadService
             throw new RuntimeException('Google Photos upload token was empty.');
         }
 
+        $startedAt = microtime(true);
         $createResponse = Http::withToken($accessToken)
             ->timeout(60)
             ->post(self::BATCH_CREATE_URL, [
@@ -78,6 +80,19 @@ final class GooglePhotosUploadService
                     ],
                 ]],
             ]);
+        $this->apiLogger->logRequest(
+            'google_photos',
+            'POST',
+            self::BATCH_CREATE_URL,
+            $startedAt,
+            $createResponse,
+            null,
+            [
+                'account_id' => $account->id,
+                'filename' => $filename,
+                'upload_token_present' => true,
+            ],
+        );
 
         if (! $createResponse->successful()) {
             throw new RuntimeException($this->apiError($createResponse->json(), 'Google Photos media item creation failed.'));

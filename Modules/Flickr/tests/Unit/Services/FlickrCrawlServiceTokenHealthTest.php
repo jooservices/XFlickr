@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Flickr\Tests\Unit\Services;
 
+use Illuminate\Support\Facades\Log;
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
 use Modules\Crawler\Enums\CrawlType;
 use Modules\Flickr\Exceptions\FlickrTokenInvalidException;
@@ -35,9 +36,18 @@ final class FlickrCrawlServiceTokenHealthTest extends TestCase
 
         $this->mockFlickrTokenHealth(valid: false);
 
-        $this->expectException(FlickrTokenInvalidException::class);
+        Log::spy();
 
-        app(FlickrCrawlService::class)->crawl($connection, CrawlType::Photos, FlickrNsid::fake());
+        try {
+            app(FlickrCrawlService::class)->crawl($connection, CrawlType::Photos, FlickrNsid::fake());
+            $this->fail('Expected FlickrTokenInvalidException.');
+        } catch (FlickrTokenInvalidException) {
+            Log::shouldHaveReceived('warning')
+                ->withArgs(fn (string $message, array $context): bool => $message === 'Crawl blocked by invalid Flickr token.'
+                    && isset($context['connection_key_fp'])
+                    && is_string($context['connection_key_fp'])
+                    && strlen($context['connection_key_fp']) === 12);
+        }
     }
 
     public function test_crawl_throws_when_global_pause_is_active(): void
@@ -47,8 +57,15 @@ final class FlickrCrawlServiceTokenHealthTest extends TestCase
         RuntimeConfig::set('xflickr.global_pause', true, 'bool');
         RuntimeConfig::refresh();
 
-        $this->expectException(GlobalCrawlPauseException::class);
+        Log::spy();
 
-        app(FlickrCrawlService::class)->crawl($connection, CrawlType::Photos, FlickrNsid::fake());
+        try {
+            app(FlickrCrawlService::class)->crawl($connection, CrawlType::Photos, FlickrNsid::fake());
+            $this->fail('Expected GlobalCrawlPauseException.');
+        } catch (GlobalCrawlPauseException) {
+            Log::shouldHaveReceived('warning')
+                ->withArgs(fn (string $message, array $context): bool => $message === 'Crawl blocked by global pause.'
+                    && isset($context['connection_key_fp']));
+        }
     }
 }

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Third-party I/O logging via `App\Support\ThirdPartyApiLogger` (StorageApiLogger wraps it). Google Photos `mediaItems:batchCreate` logs `upload_token_present` only; Flickr OAuth / token probe / crawl pause+invalid paths log fingerprints (≤12 hex) never raw secrets (`SECURITY.md`).
 - Password reset logging omits the reset URL/token (email only); `SECURITY.md` documents hashed-at-rest tokens and flash/CLI delivery.
 - A4 DAG edges: `DownloadCandidateDto` → `Modules/Flickr/Dto`; `OAuthAppConfigDto` → `App\Dto`; Spider uses `ConcurrentRunGuard` (Contacts binds) instead of importing Contacts repositories; download/upload queue controllers + FormRequests moved Transfer → Contacts (URIs unchanged).
 - Crawler connection and crawl-run persistence go through repositories (`ConnectionRepository`, `CrawlRunRepository`, `CrawlTargetRepository`, `ApiLogRepository`, plus catalog repos). Crawler Services/Commands/Jobs must not call Eloquent directly (`CrawlerLayeringTest`). Docs/skills/`AGENTS.md` enforce Service → Repository → Model; Prefer model scopes in repositories.

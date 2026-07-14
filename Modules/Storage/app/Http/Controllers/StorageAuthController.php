@@ -29,7 +29,10 @@ final class StorageAuthController
                 $request->returnUrl(),
             );
         } catch (Throwable $exception) {
-            Log::warning('Storage OAuth connect failed.', ['exception' => $exception]);
+            Log::warning('Storage OAuth connect failed.', [
+                'error' => $exception->getMessage(),
+                'driver' => $request->driver()->value,
+            ]);
 
             return redirect()->route('connections.index', ['provider' => 'storage'])->with(
                 'error',
@@ -47,7 +50,10 @@ final class StorageAuthController
         try {
             $url = $oauth->beginForAccount($account, $returnUrl);
         } catch (Throwable $exception) {
-            Log::warning('Storage OAuth reauthorize failed.', ['exception' => $exception]);
+            Log::warning('Storage OAuth reauthorize failed.', [
+                'error' => $exception->getMessage(),
+                'account_id' => $account->id,
+            ]);
 
             return redirect($returnUrl ?? route('connections.index', ['provider' => 'storage']))->with(
                 'error',
@@ -73,7 +79,10 @@ final class StorageAuthController
         try {
             $oauth->complete($request->provider(), $request->code());
         } catch (Throwable $exception) {
-            Log::warning('Storage OAuth callback failed.', ['exception' => $exception]);
+            Log::warning('Storage OAuth callback failed.', [
+                'error' => $exception->getMessage(),
+                'provider' => $request->provider(),
+            ]);
 
             return redirect($returnUrl)->with('error', 'Storage account could not be connected.');
         }

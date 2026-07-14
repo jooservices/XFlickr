@@ -26,6 +26,7 @@ Do not include secrets, API keys, OAuth tokens, cookies, session values, private
 - Accidental exposure of downloaded Flickr photos on shared servers.
 - Running tests or migrations against the local dev stack, wiping user data (see [Docker safety](docs/05-maintenance/docker-safety.md)).
 - Password reset tokens are **hashed at rest** (`password_reset_tokens`). The plaintext token appears only in the operator-facing flash/`resetUrl` (and CLI flows) — **never** in application logs. Email delivery of reset links is not implemented yet.
+- Third-party API / OAuth logs (`App\Support\ThirdPartyApiLogger`, Storage wrapper, Flickr OAuth/token/crawl guards) must **never** include raw secrets (`access_token`, `oauth_token`, `client_secret`, `upload_token`, `token_payload`, etc.). Correlate with `*_fp` fingerprints (SHA-256 hex, ≤12 chars) or boolean flags such as `upload_token_present`.
 
 ## Dependency and Config Security
 

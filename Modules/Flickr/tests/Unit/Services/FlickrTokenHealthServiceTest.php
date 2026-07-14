@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\Flickr\Tests\Unit\Services;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use JOOservices\Flickr\Client\FakeFlickrTransport;
 use Modules\Crawler\Models\Connection;
 use Modules\Flickr\Services\FlickrTokenHealthService;
@@ -79,11 +80,21 @@ final class FlickrTokenHealthServiceTest extends TestCase
         );
 
         $connection = Connection::query()->where('connection_key', '94529704@N02')->firstOrFail();
+
+        Log::spy();
+
         $result = app(FlickrTokenHealthService::class)->probe($connection);
 
         $this->assertFalse($result->valid);
         $this->assertSame(99, $result->errorCode);
         $this->assertSame('Invalid auth token', $result->errorMessage);
+
+        Log::shouldHaveReceived('warning')
+            ->once()
+            ->withArgs(fn (string $message, array $context): bool => $message === 'Flickr token health probe failed.'
+                && ($context['error_code'] ?? null) === 99
+                && isset($context['connection_key_fp'])
+                && strlen((string) $context['connection_key_fp']) === 12);
     }
 
     public function test_probe_returns_exception_message_when_client_factory_fails(): void

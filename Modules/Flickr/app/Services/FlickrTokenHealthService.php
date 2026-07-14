@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Modules\Flickr\Services;
 
+use App\Support\ThirdPartyApiLogger;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Modules\Crawler\Models\Connection;
 use Modules\Crawler\Services\FlickrClientFactory;
 use Modules\Flickr\Dto\FlickrTokenHealthResult;
@@ -55,11 +57,14 @@ class FlickrTokenHealthService
             $response = $client->raw()->call('flickr.test.login', []);
 
             if (! $response->ok) {
-                return new FlickrTokenHealthResult(
+                $result = new FlickrTokenHealthResult(
                     valid: false,
                     errorCode: $response->error?->code,
                     errorMessage: $response->error?->message,
                 );
+                $this->logProbeFailure($connection, $result);
+
+                return $result;
             }
 
             $user = $response->data['user'] ?? null;
@@ -70,11 +75,23 @@ class FlickrTokenHealthService
                 userNsid: is_string($userNsid) ? $userNsid : null,
             );
         } catch (Throwable $exception) {
-            return new FlickrTokenHealthResult(
+            $result = new FlickrTokenHealthResult(
                 valid: false,
                 errorMessage: $exception->getMessage(),
             );
+            $this->logProbeFailure($connection, $result);
+
+            return $result;
         }
+    }
+
+    private function logProbeFailure(Connection $connection, FlickrTokenHealthResult $result): void
+    {
+        Log::warning('Flickr token health probe failed.', [
+            'connection_key_fp' => ThirdPartyApiLogger::fingerprint($connection->connection_key),
+            'error_code' => $result->errorCode,
+            'error' => $result->errorMessage,
+        ]);
     }
 
     private function cacheKey(string $connectionKey): string
