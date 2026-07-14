@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\Storage\Contracts;
 
+use Modules\Storage\Dto\StorageBrowseResult;
 use Modules\Storage\Models\StorageAccount;
-use Modules\Storage\Services\StorageBrowseResult;
 
 interface StorageBrowseDriver
 {

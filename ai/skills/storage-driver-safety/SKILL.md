@@ -32,8 +32,8 @@ Source: `app/Enums/StorageDriver.php`
 
 - `StorageAccountService` — connect/disconnect accounts
 - `StorageUploadService` — Flysystem upload
-- `StorageBrowseService` / `StorageBrowseSyncService` — remote browse
-- `GooglePhotosDeleteService`, `GoogleDriveDeleteService`, `OneDriveDeleteService`, `R2DeleteService`
+- `StorageBrowseService` / `StorageBrowseSyncService` — remote browse (registry → provider `*\BrowseService` / `*\DeleteService`)
+- Provider deletes: `GooglePhotos\DeleteService`, `GoogleDrive\DeleteService`, `OneDrive\DeleteService`, `R2\DeleteService` (cache sync in `StorageDeleteService`)
 
 ## Related skills
 

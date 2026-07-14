@@ -13,7 +13,7 @@ use InvalidArgumentException;
 use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Services\StorageDeleteService;
-use Modules\Storage\Services\StorageGoogleTokenService;
+use Modules\Storage\Services\Tokens\GoogleTokenService;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
@@ -47,7 +47,7 @@ final class StorageDeleteServiceTest extends TestCase
             'expires_in' => 3600,
         ]);
 
-        $this->mock(StorageGoogleTokenService::class, function ($mock) use ($googleClient): void {
+        $this->mock(GoogleTokenService::class, function ($mock) use ($googleClient): void {
             $mock->shouldReceive('clientForAccount')->once()->andReturn($googleClient);
         });
 

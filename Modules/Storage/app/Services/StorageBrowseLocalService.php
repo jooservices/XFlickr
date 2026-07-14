@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Storage\Services;
 
+use Modules\Storage\Dto\StorageBrowseResult;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Models\StorageRemoteAlbum;
 use Modules\Storage\Models\StorageRemoteItem;

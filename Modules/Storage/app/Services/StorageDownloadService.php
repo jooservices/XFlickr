@@ -6,11 +6,11 @@ namespace Modules\Storage\Services;
 
 use InvalidArgumentException;
 use Modules\Storage\Contracts\StorageDownloadStreamer;
+use Modules\Storage\Dto\StorageStreamResult;
 use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Repositories\StorageAccountRepository;
 use Modules\Storage\Support\StorageR2Config;
-use Modules\Storage\Support\StorageStreamResult;
 use RuntimeException;
 
 final class StorageDownloadService implements StorageDownloadStreamer

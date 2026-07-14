@@ -8,7 +8,7 @@ use App\Repositories\Crawler\CrawlRunQueryRepository;
 use App\Repositories\Crawler\CrawlTargetQueryRepository;
 use Modules\Flickr\Services\CrawlStatusQueryService;
 use Modules\Flickr\Services\FlickrOAuthService;
-use Modules\Flickr\Services\FlickrRateLimitPresenter;
+use Modules\Flickr\Services\RateLimit\Presenter;
 use Modules\Flickr\Support\ConnectionPresenter;
 use Modules\Transfer\Services\TransferCountsQueryService;
 use Modules\Transfer\Services\TransferProgressQueryService;
@@ -26,7 +26,7 @@ final class OperationsSnapshotService
         private readonly TransferCountsQueryService $transferCounts,
         private readonly CrawlRunQueryRepository $crawlRuns,
         private readonly CrawlTargetQueryRepository $crawlTargets,
-        private readonly FlickrRateLimitPresenter $rateLimit,
+        private readonly Presenter $rateLimit,
         private readonly DatabaseUsageService $databases,
         private readonly ServicesDependencyProbeService $dependencies,
     ) {}

@@ -11,6 +11,7 @@ use Modules\Crawler\Models\Photo;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Repositories\StorageAccountRepository;
 use Modules\Storage\Repositories\StorageUploadRepository;
+use Modules\Transfer\Dto\TransferQueueResult;
 use Modules\Transfer\Enums\StoredFileStatus;
 use Modules\Transfer\Enums\TransferType;
 use Modules\Transfer\Jobs\FanOutTransferBatchJob;

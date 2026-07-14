@@ -14,11 +14,12 @@ use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Models\StorageRemoteItem;
 use Modules\Storage\Models\StorageUpload;
-use Modules\Storage\Services\Drivers\GoogleDriveStorageDeleteDriver;
-use Modules\Storage\Services\Drivers\R2StorageDeleteDriver;
+use Modules\Storage\Services\GoogleDrive\DeleteService as GoogleDriveDeleteService;
+use Modules\Storage\Services\R2\DeleteService as R2DeleteService;
+use Modules\Storage\Services\StorageDeleteService;
 use Modules\Storage\Services\StorageDriverRegistry;
 use Modules\Storage\Services\StorageFlysystemFactory;
-use Modules\Storage\Services\StorageGoogleTokenService;
+use Modules\Storage\Services\Tokens\GoogleTokenService;
 use Modules\Transfer\Models\StoredFile;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
@@ -56,9 +57,9 @@ final class StorageDeleteDriversTest extends TestCase
         });
 
         $driver = app(StorageDriverRegistry::class)->deleteDriver(StorageDriver::R2);
-        $this->assertInstanceOf(R2StorageDeleteDriver::class, $driver);
+        $this->assertInstanceOf(R2DeleteService::class, $driver);
 
-        $result = $driver->deleteMany($account, [$itemId]);
+        $result = app(StorageDeleteService::class)->deleteMany($account, StorageDriver::R2, [$itemId]);
 
         $this->assertSame([$itemId], $result['deleted']);
         $this->assertDatabaseMissing('storage_remote_items', [
@@ -93,14 +94,18 @@ final class StorageDeleteDriversTest extends TestCase
             'expires_in' => 3600,
         ]);
 
-        $this->mock(StorageGoogleTokenService::class, function ($mock) use ($googleClient): void {
+        $this->mock(GoogleTokenService::class, function ($mock) use ($googleClient): void {
             $mock->shouldReceive('clientForAccount')->once()->andReturn($googleClient);
         });
 
         $driver = app(StorageDriverRegistry::class)->deleteDriver(StorageDriver::GoogleDrive);
-        $this->assertInstanceOf(GoogleDriveStorageDeleteDriver::class, $driver);
+        $this->assertInstanceOf(GoogleDriveDeleteService::class, $driver);
 
-        $result = $driver->deleteMany($account, [$remoteId]);
+        $result = app(StorageDeleteService::class)->deleteMany(
+            $account,
+            StorageDriver::GoogleDrive,
+            [$remoteId],
+        );
 
         $this->assertSame([$remoteId], $result['deleted']);
         $this->assertDatabaseMissing('storage_remote_items', [

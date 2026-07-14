@@ -11,7 +11,7 @@ use App\Repositories\Crawler\CrawlTargetQueryRepository;
 use App\Repositories\Crawler\PhotoQueryRepository;
 use Illuminate\Support\Facades\Cache;
 use Modules\Flickr\Services\FlickrOAuthService;
-use Modules\Flickr\Services\FlickrRateLimitPresenter;
+use Modules\Flickr\Services\RateLimit\Presenter;
 use Modules\Flickr\Support\ConnectionPresenter;
 use Modules\Transfer\Services\TransferCountsQueryService;
 
@@ -25,7 +25,7 @@ final class DashboardService
         private readonly PhotoQueryRepository $photos,
         private readonly TransferCountsQueryService $transferCounts,
         private readonly FlickrOAuthService $oauth,
-        private readonly FlickrRateLimitPresenter $rateLimit,
+        private readonly Presenter $rateLimit,
         private readonly DatabaseUsageService $databases,
     ) {}
 

@@ -22,7 +22,7 @@ use Modules\Storage\Http\Resources\StorageDeleteResultResource;
 use Modules\Storage\Http\Resources\StorageReauthorizationResource;
 use Modules\Storage\Http\Resources\StorageSyncResultResource;
 use Modules\Storage\Models\StorageAccount;
-use Modules\Storage\Services\GooglePhotosThumbnailService;
+use Modules\Storage\Services\GooglePhotos\ThumbnailService;
 use Modules\Storage\Services\StorageAccountScopeService;
 use Modules\Storage\Services\StorageBrowseLocalService;
 use Modules\Storage\Services\StorageBrowseService;
@@ -156,7 +156,7 @@ final class StorageBrowseController extends BaseApiController
 
     public function googlePhotosThumbnail(
         GooglePhotosThumbnailRequest $request,
-        GooglePhotosThumbnailService $thumbnails,
+        ThumbnailService $thumbnails,
     ): StreamedResponse|JsonResponse {
         try {
             return $thumbnails->stream($request->accountId(), $request->mediaId());

@@ -11,8 +11,8 @@ use GuzzleHttp\Psr7\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Modules\Storage\Models\StorageAccount;
-use Modules\Storage\Services\StorageGoogleTokenService;
 use Modules\Storage\Services\StorageQuotaQueryService;
+use Modules\Storage\Services\Tokens\GoogleTokenService;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
@@ -149,7 +149,7 @@ final class StorageQuotaQueryServiceTest extends TestCase
     {
         StorageAccount::factory()->googleDrive()->create();
 
-        $this->mock(StorageGoogleTokenService::class, function ($mock): void {
+        $this->mock(GoogleTokenService::class, function ($mock): void {
             $mock->shouldReceive('clientForAccount')->andThrow(new \RuntimeException('Drive token expired'));
         });
 
@@ -269,7 +269,7 @@ final class StorageQuotaQueryServiceTest extends TestCase
             'expires_in' => 3600,
         ]);
 
-        $this->mock(StorageGoogleTokenService::class, function ($mock) use ($googleClient): void {
+        $this->mock(GoogleTokenService::class, function ($mock) use ($googleClient): void {
             $mock->shouldReceive('clientForAccount')->andReturn($googleClient);
         });
     }

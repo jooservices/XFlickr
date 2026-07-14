@@ -4,58 +4,48 @@ declare(strict_types=1);
 
 namespace Modules\Storage\Services;
 
+use InvalidArgumentException;
 use Modules\Storage\Contracts\StorageBrowseDriver;
 use Modules\Storage\Contracts\StorageDeleteDriver;
 use Modules\Storage\Enums\StorageDriver;
-use Modules\Storage\Services\Drivers\GoogleDriveStorageBrowseDriver;
-use Modules\Storage\Services\Drivers\GoogleDriveStorageDeleteDriver;
-use Modules\Storage\Services\Drivers\GooglePhotosStorageBrowseDriver;
-use Modules\Storage\Services\Drivers\GooglePhotosStorageDeleteDriver;
-use Modules\Storage\Services\Drivers\OneDriveStorageBrowseDriver;
-use Modules\Storage\Services\Drivers\OneDriveStorageDeleteDriver;
-use Modules\Storage\Services\Drivers\R2StorageBrowseDriver;
-use Modules\Storage\Services\Drivers\R2StorageDeleteDriver;
+use Modules\Storage\Services\GoogleDrive\BrowseService as GoogleDriveBrowseService;
+use Modules\Storage\Services\GoogleDrive\DeleteService as GoogleDriveDeleteService;
+use Modules\Storage\Services\GooglePhotos\BrowseService as GooglePhotosBrowseService;
+use Modules\Storage\Services\GooglePhotos\DeleteService as GooglePhotosDeleteService;
+use Modules\Storage\Services\OneDrive\BrowseService as OneDriveBrowseService;
+use Modules\Storage\Services\OneDrive\DeleteService as OneDriveDeleteService;
+use Modules\Storage\Services\R2\BrowseService as R2BrowseService;
+use Modules\Storage\Services\R2\DeleteService as R2DeleteService;
 
 final class StorageDriverRegistry
 {
-    /** @var array<string, StorageBrowseDriver> */
-    private array $browseDrivers;
+    private const BROWSE = [
+        'google_photos' => GooglePhotosBrowseService::class,
+        'google' => GoogleDriveBrowseService::class,
+        'onedrive' => OneDriveBrowseService::class,
+        'r2' => R2BrowseService::class,
+    ];
 
-    /** @var array<string, StorageDeleteDriver> */
-    private array $deleteDrivers;
-
-    public function __construct(
-        GooglePhotosStorageBrowseDriver $googlePhotosBrowse,
-        GoogleDriveStorageBrowseDriver $googleDriveBrowse,
-        OneDriveStorageBrowseDriver $oneDriveBrowse,
-        R2StorageBrowseDriver $r2Browse,
-        GooglePhotosStorageDeleteDriver $googlePhotosDelete,
-        GoogleDriveStorageDeleteDriver $googleDriveDelete,
-        OneDriveStorageDeleteDriver $oneDriveDelete,
-        R2StorageDeleteDriver $r2Delete,
-    ) {
-        $this->browseDrivers = [
-            StorageDriver::GooglePhotos->value => $googlePhotosBrowse,
-            StorageDriver::GoogleDrive->value => $googleDriveBrowse,
-            StorageDriver::OneDrive->value => $oneDriveBrowse,
-            StorageDriver::R2->value => $r2Browse,
-        ];
-
-        $this->deleteDrivers = [
-            StorageDriver::GooglePhotos->value => $googlePhotosDelete,
-            StorageDriver::GoogleDrive->value => $googleDriveDelete,
-            StorageDriver::OneDrive->value => $oneDriveDelete,
-            StorageDriver::R2->value => $r2Delete,
-        ];
-    }
+    private const DELETE = [
+        'google_photos' => GooglePhotosDeleteService::class,
+        'google' => GoogleDriveDeleteService::class,
+        'onedrive' => OneDriveDeleteService::class,
+        'r2' => R2DeleteService::class,
+    ];
 
     public function browseDriver(StorageDriver $driver): StorageBrowseDriver
     {
-        return $this->browseDrivers[$driver->value];
+        $class = self::BROWSE[$driver->value]
+            ?? throw new InvalidArgumentException("No browse driver for [{$driver->value}].");
+
+        return app($class);
     }
 
     public function deleteDriver(StorageDriver $driver): StorageDeleteDriver
     {
-        return $this->deleteDrivers[$driver->value];
+        $class = self::DELETE[$driver->value]
+            ?? throw new InvalidArgumentException("No delete driver for [{$driver->value}].");
+
+        return app($class);
     }
 }

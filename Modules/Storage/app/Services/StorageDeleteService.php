@@ -12,6 +12,7 @@ final class StorageDeleteService
 {
     public function __construct(
         private readonly StorageDriverRegistry $drivers,
+        private readonly StorageBrowseLocalService $browseLocal,
     ) {}
 
     /**
@@ -30,6 +31,19 @@ final class StorageDeleteService
             throw new InvalidArgumentException('At least one item id is required.');
         }
 
-        return $this->drivers->deleteDriver($driver)->deleteMany($account, $itemIds, $containerId);
+        $result = $this->drivers->deleteDriver($driver)->deleteMany($account, $itemIds, $containerId);
+
+        if ($result['deleted'] === []) {
+            return $result;
+        }
+
+        if ($driver === StorageDriver::GooglePhotos) {
+            $this->browseLocal->deleteCachedItems($account, $result['deleted'], $containerId);
+        } else {
+            $this->browseLocal->deleteCachedItems($account, $result['deleted']);
+            $this->browseLocal->purgeUploadRecords($account, $result['deleted']);
+        }
+
+        return $result;
     }
 }

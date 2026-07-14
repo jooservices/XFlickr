@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Modules\Storage\Tests\Feature\Controllers;
 
 use Modules\Storage\Contracts\StorageDownloadStreamer;
+use Modules\Storage\Dto\StorageStreamResult;
 use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Services\StorageAccountScopeService;
-use Modules\Storage\Services\StorageR2ConnectionVerifier;
-use Modules\Storage\Support\StorageStreamResult;
+use Modules\Storage\Services\StorageFlysystemFactory;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
@@ -49,8 +49,8 @@ final class StorageR2Test extends TestCase
 
     public function test_can_connect_r2_account_with_valid_credentials(): void
     {
-        $this->mock(StorageR2ConnectionVerifier::class, function ($mock): void {
-            $mock->shouldReceive('verify')->once();
+        $this->mock(StorageFlysystemFactory::class, function ($mock): void {
+            $mock->shouldReceive('verifyR2Credentials')->once();
         });
 
         $response = $this->post('/storage/connect/r2', [

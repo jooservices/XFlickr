@@ -17,14 +17,16 @@ use Masbug\Flysystem\GoogleDriveAdapter;
 use Microsoft\Graph\Graph;
 use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Models\StorageAccount;
+use Modules\Storage\Services\Tokens\GoogleTokenService;
+use Modules\Storage\Services\Tokens\MicrosoftTokenService;
 use Modules\Storage\Support\StorageR2Config;
 use RuntimeException;
 
 class StorageFlysystemFactory
 {
     public function __construct(
-        private readonly StorageGoogleTokenService $googleTokens,
-        private readonly StorageMicrosoftTokenService $microsoftTokens,
+        private readonly GoogleTokenService $googleTokens,
+        private readonly MicrosoftTokenService $microsoftTokens,
     ) {}
 
     public function diskForAccount(StorageAccount $account): Filesystem

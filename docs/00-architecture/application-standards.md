@@ -19,6 +19,8 @@ Artisan: `Command → Service → Repository → Model`. Jobs: `Job → Service`
 
 ## Rules
 
+Value objects / result DTOs live under `Modules/*/Dto/` (or host `app/Dto/`); behavior stays in `Services/`; static helpers in `Support/`.
+
 ### Controllers
 
 - One action per route; delegate immediately to Services.

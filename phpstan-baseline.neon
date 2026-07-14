@@ -636,7 +636,7 @@ parameters:
 			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
 			identifier: method.nonObject
 			count: 1
-			path: Modules/Storage/app/Services/GooglePhotosConnectionVerifier.php
+			path: Modules/Storage/app/Services/GooglePhotos/ConnectionVerifier.php
 
 		-
 			message: '#^Method Modules\\Storage\\Services\\OAuth\\MicrosoftProvider\:\:mapUserToObject\(\) has parameter \$user with no value type specified in iterable type array\.$#'

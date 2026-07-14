@@ -94,7 +94,7 @@ Each module owns its `routes/web.php`, `routes/api.php` (`/api/v1/*`), controlle
 
 - Web: `/dashboard`, `/operations` (Overview / Crawl / Transfers panels; `/crawl/operations` redirects)
 - API: `/api/v1/dashboard/snapshot`, `/api/v1/operations/snapshot`, `/api/v1/operations/stream`
-- Services: `DashboardService`, `DatabaseUsageService`, `ServicesDependencyProbeService`, `CrawlOperationsService`, `OperationsSnapshotService`, `OperationsStreamService`
+- Services: `DashboardService`, `DatabaseUsageService`, `ServicesDependencyProbeService`, `OperationsSnapshotService`, `OperationsStreamService`
 - Dashboard databases panel: MySQL/MongoDB reachability, size, MySQL connections, top tables, 24h size/connections samples
 - Operations Overview: activity metrics, MySQL/Redis/MongoDB probes, compact DB usage, per-account quota/pending
 

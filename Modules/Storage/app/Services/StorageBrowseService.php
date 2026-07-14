@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Storage\Services;
 
+use Modules\Storage\Dto\StorageBrowseResult;
 use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Repositories\StorageAccountRepository;
 use Modules\Storage\Support\StorageAccountPresenter;

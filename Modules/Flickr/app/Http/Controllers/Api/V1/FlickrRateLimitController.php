@@ -7,12 +7,12 @@ namespace Modules\Flickr\Http\Controllers\Api\V1;
 use Illuminate\Http\JsonResponse;
 use JOOservices\LaravelController\Http\Controllers\BaseApiController;
 use Modules\Flickr\Http\Resources\FlickrRateLimitSnapshotResource;
-use Modules\Flickr\Services\FlickrRateLimitQueryService;
+use Modules\Flickr\Services\RateLimit\QueryService;
 
 final class FlickrRateLimitController extends BaseApiController
 {
     public function __construct(
-        private readonly FlickrRateLimitQueryService $rateLimits,
+        private readonly QueryService $rateLimits,
     ) {}
 
     public function index(): JsonResponse

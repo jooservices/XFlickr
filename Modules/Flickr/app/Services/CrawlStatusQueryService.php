@@ -10,6 +10,7 @@ use App\Repositories\Crawler\CrawlTargetQueryRepository;
 use App\Support\Query\QuerySorter;
 use Modules\Crawler\Models\Connection;
 use Modules\Crawler\Support\XFlickrConfig;
+use Modules\Flickr\Services\RateLimit\Presenter;
 
 final class CrawlStatusQueryService
 {
@@ -20,7 +21,7 @@ final class CrawlStatusQueryService
         private readonly CrawlRunQueryRepository $crawlRuns,
         private readonly CrawlTargetQueryRepository $crawlTargets,
         private readonly ApiLogQueryRepository $apiLogs,
-        private readonly FlickrRateLimitPresenter $rateLimit,
+        private readonly Presenter $rateLimit,
         private readonly QuerySorter $sorter,
     ) {}
 

@@ -8,8 +8,8 @@ use Illuminate\Http\RedirectResponse;
 use Modules\Contacts\Http\Requests\QueuePhotoDownloadRequest;
 use Modules\Contacts\Services\ContactListQueryService;
 use Modules\Crawler\Models\Connection;
+use Modules\Transfer\Dto\TransferQueueResult;
 use Modules\Transfer\Services\PhotoDownloadService;
-use Modules\Transfer\Services\TransferQueueResult;
 
 final class PhotoDownloadController
 {

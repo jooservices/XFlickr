@@ -14,11 +14,11 @@ use GuzzleHttp\Psr7\Response;
 use Mockery;
 use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Models\StorageAccount;
-use Modules\Storage\Services\Drivers\GoogleDriveStorageBrowseDriver;
-use Modules\Storage\Services\Drivers\R2StorageBrowseDriver;
+use Modules\Storage\Services\GoogleDrive\BrowseService as GoogleDriveBrowseService;
+use Modules\Storage\Services\R2\BrowseService as R2BrowseService;
 use Modules\Storage\Services\StorageDriverRegistry;
 use Modules\Storage\Services\StorageFlysystemFactory;
-use Modules\Storage\Services\StorageGoogleTokenService;
+use Modules\Storage\Services\Tokens\GoogleTokenService;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
@@ -52,7 +52,7 @@ final class StorageBrowseDriversTest extends TestCase
         ]);
 
         $driver = app(StorageDriverRegistry::class)->browseDriver(StorageDriver::GoogleDrive);
-        $this->assertInstanceOf(GoogleDriveStorageBrowseDriver::class, $driver);
+        $this->assertInstanceOf(GoogleDriveBrowseService::class, $driver);
 
         $result = $driver->browse($account, 25, null, null, null, true, true);
 
@@ -91,12 +91,14 @@ final class StorageBrowseDriversTest extends TestCase
         });
 
         $driver = app(StorageDriverRegistry::class)->browseDriver(StorageDriver::R2);
-        $this->assertInstanceOf(R2StorageBrowseDriver::class, $driver);
+        $this->assertInstanceOf(R2BrowseService::class, $driver);
 
         $result = $driver->browse($account, 25, null, null, null, true, true);
 
         $this->assertCount(1, $result->albums);
         $this->assertCount(1, $result->items);
+        $this->assertSame('album-one', $result->albums[0]['id'] ?? null);
+        $this->assertSame('album-one/photo.jpg', $result->items[0]['id'] ?? null);
     }
 
     /**
@@ -122,7 +124,7 @@ final class StorageBrowseDriversTest extends TestCase
             'expires_in' => 3600,
         ]);
 
-        $this->mock(StorageGoogleTokenService::class, function ($mock) use ($googleClient): void {
+        $this->mock(GoogleTokenService::class, function ($mock) use ($googleClient): void {
             $mock->shouldReceive('clientForAccount')->andReturn($googleClient);
         });
     }

@@ -6,11 +6,11 @@ namespace Modules\Storage\Tests\Feature\Controllers\Api\V1;
 
 use Illuminate\Support\Facades\Http;
 use Modules\Storage\Contracts\StorageDownloadStreamer;
+use Modules\Storage\Dto\StorageStreamResult;
 use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Models\StorageRemoteItem;
 use Modules\Storage\Services\StorageAccountScopeService;
-use Modules\Storage\Support\StorageStreamResult;
 use RuntimeException;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;

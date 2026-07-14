@@ -6,7 +6,7 @@ namespace Modules\Storage\Tests\Unit\Services;
 
 use Illuminate\Support\Facades\Http;
 use Modules\Storage\Models\StorageAccount;
-use Modules\Storage\Services\StorageMicrosoftTokenService;
+use Modules\Storage\Services\Tokens\MicrosoftTokenService;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
@@ -39,7 +39,7 @@ final class StorageTokenRefreshTest extends TestCase
             'connected_at' => now(),
         ]);
 
-        $accessToken = app(StorageMicrosoftTokenService::class)->accessToken($account->credentials ?? [], $account);
+        $accessToken = app(MicrosoftTokenService::class)->accessToken($account->credentials ?? [], $account);
 
         $this->assertSame('new-access-token', $accessToken);
 

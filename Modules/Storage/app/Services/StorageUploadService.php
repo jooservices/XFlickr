@@ -8,13 +8,14 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Repositories\StorageAccountRepository;
+use Modules\Storage\Services\GooglePhotos\UploadService;
 use Modules\Storage\Support\StorageR2Config;
 use RuntimeException;
 
 final class StorageUploadService
 {
     public function __construct(
-        private readonly GooglePhotosUploadService $googlePhotosUpload,
+        private readonly UploadService $googlePhotosUpload,
         private readonly StorageBrowseLocalService $browseLocal,
         private readonly StorageFlysystemFactory $flysystem,
         private readonly StorageAccountRepository $accounts,

@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Http;
 use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Repositories\StorageAccountRepository;
+use Modules\Storage\Services\Tokens\GoogleTokenService;
+use Modules\Storage\Services\Tokens\MicrosoftTokenService;
 use Modules\Storage\Support\StorageApiLogger;
 use Throwable;
 
@@ -19,8 +21,8 @@ final class StorageQuotaQueryService
 
     public function __construct(
         private readonly StorageAccountRepository $accounts,
-        private readonly StorageGoogleTokenService $googleTokens,
-        private readonly StorageMicrosoftTokenService $microsoftTokens,
+        private readonly GoogleTokenService $googleTokens,
+        private readonly MicrosoftTokenService $microsoftTokens,
         private readonly StorageApiLogger $apiLogger,
     ) {}
 

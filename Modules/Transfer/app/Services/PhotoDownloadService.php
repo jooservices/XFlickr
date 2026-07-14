@@ -8,6 +8,7 @@ use App\Repositories\Crawler\PhotoQueryRepository;
 use Illuminate\Support\Collection;
 use Modules\Crawler\Models\Connection;
 use Modules\Crawler\Models\Photo;
+use Modules\Transfer\Dto\TransferQueueResult;
 use Modules\Transfer\Enums\TransferType;
 use Modules\Transfer\Jobs\DownloadPhotoJob;
 use Modules\Transfer\Jobs\FanOutTransferBatchJob;

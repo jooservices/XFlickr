@@ -7,7 +7,7 @@ namespace Modules\Storage\Console\Commands;
 use Illuminate\Console\Command;
 use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Models\StorageAccount;
-use Modules\Storage\Services\GooglePhotosConnectionVerifier;
+use Modules\Storage\Services\GooglePhotos\ConnectionVerifier;
 
 final class VerifyGooglePhotosConnectionCommand extends Command
 {
@@ -15,7 +15,7 @@ final class VerifyGooglePhotosConnectionCommand extends Command
 
     protected $description = 'Verify Google Photos app-created library content for the connected OAuth client';
 
-    public function handle(GooglePhotosConnectionVerifier $verifier): int
+    public function handle(ConnectionVerifier $verifier): int
     {
         $account = $this->resolveAccount();
         if ($account === null) {

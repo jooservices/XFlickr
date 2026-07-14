@@ -9,7 +9,7 @@ use JOOservices\LaravelConfig\Facades\Config;
 use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Events\StorageAccountDisconnected;
 use Modules\Storage\Models\StorageAccount;
-use Modules\Storage\Services\StorageR2ConnectionVerifier;
+use Modules\Storage\Services\StorageFlysystemFactory;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
@@ -123,8 +123,8 @@ final class StorageAuthControllerTest extends TestCase
 
     public function test_connect_r2_rejects_invalid_credentials(): void
     {
-        $this->mock(StorageR2ConnectionVerifier::class, function ($mock): void {
-            $mock->shouldReceive('verify')->once()->andThrow(new \RuntimeException('Invalid bucket'));
+        $this->mock(StorageFlysystemFactory::class, function ($mock): void {
+            $mock->shouldReceive('verifyR2Credentials')->once()->andThrow(new \RuntimeException('Invalid bucket'));
         });
 
         $response = $this->post('/storage/connect/r2', [
