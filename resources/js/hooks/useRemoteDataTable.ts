@@ -37,7 +37,12 @@ export function useRemoteDataTable<T>({
     const [loadingMore, setLoadingMore] = useState(false);
     const appendRef = useRef(false);
 
+    // Stable serialized key so parent identity churn of `filters` does not reload.
     const filtersKey = useMemo(() => JSON.stringify(filters), [filters]);
+    const stableFilters = useMemo(
+        () => JSON.parse(filtersKey) as Record<string, string>,
+        [filtersKey],
+    );
 
     const handleSortChange = useCallback((key: string, direction: SortDirection) => {
         appendRef.current = false;
@@ -62,7 +67,7 @@ export function useRemoteDataTable<T>({
             direction: sortDirection,
         };
 
-        for (const [key, value] of Object.entries(filters)) {
+        for (const [key, value] of Object.entries(stableFilters)) {
             if (value.trim() !== '') {
                 params[key] = value.trim();
             }
@@ -83,7 +88,7 @@ export function useRemoteDataTable<T>({
             setLoading(false);
             setLoadingMore(false);
         }
-    }, [fetchPath, page, perPage, sortKey, sortDirection, filtersKey, paginationMode]);
+    }, [fetchPath, page, perPage, sortKey, sortDirection, stableFilters, paginationMode]);
 
     useEffect(() => {
         void load();

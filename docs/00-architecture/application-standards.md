@@ -2,6 +2,8 @@
 
 XFlickr follows a layered request lifecycle for backend code. Domain code lives in `Modules/{Name}` (`nwidart/laravel-modules`); thin `app/` is host bootstrap only.
 
+Which module owns what: [Modules catalog](modules.md).
+
 ## Mandated flow
 
 ```
@@ -36,8 +38,14 @@ Artisan: `Command → Service → Repository → Model`. Jobs: `Job → Service`
 ### Services
 
 - Single responsibility; hold business rules under `Modules/*/Services/`.
-- Depend on Repositories, not Eloquent directly from controllers.
+- Depend on Repositories for all persistence — **never** Eloquent/`Model::query()` / `$model->update()` from Services (or Controllers/Commands).
+- `DB::transaction()` wrapping Repository calls is fine.
 - Two Services must not depend on each other bidirectionally — use an orchestrator Service for shared workflows.
+
+### Commands / Jobs
+
+- Commands: `Command → Service → Repository → Model` only.
+- Jobs: call Services; work-item claim/status via Repositories — never static Eloquent query builders in Jobs.
 
 ### Jobs / Commands
 

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Modules\Spider\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
-use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Crawler\Models\Connection;
 use Modules\Spider\Http\Requests\SpiderConnectionRequest;
 use Modules\Spider\Services\SpiderPlannerService;
 use RuntimeException;

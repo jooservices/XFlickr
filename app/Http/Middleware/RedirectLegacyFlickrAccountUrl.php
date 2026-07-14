@@ -7,7 +7,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Crawler\Models\Connection;
 use Modules\Flickr\Support\ConnectionPublicIdService;
 use Symfony\Component\HttpFoundation\Response;
 

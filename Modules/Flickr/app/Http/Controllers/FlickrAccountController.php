@@ -7,11 +7,12 @@ namespace Modules\Flickr\Http\Controllers;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
-use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Crawler\Models\Connection;
 use Modules\Flickr\Exceptions\FlickrTokenInvalidException;
+use Modules\Flickr\Exceptions\GlobalCrawlPauseException;
 use Modules\Flickr\Http\Requests\CrawlFlickrAccountRequest;
+use Modules\Flickr\Http\Requests\ShowFlickrAccountsRequest;
 use Modules\Flickr\Services\FlickrCrawlService;
-use Modules\Flickr\Services\FlickrOAuthService;
 use Modules\Flickr\Support\ConnectionPresenter;
 
 final class FlickrAccountController
@@ -23,10 +24,10 @@ final class FlickrAccountController
         ]);
     }
 
-    public function list(FlickrOAuthService $oauth): Response
+    public function list(ShowFlickrAccountsRequest $request): RedirectResponse
     {
-        return Inertia::render('Flickr/Index', [
-            'accounts' => $oauth->listAccounts(),
+        return redirect()->route('connections.index', [
+            'provider' => 'flickr',
         ]);
     }
 
@@ -38,7 +39,7 @@ final class FlickrAccountController
                 $request->crawlTypes(),
                 $request->subjectNsid(),
             );
-        } catch (FlickrTokenInvalidException $exception) {
+        } catch (FlickrTokenInvalidException|GlobalCrawlPauseException $exception) {
             return back()->with('error', $exception->getMessage());
         }
 

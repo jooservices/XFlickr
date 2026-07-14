@@ -1,6 +1,7 @@
-import { X } from 'lucide-react';
-
 import Button from '@/Components/Button';
+import LoadingIndicator from '@/Components/LoadingIndicator';
+import Modal from '@/Components/Modal';
+import SpiderImpactSummary from '@/Components/SpiderImpactSummary';
 import type { ExpandPreviewPayload } from '@/types';
 
 export type ExpandMode = 'spider' | 'full_pass';
@@ -44,21 +45,15 @@ export default function ExpandConfirmModal({
         (isSpider && !spiderEnabled);
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-            <div className="w-full max-w-lg rounded-lg border border-slate-200 bg-white p-6 shadow-xl">
-                <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-                    <Button type="button" variant="ghost" size="sm" onClick={onClose} aria-label="Close" disabled={submitting}>
-                        <X className="h-5 w-5" />
-                    </Button>
-                </div>
-
+        <Modal open onClose={onClose} closeDisabled={submitting} titleId="expand-confirm-title" size="md">
+            <Modal.Header title={title} />
+            <Modal.Body className="space-y-4 text-sm text-slate-600">
                 {loading ? (
-                    <p className="text-sm text-slate-500">Loading preview…</p>
+                    <LoadingIndicator size="sm" label="Loading preview…" />
                 ) : preview === null ? (
-                    <p className="text-sm text-rose-700">Could not load expand preview.</p>
+                    <p className="text-rose-700">Could not load expand preview.</p>
                 ) : (
-                    <div className="space-y-4 text-sm text-slate-600">
+                    <>
                         <div className="rounded-md border border-slate-100 bg-slate-50 px-3 py-2">
                             <p className="text-xs font-medium text-slate-500">Account</p>
                             <p className="font-medium text-slate-900">{accountLabel(preview)}</p>
@@ -92,14 +87,17 @@ export default function ExpandConfirmModal({
                                 </dl>
                                 {!spiderEnabled ? (
                                     <p className="rounded-md bg-amber-50 px-3 py-2 text-amber-900">
-                                        Enable <span className="font-mono text-xs">spider.enabled</span> in Settings →
-                                        General before starting.
+                                        Enable spider mode from the header <span className="font-medium">Spider</span>{' '}
+                                        control (or Settings → General) before starting.
                                     </p>
                                 ) : null}
                                 {spiderActive ? (
                                     <p className="rounded-md bg-amber-50 px-3 py-2 text-amber-900">
                                         A spider run is already active for this account.
                                     </p>
+                                ) : null}
+                                {preview.spider.impact ? (
+                                    <SpiderImpactSummary impact={preview.spider.impact} context="account" />
                                 ) : null}
                                 <p className="text-xs text-slate-500">
                                     Refreshes your contact list, then expands automatically via the scheduler. Primarily
@@ -144,18 +142,17 @@ export default function ExpandConfirmModal({
                                 Stop the other expand run before starting this one.
                             </p>
                         ) : null}
-                    </div>
+                    </>
                 )}
-
-                <div className="mt-6 flex justify-end gap-2">
-                    <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
-                        Cancel
-                    </Button>
-                    <Button type="button" variant="primary" onClick={onConfirm} disabled={disabled}>
-                        {submitting ? 'Starting…' : 'Start'}
-                    </Button>
-                </div>
-            </div>
-        </div>
+            </Modal.Body>
+            <Modal.Footer>
+                <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
+                    Cancel
+                </Button>
+                <Button type="button" variant="primary" onClick={onConfirm} disabled={disabled}>
+                    {submitting ? 'Starting…' : 'Start'}
+                </Button>
+            </Modal.Footer>
+        </Modal>
     );
 }

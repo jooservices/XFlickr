@@ -1,4 +1,5 @@
 import type { BreadcrumbItem } from '@/Components/Breadcrumbs';
+import { connectionsPath } from '@/lib/connections';
 import { flickrAccountPath } from '@/lib/flickrAccount';
 import type { FlickrAccount } from '@/types';
 
@@ -6,8 +7,13 @@ export function accountLabel(account: FlickrAccount): string {
     return account.username ?? account.nsid;
 }
 
+export function connectionsRootCrumb(): BreadcrumbItem {
+    return { label: 'Connections', href: connectionsPath() };
+}
+
+/** @deprecated Prefer connectionsRootCrumb() — kept for catalog/account crumbs. */
 export function flickrRootCrumb(): BreadcrumbItem {
-    return { label: 'Flickr', href: '/flickr/accounts' };
+    return { label: 'Connections', href: connectionsPath({ provider: 'flickr' }) };
 }
 
 export function flickrAccountPageCrumbs(
@@ -61,20 +67,13 @@ export function catalogPhotosetShowCrumbs(
     ];
 }
 
-const settingsTabLabels: Record<'general' | 'flickr' | 'storage', string> = {
-    general: 'General',
-    flickr: 'Flickr',
-    storage: 'Storages',
-};
-
-export function settingsCrumbs(tab: 'general' | 'flickr' | 'storage'): BreadcrumbItem[] {
-    if (tab === 'general') {
-        return [{ label: 'Settings' }];
-    }
-
-    return [{ label: 'Settings', href: '/settings' }, { label: settingsTabLabels[tab] }];
+export function settingsCrumbs(): BreadcrumbItem[] {
+    return [{ label: 'Settings' }];
 }
 
 export function storageBrowseCrumbs(providerLabel: string): BreadcrumbItem[] {
-    return [{ label: 'Storage' }, { label: providerLabel }];
+    return [
+        { label: 'Connections', href: connectionsPath({ provider: 'storage' }) },
+        { label: providerLabel },
+    ];
 }

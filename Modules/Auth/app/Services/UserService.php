@@ -176,6 +176,20 @@ final class UserService
     }
 
     /**
+     * @throws InvalidArgumentException when a new password is forbidden in production
+     * @throws ValidationException when a new password fails Laravel password rules
+     */
+    public function updateProfile(User $user, string $name, string $email, ?string $password = null): User
+    {
+        if ($password !== null && $password !== '') {
+            $this->credentials->assertPasswordAllowed($password);
+            $this->assertPasswordRules($password);
+        }
+
+        return $this->users->updateProfile($user, $name, $email, $password);
+    }
+
+    /**
      * @throws ValidationException
      */
     private function assertPasswordRules(string $password): void

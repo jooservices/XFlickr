@@ -8,8 +8,8 @@ use App\Repositories\Crawler\ApiLogQueryRepository;
 use App\Repositories\Crawler\CrawlRunQueryRepository;
 use App\Repositories\Crawler\CrawlTargetQueryRepository;
 use App\Support\Query\QuerySorter;
-use JOOservices\XFlickrCrawler\Models\Connection;
-use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
+use Modules\Crawler\Models\Connection;
+use Modules\Crawler\Support\XFlickrConfig;
 
 final class CrawlStatusQueryService
 {

@@ -16,6 +16,7 @@ Prevent documentation drift after code changes.
 | User-visible UI/behavior | `docs/02-user-guide/`, `CHANGELOG.md` `[Unreleased]` |
 | Install/ports | `docs/01-getting-started/`, `README.md` |
 | Architecture/layers | `docs/00-architecture/` |
+| Module scope / ownership / features | `docs/00-architecture/modules.md`, `AGENTS.md` module table, `class-purpose-and-module-map` skill |
 | Agent rules | `AGENTS.md`, relevant `ai/skills/` |
 | New dangerous commands | `docs/05-maintenance/known-dangerous-commands.md` |
 | Doc initiative itself | `docs/05-maintenance/02-docs-changelog.md` |

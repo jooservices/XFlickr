@@ -6,7 +6,7 @@ namespace Modules\Flickr\Support;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Crawler\Models\Connection;
 
 final class ConnectionPublicIdService
 {

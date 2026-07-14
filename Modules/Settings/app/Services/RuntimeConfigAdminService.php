@@ -38,7 +38,7 @@ final class RuntimeConfigAdminService
                 ];
             })
             ->sortBy([
-                ['group', 'asc'],
+                ['group_label', 'asc'],
                 ['sort', 'asc'],
                 ['label', 'asc'],
             ])
@@ -79,6 +79,46 @@ final class RuntimeConfigAdminService
 
         if ($this->horizonConfig->isHorizonPath($path)) {
             Artisan::call('horizon:terminate');
+        }
+    }
+
+    public function setGlobalCrawlPause(bool $paused): void
+    {
+        $this->upsert([
+            'path' => 'xflickr.global_pause',
+            'type' => 'bool',
+            'value' => $paused,
+        ]);
+    }
+
+    /**
+     * @param  array{enabled: bool, max_depth: int, max_new_contacts_per_run: int, max_contacts_total: int}  $data
+     */
+    public function updateSpiderMode(array $data): void
+    {
+        $this->upsert([
+            'path' => 'spider.enabled',
+            'type' => 'bool',
+            'value' => $data['enabled'],
+        ]);
+        $this->upsert([
+            'path' => 'spider.max_depth',
+            'type' => 'int',
+            'value' => $data['max_depth'],
+        ]);
+        $this->upsert([
+            'path' => 'spider.max_new_contacts_per_run',
+            'type' => 'int',
+            'value' => $data['max_new_contacts_per_run'],
+        ]);
+        $this->upsert([
+            'path' => 'spider.max_contacts_total',
+            'type' => 'int',
+            'value' => $data['max_contacts_total'],
+        ]);
+
+        if ($data['enabled']) {
+            $this->setGlobalCrawlPause(false);
         }
     }
 
@@ -162,6 +202,7 @@ final class RuntimeConfigAdminService
                 }
 
                 return [
+                    'id' => $path,
                     'path' => $path,
                     'type' => (string) $config->getAttribute('type'),
                     'value' => RuntimeConfig::get($path),

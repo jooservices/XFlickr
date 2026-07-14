@@ -7,7 +7,7 @@ namespace Modules\Flickr\Services;
 use App\Repositories\Crawler\CatalogQueryRepository;
 use App\Repositories\Crawler\ContactQueryRepository;
 use App\Repositories\Crawler\PhotoQueryRepository;
-use JOOservices\XFlickrCrawler\Facades\FlickrService;
+use Modules\Crawler\Facades\FlickrService;
 use Modules\Flickr\Support\ConnectionPresenter;
 
 final class FlickrRateLimitQueryService

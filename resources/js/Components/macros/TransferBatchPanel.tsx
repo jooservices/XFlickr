@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import Button from '@/Components/Button';
+import LoadingIndicator from '@/Components/LoadingIndicator';
 import { apiGet, apiPost } from '@/lib/apiClient';
 import { flickrApiAccountPath } from '@/lib/flickrAccount';
 import type { FlickrAccount, TransferBatch, TransferItem } from '@/types';
@@ -76,7 +77,11 @@ export default function TransferBatchPanel({ batch, account }: TransferBatchPane
             </Button>
             {open ? (
                 <ul className="mt-2 space-y-2 rounded border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-900/50">
-                    {loading ? <li className="text-xs text-slate-500">Loading…</li> : null}
+                    {loading ? (
+                        <li>
+                            <LoadingIndicator size="sm" label="Loading…" />
+                        </li>
+                    ) : null}
                     {!loading && items.length === 0 ? (
                         <li className="text-xs text-slate-500">No failed items in this batch.</li>
                     ) : null}

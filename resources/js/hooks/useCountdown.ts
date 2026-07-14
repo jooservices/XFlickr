@@ -1,19 +1,21 @@
 import { useEffect, useState } from 'react';
 
+function secondsUntil(targetIso: string | null, initialSeconds: number): number {
+    if (targetIso) {
+        const diff = Math.ceil((new Date(targetIso).getTime() - Date.now()) / 1000);
+
+        return Math.max(0, diff);
+    }
+
+    return Math.max(0, initialSeconds);
+}
+
 export function useCountdown(targetIso: string | null, initialSeconds = 0): number {
-    const computeSeconds = (): number => {
-        if (targetIso) {
-            const diff = Math.ceil((new Date(targetIso).getTime() - Date.now()) / 1000);
-
-            return Math.max(0, diff);
-        }
-
-        return Math.max(0, initialSeconds);
-    };
-
-    const [seconds, setSeconds] = useState(computeSeconds);
+    const [seconds, setSeconds] = useState(() => secondsUntil(targetIso, initialSeconds));
 
     useEffect(() => {
+        const computeSeconds = () => secondsUntil(targetIso, initialSeconds);
+
         setSeconds(computeSeconds());
 
         const interval = setInterval(() => {

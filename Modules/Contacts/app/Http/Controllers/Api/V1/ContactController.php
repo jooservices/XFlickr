@@ -6,7 +6,6 @@ namespace Modules\Contacts\Http\Controllers\Api\V1;
 
 use Illuminate\Http\JsonResponse;
 use JOOservices\LaravelController\Http\Controllers\BaseApiController;
-use JOOservices\XFlickrCrawler\Models\Connection;
 use Modules\Contacts\Http\Requests\CrawlFlickrContactRequest;
 use Modules\Contacts\Http\Requests\FlickrContactProgressRequest;
 use Modules\Contacts\Http\Requests\FlickrContactSuggestRequest;
@@ -15,7 +14,9 @@ use Modules\Contacts\Http\Resources\ContactProgressResource;
 use Modules\Contacts\Http\Resources\ContactSuggestionResource;
 use Modules\Contacts\Services\ContactListPresenter;
 use Modules\Contacts\Services\ContactListQueryService;
+use Modules\Crawler\Models\Connection;
 use Modules\Flickr\Exceptions\FlickrTokenInvalidException;
+use Modules\Flickr\Exceptions\GlobalCrawlPauseException;
 use Modules\Flickr\Services\FlickrCrawlService;
 
 final class ContactController extends BaseApiController
@@ -61,7 +62,7 @@ final class ContactController extends BaseApiController
     ): JsonResponse {
         try {
             $crawlService->crawlMany($connection, $request->crawlTypes(), $contactNsid);
-        } catch (FlickrTokenInvalidException $exception) {
+        } catch (FlickrTokenInvalidException|GlobalCrawlPauseException $exception) {
             return $this->unprocessable($exception->getMessage());
         }
 

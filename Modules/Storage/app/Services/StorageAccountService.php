@@ -99,9 +99,11 @@ final class StorageAccountService
 
     public function setDefault(StorageAccount $account): void
     {
-        $this->accounts->connectInTransaction(function () use ($account): void {
+        $this->accounts->connectInTransaction(function () use ($account): StorageAccount {
             $this->accounts->clearDefaultForProvider($account->provider);
             $account->update(['is_default' => true]);
+
+            return $account->fresh() ?? $account;
         });
     }
 

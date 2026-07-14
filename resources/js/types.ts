@@ -61,6 +61,29 @@ export interface StorageConnectionMeta {
     prefix?: string | null;
 }
 
+export interface StorageQuotaState {
+    used_bytes: number;
+    limit_bytes: number | null;
+    remaining_bytes: number | null;
+}
+
+export interface StorageQuotaAccountSummary {
+    account: {
+        id: number;
+        provider: string;
+        label: string;
+        is_default: boolean;
+    };
+    status: 'ok' | 'unsupported' | 'error';
+    message: string | null;
+    quota: StorageQuotaState | null;
+}
+
+export interface StorageQuotaSnapshot {
+    generated_at: string;
+    accounts: StorageQuotaAccountSummary[];
+}
+
 export interface StorageScopeDefinition {
     scope: string;
     label: string;
@@ -351,6 +374,89 @@ export interface DashboardSnapshotAccountRow {
     };
 }
 
+export interface DatabaseTableSize {
+    name: string;
+    size_bytes: number;
+}
+
+export interface MysqlUsageSnapshot {
+    status: 'ok' | 'error';
+    driver: string;
+    database: string | null;
+    size_bytes: number | null;
+    connections_current: number | null;
+    connections_max: number | null;
+    tables: DatabaseTableSize[];
+    error: string | null;
+}
+
+export interface MongodbUsageSnapshot {
+    status: 'ok' | 'error';
+    driver: string;
+    database: string | null;
+    size_bytes: number | null;
+    collections: number | null;
+    objects: number | null;
+    error: string | null;
+}
+
+export interface DatabaseUsageHistoryPoint {
+    t: number;
+    mysql_size_bytes: number | null;
+    mysql_connections: number | null;
+    mongodb_size_bytes: number | null;
+}
+
+export interface DatabaseUsageSnapshot {
+    mysql: MysqlUsageSnapshot;
+    mongodb: MongodbUsageSnapshot;
+    history: DatabaseUsageHistoryPoint[];
+}
+
+export interface ServiceDependencyProbe {
+    ok: boolean;
+    latency_ms: number | null;
+    detail: string | null;
+}
+
+export interface OperationsOverviewTotals {
+    runs_running: number;
+    pending_targets: number;
+    downloads_active: number;
+    uploads_active: number;
+    failed_transfers_24h: number;
+    accounts_in_cooldown: number;
+}
+
+export interface OperationsAccountRow {
+    connection_key: string;
+    public_id: string;
+    label: string;
+    pending_targets: number;
+    rate_limit: RateLimitState;
+}
+
+export interface OperationsActivityPoint {
+    t: number;
+    runs_running: number;
+    pending_targets: number;
+    transfers_active: number;
+}
+
+export interface OperationsSnapshotPayload {
+    overview: OperationsOverviewTotals;
+    dependencies: {
+        mysql: ServiceDependencyProbe;
+        redis: ServiceDependencyProbe;
+        mongodb: ServiceDependencyProbe;
+    };
+    databases: DatabaseUsageSnapshot;
+    accounts: OperationsAccountRow[];
+    fetch_runs: CrawlRun[];
+    download_batches: TransferBatch[];
+    upload_batches: TransferBatch[];
+}
+
 export interface DashboardSnapshot {
     generated_at: string;
     global: {
@@ -363,8 +469,11 @@ export interface DashboardSnapshot {
         failed_transfers_24h: number;
     };
     accounts: DashboardSnapshotAccountRow[];
+    databases: DatabaseUsageSnapshot;
     alerts: {
         any_cooldown: boolean;
+        database_unreachable?: boolean;
+        mysql_connections_high?: boolean;
     };
 }
 
@@ -413,6 +522,27 @@ export interface Gallery {
     primary_server?: string | null;
 }
 
+export interface SpiderImpactEstimate {
+    seed_crawl_targets: number;
+    crawl_targets_per_contact: number;
+    contacts_known: number | null;
+    contacts_known_capped: number | null;
+    crawl_targets_known: number | null;
+    contacts_ceiling: number;
+    crawl_targets_ceiling: number;
+    crawl_targets_per_tick: number;
+    max_depth: number;
+    max_new_contacts_per_run: number;
+    max_contacts_total: number;
+}
+
+export interface SpiderSharedConfig {
+    enabled: boolean;
+    max_depth: number;
+    max_new_contacts_per_run: number;
+    max_contacts_total: number;
+}
+
 export interface PageProps {
     auth: {
         user: {
@@ -424,6 +554,7 @@ export interface PageProps {
     app: {
         name: string;
         global_pause?: boolean;
+        spider?: SpiderSharedConfig;
     };
     flash: {
         success: string | null;
@@ -437,9 +568,13 @@ export type ConfigValueType = 'string' | 'int' | 'float' | 'bool' | 'array' | 'j
 export interface CuratedConfigEntry {
     path: string;
     label: string;
+    description: string;
     type: ConfigValueType;
     default: unknown;
     group: string;
+    group_label: string;
+    section: string;
+    tier: 'operational' | 'expert' | string;
     is_core: boolean;
     sort: number;
     effective_value: unknown;
@@ -448,6 +583,7 @@ export interface CuratedConfigEntry {
 }
 
 export interface CustomConfigEntry {
+    id?: string;
     path: string;
     type: ConfigValueType;
     value: unknown;
@@ -482,6 +618,7 @@ export interface ExpandPreviewPayload {
         max_contacts_total: number;
         active: boolean;
         run: ExpandPreviewRunSummary | null;
+        impact: SpiderImpactEstimate;
     };
     full_pass: {
         max_depth: number;

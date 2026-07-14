@@ -12,9 +12,13 @@ Flow: `HTTP Request → Controller → FormRequest → Service → Repository �
 
 Artisan: `Command → Service → Repository → Model`. Jobs → Service only.
 
-- Crawl logic: `jooservices/xflickr-crawler` package only
+Services **must not** call Eloquent directly — only Repositories (prefer model scopes). Commands → Services only. Jobs must not use `Model::query()`.
+
+Guard test (Crawler): `Modules/Crawler/tests/Unit/Architecture/CrawlerLayeringTest`.
+
+- Crawl logic: `Modules/Crawler` (`Modules\Crawler\*`) only — do not reimplement fetchers
 - Spider mode: opt-in (`spider.enabled` runtime config); see `SpiderPlannerService` and `docs/02-user-guide/spider-mode.md`
 - Auth module owns session login/logout + password reset (`Modules/Auth`)
 - Dedicated FormRequest required on every mutating action (including body-less logout)
 
-Module map: [`ai/skills/class-purpose-and-module-map/SKILL.md`](../../ai/skills/class-purpose-and-module-map/SKILL.md)
+Module map: [`ai/skills/class-purpose-and-module-map/SKILL.md`](../../ai/skills/class-purpose-and-module-map/SKILL.md) · Catalog: [`docs/00-architecture/modules.md`](../../docs/00-architecture/modules.md)

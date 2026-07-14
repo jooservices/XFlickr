@@ -37,5 +37,11 @@ final class DashboardServiceTest extends TestCase
         $this->assertSame('a@N01', $snapshot['accounts'][0]['account']['nsid']);
         $this->assertArrayHasKey('rate_limit', $snapshot['accounts'][0]);
         $this->assertArrayHasKey('transfers', $snapshot['accounts'][0]);
+        $this->assertArrayHasKey('databases', $snapshot);
+        $this->assertArrayHasKey('mysql', $snapshot['databases']);
+        $this->assertArrayHasKey('mongodb', $snapshot['databases']);
+        $this->assertArrayHasKey('history', $snapshot['databases']);
+        $this->assertArrayHasKey('database_unreachable', $snapshot['alerts']);
+        $this->assertArrayHasKey('mysql_connections_high', $snapshot['alerts']);
     }
 }

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Modules\Contacts\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Modules\Contacts\Database\Factories\ContactAnnotationFactory;
 
 /**
  * @property string $connection_key
@@ -15,6 +17,14 @@ use Illuminate\Support\Carbon;
  */
 final class ContactAnnotation extends Model
 {
+    /** @use HasFactory<ContactAnnotationFactory> */
+    use HasFactory;
+
+    protected static function newFactory(): ContactAnnotationFactory
+    {
+        return ContactAnnotationFactory::new();
+    }
+
     protected $fillable = [
         'connection_key',
         'contact_nsid',

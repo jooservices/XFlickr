@@ -44,9 +44,9 @@ final class BeginStorageOAuthRequest extends Request
     protected function failedValidation(Validator $validator): void
     {
         throw new HttpResponseException(
-            redirect()->route('settings.index', ['tab' => 'storage'])->with(
+            redirect()->route('connections.index', ['provider' => 'storage'])->with(
                 'error',
-                'Storage OAuth could not be started. Add app credentials for this provider in Settings first.',
+                'Storage OAuth could not be started. Add app credentials for this provider under Connections → Storage → Apps first.',
             ),
         );
     }

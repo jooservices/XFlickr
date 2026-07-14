@@ -1,7 +1,8 @@
 import { Link } from '@inertiajs/react';
-import { ExternalLink, Loader2, Search, X } from 'lucide-react';
+import { ExternalLink, Search, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import LoadingIndicator from '@/Components/LoadingIndicator';
 import PhotoGridTile from '@/Components/PhotoGridTile';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { useRemoteDataTable } from '@/hooks/useRemoteDataTable';
@@ -108,10 +109,7 @@ export default function ContactPhotoStrip({ ownerNsid, photosCount }: ContactPho
             </form>
 
             {loading && photos.length === 0 ? (
-                <div className="flex flex-1 items-center gap-2 text-sm text-slate-500">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading photos…
-                </div>
+                <LoadingIndicator size="sm" label="Loading photos…" className="flex-1" />
             ) : filteredPhotos.length === 0 ? (
                 <p className="text-sm text-slate-500">
                     {searchQuery ? 'No loaded photos match your search.' : 'No photos found.'}
@@ -148,10 +146,9 @@ export default function ContactPhotoStrip({ ownerNsid, photosCount }: ContactPho
             )}
 
             {loadingMore ? (
-                <p className="shrink-0 text-center text-xs text-slate-500">
-                    <Loader2 className="mr-1 inline h-3.5 w-3.5 animate-spin" />
-                    Loading more…
-                </p>
+                <div className="flex shrink-0 justify-center">
+                    <LoadingIndicator size="sm" label="Loading more…" />
+                </div>
             ) : null}
 
             {!loading || photos.length > 0 ? (

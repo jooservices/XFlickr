@@ -8,8 +8,8 @@ use App\Repositories\Crawler\CatalogQueryRepository;
 use App\Repositories\Crawler\PhotoQueryRepository;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use JOOservices\XFlickrCrawler\Models\Connection;
-use JOOservices\XFlickrCrawler\Models\Contact;
+use Modules\Crawler\Models\Connection;
+use Modules\Crawler\Models\Contact;
 use Modules\Transfer\Repositories\StoredFileRepository;
 
 final class ContactListSorter

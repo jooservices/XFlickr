@@ -7,7 +7,7 @@ namespace Modules\Flickr\Http\Controllers\Api\V1;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 use JOOservices\LaravelController\Http\Controllers\BaseApiController;
-use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Crawler\Models\Connection;
 use Modules\Flickr\Http\Requests\Api\ListCrawlLogsRequest;
 use Modules\Flickr\Http\Requests\Api\ListCrawlRunsRequest;
 use Modules\Flickr\Http\Resources\CrawlLogResource;

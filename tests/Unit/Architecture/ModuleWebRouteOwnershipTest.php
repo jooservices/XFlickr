@@ -25,10 +25,11 @@ final class ModuleWebRouteOwnershipTest extends TestCase
             '/reset-password/{token}',
             '/dashboard',
             '/settings',
+            '/connections',
             '/contacts',
             '/flickr/accounts',
             '/flickr/oauth',
-            '/crawl/operations',
+            '/operations',
             '/photos',
             '/storages/google-photos',
         ];

@@ -6,25 +6,28 @@ namespace Tests\Feature;
 
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
-use JOOservices\XFlickrCrawler\Enums\CrawlRunStatus;
-use JOOservices\XFlickrCrawler\Enums\CrawlType;
-use JOOservices\XFlickrCrawler\Models\ConnectionContact;
-use JOOservices\XFlickrCrawler\Models\Contact;
-use JOOservices\XFlickrCrawler\Models\CrawlRun;
-use JOOservices\XFlickrCrawler\Models\Favorite;
-use JOOservices\XFlickrCrawler\Models\Gallery;
-use JOOservices\XFlickrCrawler\Models\Photo;
-use JOOservices\XFlickrCrawler\Models\Photoset;
-use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
+use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
 use Modules\Contacts\Services\ContactCatalogDetailStatsService;
 use Modules\Contacts\Services\ContactDetailService;
 use Modules\Contacts\Services\ContactListSorter;
+use Modules\Crawler\Enums\CrawlRunStatus;
+use Modules\Crawler\Enums\CrawlType;
+use Modules\Crawler\Models\ConnectionContact;
+use Modules\Crawler\Models\Contact;
+use Modules\Crawler\Models\CrawlRun;
+use Modules\Crawler\Models\Favorite;
+use Modules\Crawler\Models\Gallery;
+use Modules\Crawler\Models\Photo;
+use Modules\Crawler\Models\Photoset;
+use Modules\Crawler\Support\XFlickrConfig;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Transfer\Jobs\DownloadPhotoJob;
+use Modules\Transfer\Jobs\FanOutTransferBatchJob;
 use Modules\Transfer\Jobs\UploadPhotoJob;
 use Modules\Transfer\Models\StoredFile;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
+use Tests\Support\FlickrNsid;
 use Tests\TestCase;
 
 final class FlickrContactFrontendSupportTest extends TestCase
@@ -450,6 +453,20 @@ final class FlickrContactFrontendSupportTest extends TestCase
         $response->assertSessionHas('error', 'No contacts selected.');
     }
 
+    public function test_contacts_bulk_crawl_select_all_with_no_matches_errors(): void
+    {
+        $connection = $this->createFlickrConnection();
+
+        $response = $this->post('/flickr/accounts/'.$connection->public_id.'/contacts/crawl', [
+            'select_all' => true,
+            'search' => 'definitely-missing-'.fake()->uuid(),
+            'types' => ['photos'],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'No contacts selected.');
+    }
+
     public function test_contacts_bulk_upload_accepts_multiple_contact_nsids(): void
     {
         Bus::fake([DownloadPhotoJob::class, UploadPhotoJob::class]);
@@ -497,6 +514,64 @@ final class FlickrContactFrontendSupportTest extends TestCase
 
         $response->assertRedirect();
         $response->assertSessionHas('success', '2 photo(s) queued for upload across 2 contact(s).');
+    }
+
+    public function test_contacts_bulk_download_select_all_queues_matching_contacts(): void
+    {
+        Bus::fake([DownloadPhotoJob::class, FanOutTransferBatchJob::class]);
+
+        $connection = $this->createFlickrConnection();
+        $matchNsid = FlickrNsid::fake();
+        $otherNsid = FlickrNsid::fake();
+
+        foreach ([[$matchNsid, 'alice'], [$otherNsid, 'bob']] as [$nsid, $username]) {
+            Contact::query()->forceCreate([
+                'nsid' => $nsid,
+                'username' => $username,
+                'realname' => $username,
+            ]);
+            ConnectionContact::query()->forceCreate([
+                'connection_key' => $connection->connection_key,
+                'contact_nsid' => $nsid,
+            ]);
+            Photo::query()->forceCreate([
+                'flickr_photo_id' => 'p-'.$nsid,
+                'owner_nsid' => $nsid,
+                'title' => 'Photo',
+            ]);
+        }
+
+        $response = $this->post('/flickr/accounts/'.$connection->public_id.'/download', [
+            'select_all' => true,
+            'search' => 'alice',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', '1 contact download batch(es) queued.');
+        Bus::assertDispatched(FanOutTransferBatchJob::class, 1);
+    }
+
+    public function test_photos_bulk_download_select_all_requires_owner_nsid_or_contact_filters(): void
+    {
+        Bus::fake([DownloadPhotoJob::class, FanOutTransferBatchJob::class]);
+
+        $connection = $this->createFlickrConnection();
+        $ownerNsid = FlickrNsid::fake();
+
+        Photo::query()->forceCreate([
+            'flickr_photo_id' => 'p-owner-1',
+            'owner_nsid' => $ownerNsid,
+            'title' => 'Photo',
+        ]);
+
+        $response = $this->post('/flickr/accounts/'.$connection->public_id.'/download', [
+            'select_all' => true,
+            'owner_nsid' => $ownerNsid,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', '1 download batch(es) queued.');
+        Bus::assertDispatched(FanOutTransferBatchJob::class, 1);
     }
 
     public function test_contact_list_sorter_allowlist(): void
@@ -570,5 +645,36 @@ final class FlickrContactFrontendSupportTest extends TestCase
 
         $response->assertRedirect();
         $response->assertSessionHas('error');
+    }
+
+    public function test_contact_crawl_is_blocked_when_global_pause_is_active(): void
+    {
+        $connection = $this->createFlickrConnection();
+        $contact = Contact::query()->forceCreate([
+            'nsid' => FlickrNsid::fake(),
+            'username' => fake()->userName(),
+            'realname' => fake()->name(),
+        ]);
+
+        ConnectionContact::query()->forceCreate([
+            'connection_key' => $connection->connection_key,
+            'contact_nsid' => $contact->nsid,
+        ]);
+
+        RuntimeConfig::set('xflickr.global_pause', true, 'bool');
+        RuntimeConfig::refresh();
+
+        $response = $this->post('/flickr/accounts/'.$connection->public_id.'/contacts/'.$contact->nsid.'/crawl', [
+            'types' => ['photos'],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'Global crawl pause is active. Resume from the header to start crawls.');
+        $this->assertDatabaseMissing('xflickr_crawl_runs', [
+            'connection_key' => $connection->connection_key,
+        ]);
+
+        RuntimeConfig::forget('xflickr.global_pause');
+        RuntimeConfig::refresh();
     }
 }

@@ -74,6 +74,28 @@ final class FormRequestValidationTest extends TestCase
         $this->assertSame(['67890@N01'], $request->contactNsids());
     }
 
+    public function test_queue_photo_download_request_normalizes_flickr_photo_ids_string(): void
+    {
+        $request = QueuePhotoDownloadRequest::create('/download', 'POST', [
+            'flickr_photo_ids' => 'photo-bulk-1',
+        ]);
+        $request->setContainer($this->app);
+        $request->validateResolved();
+
+        $this->assertSame(['photo-bulk-1'], $request->flickrPhotoIds());
+    }
+
+    public function test_queue_photo_upload_request_exposes_flickr_photo_ids(): void
+    {
+        $request = QueuePhotoUploadRequest::create('/upload', 'POST', [
+            'flickr_photo_ids' => ['photo-a', 'photo-b', 'photo-a', ''],
+        ]);
+        $request->setContainer($this->app);
+        $request->validateResolved();
+
+        $this->assertSame(['photo-a', 'photo-b'], $request->flickrPhotoIds());
+    }
+
     public function test_queue_photo_upload_request_exposes_storage_account_id_without_lookup(): void
     {
         $request = QueuePhotoUploadRequest::create('/upload', 'POST', [

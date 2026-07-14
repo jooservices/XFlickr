@@ -23,7 +23,7 @@ Account-scoped variants exist under `/flickr/accounts/{connection}/photos` etc.
 
 Catalog rows live in crawler package tables (`xflickr_photos`, `xflickr_photosets`, etc.) populated by crawl operations.
 
-Empty catalog? Run a crawl from [Flickr accounts](flickr-accounts.md) or [Contacts](contacts.md) first.
+Empty catalog? Run a crawl from [Connections](connections.md) or [Contacts](contacts.md) first.
 
 ## Related
 

@@ -6,8 +6,8 @@ namespace Modules\Catalog\Http\Controllers;
 
 use Inertia\Inertia;
 use Inertia\Response;
-use JOOservices\XFlickrCrawler\Models\Connection;
 use Modules\Catalog\Services\CatalogQueryService;
+use Modules\Crawler\Models\Connection;
 use Modules\Flickr\Services\FlickrOAuthService;
 use Modules\Flickr\Support\ConnectionPresenter;
 

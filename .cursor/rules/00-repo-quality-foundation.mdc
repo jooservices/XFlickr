@@ -13,5 +13,6 @@ Non-negotiables:
 
 - Never touch local dev stack — AI uses `bash scripts/test.sh` only
 - Tests only: `bash scripts/test.sh gate:test`
+- Test data: factories for every Eloquent model; Faker for incidental values; assert from models (see `testing-and-quality-gates`)
 - Minimize scope; inspect source before inventing behavior
 - Commits: `Viet Vu <jooservices@gmail.com>` only

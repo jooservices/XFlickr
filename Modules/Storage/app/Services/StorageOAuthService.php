@@ -90,17 +90,17 @@ final class StorageOAuthService
         session()->forget('storage_oauth_return_url');
 
         if (! is_string($returnUrl) || $returnUrl === '') {
-            return route('settings.index', ['tab' => 'storage']);
+            return route('connections.index', ['provider' => 'storage']);
         }
 
         $parsed = parse_url($returnUrl);
         if ($parsed === false) {
-            return route('settings.index', ['tab' => 'storage']);
+            return route('connections.index', ['provider' => 'storage']);
         }
 
         $host = $parsed['host'] ?? null;
         if (is_string($host) && ! hash_equals(request()->getHost(), $host)) {
-            return route('settings.index', ['tab' => 'storage']);
+            return route('connections.index', ['provider' => 'storage']);
         }
 
         return $returnUrl;

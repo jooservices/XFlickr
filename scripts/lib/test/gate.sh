@@ -13,7 +13,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/prereqs.sh"
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/deploy-gate.sh"
 
 TEST_GATE_FAILED=0
-TEST_COVERAGE_MIN="${TEST_COVERAGE_MIN:-60}"
+TEST_COVERAGE_MIN="${TEST_COVERAGE_MIN:-95}"
 
 test_gate_run_step() {
     local name="$1"

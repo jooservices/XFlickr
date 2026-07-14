@@ -1,0 +1,11 @@
+{
+    "name": "Crawler",
+    "alias": "crawler",
+    "description": "Flickr crawl engine, catalog models, and xflickr queue jobs",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Crawler\\Providers\\CrawlerServiceProvider"
+    ],
+    "files": []
+}

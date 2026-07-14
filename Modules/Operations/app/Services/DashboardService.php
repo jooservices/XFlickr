@@ -26,6 +26,7 @@ final class DashboardService
         private readonly TransferCountsQueryService $transferCounts,
         private readonly FlickrOAuthService $oauth,
         private readonly FlickrRateLimitPresenter $rateLimit,
+        private readonly DatabaseUsageService $databases,
     ) {}
 
     /**
@@ -104,12 +105,25 @@ final class DashboardService
                 0,
             );
 
+            $databases = $this->databases->snapshot();
+            $mysql = $databases['mysql'] ?? [];
+            $mongodb = $databases['mongodb'] ?? [];
+            $mysqlConnectionsCurrent = isset($mysql['connections_current']) ? (int) $mysql['connections_current'] : null;
+            $mysqlConnectionsMax = isset($mysql['connections_max']) ? (int) $mysql['connections_max'] : null;
+            $mysqlConnectionsHigh = $mysqlConnectionsCurrent !== null
+                && $mysqlConnectionsMax !== null
+                && $mysqlConnectionsMax > 0
+                && ($mysqlConnectionsCurrent / $mysqlConnectionsMax) >= 0.8;
+
             return [
                 'generated_at' => now()->toISOString(),
                 'global' => $global,
                 'accounts' => $perAccount,
+                'databases' => $databases,
                 'alerts' => [
                     'any_cooldown' => $cooldownSeconds > 0,
+                    'database_unreachable' => ($mysql['status'] ?? null) === 'error' || ($mongodb['status'] ?? null) === 'error',
+                    'mysql_connections_high' => $mysqlConnectionsHigh,
                 ],
             ];
         });

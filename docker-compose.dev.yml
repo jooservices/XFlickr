@@ -42,7 +42,6 @@ x-php-base: &php-base
     <<: *php-environment
   volumes:
     - .:/var/www/html
-    - ../XFlickrCrawler:/var/www/html/vendor/jooservices/xflickr-crawler
     - node-modules:/var/www/html/node_modules
   entrypoint: ["/var/www/html/docker/entrypoint.sh"]
   depends_on:

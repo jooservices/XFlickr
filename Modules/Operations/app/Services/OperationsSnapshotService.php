@@ -4,20 +4,43 @@ declare(strict_types=1);
 
 namespace Modules\Operations\Services;
 
+use App\Repositories\Crawler\CrawlRunQueryRepository;
+use App\Repositories\Crawler\CrawlTargetQueryRepository;
 use Modules\Flickr\Services\CrawlStatusQueryService;
 use Modules\Flickr\Services\FlickrOAuthService;
+use Modules\Flickr\Services\FlickrRateLimitPresenter;
+use Modules\Flickr\Support\ConnectionPresenter;
+use Modules\Transfer\Services\TransferCountsQueryService;
 use Modules\Transfer\Services\TransferProgressQueryService;
 
 final class OperationsSnapshotService
 {
+    private const int FETCH_RUNS_PER_CONNECTION = 10;
+
+    private const int TRANSFER_BATCHES_PER_CONNECTION = 20;
+
     public function __construct(
         private readonly FlickrOAuthService $oauth,
         private readonly CrawlStatusQueryService $crawlStatus,
         private readonly TransferProgressQueryService $transferProgress,
+        private readonly TransferCountsQueryService $transferCounts,
+        private readonly CrawlRunQueryRepository $crawlRuns,
+        private readonly CrawlTargetQueryRepository $crawlTargets,
+        private readonly FlickrRateLimitPresenter $rateLimit,
+        private readonly DatabaseUsageService $databases,
+        private readonly ServicesDependencyProbeService $dependencies,
     ) {}
 
     /**
      * @return array{
+     *     overview: array<string, int>,
+     *     dependencies: array<string, array{ok: bool, latency_ms: int|null, detail: string|null}>,
+     *     databases: array{
+     *         mysql: array<string, mixed>,
+     *         mongodb: array<string, mixed>,
+     *         history: list<array<string, mixed>>
+     *     },
+     *     accounts: list<array<string, mixed>>,
      *     fetch_runs: list<mixed>,
      *     download_batches: list<mixed>,
      *     upload_batches: list<mixed>,
@@ -25,17 +48,46 @@ final class OperationsSnapshotService
      */
     public function snapshot(): array
     {
+        $connections = $this->oauth->listConnections();
+        $connectionKeys = $connections->map(fn ($connection) => $connection->connection_key)->values()->all();
+        $since = now()->subDay();
+
+        $pendingByConnection = $this->crawlTargets->countPendingGroupedByConnection($connectionKeys);
+
         $fetchRuns = [];
         $downloadBatches = [];
         $uploadBatches = [];
+        $accountRows = [];
+        $accountsInCooldown = 0;
 
-        foreach ($this->oauth->listConnections() as $connection) {
-            $runs = $this->crawlStatus->runs($connection, 'id', 'desc', 10, 1);
+        foreach ($connections as $connection) {
+            $key = (string) $connection->connection_key;
+            $rateLimit = $this->rateLimit->present($key);
+            $pending = $pendingByConnection[$key] ?? 0;
+
+            if ((int) ($rateLimit['cooldown_seconds_remaining'] ?? 0) > 0) {
+                $accountsInCooldown++;
+            }
+
+            $account = ConnectionPresenter::toArray($connection);
+            $accountRows[] = [
+                'connection_key' => $key,
+                'public_id' => $account['public_id'],
+                'label' => $account['fullname'] ?: ($account['username'] ?: $key),
+                'pending_targets' => $pending,
+                'rate_limit' => $rateLimit,
+            ];
+
+            $runs = $this->crawlStatus->runs(
+                $connection,
+                'id',
+                'desc',
+                self::FETCH_RUNS_PER_CONNECTION,
+                1,
+            );
 
             foreach ($runs['data'] as $run) {
-                if (is_object($run) && isset($run->status) && $run->status === 'running') {
-                    $fetchRuns[] = $run;
-                }
+                $fetchRuns[] = $run;
             }
 
             $downloads = $this->transferProgress->index(
@@ -45,7 +97,7 @@ final class OperationsSnapshotService
                 true,
                 'id',
                 'desc',
-                20,
+                self::TRANSFER_BATCHES_PER_CONNECTION,
             );
 
             foreach ($downloads['data'] as $batch) {
@@ -59,7 +111,7 @@ final class OperationsSnapshotService
                 true,
                 'id',
                 'desc',
-                20,
+                self::TRANSFER_BATCHES_PER_CONNECTION,
             );
 
             foreach ($uploads['data'] as $batch) {
@@ -67,7 +119,20 @@ final class OperationsSnapshotService
             }
         }
 
+        $usage = $this->databases->snapshot();
+
         return [
+            'overview' => [
+                'runs_running' => $this->crawlRuns->countByConnectionsAndStatus($connectionKeys, 'running'),
+                'pending_targets' => $this->crawlTargets->countPendingForConnections($connectionKeys),
+                'downloads_active' => $this->transferCounts->countBatchesByTypeAndStatus('download', 'running'),
+                'uploads_active' => $this->transferCounts->countBatchesByTypeAndStatus('upload', 'running'),
+                'failed_transfers_24h' => $this->transferCounts->countFailedItemsSince($since),
+                'accounts_in_cooldown' => $accountsInCooldown,
+            ],
+            'dependencies' => $this->dependencies->probeAll(),
+            'databases' => $usage,
+            'accounts' => $accountRows,
             'fetch_runs' => $fetchRuns,
             'download_batches' => $downloadBatches,
             'upload_batches' => $uploadBatches,

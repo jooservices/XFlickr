@@ -7,7 +7,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
+use Modules\Crawler\Support\XFlickrConfig;
 
 return new class extends Migration
 {

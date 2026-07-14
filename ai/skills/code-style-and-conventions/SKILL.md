@@ -25,13 +25,15 @@ Keep code style consistent across PHP and TypeScript.
 
 ## Naming
 
-- Controllers: `{Feature}Controller`
+- Controllers: `{Feature}Controller` (Auth intent nouns: `LoginController`, `RegisterController`, …)
 - FormRequests: `{Action}{Feature}Request`
 - Services: `{Feature}Service` or `{Feature}{Verb}Service`
 - Repositories: `{Model}Repository` or `{Domain}QueryRepository`
 - Jobs: `{Verb}{Noun}Job`
+- Factories: `{Model}Factory` co-located under `Modules/{M}/database/factories/` (or `database/factories/` / `database/factories/Crawler/` for host and crawler models)
 
 ## Related skills
 
 - `react-inertia-frontend`
 - `form-request-service-repository`
+- `testing-and-quality-gates`

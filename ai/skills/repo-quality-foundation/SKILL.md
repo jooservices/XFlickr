@@ -26,6 +26,7 @@ Any non-trivial change, documentation sync, or pre-PR readiness check.
 - Feature work requires `bash scripts/test.sh gate` green before PR.
 - Non-trivial features follow `docs/04-development/ai-development-workflow.md`.
 - Minimize scope — focused diffs only.
+- New/changed tests: factories for every Eloquent model; Faker for incidental data; assert from created models (`testing-and-quality-gates`).
 
 ## Steps
 

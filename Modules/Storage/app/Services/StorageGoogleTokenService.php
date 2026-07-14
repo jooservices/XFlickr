@@ -8,7 +8,7 @@ use Google\Client as GoogleClient;
 use Modules\Storage\Models\StorageAccount;
 use RuntimeException;
 
-final class StorageGoogleTokenService
+class StorageGoogleTokenService
 {
     /**
      * @param  array<string, mixed>  $credentials

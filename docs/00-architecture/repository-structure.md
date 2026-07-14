@@ -44,6 +44,8 @@ XFlickr/
 
 ## Module ownership (controllers)
 
+Full catalog (scope, purpose, features): [Modules catalog](modules.md).
+
 | Area | Module |
 |---|---|
 | Login / logout / register / password reset / optional admin seed / activate CLI | Auth (`AuthService`, `UserService`, `AdminUserSeeder`) |
@@ -62,8 +64,9 @@ XFlickr/
 |---|---|
 | `/dashboard` | `Pages/Dashboard.tsx` |
 | `/contacts` | `Pages/Contacts/Index.tsx` |
-| `/flickr/accounts` | `Pages/Flickr/Index.tsx` |
+| `/connections` | `Pages/Connections/Index.tsx` |
+| `/flickr/accounts/{id}` | `Pages/Flickr/Show.tsx` |
 | `/photos`, `/photosets`, `/galleries`, `/favorites` | `Pages/Catalog/*.tsx` |
 | `/storages/*` | `Pages/Storage/Browse.tsx` |
 | `/settings` | `Pages/Settings/Index.tsx` |
-| `/crawl/operations` | `Pages/Crawl/Operations.tsx` |
+| `/operations` | `Pages/Crawl/Operations.tsx` |

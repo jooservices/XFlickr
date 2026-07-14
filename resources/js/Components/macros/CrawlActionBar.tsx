@@ -1,8 +1,8 @@
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 
 import CrawlDropdown, { type CrawlSubjectLabel } from '@/Components/CrawlDropdown';
 import { flickrAccountPath, flickrContactPath } from '@/lib/flickrAccount';
-import type { CrawlType, CrawlTypeState } from '@/types';
+import type { CrawlType, CrawlTypeState, PageProps } from '@/types';
 
 export type { CrawlSubjectLabel };
 
@@ -37,7 +37,14 @@ export default function CrawlActionBar({
     showUpload = true,
     label,
 }: CrawlActionBarProps) {
+    const { app } = usePage<PageProps>().props;
+    const crawlPaused = app.global_pause ?? false;
+
     const startCrawl = (types: CrawlType[]) => {
+        if (crawlPaused) {
+            return;
+        }
+
         if (scope === 'contact') {
             if (!contactNsid) {
                 return;
@@ -84,6 +91,7 @@ export default function CrawlActionBar({
             onUpload={showUpload ? startUpload : undefined}
             includeContactsDiscovery={scope === 'account'}
             showCrawlOptions={showCrawl}
+            crawlPaused={crawlPaused}
             subjectLabel={subjectLabel}
             typeStates={typeStates}
             size={size}

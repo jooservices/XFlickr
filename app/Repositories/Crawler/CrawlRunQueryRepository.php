@@ -7,8 +7,8 @@ namespace App\Repositories\Crawler;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use JOOservices\XFlickrCrawler\Enums\CrawlRunStatus;
-use JOOservices\XFlickrCrawler\Models\CrawlRun;
+use Modules\Crawler\Enums\CrawlRunStatus;
+use Modules\Crawler\Models\CrawlRun;
 
 final class CrawlRunQueryRepository
 {

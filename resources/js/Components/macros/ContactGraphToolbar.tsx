@@ -1,7 +1,8 @@
-import { Loader2, Maximize, Minimize, X } from 'lucide-react';
+import { Maximize, Minimize, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import Button from '@/Components/Button';
+import LoadingIndicator from '@/Components/LoadingIndicator';
 
 export type ContactGraphToolbarProps = {
     directShown: number;
@@ -54,14 +55,7 @@ export default function ContactGraphToolbar({
                             disabled={loadingMore}
                             onClick={() => onLoadMore(currentDirectLimit + loadMoreStep)}
                         >
-                            {loadingMore ? (
-                                <>
-                                    <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                                    Loading…
-                                </>
-                            ) : (
-                                `+${loadMoreStep} contacts`
-                            )}
+                            {loadingMore ? <LoadingIndicator size="sm" label="Loading…" /> : `+${loadMoreStep} contacts`}
                         </Button>
                         <Button type="button" variant="secondary" size="sm" disabled={loadingMore} onClick={onShowAll}>
                             Show all

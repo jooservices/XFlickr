@@ -4,12 +4,22 @@ declare(strict_types=1);
 
 namespace Modules\Storage\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Storage\Database\Factories\StorageUploadFactory;
 use Modules\Transfer\Models\StoredFile;
 
 final class StorageUpload extends Model
 {
+    /** @use HasFactory<StorageUploadFactory> */
+    use HasFactory;
+
+    protected static function newFactory(): StorageUploadFactory
+    {
+        return StorageUploadFactory::new();
+    }
+
     protected $fillable = [
         'stored_file_id',
         'storage_account_id',

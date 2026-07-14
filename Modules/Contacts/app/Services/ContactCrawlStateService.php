@@ -7,13 +7,13 @@ namespace Modules\Contacts\Services;
 use App\Repositories\Crawler\CrawlRunQueryRepository;
 use App\Repositories\Crawler\CrawlTargetQueryRepository;
 use Illuminate\Support\Collection;
-use JOOservices\XFlickrCrawler\Enums\CrawlRunStatus;
-use JOOservices\XFlickrCrawler\Enums\CrawlStatus;
-use JOOservices\XFlickrCrawler\Enums\CrawlType;
-use JOOservices\XFlickrCrawler\Enums\TaskType;
-use JOOservices\XFlickrCrawler\Models\Connection;
-use JOOservices\XFlickrCrawler\Models\CrawlTarget;
-use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
+use Modules\Crawler\Enums\CrawlRunStatus;
+use Modules\Crawler\Enums\CrawlStatus;
+use Modules\Crawler\Enums\CrawlType;
+use Modules\Crawler\Enums\TaskType;
+use Modules\Crawler\Models\Connection;
+use Modules\Crawler\Models\CrawlTarget;
+use Modules\Crawler\Support\XFlickrConfig;
 
 final class ContactCrawlStateService
 {

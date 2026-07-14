@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Modules\Spider\Services;
 
 use Illuminate\Support\Facades\DB;
-use JOOservices\XFlickrCrawler\Enums\CrawlType;
-use JOOservices\XFlickrCrawler\Events\ContactsCrawlCompleted;
-use JOOservices\XFlickrCrawler\Models\Connection;
-use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
 use Modules\Contacts\Repositories\ContactFullPassRunRepository;
+use Modules\Crawler\Enums\CrawlType;
+use Modules\Crawler\Events\ContactsCrawlCompleted;
+use Modules\Crawler\Models\Connection;
+use Modules\Crawler\Support\XFlickrConfig;
+use Modules\Flickr\Exceptions\GlobalCrawlPauseException;
 use Modules\Flickr\Services\FlickrCrawlService;
 use Modules\Spider\Enums\SpiderFrontierStatus;
 use Modules\Spider\Enums\SpiderRunStatus;
@@ -51,6 +52,10 @@ final class SpiderPlannerService
     {
         if (! $this->isEnabled()) {
             throw new RuntimeException('Spider mode is disabled. Enable spider.enabled in Settings → General runtime config.');
+        }
+
+        if (XFlickrConfig::globalPause()) {
+            throw GlobalCrawlPauseException::active();
         }
 
         if ($this->fullPassRuns->findActiveForConnection($connection->connection_key) !== null) {
@@ -116,6 +121,10 @@ final class SpiderPlannerService
 
     public function expandRun(SpiderRun $run): int
     {
+        if (XFlickrConfig::globalPause()) {
+            return 0;
+        }
+
         $connection = Connection::query()
             ->where('connection_key', $run->connection_key)
             ->first();

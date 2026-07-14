@@ -6,7 +6,8 @@ Single source of truth for known gaps. Detail lives in the linked audit finding 
 
 | ID | Item | Source | Priority | Since |
 |----|------|--------|----------|-------|
-| N-08 | Flickr `token_payload` plaintext (crawler package) | [audit_claude_v2 §5](release-reviews/2026-07-06/audit_claude_v2.md) | P1 | v1.0.0 |
+| N-08 | Flickr `token_payload` plaintext (now `Modules/Crawler` connections) | [audit_claude_v2 §5](release-reviews/2026-07-06/audit_claude_v2.md) | P1 | v1.0.0 |
+| N-16 | Flickr client layering: SDK → Crawler `FlickrClientFactory` (auth true/false) → peers via Crawler/Flickr (not ad hoc `FlickrFactory`) | [flickr-client-factory-layering.md](flickr-client-factory-layering.md) | P2 | Unreleased |
 | N-15 | Hardcoded download HTTP timeout (120s) | audit_claude_v2 §5 | P2 | v1.0.0 |
 | N-13 | README badges missing | audit_claude_v2 §5 | P2 | v1.0.0 |
 

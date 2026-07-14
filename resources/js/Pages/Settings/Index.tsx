@@ -1,87 +1,34 @@
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
+import { useCallback, useState } from 'react';
 
-import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
-import FlickrCredentialsPanel from '@/Components/Settings/FlickrCredentialsPanel';
+import Button from '@/Components/Button';
+import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/layout/page-shell';
 import GeneralConfigPanel from '@/Components/Settings/GeneralConfigPanel';
 import OnboardingWizard from '@/Components/Settings/OnboardingWizard';
-import StorageCredentialsPanel from '@/Components/Settings/StorageCredentialsPanel';
 import AppLayout from '@/Layouts/AppLayout';
 import { settingsCrumbs } from '@/lib/breadcrumbs';
-import type {
-    FlickrAccountSummary,
-    PageProps,
-    RuntimeConfigPayload,
-    StorageAccount,
-    StorageDriver,
-} from '@/types';
-
-interface FlickrAppSummary {
-    profile: string;
-    label: string | null;
-    api_key_hint: string;
-    callback_url: string | null;
-    accounts_count: number;
-}
-
-interface FlickrSettingsData {
-    status: {
-        connected: boolean;
-        account: {
-            id: number;
-            nsid: string;
-            username: string | null;
-            fullname: string | null;
-            is_active: boolean;
-        } | null;
-    };
-    accounts: FlickrAccountSummary[];
-    apps: FlickrAppSummary[];
-    default_callback_url: string;
-    default_app_profile: string;
-    settings: {
-        default_app_profile: string;
-        global_pause: boolean;
-    };
-}
-
-interface StorageAppSummary {
-    provider: string;
-    label: string;
-    client_id_hint: string;
-    redirect: string | null;
-    accounts_count: number;
-}
+import type { PageProps, RuntimeConfigPayload } from '@/types';
 
 interface Props extends PageProps {
-    tab: 'general' | 'flickr' | 'storage';
+    tab: 'general';
     runtime_config: RuntimeConfigPayload;
-    flickr: FlickrSettingsData;
-    storage_accounts: StorageAccount[];
-    storage_apps: StorageAppSummary[];
-    storage_redirects: Record<string, string>;
-    storage_drivers: StorageDriver[];
     runtime_config_available: boolean;
+    has_flickr_accounts: boolean;
+    has_storage_accounts: boolean;
 }
 
-const tabs = [
-    { key: 'general', label: 'General' },
-    { key: 'flickr', label: 'Flickr' },
-    { key: 'storage', label: 'Storages' },
-] as const;
-
 export default function SettingsIndex({
-    tab,
     runtime_config,
-    flickr,
-    storage_accounts,
-    storage_apps,
-    storage_redirects,
-    storage_drivers,
     runtime_config_available,
+    has_flickr_accounts,
+    has_storage_accounts,
 }: Props) {
-    const setTab = (next: string) => {
-        router.get('/settings', { tab: next }, { preserveState: true, replace: true });
-    };
+    const [openCreate, setOpenCreate] = useState<(() => void) | null>(null);
+
+    const handleOpenCreateReady = useCallback((next: (() => void) | null) => {
+        setOpenCreate(() => next);
+    }, []);
 
     return (
         <AppLayout>
@@ -89,62 +36,36 @@ export default function SettingsIndex({
 
             <PageShell>
                 <PageShellIdentity
-                    breadcrumbs={settingsCrumbs(tab)}
+                    breadcrumbs={settingsCrumbs()}
                     title="Settings"
-                    subtitle="Configure runtime options, manage connections, and storage credentials."
-                />
-
-                <PageShellControlBar
-                    tabs={
-                        <div className="flex gap-1">
-                            {tabs.map((item) => (
-                                <button
-                                    key={item.key}
-                                    type="button"
-                                    onClick={() => setTab(item.key)}
-                                    className={`border-b-2 px-4 py-2 text-sm font-medium ${
-                                        tab === item.key
-                                            ? 'border-slate-900 text-slate-900'
-                                            : 'border-transparent text-slate-500 hover:text-slate-700'
-                                    }`}
-                                >
-                                    {item.label}
-                                </button>
-                            ))}
-                        </div>
+                    subtitle="Configure runtime options for crawl, discovery, and operations."
+                    actions={
+                        runtime_config_available ? (
+                            <Button
+                                type="button"
+                                variant="primary"
+                                onClick={() => openCreate?.()}
+                                disabled={openCreate === null}
+                            >
+                                <Plus className="h-4 w-4" />
+                                New
+                            </Button>
+                        ) : undefined
                     }
                 />
 
                 <PageShellCanvas className="space-y-6" variant="plain">
-                <OnboardingWizard
-                    hasFlickrAccounts={flickr.accounts.length > 0}
-                    hasStorageAccounts={storage_accounts.length > 0}
-                />
+                    <OnboardingWizard
+                        hasFlickrAccounts={has_flickr_accounts}
+                        hasStorageAccounts={has_storage_accounts}
+                    />
 
-                {tab === 'general' && (
                     <GeneralConfigPanel
                         curated={runtime_config.curated}
                         custom={runtime_config.custom}
                         runtimeConfigAvailable={runtime_config_available}
+                        onOpenCreateReady={handleOpenCreateReady}
                     />
-                )}
-
-                {tab === 'flickr' && (
-                    <FlickrCredentialsPanel
-                        accounts={flickr.accounts}
-                        apps={flickr.apps}
-                        default_callback_url={flickr.default_callback_url}
-                    />
-                )}
-
-                {tab === 'storage' && (
-                    <StorageCredentialsPanel
-                        apps={storage_apps}
-                        accounts={storage_accounts}
-                        redirects={storage_redirects}
-                        drivers={storage_drivers}
-                    />
-                )}
                 </PageShellCanvas>
             </PageShell>
         </AppLayout>

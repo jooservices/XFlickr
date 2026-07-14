@@ -2,9 +2,13 @@
 
 Read [`AGENTS.md`](../AGENTS.md) first. **Never touch local dev stack.**
 
+Test data: factories for every Eloquent model; Faker for incidental values; assert from created models (`docs/04-development/testing.md`).
+
 ## Project
 
 Self-hosted Flickr archive manager — Laravel 12, React 19, Inertia 3.
+
+Module scope / purpose / features: [`docs/00-architecture/modules.md`](../docs/00-architecture/modules.md). Routing skill: `class-purpose-and-module-map`.
 
 ## Non-negotiables
 

@@ -14,7 +14,7 @@ Prevent accidental schema changes on dev data and ensure safe migrations.
 - **Agents:** never run migrations on dev stack. Validate via `bash scripts/test.sh gate:test` after adding migrations.
 - **Never** `migrate:fresh` or `db:wipe` on local dev stack.
 - New migrations: reversible `down()` when practical.
-- App-owned tables only in `database/migrations/` — do not migrate crawler package tables manually.
+- App-owned tables only in `database/migrations/` — Crawler engine migrations live under `Modules/Crawler/database/migrations` (do not copy engine tables into host migrations).
 
 ## Test stack
 

@@ -7,9 +7,9 @@ namespace Modules\Contacts\Services;
 use App\Repositories\Crawler\CrawlRunQueryRepository;
 use App\Repositories\Crawler\CrawlTargetQueryRepository;
 use App\Repositories\Crawler\PhotoQueryRepository;
-use JOOservices\XFlickrCrawler\Enums\CrawlType;
-use JOOservices\XFlickrCrawler\Enums\TaskType;
-use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Crawler\Enums\CrawlType;
+use Modules\Crawler\Enums\TaskType;
+use Modules\Crawler\Models\Connection;
 
 final class ContactCatalogDetailStatsService
 {

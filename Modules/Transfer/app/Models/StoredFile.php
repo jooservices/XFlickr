@@ -4,13 +4,23 @@ declare(strict_types=1);
 
 namespace Modules\Transfer\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Modules\Storage\Models\StorageUpload;
+use Modules\Transfer\Database\Factories\StoredFileFactory;
 
 final class StoredFile extends Model
 {
+    /** @use HasFactory<StoredFileFactory> */
+    use HasFactory;
+
+    protected static function newFactory(): StoredFileFactory
+    {
+        return StoredFileFactory::new();
+    }
+
     protected $fillable = [
         'uuid',
         'flickr_photo_id',

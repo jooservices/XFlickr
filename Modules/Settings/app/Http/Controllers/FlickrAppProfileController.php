@@ -7,7 +7,7 @@ namespace Modules\Settings\Http\Controllers;
 use App\Support\Observability\AdminActionLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\ValidationException;
-use JOOservices\XFlickrCrawler\Exceptions\FlickrAppNotConfiguredException;
+use Modules\Crawler\Exceptions\FlickrAppNotConfiguredException;
 use Modules\Flickr\Services\FlickrAppProfileService;
 use Modules\Settings\Http\Requests\DestroyFlickrAppProfileRequest;
 use Modules\Settings\Http\Requests\StoreFlickrAppProfileRequest;
@@ -31,7 +31,7 @@ final class FlickrAppProfileController
         ]);
 
         return redirect()
-            ->route('settings.index', ['tab' => 'flickr'])
+            ->route('connections.index', ['provider' => 'flickr'])
             ->with('success', 'Flickr app credentials saved.');
     }
 
@@ -43,7 +43,7 @@ final class FlickrAppProfileController
             $message = collect($exception->errors())->flatten()->first();
 
             return redirect()
-                ->route('settings.index', ['tab' => 'flickr'])
+                ->route('connections.index', ['provider' => 'flickr'])
                 ->with('error', is_string($message) ? $message : 'Flickr app profile could not be deleted.');
         }
 
@@ -52,7 +52,7 @@ final class FlickrAppProfileController
         ]);
 
         return redirect()
-            ->route('settings.index', ['tab' => 'flickr'])
+            ->route('connections.index', ['provider' => 'flickr'])
             ->with('success', 'Flickr app profile deleted.');
     }
 }

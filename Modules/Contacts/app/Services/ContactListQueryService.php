@@ -8,9 +8,9 @@ use App\Repositories\Crawler\ConnectionContactQueryRepository;
 use App\Repositories\Crawler\ContactQueryRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use JOOservices\XFlickrCrawler\Models\Connection;
-use JOOservices\XFlickrCrawler\Models\Contact;
 use Modules\Contacts\Repositories\ContactAnnotationRepository;
+use Modules\Crawler\Models\Connection;
+use Modules\Crawler\Models\Contact;
 
 final class ContactListQueryService
 {
@@ -47,6 +47,34 @@ final class ContactListQueryService
         $query = $this->sorter->apply($query, $connection, $sort, $direction);
 
         return $query->paginate($perPage, ['*'], 'page', $page);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function listNsidsForConnection(
+        Connection $connection,
+        ?string $search = null,
+        bool $starredOnly = false,
+    ): array {
+        $query = $search !== null && $search !== ''
+            ? $this->contacts->queryForConnectionWithSearch($connection->connection_key, $search)
+            : $this->contacts->queryForConnection($connection->connection_key);
+
+        if ($starredOnly) {
+            $starredNsids = $this->annotations->starredContactNsids($connection->connection_key);
+
+            if ($starredNsids === []) {
+                return [];
+            }
+
+            $query->whereIn('nsid', $starredNsids);
+        }
+
+        /** @var list<string> $nsids */
+        $nsids = $query->orderBy('nsid')->pluck('nsid')->all();
+
+        return $nsids;
     }
 
     /**

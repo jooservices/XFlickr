@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories\Crawler;
 
-use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Crawler\Models\Connection;
 
 final class ConnectionQueryRepository
 {

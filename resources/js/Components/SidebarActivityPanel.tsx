@@ -1,7 +1,8 @@
 import { Link } from '@inertiajs/react';
-import { ArrowDownToLine, ArrowUpFromLine, Loader2, RefreshCw } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, RefreshCw } from 'lucide-react';
 import { useMemo } from 'react';
 
+import LoadingIndicator from '@/Components/LoadingIndicator';
 import ProgressBar from '@/Components/ProgressBar';
 import type { DownloadTransferBatch } from '@/hooks/useOperationsStream';
 import { cn } from '@/lib/cn';
@@ -9,6 +10,9 @@ import { accountLabel, downloadGroupLabel } from '@/lib/crawlOperations';
 import type { CrawlRun, FlickrAccount, TransferBatch } from '@/types';
 
 const MAX_ROWS = 5;
+
+/** Sidebar Live only shows in-flight work; Operations page keeps recent history. */
+const LIVE_STATUS = 'running';
 
 type ActivityRow = {
     key: string;
@@ -25,6 +29,11 @@ interface SidebarActivityPanelProps {
     uploadBatches: TransferBatch[];
     loading: boolean;
     accountByNsid: Record<string, FlickrAccount>;
+    className?: string;
+}
+
+function isLiveStatus(status: string): boolean {
+    return status === LIVE_STATUS;
 }
 
 function buildActivityRows(
@@ -35,7 +44,7 @@ function buildActivityRows(
 ): ActivityRow[] {
     const rows: ActivityRow[] = [];
 
-    for (const batch of downloadBatches) {
+    for (const batch of downloadBatches.filter((item) => isLiveStatus(item.status))) {
         const account = accountByNsid[batch.connection_key];
         const processed = batch.completed_count + batch.failed_count;
         const max = Math.max(batch.total_count, processed, 1);
@@ -50,7 +59,7 @@ function buildActivityRows(
         });
     }
 
-    for (const batch of uploadBatches) {
+    for (const batch of uploadBatches.filter((item) => isLiveStatus(item.status))) {
         const account = accountByNsid[batch.connection_key];
         const processed = batch.completed_count + batch.failed_count;
         const max = Math.max(batch.total_count, processed, 1);
@@ -65,7 +74,7 @@ function buildActivityRows(
         });
     }
 
-    for (const run of fetchRuns) {
+    for (const run of fetchRuns.filter((item) => isLiveStatus(item.status))) {
         const account = accountByNsid[run.connection_key];
         const discovered = run.photos_discovered + run.contacts_discovered;
         const max = Math.max(discovered, run.api_calls, 1);
@@ -101,35 +110,47 @@ export default function SidebarActivityPanel({
     uploadBatches,
     loading,
     accountByNsid,
+    className,
 }: SidebarActivityPanelProps) {
     const rows = useMemo(
         () => buildActivityRows(fetchRuns, downloadBatches, uploadBatches, accountByNsid),
         [fetchRuns, downloadBatches, uploadBatches, accountByNsid],
     );
 
-    const totalActive = fetchRuns.length + downloadBatches.length + uploadBatches.length;
+    const totalActive = useMemo(
+        () =>
+            fetchRuns.filter((item) => isLiveStatus(item.status)).length
+            + downloadBatches.filter((item) => isLiveStatus(item.status)).length
+            + uploadBatches.filter((item) => isLiveStatus(item.status)).length,
+        [fetchRuns, downloadBatches, uploadBatches],
+    );
 
-    if (!loading && totalActive === 0) {
+    if (totalActive === 0) {
         return null;
     }
 
     return (
-        <section aria-label="Live operations" className="shrink-0 border-t border-slate-200 p-3">
-            <div className="flex items-center justify-between gap-2 px-3 pb-2">
+        <section
+            aria-label="Live operations"
+            className={cn('shrink-0 border-t border-slate-200 px-3 py-2', className)}
+        >
+            <div className="flex items-center justify-between gap-2">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Live</p>
                 {loading ? (
-                    <Loader2 className="h-3 w-3 animate-spin text-slate-400" aria-label="Loading operations" />
+                    <LoadingIndicator size="sm" />
                 ) : (
                     <span className="text-[11px] font-medium tabular-nums text-slate-500">{totalActive}</span>
                 )}
             </div>
 
             {rows.length === 0 && loading ? (
-                <p className="px-3 py-1 text-xs text-slate-500">Checking active jobs…</p>
-            ) : (
-                <ul className="space-y-2">
+                <LoadingIndicator size="sm" label="Checking active jobs…" className="mt-1" />
+            ) : null}
+
+            {rows.length > 0 ? (
+                <ul className="mt-2 space-y-2">
                     {rows.map((row) => (
-                        <li key={row.key} className="rounded-md px-3 py-1.5">
+                        <li key={row.key} className="rounded-md py-0.5">
                             <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
                                 <ActivityIcon kind={row.kind} />
                                 <span>{row.label}</span>
@@ -146,16 +167,16 @@ export default function SidebarActivityPanel({
                         </li>
                     ))}
                 </ul>
-            )}
+            ) : null}
 
             {totalActive > MAX_ROWS ? (
-                <p className="px-3 pt-1 text-[11px] text-slate-500">+{totalActive - MAX_ROWS} more</p>
+                <p className="pt-1 text-[11px] text-slate-500">+{totalActive - MAX_ROWS} more</p>
             ) : null}
 
             <Link
-                href="/crawl/operations"
+                href="/operations"
                 className={cn(
-                    'mt-2 block rounded-md px-3 py-1.5 text-xs font-medium text-cyan-700 hover:bg-cyan-50',
+                    'mt-1.5 block rounded-md py-1 text-xs font-medium text-cyan-700 hover:bg-cyan-50',
                 )}
             >
                 View Operations

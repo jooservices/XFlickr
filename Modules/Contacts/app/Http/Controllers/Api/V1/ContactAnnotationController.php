@@ -6,10 +6,10 @@ namespace Modules\Contacts\Http\Controllers\Api\V1;
 
 use Illuminate\Http\JsonResponse;
 use JOOservices\LaravelController\Http\Controllers\BaseApiController;
-use JOOservices\XFlickrCrawler\Models\Connection;
 use Modules\Contacts\Http\Requests\Api\UpdateContactAnnotationRequest;
 use Modules\Contacts\Http\Resources\ContactAnnotationResource;
 use Modules\Contacts\Services\ContactAnnotationService;
+use Modules\Crawler\Models\Connection;
 
 final class ContactAnnotationController extends BaseApiController
 {

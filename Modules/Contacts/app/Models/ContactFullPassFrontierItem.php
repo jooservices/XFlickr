@@ -4,12 +4,22 @@ declare(strict_types=1);
 
 namespace Modules\Contacts\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Contacts\Database\Factories\ContactFullPassFrontierItemFactory;
 use Modules\Spider\Enums\SpiderFrontierStatus;
 
 class ContactFullPassFrontierItem extends Model
 {
+    /** @use HasFactory<ContactFullPassFrontierItemFactory> */
+    use HasFactory;
+
+    protected static function newFactory(): ContactFullPassFrontierItemFactory
+    {
+        return ContactFullPassFrontierItemFactory::new();
+    }
+
     protected $fillable = [
         'contact_full_pass_run_id',
         'contact_nsid',

@@ -7,7 +7,6 @@ namespace Modules\Contacts\Http\Controllers;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
-use JOOservices\XFlickrCrawler\Models\Connection;
 use Modules\Contacts\Http\Requests\CrawlFlickrContactBulkRequest;
 use Modules\Contacts\Http\Requests\CrawlFlickrContactRequest;
 use Modules\Contacts\Http\Requests\ListFlickrContactsRequest;
@@ -15,7 +14,9 @@ use Modules\Contacts\Services\ContactDetailService;
 use Modules\Contacts\Services\ContactListPresenter;
 use Modules\Contacts\Services\ContactListQueryService;
 use Modules\Contacts\Services\ContactListSorter;
+use Modules\Crawler\Models\Connection;
 use Modules\Flickr\Exceptions\FlickrTokenInvalidException;
+use Modules\Flickr\Exceptions\GlobalCrawlPauseException;
 use Modules\Flickr\Services\FlickrCrawlService;
 use Modules\Flickr\Support\ConnectionPresenter;
 
@@ -68,9 +69,20 @@ final class FlickrContactController
         return Inertia::render('Contacts/Show', $payload);
     }
 
-    public function crawlBulk(CrawlFlickrContactBulkRequest $request, Connection $connection, FlickrCrawlService $crawlService): RedirectResponse
-    {
-        $contactNsids = $request->contactNsids();
+    public function crawlBulk(
+        CrawlFlickrContactBulkRequest $request,
+        Connection $connection,
+        FlickrCrawlService $crawlService,
+        ContactListQueryService $contactList,
+    ): RedirectResponse {
+        $contactNsids = $request->wantsSelectAll()
+            ? $contactList->listNsidsForConnection(
+                $connection,
+                $request->bulkSearch(),
+                $request->bulkStarredOnly(),
+            )
+            : $request->contactNsids();
+
         if ($contactNsids === []) {
             return back()->with('error', 'No contacts selected.');
         }
@@ -81,7 +93,7 @@ final class FlickrContactController
             foreach ($contactNsids as $contactNsid) {
                 $crawlService->crawlMany($connection, $crawlTypes, $contactNsid);
             }
-        } catch (FlickrTokenInvalidException $exception) {
+        } catch (FlickrTokenInvalidException|GlobalCrawlPauseException $exception) {
             return back()->with('error', $exception->getMessage());
         }
 
@@ -94,7 +106,7 @@ final class FlickrContactController
     {
         try {
             $crawlService->crawlMany($connection, $request->crawlTypes(), $contactNsid);
-        } catch (FlickrTokenInvalidException $exception) {
+        } catch (FlickrTokenInvalidException|GlobalCrawlPauseException $exception) {
             return back()->with('error', $exception->getMessage());
         }
 

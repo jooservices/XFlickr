@@ -6,7 +6,9 @@ namespace Modules\Auth\Tests\Unit\Services;
 
 use App\Models\User;
 use App\Support\AdminCredentialResolver;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use Modules\Auth\Services\UserService;
@@ -244,5 +246,107 @@ final class UserServiceTest extends TestCase
         $this->expectException(ValidationException::class);
 
         $this->users->resetPassword('admin@local', '       '); // 7 spaces
+    }
+
+    public function test_update_profile_updates_name_and_email(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Old',
+            'email' => 'old@local',
+            'password' => 'secure-password-1',
+        ]);
+
+        $updated = $this->users->updateProfile($user, 'New Name', 'new@local');
+
+        $this->assertSame('New Name', $updated->name);
+        $this->assertSame('new@local', $updated->email);
+        $this->assertTrue(Hash::check('secure-password-1', $updated->fresh()->password));
+    }
+
+    public function test_update_profile_updates_password_when_provided(): void
+    {
+        $user = User::factory()->create([
+            'password' => 'secure-password-1',
+        ]);
+
+        $updated = $this->users->updateProfile($user, $user->name, $user->email, 'secure-password-2');
+
+        $this->assertTrue(Hash::check('secure-password-2', $updated->fresh()->password));
+    }
+
+    public function test_reset_password_with_token_rejects_expired_token(): void
+    {
+        User::factory()->create(['email' => 'admin@local']);
+
+        $plainToken = 'expired-token-value';
+        DB::table('password_reset_tokens')->insert([
+            'email' => 'admin@local',
+            'token' => Hash::make($plainToken),
+            'created_at' => now()->subHours(3),
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        $this->users->resetPasswordWithToken('admin@local', $plainToken, 'new-secure-password-1');
+    }
+
+    public function test_reset_password_with_token_rejects_inactive_user(): void
+    {
+        User::factory()->inactive()->create(['email' => 'pending@local']);
+
+        $plainToken = 'inactive-token-value';
+        DB::table('password_reset_tokens')->insert([
+            'email' => 'pending@local',
+            'token' => Hash::make($plainToken),
+            'created_at' => now(),
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        $this->users->resetPasswordWithToken('pending@local', $plainToken, 'new-secure-password-1');
+    }
+
+    public function test_activate_user_returns_existing_when_already_active(): void
+    {
+        $user = User::factory()->create(['email' => 'active@local']);
+
+        $result = $this->users->activateUser('active@local');
+
+        $this->assertSame($user->id, $result->id);
+        $this->assertTrue($result->is_active);
+    }
+
+    public function test_register_rate_limits_repeated_attempts_for_same_email(): void
+    {
+        $email = fake()->safeEmail();
+        RateLimiter::clear('register|127.0.0.1');
+
+        $this->users->register('First User', $email, 'secure-password-1', '127.0.0.1');
+
+        for ($attempt = 0; $attempt < 4; $attempt++) {
+            try {
+                $this->users->register('Duplicate User', $email, 'secure-password-1', '127.0.0.1');
+                $this->fail('Expected ValidationException for duplicate email');
+            } catch (ValidationException) {
+                // duplicate attempts still consume the rate limiter budget
+            }
+        }
+
+        $this->expectException(ValidationException::class);
+
+        $this->users->register('Throttled User', $email, 'secure-password-1', '127.0.0.1');
+    }
+
+    public function test_request_password_reset_rate_limits_repeated_attempts(): void
+    {
+        RateLimiter::clear('forgot-password|127.0.0.1|ghost@local');
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->users->requestPasswordReset('ghost@local', '127.0.0.1');
+        }
+
+        $this->expectException(ValidationException::class);
+
+        $this->users->requestPasswordReset('ghost@local', '127.0.0.1');
     }
 }

@@ -6,8 +6,8 @@ namespace Modules\Transfer\Services;
 
 use App\Repositories\Crawler\PhotoQueryRepository;
 use Illuminate\Support\Collection;
-use JOOservices\XFlickrCrawler\Models\Connection;
-use JOOservices\XFlickrCrawler\Models\Photo;
+use Modules\Crawler\Models\Connection;
+use Modules\Crawler\Models\Photo;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Repositories\StorageAccountRepository;
 use Modules\Storage\Repositories\StorageUploadRepository;
@@ -44,6 +44,7 @@ final class PhotoUploadService
 
     /**
      * @param  list<string>  $contactNsids
+     * @param  list<string>  $flickrPhotoIds
      */
     public function queueFromInput(
         Connection $connection,
@@ -51,11 +52,26 @@ final class PhotoUploadService
         ?string $flickrPhotoId = null,
         ?string $contactNsid = null,
         array $contactNsids = [],
+        array $flickrPhotoIds = [],
     ): TransferQueueResult {
         $storageAccount = $this->resolveStorageAccount($storageAccountId);
 
         if ($storageAccount === null) {
             return TransferQueueResult::error('No storage account configured.');
+        }
+
+        if ($flickrPhotoIds !== []) {
+            $queued = $this->queuePhotoUploads($connection, $storageAccount, $flickrPhotoIds);
+            $selectedCount = count($flickrPhotoIds);
+
+            return TransferQueueResult::success(
+                $queued === 0
+                    ? 'No upload queued for selected photo(s).'
+                    : ($selectedCount === 1
+                        ? 'Photo upload queued.'
+                        : "{$queued} photo(s) queued for upload from {$selectedCount} selected."),
+                $queued,
+            );
         }
 
         if ($flickrPhotoId !== null && $flickrPhotoId !== '') {
@@ -130,7 +146,36 @@ final class PhotoUploadService
             return 0;
         }
 
-        return $this->queuePendingPhotos($connection, collect([$photo]), $storageAccount);
+        return $this->queuePendingPhotos($connection, collect([$photo]), $storageAccount, $photo->owner_nsid);
+    }
+
+    /**
+     * @param  list<string>  $flickrPhotoIds
+     * @return int Number of photos queued
+     */
+    public function queuePhotoUploads(
+        Connection $connection,
+        StorageAccount $storageAccount,
+        array $flickrPhotoIds,
+    ): int {
+        $photos = $this->photos->listByFlickrPhotoIds($flickrPhotoIds, ['id', 'flickr_photo_id', 'owner_nsid']);
+
+        if ($photos->isEmpty()) {
+            return 0;
+        }
+
+        $queued = 0;
+
+        foreach ($photos->groupBy('owner_nsid') as $ownerNsid => $ownerPhotos) {
+            $queued += $this->queuePendingPhotos(
+                $connection,
+                $ownerPhotos,
+                $storageAccount,
+                (string) $ownerNsid,
+            );
+        }
+
+        return $queued;
     }
 
     /**

@@ -3,6 +3,7 @@ import { ChevronDown, Network, Users } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import Button from '@/Components/Button';
 import ExpandConfirmModal, { type ExpandMode } from '@/Components/ExpandConfirmModal';
 import { apiGet } from '@/lib/apiClient';
 import { flickrAccountPath, flickrApiAccountPath } from '@/lib/flickrAccount';
@@ -13,16 +14,37 @@ interface ExpandActionBarProps {
     size?: 'sm' | 'md';
 }
 
+interface SpiderStatusPayload {
+    active?: boolean;
+}
+
 export default function ExpandActionBar({ accountPublicId, size = 'sm' }: ExpandActionBarProps) {
     const [open, setOpen] = useState(false);
     const [modalMode, setModalMode] = useState<ExpandMode | null>(null);
     const [preview, setPreview] = useState<ExpandPreviewPayload | null>(null);
     const [loadingPreview, setLoadingPreview] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [spiderActive, setSpiderActive] = useState(false);
+    const [stopping, setStopping] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
     const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
+
+    const refreshSpiderStatus = useCallback(async () => {
+        try {
+            const data = await apiGet<{ data: SpiderStatusPayload }>(
+                flickrApiAccountPath(accountPublicId, '/spider-runs/current'),
+            );
+            setSpiderActive(Boolean(data.data?.active));
+        } catch {
+            setSpiderActive(false);
+        }
+    }, [accountPublicId]);
+
+    useEffect(() => {
+        void refreshSpiderStatus();
+    }, [refreshSpiderStatus]);
 
     const loadPreview = useCallback(async () => {
         setLoadingPreview(true);
@@ -31,6 +53,7 @@ export default function ExpandActionBar({ accountPublicId, size = 'sm' }: Expand
                 flickrApiAccountPath(accountPublicId, '/expand-previews'),
             );
             setPreview(data.data);
+            setSpiderActive(Boolean(data.data?.spider?.active));
         } catch {
             setPreview(null);
         } finally {
@@ -68,6 +91,18 @@ export default function ExpandActionBar({ accountPublicId, size = 'sm' }: Expand
             onFinish: () => {
                 setSubmitting(false);
                 setModalMode(null);
+                void refreshSpiderStatus();
+            },
+        });
+    };
+
+    const stopSpider = () => {
+        setStopping(true);
+        router.post(flickrAccountPath(accountPublicId, '/spider/stop'), {}, {
+            preserveScroll: true,
+            onFinish: () => {
+                setStopping(false);
+                void refreshSpiderStatus();
             },
         });
     };
@@ -162,17 +197,31 @@ export default function ExpandActionBar({ accountPublicId, size = 'sm' }: Expand
 
     return (
         <>
-            <div ref={containerRef} className="relative inline-block">
-                <button
-                    ref={buttonRef}
-                    type="button"
-                    onClick={() => setOpen((value) => !value)}
-                    className={buttonClass}
-                >
-                    Expand
-                    <ChevronDown className={size === 'md' ? 'size-3.5' : 'size-3'} />
-                </button>
-                {menu && createPortal(menu, document.body)}
+            <div className="inline-flex items-center gap-2">
+                <div ref={containerRef} className="relative inline-block">
+                    <button
+                        ref={buttonRef}
+                        type="button"
+                        onClick={() => setOpen((value) => !value)}
+                        className={buttonClass}
+                    >
+                        Expand
+                        <ChevronDown className={size === 'md' ? 'size-3.5' : 'size-3'} />
+                    </button>
+                    {menu && createPortal(menu, document.body)}
+                </div>
+
+                {spiderActive ? (
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size={size === 'md' ? 'md' : 'sm'}
+                        disabled={stopping}
+                        onClick={stopSpider}
+                    >
+                        {stopping ? 'Stopping…' : 'Stop spider'}
+                    </Button>
+                ) : null}
             </div>
 
             {modalMode ? (

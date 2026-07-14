@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Modules\Transfer\Services;
 
 use App\Support\Query\QuerySorter;
-use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Crawler\Models\Connection;
 use Modules\Transfer\Enums\TransferBatchStatus;
 use Modules\Transfer\Models\TransferBatch;
 use Modules\Transfer\Repositories\TransferBatchRepository;

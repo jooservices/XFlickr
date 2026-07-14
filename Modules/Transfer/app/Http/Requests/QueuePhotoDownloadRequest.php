@@ -4,16 +4,27 @@ declare(strict_types=1);
 
 namespace Modules\Transfer\Http\Requests;
 
+use App\Http\Requests\Concerns\ResolvesBulkSelectAll;
 use App\Http\Requests\Request;
 
 final class QueuePhotoDownloadRequest extends Request
 {
+    use ResolvesBulkSelectAll;
+
     protected function prepareForValidation(): void
     {
+        $this->prepareBulkSelectAllForValidation();
+
         $contactNsids = $this->input('contact_nsids');
 
         if (is_string($contactNsids)) {
             $this->merge(['contact_nsids' => [$contactNsids]]);
+        }
+
+        $flickrPhotoIds = $this->input('flickr_photo_ids');
+
+        if (is_string($flickrPhotoIds)) {
+            $this->merge(['flickr_photo_ids' => [$flickrPhotoIds]]);
         }
     }
 
@@ -23,7 +34,10 @@ final class QueuePhotoDownloadRequest extends Request
     public function rules(): array
     {
         return [
+            ...$this->bulkSelectAllRules(),
             'flickr_photo_id' => ['sometimes', 'nullable', 'string'],
+            'flickr_photo_ids' => ['sometimes', 'nullable', 'array'],
+            'flickr_photo_ids.*' => ['string'],
             'contact_nsid' => ['sometimes', 'nullable', 'string'],
             'contact_nsids' => ['sometimes', 'nullable', 'array'],
             'contact_nsids.*' => ['string'],
@@ -35,6 +49,19 @@ final class QueuePhotoDownloadRequest extends Request
         $flickrPhotoId = $this->input('flickr_photo_id');
 
         return is_string($flickrPhotoId) && $flickrPhotoId !== '' ? $flickrPhotoId : null;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function flickrPhotoIds(): array
+    {
+        $flickrPhotoIds = $this->input('flickr_photo_ids', []);
+
+        return array_values(array_unique(array_filter(
+            is_array($flickrPhotoIds) ? $flickrPhotoIds : [],
+            static fn (mixed $photoId): bool => is_string($photoId) && $photoId !== '',
+        )));
     }
 
     /**

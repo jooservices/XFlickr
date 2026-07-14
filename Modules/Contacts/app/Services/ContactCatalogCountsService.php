@@ -6,7 +6,7 @@ namespace Modules\Contacts\Services;
 
 use App\Repositories\Crawler\CatalogQueryRepository;
 use App\Repositories\Crawler\PhotoQueryRepository;
-use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Crawler\Models\Connection;
 
 final class ContactCatalogCountsService
 {

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
+use Modules\Crawler\Support\XFlickrConfig;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 

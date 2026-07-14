@@ -6,8 +6,8 @@ namespace Modules\Flickr\Services;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Redis;
-use JOOservices\XFlickrCrawler\Facades\FlickrService;
-use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
+use Modules\Crawler\Facades\FlickrService;
+use Modules\Crawler\Support\XFlickrConfig;
 
 final class FlickrRateLimitPresenter
 {

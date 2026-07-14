@@ -12,40 +12,86 @@ deptrac:
       collectors:
         - type: classLike
           value: App\\Services\\.*
-        - type: classLike
-          value: Modules\\.*\\Services\\.*
+        # Peer modules only — Crawler engine is the leaf `Crawler` layer (Modules\Crawler\*).
+        # Exclude *\Tests\* so PHPUnit classes under Services folders are not treated as Services.
+        - type: bool
+          must:
+            - type: classLike
+              value: Modules\\.*\\Services\\.*
+          must_not:
+            - type: classLike
+              value: Modules\\Crawler\\.*
+            - type: classLike
+              value: Modules\\.*\\Tests\\.*
     - name: Controller
       collectors:
         - type: classLike
           value: App\\Http\\Controllers\\.*
-        - type: classLike
-          value: Modules\\.*\\Http\\Controllers\\.*
+        - type: bool
+          must:
+            - type: classLike
+              value: Modules\\.*\\Http\\Controllers\\.*
+          must_not:
+            - type: classLike
+              value: Modules\\Crawler\\.*
+            - type: classLike
+              value: Modules\\.*\\Tests\\.*
     - name: Repository
       collectors:
         - type: classLike
           value: App\\Repositories\\.*
-        - type: classLike
-          value: Modules\\.*\\Repositories\\.*
+        - type: bool
+          must:
+            - type: classLike
+              value: Modules\\.*\\Repositories\\.*
+          must_not:
+            - type: classLike
+              value: Modules\\Crawler\\.*
+            - type: classLike
+              value: Modules\\.*\\Tests\\.*
     - name: Job
       collectors:
         - type: classLike
           value: App\\Jobs\\.*
-        - type: classLike
-          value: Modules\\.*\\Jobs\\.*
+        - type: bool
+          must:
+            - type: classLike
+              value: Modules\\.*\\Jobs\\.*
+          must_not:
+            - type: classLike
+              value: Modules\\Crawler\\.*
+            - type: classLike
+              value: Modules\\.*\\Tests\\.*
+    - name: Crawler
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: Modules\\Crawler\\.*
+          must_not:
+            - type: classLike
+              value: Modules\\Crawler\\Tests\\.*
 
   ruleset:
     # Primary audit guard: Models must not import Services, Repositories, Controllers, or Jobs.
     Model: []
     Repository:
       - Model
+      - Crawler
     Service:
       - Model
       - Repository
       - Job
+      - Crawler
     Job:
       - Service
       - Model
       - Repository
+      - Crawler
     Controller:
       - Service
       - Model
+      - Crawler
+    # Leaf: engine may not depend on Modules\* / App Http layers (PHPUnit also enforces).
+    # Same-layer deps inside Modules\Crawler\app are allowed.
+    Crawler: []

@@ -22,10 +22,16 @@ Keep frontend pages consistent with XCrawlerII-aligned AppShell / PageShell patt
 
 - Authenticated pages: `AppLayout` → `PageShell` → Identity / ControlBar / Canvas (not standalone `PageHeading`)
 - Use `Button` / `ActionButton` — not raw `<button>` for actions
+- Use shared `Modal` (`Modal.Header` / `Modal.Body` / `Modal.Footer`) for dialogs — portals to `document.body`
 - Use crawl/expand macros (`CrawlActionBar`, `ExpandActionBar`) for action groups
 - Use JOO / local `DataTable` for sortable tables; `MetricCard` for stats
 - Use `ProviderCard` for settings connection cards
 - Poll with `usePolledResource` against `/api/v1/*`
+- **API wait affordances** — always show a wait indicator scoped to what is blocked:
+  - `PageLoading` / `BusyRegion` with `empty` — primary canvas content not ready yet
+  - `BusyRegion` overlay / `DataTable` `busy` — panel/table refetch while content exists
+  - `LoadingIndicator` — inline control/group waits (search, load-more, modal preview)
+  - Do not use a global app spinner for every `apiGet`
 
 ## Inertia patterns
 

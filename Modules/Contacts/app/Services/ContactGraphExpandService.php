@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Modules\Contacts\Services;
 
-use JOOservices\XFlickrCrawler\Enums\CrawlRunStatus;
-use JOOservices\XFlickrCrawler\Enums\CrawlType;
-use JOOservices\XFlickrCrawler\Models\Connection;
-use JOOservices\XFlickrCrawler\Models\CrawlRun;
+use Modules\Crawler\Enums\CrawlRunStatus;
+use Modules\Crawler\Enums\CrawlType;
+use Modules\Crawler\Models\Connection;
+use Modules\Crawler\Models\CrawlRun;
 use Modules\Flickr\Services\FlickrCrawlService;
 
 final class ContactGraphExpandService

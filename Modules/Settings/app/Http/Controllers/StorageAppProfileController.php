@@ -22,7 +22,7 @@ final class StorageAppProfileController
         ]);
 
         return redirect()
-            ->route('settings.index', ['tab' => 'storage'])
+            ->route('connections.index', ['provider' => 'storage'])
             ->with('success', 'Storage app credentials saved.');
     }
 }

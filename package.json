@@ -10,7 +10,7 @@
         "build": "vite build",
         "dev": "vite",
         "typecheck": "tsc --noEmit",
-        "lint": "eslint resources/js",
+        "lint": "eslint resources/js --max-warnings 0",
         "lint:fix": "eslint resources/js --fix",
         "check": "npm run typecheck && npm run lint",
         "test": "vitest run",
@@ -41,6 +41,7 @@
     },
     "dependencies": {
         "@inertiajs/react": "^3.4.0",
+        "@jooservices/react-config": "file:packages/jooservices-react-config-0.1.1.tgz",
         "@jooservices/react-content": "file:packages/jooservices-react-content-0.1.0.tgz",
         "@jooservices/react-layout": "file:packages/jooservices-react-layout-0.1.0.tgz",
         "@jooservices/react-table": "file:packages/jooservices-react-table-0.1.1.tgz",

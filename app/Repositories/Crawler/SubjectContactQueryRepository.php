@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories\Crawler;
 
 use Illuminate\Support\Collection;
-use JOOservices\XFlickrCrawler\Models\SubjectContact;
+use Modules\Crawler\Models\SubjectContact;
 
 final class SubjectContactQueryRepository
 {

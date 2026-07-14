@@ -10,7 +10,7 @@ use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
-use JOOservices\XFlickrCrawler\Models\Photo as CrawlerPhoto;
+use Modules\Crawler\Models\Photo as CrawlerPhoto;
 use Modules\Flickr\Services\FlickrPhotoSizeResolver;
 use Modules\Flickr\Support\FlickrPhotoUrlHelper;
 use Modules\Transfer\Enums\PhotoTransferExecutionOutcome;

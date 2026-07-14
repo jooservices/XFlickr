@@ -4,11 +4,21 @@ declare(strict_types=1);
 
 namespace Modules\Storage\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Storage\Database\Factories\StorageRemoteItemFactory;
 
 final class StorageRemoteItem extends Model
 {
+    /** @use HasFactory<StorageRemoteItemFactory> */
+    use HasFactory;
+
+    protected static function newFactory(): StorageRemoteItemFactory
+    {
+        return StorageRemoteItemFactory::new();
+    }
+
     protected $fillable = [
         'storage_account_id',
         'parent_remote_id',

@@ -6,13 +6,14 @@ namespace Modules\Flickr\Services;
 
 use Illuminate\Support\Collection;
 use JOOservices\Flickr\Config\FlickrConfig;
+use JOOservices\Flickr\Contracts\Client\FlickrTransportContract;
 use JOOservices\Flickr\DTO\Auth\AccessTokenData;
 use JOOservices\Flickr\Enums\AuthPermission;
 use JOOservices\Flickr\Exceptions\AuthenticationException;
 use JOOservices\Flickr\Flickr;
 use JOOservices\Flickr\FlickrFactory;
-use JOOservices\XFlickrCrawler\Facades\FlickrService;
-use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Crawler\Facades\FlickrService;
+use Modules\Crawler\Models\Connection;
 use Modules\Flickr\Events\FlickrAccountConnected;
 use Modules\Flickr\Events\FlickrAccountDisconnected;
 use Modules\Flickr\Support\ConnectionPresenter;
@@ -22,6 +23,7 @@ final class FlickrOAuthService
     public function __construct(
         private readonly FlickrAppProfileService $appProfiles,
         private readonly FlickrTokenHealthService $tokenHealth,
+        private readonly ?FlickrTransportContract $transport = null,
     ) {}
 
     /**
@@ -153,6 +155,7 @@ final class FlickrOAuthService
     {
         return FlickrFactory::make(
             FlickrConfig::from($this->appProfiles->flickrClientConfig($profile)),
+            transport: $this->transport,
         );
     }
 

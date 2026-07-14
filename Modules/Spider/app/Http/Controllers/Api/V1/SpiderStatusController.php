@@ -6,7 +6,7 @@ namespace Modules\Spider\Http\Controllers\Api\V1;
 
 use Illuminate\Http\JsonResponse;
 use JOOservices\LaravelController\Http\Controllers\BaseApiController;
-use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Crawler\Models\Connection;
 use Modules\Spider\Http\Resources\SpiderStatusResource;
 use Modules\Spider\Services\SpiderPlannerService;
 

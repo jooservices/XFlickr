@@ -1,4 +1,4 @@
-import { Link, router, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { AppShell, useAppShell } from '@jooservices/react-layout';
 import {
     Activity,
@@ -9,20 +9,27 @@ import {
     Images,
     LayoutDashboard,
     Layers,
-    LogOut,
+    Link2,
     Server,
     Settings,
     Users,
 } from 'lucide-react';
 import { type PropsWithChildren, type ReactNode, useMemo } from 'react';
 
-import NavbarRateLimit from '@/Components/NavbarRateLimit';
+import { APP_SIDEBAR_FOOTER_RESET_CLASS } from '@/Components/layout/appBottomRail';
+import AppSidebarFooter from '@/Components/layout/AppSidebarFooter';
+import AppStatusFooter from '@/Components/layout/AppStatusFooter';
+import GlobalCrawlPauseButton from '@/Components/layout/GlobalCrawlPauseButton';
+import { SpiderModeButton } from '@/Components/layout/SpiderModeButton';
+import UserAccountMenu from '@/Components/layout/UserAccountMenu';
 import SidebarActivityPanel from '@/Components/SidebarActivityPanel';
 import { useFlashToast } from '@/hooks/useFlashToast';
 import { useFlickrRateLimit } from '@/hooks/useFlickrRateLimit';
 import { useOperationsStream } from '@/hooks/useOperationsStream';
+import { useStorageQuota } from '@/hooks/useStorageQuota';
 import { cn } from '@/lib/cn';
-import type { FlickrCatalogCounts, PageProps } from '@/types';
+import { connectionsPath } from '@/lib/connections';
+import type { FlickrCatalogCounts, PageProps, SpiderSharedConfig } from '@/types';
 
 function isContactsPath(path: string): boolean {
     return path === '/contacts' || path.startsWith('/contacts/') || /\/contacts(\/|$)/.test(path);
@@ -55,6 +62,13 @@ function isGalleriesPath(path: string): boolean {
 function isStoragePath(path: string, slug: string): boolean {
     return path === `/storages/${slug}` || path.startsWith(`/storages/${slug}/`);
 }
+
+const defaultSpider: SpiderSharedConfig = {
+    enabled: false,
+    max_depth: 2,
+    max_new_contacts_per_run: 25,
+    max_contacts_total: 500,
+};
 
 const storageNav = [
     {
@@ -140,12 +154,14 @@ function sidebarCountForItem(
 }
 
 const topNav = [
-    { href: '/crawl/operations', label: 'Operations', icon: Activity },
+    { href: '/operations', label: 'Operations', icon: Activity },
     {
-        href: '/flickr/accounts',
-        label: 'Flickr',
-        icon: Camera,
-        isActive: (path: string) => path.startsWith('/flickr/accounts') && !path.includes('/contacts'),
+        href: connectionsPath(),
+        label: 'Connections',
+        icon: Link2,
+        isActive: (path: string) =>
+            path.startsWith('/connections') ||
+            (path.startsWith('/flickr/accounts') && !path.includes('/contacts')),
     },
     { href: '/settings', label: 'Settings', icon: Settings },
 ] as const;
@@ -182,6 +198,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
     const { props, url } = usePage<PageProps>();
     const { app, auth, flash } = props;
     const globalPause = app.global_pause ?? false;
+    const spider = app.spider ?? defaultSpider;
     const {
         snapshot: rateLimitSnapshot,
         selectedNsid,
@@ -190,6 +207,14 @@ export default function AppLayout({ children }: PropsWithChildren) {
         selectedCatalogCounts,
         loading: rateLimitLoading,
     } = useFlickrRateLimit();
+    const {
+        snapshot: storageQuotaSnapshot,
+        selectedAccountId: storageQuotaAccountId,
+        setSelectedAccountId: setStorageQuotaAccountId,
+        selectedRow: storageQuotaRow,
+        selectedQuota: storageQuota,
+        loading: storageQuotaLoading,
+    } = useStorageQuota();
     const { fetchRuns, downloadBatches, uploadBatches, loading: operationsLoading } = useOperationsStream();
 
     useFlashToast(flash);
@@ -204,149 +229,151 @@ export default function AppLayout({ children }: PropsWithChildren) {
 
     const path = url.split('?')[0] ?? '';
 
-    function logout() {
-        router.post('/logout');
-    }
-
     return (
         <AppShell sidebarWidth="14rem">
-            {globalPause ? (
-                <AppShell.Banner className="border-b border-rose-200 bg-rose-50 px-4 py-2 text-center text-sm font-medium text-rose-900">
-                    Global crawl pause is active — jobs will not dispatch until resumed in Settings.
-                </AppShell.Banner>
-            ) : null}
+            <div className="sticky top-0 z-40">
+                {globalPause ? (
+                    <div className="border-b border-rose-200 bg-rose-50 px-4 py-2 text-center text-sm font-medium text-rose-900">
+                        Global crawl pause is active — jobs will not dispatch until resumed.
+                    </div>
+                ) : null}
 
-            <AppShell.Header>
-                <AppShell.HeaderRow>
-                    <AppShell.Brand>
-                        <Link href="/dashboard" className="flex items-center gap-2">
-                            <Camera className="h-5 w-5 text-cyan-700" />
-                            <span className="font-semibold text-slate-900">{app.name}</span>
-                        </Link>
-                    </AppShell.Brand>
+                <AppShell.Header className="!static">
+                    <AppShell.HeaderRow>
+                        <AppShell.Brand>
+                            <Link href="/dashboard" className="flex items-center gap-2">
+                                <Camera className="h-5 w-5 text-cyan-700" />
+                                <span className="font-semibold text-slate-900">{app.name}</span>
+                            </Link>
+                        </AppShell.Brand>
 
-                    <AppShell.HeaderMain>
-                        <AppShell.HeaderNav>
-                            {topNav.map((item) => {
-                                const active =
-                                    'isActive' in item && item.isActive
-                                        ? item.isActive(path)
-                                        : path.startsWith(item.href);
-                                const Icon = item.icon;
+                        <AppShell.HeaderMain>
+                            <AppShell.HeaderNav>
+                                {topNav.map((item) => {
+                                    const active =
+                                        'isActive' in item && item.isActive
+                                            ? item.isActive(path)
+                                            : path.startsWith(item.href);
+                                    const Icon = item.icon;
 
-                                return (
-                                    <Link
-                                        key={item.href}
-                                        href={item.href}
-                                        className={cn(
-                                            'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium',
-                                            active
-                                                ? 'bg-cyan-50 text-cyan-800'
-                                                : 'text-slate-600 hover:bg-slate-100',
-                                        )}
-                                    >
-                                        <Icon className="h-4 w-4" />
-                                        {item.label}
-                                    </Link>
-                                );
-                            })}
-                        </AppShell.HeaderNav>
+                                    return (
+                                        <Link
+                                            key={item.href}
+                                            href={item.href}
+                                            className={cn(
+                                                'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium',
+                                                active
+                                                    ? 'bg-cyan-50 text-cyan-800'
+                                                    : 'text-slate-600 hover:bg-slate-100',
+                                            )}
+                                        >
+                                            <Icon className="h-4 w-4" />
+                                            {item.label}
+                                        </Link>
+                                    );
+                                })}
+                            </AppShell.HeaderNav>
 
-                        <AppShell.HeaderCenter>
-                            <NavbarRateLimit
-                                snapshot={rateLimitSnapshot}
-                                selectedNsid={selectedNsid}
-                                setSelectedNsid={setSelectedNsid}
-                                selectedRateLimit={selectedRateLimit}
-                                loading={rateLimitLoading}
-                            />
-                        </AppShell.HeaderCenter>
-
-                        <AppShell.HeaderActions>
-                            {auth.user ? (
-                                <div className="flex shrink-0 items-center gap-2">
-                                    <span className="hidden text-sm text-slate-600 sm:inline">{auth.user.email}</span>
-                                    <button
-                                        type="button"
-                                        onClick={logout}
-                                        className="flex items-center gap-1 rounded-md px-2 py-2 text-sm text-slate-600 hover:bg-slate-100"
-                                        title="Sign out"
-                                    >
-                                        <LogOut className="h-4 w-4" />
-                                        <span className="hidden sm:inline">Sign out</span>
-                                    </button>
-                                </div>
-                            ) : null}
-                        </AppShell.HeaderActions>
-                    </AppShell.HeaderMain>
-                </AppShell.HeaderRow>
-            </AppShell.Header>
+                            <AppShell.HeaderActions>
+                                <GlobalCrawlPauseButton paused={globalPause} />
+                                <SpiderModeButton spider={spider} />
+                                {auth.user ? <UserAccountMenu user={auth.user} /> : null}
+                            </AppShell.HeaderActions>
+                        </AppShell.HeaderMain>
+                    </AppShell.HeaderRow>
+                </AppShell.Header>
+            </div>
 
             <AppShell.Body>
                 <AppShell.Sidebar
-                    footer={
+                    className={cn(
+                        APP_SIDEBAR_FOOTER_RESET_CLASS,
+                        globalPause ? 'lg:!top-[5.75rem] lg:!max-h-[calc(100vh-5.75rem)]' : undefined,
+                    )}
+                    footer={<AppSidebarFooter />}
+                >
+                    <div className="flex min-h-full flex-col">
+                        <div className="flex flex-col gap-1 p-3">
+                            {sidebarNav.map((item) => {
+                                const active =
+                                    'isActive' in item && item.isActive
+                                        ? item.isActive(path)
+                                        : path === item.href || path.startsWith(`${item.href}/`);
+                                const Icon = item.icon;
+                                const count = sidebarCountForItem(
+                                    selectedCatalogCounts,
+                                    'countKey' in item ? item.countKey : undefined,
+                                );
+
+                                return (
+                                    <ShellNavLink key={item.href} href={item.href} active={active}>
+                                        <Icon className="h-4 w-4 shrink-0" />
+                                        <span className="truncate">{item.label}</span>
+                                        {count !== null ? (
+                                            <span
+                                                className={cn(
+                                                    'ml-auto tabular-nums text-xs',
+                                                    active ? 'text-cyan-700' : 'text-slate-400',
+                                                )}
+                                            >
+                                                {formatSidebarCount(count)}
+                                            </span>
+                                        ) : null}
+                                    </ShellNavLink>
+                                );
+                            })}
+
+                            <div className="px-3 pt-4 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                Storages
+                            </div>
+
+                            {storageNav.map((item) => {
+                                const active =
+                                    'isActive' in item && item.isActive
+                                        ? item.isActive(path)
+                                        : path === item.href || path.startsWith(`${item.href}/`);
+                                const Icon = item.icon;
+
+                                return (
+                                    <ShellNavLink key={item.href} href={item.href} active={active}>
+                                        <Icon className="h-4 w-4" />
+                                        {item.label}
+                                    </ShellNavLink>
+                                );
+                            })}
+                        </div>
+
                         <SidebarActivityPanel
+                            className="mt-auto"
                             fetchRuns={fetchRuns}
                             downloadBatches={downloadBatches}
                             uploadBatches={uploadBatches}
                             loading={operationsLoading}
                             accountByNsid={accountByNsid}
                         />
-                    }
-                >
-                    <div className="flex flex-col gap-1 p-3">
-                        {sidebarNav.map((item) => {
-                            const active =
-                                'isActive' in item && item.isActive
-                                    ? item.isActive(path)
-                                    : path === item.href || path.startsWith(`${item.href}/`);
-                            const Icon = item.icon;
-                            const count = sidebarCountForItem(
-                                selectedCatalogCounts,
-                                'countKey' in item ? item.countKey : undefined,
-                            );
-
-                            return (
-                                <ShellNavLink key={item.href} href={item.href} active={active}>
-                                    <Icon className="h-4 w-4 shrink-0" />
-                                    <span className="truncate">{item.label}</span>
-                                    {count !== null ? (
-                                        <span
-                                            className={cn(
-                                                'ml-auto tabular-nums text-xs',
-                                                active ? 'text-cyan-700' : 'text-slate-400',
-                                            )}
-                                        >
-                                            {formatSidebarCount(count)}
-                                        </span>
-                                    ) : null}
-                                </ShellNavLink>
-                            );
-                        })}
-
-                        <div className="px-3 pt-4 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                            Storages
-                        </div>
-
-                        {storageNav.map((item) => {
-                            const active =
-                                'isActive' in item && item.isActive
-                                    ? item.isActive(path)
-                                    : path === item.href || path.startsWith(`${item.href}/`);
-                            const Icon = item.icon;
-
-                            return (
-                                <ShellNavLink key={item.href} href={item.href} active={active}>
-                                    <Icon className="h-4 w-4" />
-                                    {item.label}
-                                </ShellNavLink>
-                            );
-                        })}
                     </div>
                 </AppShell.Sidebar>
 
-                <AppShell.Main>
-                    <AppShell.MainFrame className="overflow-y-auto">{children}</AppShell.MainFrame>
+                <AppShell.Main className="min-h-0">
+                    <AppShell.MainFrame className="min-h-0 overflow-y-auto">{children}</AppShell.MainFrame>
+                    <AppStatusFooter
+                        appName={app.name}
+                        flickr={{
+                            snapshot: rateLimitSnapshot,
+                            selectedNsid,
+                            setSelectedNsid,
+                            selectedRateLimit,
+                            loading: rateLimitLoading,
+                        }}
+                        storage={{
+                            accounts: storageQuotaSnapshot?.accounts ?? [],
+                            selectedAccountId: storageQuotaAccountId,
+                            setSelectedAccountId: setStorageQuotaAccountId,
+                            selectedRow: storageQuotaRow,
+                            selectedQuota: storageQuota,
+                            loading: storageQuotaLoading,
+                        }}
+                    />
                 </AppShell.Main>
             </AppShell.Body>
         </AppShell>

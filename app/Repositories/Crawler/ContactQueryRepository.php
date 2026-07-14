@@ -6,8 +6,8 @@ namespace App\Repositories\Crawler;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use JOOservices\XFlickrCrawler\Models\ConnectionContact;
-use JOOservices\XFlickrCrawler\Models\Contact;
+use Modules\Crawler\Models\ConnectionContact;
+use Modules\Crawler\Models\Contact;
 
 final class ContactQueryRepository
 {

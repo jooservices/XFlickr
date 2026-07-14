@@ -7,6 +7,7 @@ parameters:
     paths:
         - app
         - Modules/Auth
+        - Modules/Crawler
         - Modules/Settings
         - Modules/Operations
         - Modules/Storage
@@ -19,4 +20,5 @@ parameters:
         - Modules/*/resources/*
         - Modules/*/database/*
         - Modules/*/tests/*
+        - Modules/*/config/*
     treatPhpDocTypesAsCertain: false

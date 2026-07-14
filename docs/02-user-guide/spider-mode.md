@@ -5,8 +5,9 @@ Automatic breadth-first expansion of Flickr contacts (opt-in). Spider discovers 
 ## Enable
 
 - Spider is **disabled by default**.
-- Open **Settings → General** and edit the **Spider** runtime config group (stored in MongoDB via `jooservices/laravel-config`).
-- Set **`spider.enabled`** to `true` before using Start on the Operations page.
+- Use the header **Spider** control (opens a modal for enable + caps), or edit the **Spider** group under **Settings → General**.
+- Set **`spider.enabled`** to `true` before using **Auto-expand** on a Flickr account.
+- Enabling spider also clears **global crawl pause** so dispatch can run.
 
 ## Runtime config keys
 
@@ -21,12 +22,26 @@ Values are curated core config: edit in Settings, reset to default, or override 
 
 ## Behaviour
 
-1. **Start** (Operations page) — Creates a spider run and queues an owner contacts crawl. The frontier is seeded when that crawl completes (`ContactsCrawlCompleted` event).
+1. **Start** (Flickr account **Expand → Auto-expand**) — Creates a spider run and queues an owner contacts crawl. The frontier is seeded when that crawl completes (`ContactsCrawlCompleted` event).
 2. **Expand** — Scheduler runs `xflickr:spider:expand` when `spider.enabled` is true. For each pending frontier contact, queues photo crawl plus subject contacts crawl (public list).
 3. **Discover** — When a subject contacts crawl completes, newly discovered NSIDs are enqueued at depth + 1 until `spider.max_depth` or caps are hit.
-4. **Stop** — Pauses the active run; frontier state is retained.
+4. **Stop** — Use **Stop spider** on the same Expand action bar while a run is active; frontier state is retained.
 
 Global crawl pause (`xflickr.global_pause` in the same Settings panel) stops expansion while enabled.
+
+## Estimated load
+
+Before enabling spider or starting Auto-expand, the UI shows an **estimate** of crawl targets:
+
+- **Per frontier contact:** Photos + Contacts (= 2 crawl targets)
+- **Seed:** one owner Contacts crawl when a run starts
+- **Known (account):** based on currently saved contacts (capped by `max_contacts_total`)
+- **Ceiling:** `1 + max_contacts_total × 2` (depth &gt; 0 discovery can grow up to this hard cap)
+- **Per tick:** `max_new_contacts_per_run × 2`
+
+These are crawl-target estimates, not exact Horizon job counts.
+
+Spider controls do **not** live on the [Operations](operations.md) page (that console is read-only process monitoring).
 
 ## Depth > 0 limitation
 

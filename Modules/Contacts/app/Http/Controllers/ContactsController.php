@@ -14,7 +14,7 @@ final class ContactsController
         $connection = $oauth->activeConnection();
         if ($connection === null) {
             return redirect()
-                ->route('settings.index', ['tab' => 'flickr'])
+                ->route('connections.index', ['provider' => 'flickr'])
                 ->with('error', 'Connect a Flickr account before viewing contacts.');
         }
 

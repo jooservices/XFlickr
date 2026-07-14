@@ -9,5 +9,6 @@ use Modules\Operations\Http\Controllers\DashboardController;
 Route::middleware('auth')->group(function (): void {
     Route::redirect('/', '/dashboard');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/crawl/operations', [CrawlOperationsController::class, 'index'])->name('crawl.operations');
+    Route::get('/operations', [CrawlOperationsController::class, 'index'])->name('operations');
+    Route::redirect('/crawl/operations', '/operations', 301);
 });

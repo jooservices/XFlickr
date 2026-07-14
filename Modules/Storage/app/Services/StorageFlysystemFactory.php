@@ -20,7 +20,7 @@ use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Support\StorageR2Config;
 use RuntimeException;
 
-final class StorageFlysystemFactory
+class StorageFlysystemFactory
 {
     public function __construct(
         private readonly StorageGoogleTokenService $googleTokens,

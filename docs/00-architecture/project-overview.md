@@ -2,6 +2,8 @@
 
 Visual architecture (flows, queues, OAuth, data stores): [Architecture diagrams](architecture-diagrams.md).
 
+Domain modules (scope, purpose, features): [Modules catalog](modules.md).
+
 XFlickr is a self-hosted web application for managing Flickr accounts, crawling contacts and photo catalogs, downloading photos locally, and backing them up to cloud storage.
 
 ## Core purpose

@@ -1,0 +1,18 @@
+---
+description: Test data must use factories and Faker — no incidental hardcodes
+globs: **/tests/**/*.php,**/database/factories/**/*.php,**/Modules/*/database/factories/**/*.php
+alwaysApply: false
+---
+
+# XFlickr — test factories and Faker
+
+Canonical details: [`docs/04-development/testing.md`](../../docs/04-development/testing.md), skill [`testing-and-quality-gates`](../../ai/skills/testing-and-quality-gates/SKILL.md).
+
+Rules:
+
+- Every Eloquent model needs a factory (`HasFactory` + factory class)
+- Incidental attributes: `Model::factory()`, `fake()`, `Tests\Support\FlickrNsid::fake()` — not hardcoded NSIDs/emails
+- Assert from the created model (`$connection->connection_key`), never re-hardcode the same literal
+- Flickr accounts: `CreatesFlickrConnection` (already Faker-backed)
+- Crawler package models: `database/factories/Crawler/*`
+- Hardcode only when the literal is the scenario (config admin email, forbidden production password)

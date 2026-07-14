@@ -15,7 +15,6 @@
         "jooservices/laravel-events": "^1.4",
         "jooservices/laravel-logging": "^1.1",
         "jooservices/laravel-repository": "^1.3",
-        "jooservices/xflickr-crawler": "^1.3.0",
         "justus/flysystem-onedrive": "^2.0",
         "laravel/framework": "^12.0",
         "laravel/horizon": "^5.47",

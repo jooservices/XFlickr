@@ -151,8 +151,8 @@ jobs:
             echo \$percent;
           ")
           echo "Code coverage: ${COVERAGE}%"
-          if (( $(echo "$COVERAGE < 60" | bc -l) )); then
-            echo "::error::Code coverage ${COVERAGE}% is below minimum threshold of 60%"
+          if (( $(echo "$COVERAGE < 95" | bc -l) )); then
+            echo "::error::Code coverage ${COVERAGE}% is below minimum threshold of 95%"
             exit 1
           fi
 

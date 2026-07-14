@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Modules\Contacts\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
-use JOOservices\XFlickrCrawler\Models\Connection;
 use Modules\Contacts\Services\ContactFullPassPlannerService;
+use Modules\Crawler\Models\Connection;
 use Modules\Spider\Http\Requests\SpiderConnectionRequest;
 use RuntimeException;
 

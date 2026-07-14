@@ -16,18 +16,16 @@ final class CrawlOperationsServiceTest extends TestCase
     use SafeRefreshDatabase;
 
     #[Test]
-    public function page_props_include_accounts_and_spider_flag(): void
+    public function page_props_include_accounts(): void
     {
-        $this->createFlickrConnection([
-            'connection_key' => 'a@N01',
+        $connection = $this->createFlickrConnection([
             'username' => 'alpha',
         ]);
 
         $props = app(CrawlOperationsService::class)->pageProps();
 
-        $this->assertArrayHasKey('spiderEnabled', $props);
-        $this->assertIsBool($props['spiderEnabled']);
+        $this->assertArrayNotHasKey('spiderEnabled', $props);
         $this->assertCount(1, $props['accounts']);
-        $this->assertSame('a@N01', $props['accounts']->first()['nsid']);
+        $this->assertSame($connection->connection_key, $props['accounts']->first()['nsid']);
     }
 }

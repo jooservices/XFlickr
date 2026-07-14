@@ -7,6 +7,7 @@ namespace Tests\Feature\Events;
 use Illuminate\Support\Facades\Event;
 use Modules\Flickr\Events\FlickrAccountConnected;
 use Tests\Concerns\SafeRefreshDatabase;
+use Tests\Support\FlickrNsid;
 use Tests\TestCase;
 
 final class FlickrAccountConnectedEventTest extends TestCase
@@ -17,18 +18,20 @@ final class FlickrAccountConnectedEventTest extends TestCase
     {
         Event::fake([FlickrAccountConnected::class]);
 
-        $event = new FlickrAccountConnected('me@N01', 'main', 'demo-user');
+        $connectionKey = FlickrNsid::fake();
+        $username = fake()->userName();
+        $event = new FlickrAccountConnected($connectionKey, 'main', $username);
 
         event($event);
 
-        Event::assertDispatched(FlickrAccountConnected::class, function (FlickrAccountConnected $dispatched): bool {
-            return $dispatched->connectionKey === 'me@N01'
+        Event::assertDispatched(FlickrAccountConnected::class, function (FlickrAccountConnected $dispatched) use ($connectionKey, $username): bool {
+            return $dispatched->connectionKey === $connectionKey
                 && $dispatched->appProfile === 'main'
-                && $dispatched->username === 'demo-user'
+                && $dispatched->username === $username
                 && $dispatched->payload() === [
-                    'connection_key' => 'me@N01',
+                    'connection_key' => $connectionKey,
                     'app_profile' => 'main',
-                    'username' => 'demo-user',
+                    'username' => $username,
                 ];
         });
     }

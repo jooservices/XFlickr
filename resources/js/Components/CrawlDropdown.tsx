@@ -23,6 +23,7 @@ interface CrawlDropdownProps {
     exclude?: CrawlType[];
     includeContactsDiscovery?: boolean;
     showCrawlOptions?: boolean;
+    crawlPaused?: boolean;
     typeStates?: Partial<Record<CrawlType, CrawlTypeState>>;
     subjectLabel?: CrawlSubjectLabel;
     label?: string;
@@ -73,6 +74,7 @@ export default function CrawlDropdown({
     exclude = [],
     includeContactsDiscovery = false,
     showCrawlOptions = true,
+    crawlPaused = false,
     typeStates = {},
     subjectLabel,
     label = 'Crawl',
@@ -157,6 +159,10 @@ export default function CrawlDropdown({
     const close = () => setOpen(false);
 
     const selectCrawl = (types: CrawlType[]) => {
+        if (crawlPaused) {
+            return;
+        }
+
         const runnable = types.filter((type) => !typeStates[type]?.processing);
         if (runnable.length === 0) {
             return;
@@ -239,21 +245,26 @@ export default function CrawlDropdown({
             className="z-50 min-w-52 overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg"
         >
             {subjectLabel ? <CrawlActionMenuHeader subject={subjectLabel} /> : null}
+            {crawlPaused && showCrawlOptions ? (
+                <p className="border-b border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                    Global crawl pause is active — resume from the header to start crawls.
+                </p>
+            ) : null}
             <div className="py-1">
             {showCrawlOptions && includeContactsDiscovery && !exclude.includes('contacts') && (
                 <>
-                    {renderMenuItem(CONTACTS_DISCOVERY_CRAWL_OPTION, () => selectCrawl(['contacts']))}
+                    {renderMenuItem(CONTACTS_DISCOVERY_CRAWL_OPTION, () => selectCrawl(['contacts']), crawlPaused)}
                     <div className="my-1 border-t border-slate-100" />
                 </>
             )}
             {showCrawlOptions && allTypes.length > 0 && (
                 <button
                     type="button"
-                    disabled={allProcessing}
+                    disabled={crawlPaused || allProcessing}
                     onClick={() => selectCrawl(availableTypes)}
                     className={cn(
                         'flex w-full gap-2 px-3 py-2 text-left',
-                        allProcessing
+                        crawlPaused || allProcessing
                             ? 'cursor-not-allowed opacity-60'
                             : allCrawled && allFetchedEmpty
                               ? 'text-amber-800 hover:bg-amber-50'
@@ -279,7 +290,7 @@ export default function CrawlDropdown({
                     </span>
                 </button>
             )}
-            {showCrawlOptions && options.map((option) => renderMenuItem(option, () => selectCrawl([option.value])))}
+            {showCrawlOptions && options.map((option) => renderMenuItem(option, () => selectCrawl([option.value]), crawlPaused))}
 
             {onDownload && (
                 <>

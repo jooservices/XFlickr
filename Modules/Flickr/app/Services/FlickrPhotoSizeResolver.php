@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Modules\Flickr\Services;
 
 use App\Repositories\Crawler\PhotoQueryRepository;
-use JOOservices\XFlickrCrawler\Models\Connection;
-use JOOservices\XFlickrCrawler\Models\Photo;
-use JOOservices\XFlickrCrawler\Services\FlickrClientFactory;
+use Modules\Crawler\Models\Connection;
+use Modules\Crawler\Models\Photo;
+use Modules\Crawler\Services\FlickrClientFactory;
 use Modules\Flickr\Support\FlickrPhotoUrlHelper;
 use Modules\Transfer\Dto\DownloadCandidateDto;
 use RuntimeException;
@@ -62,8 +62,12 @@ final class FlickrPhotoSizeResolver
 
     private function fetchAndPersistSizes(Photo $photo, Connection $connection): ?DownloadCandidateDto
     {
+        // Connection clients are force-authenticated by FlickrClientFactory.
         $photosApi = $this->clientFactory->forConnection($connection->connection_key)->photos();
-        $result = FlickrPhotoUrlHelper::fetchSizesFromApi($photosApi, $photo->flickr_photo_id);
+        $result = FlickrPhotoUrlHelper::fetchSizesFromApi(
+            static fn (string $photoId): object => $photosApi->getSizes($photoId),
+            $photo->flickr_photo_id,
+        );
 
         if (! $result['ok']) {
             throw new RuntimeException(

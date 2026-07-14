@@ -2,6 +2,16 @@
 
 Record of significant documentation and AI governance changes (not package releases).
 
+## 2026-07-13 (Flickr client factory backlog)
+
+- Added [flickr-client-factory-layering.md](flickr-client-factory-layering.md) and backlog **N-16**: SDK → Crawler ClientFactory → peers; Flickr module stays account facade (not factory owner).
+- Linked from `package-boundaries.md` Planned section and `BACKLOG.md`.
+
+## 2026-07-12 (modules catalog)
+
+- Added `docs/00-architecture/modules.md` — per-module scope, purpose, and features for all nine Laravel modules plus host `app/` leftovers.
+- Linked from `docs/README.md`, `AGENTS.md`, `project-overview`, `package-boundaries`, `repository-structure`, `ai/README.md`, and expanded `class-purpose-and-module-map` / `documentation-sync` skills.
+
 ## 2026-07-11 (modules migration complete)
 
 - Architecture docs (`application-standards`, `package-boundaries`, `repository-structure`) and `AGENTS.md` updated for nine `Modules/*` domains; thin `app/` host only.

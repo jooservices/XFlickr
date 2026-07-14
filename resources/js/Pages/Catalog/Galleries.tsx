@@ -40,10 +40,8 @@ export default function CatalogGalleries({ account }: Props) {
                 <PageShellControlBar filters={<CatalogOwnerNsidFilter {...filterFormProps} />} />
 
                 <PageShellCanvas className="space-y-6" variant="plain">
-                {loading ? (
-                    <p className="text-sm text-slate-500">Loading…</p>
-                ) : (
                     <DataTable
+                        busy={loading}
                         columns={[
                             {
                                 key: 'thumbnail',
@@ -120,7 +118,6 @@ export default function CatalogGalleries({ account }: Props) {
                         meta={meta ?? undefined}
                         onPageChange={setPage}
                     />
-                )}
                 </PageShellCanvas>
             </PageShell>
         </AppLayout>

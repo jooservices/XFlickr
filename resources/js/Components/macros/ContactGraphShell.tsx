@@ -6,6 +6,7 @@ import ContactAnnotationActions from '@/Components/Contacts/ContactAnnotationAct
 import ContactDetailPanel from '@/Components/Contacts/ContactDetailPanel';
 import ContactGraphDetailShell from '@/Components/Contacts/ContactGraphDetailShell';
 import ContactGraphHoverPopup from '@/Components/Contacts/ContactGraphHoverPopup';
+import { PageLoading } from '@/Components/LoadingIndicator';
 import ContactGraphToolbar from '@/Components/macros/ContactGraphToolbar';
 import { drawContactGraph, useContactGraphCanvas } from '@/hooks/useContactGraphCanvas';
 import { useElementSize } from '@/hooks/useElementSize';
@@ -122,16 +123,17 @@ export default function ContactGraphShell({
         initialTransform: fitTransform,
         onTransformChange: requestRedraw,
     });
+    const { resetTransform } = panZoom;
 
     useEffect(() => {
         if (loading || error !== null || initialFitAppliedRef.current) {
             return;
         }
 
-        panZoom.resetTransform(fitTransform);
+        resetTransform(fitTransform);
         initialFitAppliedRef.current = true;
         requestRedraw();
-    }, [loading, error, fitTransform, panZoom.resetTransform, requestRedraw]);
+    }, [loading, error, fitTransform, resetTransform, requestRedraw]);
 
     const highlightedNsids = useMemo(
         () => buildHighlightedNsids(edges, hovered?.nsid ?? selectedNsid),
@@ -189,6 +191,8 @@ export default function ContactGraphShell({
     ]);
 
     useEffect(() => {
+        const shellElement = shellRef.current;
+
         function onKeyDown(event: KeyboardEvent) {
             if (event.key !== 'Escape') {
                 return;
@@ -210,7 +214,7 @@ export default function ContactGraphShell({
         }
 
         function onFullscreenChange() {
-            setIsBrowserFullscreen(document.fullscreenElement === shellRef.current);
+            setIsBrowserFullscreen(document.fullscreenElement === shellElement);
         }
 
         const previousOverflow = document.body.style.overflow;
@@ -223,8 +227,7 @@ export default function ContactGraphShell({
             document.removeEventListener('keydown', onKeyDown);
             document.removeEventListener('fullscreenchange', onFullscreenChange);
 
-            const activeShell = shellRef.current;
-            if (document.fullscreenElement === activeShell) {
+            if (document.fullscreenElement === shellElement) {
                 void document.exitFullscreen();
             }
         };
@@ -494,10 +497,7 @@ export default function ContactGraphShell({
             <div className="flex min-h-0 flex-1 overflow-hidden">
                 <div ref={canvasContainer.ref} className="relative min-w-0 flex-1 overflow-hidden">
                 {loading ? (
-                    <div className="flex h-full items-center justify-center gap-2 text-sm text-slate-600">
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        Laying out graph…
-                    </div>
+                    <PageLoading label="Laying out graph…" className="h-full min-h-0" />
                 ) : error ? (
                     <div className="flex h-full flex-col items-center justify-center gap-3">
                         <p className="text-sm text-rose-700">{error}</p>

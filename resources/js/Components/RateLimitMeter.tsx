@@ -8,7 +8,7 @@ interface RateLimitMeterProps {
     className?: string;
     compact?: boolean;
     label?: string;
-    variant?: 'default' | 'navbar';
+    variant?: 'default' | 'navbar' | 'footer';
 }
 
 export default function RateLimitMeter({
@@ -34,18 +34,57 @@ export default function RateLimitMeter({
     const isFull = percent >= 100;
     const inCooldown = cooldownSeconds > 0;
     const isNavbar = variant === 'navbar';
-    const showWindowReset = (!compact || isNavbar) && rateLimit.window_reset_at && windowSeconds > 0;
+    const isFooter = variant === 'footer';
+    const showWindowReset = !isFooter && (!compact || isNavbar) && rateLimit.window_reset_at && windowSeconds > 0;
+    const showCooldownDetail = !isFooter && inCooldown;
+    const showGlobalPause = !isFooter && rateLimit.global_pause;
+
+    const barTone = cn(
+        '[&>div>div]:bg-blue-600',
+        isWarning && '[&>div>div]:bg-amber-500',
+        (isFull || inCooldown) && '[&>div>div]:bg-red-500',
+    );
+
+    if (isFooter) {
+        return (
+            <div className={cn('flex min-w-0 items-center gap-2', className)} title={label}>
+                <span className="shrink-0 text-xs font-medium text-slate-700">{label}</span>
+                <ProgressBar
+                    value={used}
+                    max={max}
+                    showLabel={false}
+                    className={cn('w-24 shrink-0 [&>div]:h-1.5', barTone)}
+                />
+                <span
+                    className={cn(
+                        'shrink-0 tabular-nums text-xs text-slate-500',
+                        isFull && 'text-amber-700',
+                        inCooldown && 'text-red-700',
+                    )}
+                >
+                    {used}/{max}
+                    {inCooldown ? ` · cd ${formatCountdown(cooldownSeconds)}` : ''}
+                </span>
+            </div>
+        );
+    }
 
     return (
         <div
             className={cn(
-                isNavbar ? 'w-[240px] space-y-1' : 'space-y-1.5',
+                isNavbar ? 'w-[220px] space-y-1' : 'space-y-1.5',
                 className,
             )}
         >
             <div className="flex items-center justify-between gap-2 text-xs">
                 <span className="font-medium text-slate-700">{label}</span>
-                <span className={cn('text-slate-500', isFull && 'text-amber-700', inCooldown && 'text-red-700')}>
+                <span
+                    className={cn(
+                        'tabular-nums text-slate-500',
+                        isFull && 'text-amber-700',
+                        inCooldown && 'text-red-700',
+                    )}
+                >
                     {used} / {max}
                 </span>
             </div>
@@ -54,12 +93,7 @@ export default function RateLimitMeter({
                 value={used}
                 max={max}
                 showLabel={false}
-                className={cn(
-                    '[&>div>div]:bg-blue-600',
-                    isWarning && '[&>div>div]:bg-amber-500',
-                    (isFull || inCooldown) && '[&>div>div]:bg-red-500',
-                    isNavbar && '[&>div]:h-1.5',
-                )}
+                className={cn(barTone, isNavbar && '[&>div]:h-1.5')}
             />
 
             {showWindowReset ? (
@@ -68,13 +102,13 @@ export default function RateLimitMeter({
                 </p>
             ) : null}
 
-            {inCooldown ? (
+            {showCooldownDetail ? (
                 <p className="text-xs font-medium text-red-700">
                     API cooldown — {formatCountdown(cooldownSeconds)} remaining
                 </p>
             ) : null}
 
-            {rateLimit.global_pause ? (
+            {showGlobalPause ? (
                 <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
                     Crawl paused (operator)
                 </span>

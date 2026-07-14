@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
-use JOOservices\XFlickrCrawler\Facades\FlickrService;
-use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
+use Modules\Crawler\Facades\FlickrService;
+use Modules\Crawler\Support\XFlickrConfig;
 use Modules\Flickr\Services\FlickrTokenHealthService;
 use Throwable;
 

@@ -4,11 +4,21 @@ declare(strict_types=1);
 
 namespace Modules\Storage\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Modules\Storage\Database\Factories\StorageAccountFactory;
 
 final class StorageAccount extends Model
 {
+    /** @use HasFactory<StorageAccountFactory> */
+    use HasFactory;
+
+    protected static function newFactory(): StorageAccountFactory
+    {
+        return StorageAccountFactory::new();
+    }
+
     protected $fillable = [
         'provider',
         'label',

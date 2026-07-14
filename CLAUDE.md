@@ -14,6 +14,7 @@ Claude Code entry point. **All rules live in [`AGENTS.md`](AGENTS.md)** — read
 | Resource | Path |
 |---|---|
 | Agent rules | [`AGENTS.md`](AGENTS.md) |
+| Modules catalog | [`docs/00-architecture/modules.md`](docs/00-architecture/modules.md) |
 | Skills map | [`ai/README.md`](ai/README.md) |
 | Documentation | [`docs/README.md`](docs/README.md) |
 | Docker safety | [`docs/05-maintenance/docker-safety.md`](docs/05-maintenance/docker-safety.md) |

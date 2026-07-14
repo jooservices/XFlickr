@@ -30,7 +30,7 @@ Use `ai/skills/` only — do not duplicate skill bodies elsewhere.
 
 - [`repo-quality-foundation`](skills/repo-quality-foundation/SKILL.md) — baseline quality and scope discipline
 - [`architecture-and-design-principles`](skills/architecture-and-design-principles/SKILL.md) — SOLID, thin controllers, YAGNI
-- [`class-purpose-and-module-map`](skills/class-purpose-and-module-map/SKILL.md) — module ownership map
+- [`class-purpose-and-module-map`](skills/class-purpose-and-module-map/SKILL.md) — module ownership map ([full catalog](../docs/00-architecture/modules.md))
 - [`code-style-and-conventions`](skills/code-style-and-conventions/SKILL.md) — Pint, TypeScript, naming
 - [`review-and-risk-assessment`](skills/review-and-risk-assessment/SKILL.md) — P0/P1/P2 risk triage
 - [`documentation-sync`](skills/documentation-sync/SKILL.md) — keep docs aligned with source
@@ -56,7 +56,7 @@ Use `ai/skills/` only — do not duplicate skill bodies elsewhere.
 
 ### Operations
 
-- [`testing-and-quality-gates`](skills/testing-and-quality-gates/SKILL.md) — `bash scripts/test.sh gate`
+- [`testing-and-quality-gates`](skills/testing-and-quality-gates/SKILL.md) — `bash scripts/test.sh gate`; factories + Faker test data
 - [`release-and-deploy-flow`](skills/release-and-deploy-flow/SKILL.md) — dev reload, CHANGELOG
 
 ## End-to-end workflow (non-trivial features)

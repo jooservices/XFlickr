@@ -6,15 +6,16 @@ namespace Modules\Contacts\Services;
 
 use App\Repositories\Crawler\ContactQueryRepository;
 use Illuminate\Support\Facades\DB;
-use JOOservices\XFlickrCrawler\Enums\CrawlType;
-use JOOservices\XFlickrCrawler\Events\ContactsCrawlCompleted;
-use JOOservices\XFlickrCrawler\Models\Connection;
-use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
 use Modules\Contacts\Models\ContactFullPassFrontierItem;
 use Modules\Contacts\Models\ContactFullPassRun;
 use Modules\Contacts\Repositories\ContactFullPassFrontierRepository;
 use Modules\Contacts\Repositories\ContactFullPassRunRepository;
 use Modules\Contacts\Support\FullPassRuntimeConfig;
+use Modules\Crawler\Enums\CrawlType;
+use Modules\Crawler\Events\ContactsCrawlCompleted;
+use Modules\Crawler\Models\Connection;
+use Modules\Crawler\Support\XFlickrConfig;
+use Modules\Flickr\Exceptions\GlobalCrawlPauseException;
 use Modules\Flickr\Services\FlickrCrawlService;
 use Modules\Spider\Enums\SpiderFrontierStatus;
 use Modules\Spider\Enums\SpiderRunStatus;
@@ -55,6 +56,10 @@ final class ContactFullPassPlannerService
 
     public function start(Connection $connection): ContactFullPassRun
     {
+        if (XFlickrConfig::globalPause()) {
+            throw GlobalCrawlPauseException::active();
+        }
+
         if ($this->spiderRuns->findActiveForConnection($connection->connection_key) !== null) {
             throw new RuntimeException('A spider run is already active for this account. Stop it before starting a full contact pass.');
         }
@@ -183,7 +188,7 @@ final class ContactFullPassPlannerService
 
     public function expandRun(ContactFullPassRun $run): int
     {
-        if ($run->status !== SpiderRunStatus::Running) {
+        if ($run->status !== SpiderRunStatus::Running || XFlickrConfig::globalPause()) {
             return 0;
         }
 

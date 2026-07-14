@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Flickr\Support;
 
-use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Crawler\Models\Connection;
 
 final class ConnectionPresenter
 {

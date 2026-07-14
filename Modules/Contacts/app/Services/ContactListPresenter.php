@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\Contacts\Services;
 
-use JOOservices\XFlickrCrawler\Models\Connection;
-use JOOservices\XFlickrCrawler\Models\Contact;
+use Modules\Crawler\Models\Connection;
+use Modules\Crawler\Models\Contact;
 
 final class ContactListPresenter
 {

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import ApiUsageChart from '@/Components/ApiUsageChart';
 import Card from '@/Components/Card';
+import DatabaseUsagePanel from '@/Components/DatabaseUsagePanel';
 import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/layout/page-shell';
 import RateLimitMeter from '@/Components/RateLimitMeter';
 import MetricCard from '@/Components/ui/MetricCard';
@@ -23,6 +24,29 @@ function accountLabel(account: FlickrAccount): string {
 function formatNumber(value: number): string {
     return new Intl.NumberFormat().format(value);
 }
+
+const emptyDatabases: DashboardSnapshot['databases'] = {
+    mysql: {
+        status: 'error',
+        driver: 'unknown',
+        database: null,
+        size_bytes: null,
+        connections_current: null,
+        connections_max: null,
+        tables: [],
+        error: null,
+    },
+    mongodb: {
+        status: 'error',
+        driver: 'mongodb',
+        database: null,
+        size_bytes: null,
+        collections: null,
+        objects: null,
+        error: null,
+    },
+    history: [],
+};
 
 export default function Dashboard() {
     const { snapshot: initialSnapshot } = usePage<Props>().props;
@@ -52,7 +76,10 @@ export default function Dashboard() {
 
     const rows = snapshot.accounts;
     const global = snapshot.global;
+    const databases = snapshot.databases ?? emptyDatabases;
     const anyCooldown = snapshot.alerts.any_cooldown;
+    const databaseUnreachable = Boolean(snapshot.alerts.database_unreachable);
+    const mysqlConnectionsHigh = Boolean(snapshot.alerts.mysql_connections_high);
     const accountList = useMemo(() => rows.map((row) => row.account), [rows]);
 
     const [selectedNsid, setSelectedNsid] = useState<string | null>(() =>
@@ -93,8 +120,12 @@ export default function Dashboard() {
     }, [accountList.length, selectedAccountRow]);
 
     const hasAlerts = useMemo(
-        () => anyCooldown || global.failed_transfers_24h > 0,
-        [anyCooldown, global.failed_transfers_24h],
+        () =>
+            anyCooldown ||
+            global.failed_transfers_24h > 0 ||
+            databaseUnreachable ||
+            mysqlConnectionsHigh,
+        [anyCooldown, global.failed_transfers_24h, databaseUnreachable, mysqlConnectionsHigh],
     );
 
     return (
@@ -105,7 +136,7 @@ export default function Dashboard() {
                 <PageShellIdentity
                     breadcrumbs={[{ label: 'Dashboard' }]}
                     title="Dashboard"
-                    subtitle="Monitor crawl progress, catalog growth, and transfer health."
+                    subtitle="Monitor crawl progress, catalog growth, transfer health, and database usage."
                 />
 
                 <PageShellCanvas className="space-y-6" variant="plain">
@@ -154,6 +185,8 @@ export default function Dashboard() {
                     </div>
                 </div>
 
+                <DatabaseUsagePanel databases={databases} />
+
                 <ApiUsageChart accounts={rows.map((row) => row.account)} />
 
                 {hasAlerts ? (
@@ -167,6 +200,16 @@ export default function Dashboard() {
                             {global.failed_transfers_24h > 0 ? (
                                 <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
                                     {formatNumber(global.failed_transfers_24h)} transfer item(s) failed in the last 24 hours. Check Operations.
+                                </div>
+                            ) : null}
+                            {databaseUnreachable ? (
+                                <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-900">
+                                    MySQL or MongoDB is unreachable. Check database connectivity.
+                                </div>
+                            ) : null}
+                            {mysqlConnectionsHigh ? (
+                                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
+                                    MySQL connections are at or above 80% of max_connections.
                                 </div>
                             ) : null}
                         </div>
@@ -202,7 +245,7 @@ export default function Dashboard() {
                                             </Link>
                                         }
                                         footer={
-                                            <Link href="/crawl/operations" className="text-sm font-medium text-cyan-700 hover:underline">
+                                            <Link href="/operations" className="text-sm font-medium text-cyan-700 hover:underline">
                                                 View operations
                                             </Link>
                                         }

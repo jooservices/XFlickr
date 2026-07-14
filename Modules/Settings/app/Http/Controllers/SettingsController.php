@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Modules\Settings\Http\Controllers;
 
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
-use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
-use Modules\Flickr\Services\FlickrAppProfileService;
 use Modules\Flickr\Services\FlickrOAuthService;
 use Modules\Settings\Http\Requests\ShowSettingsRequest;
 use Modules\Settings\Services\RuntimeConfigAdminService;
@@ -18,32 +17,26 @@ final class SettingsController
     public function index(
         ShowSettingsRequest $request,
         FlickrOAuthService $flickrOAuth,
-        FlickrAppProfileService $appProfiles,
         RuntimeConfigAdminService $runtimeConfig,
         StorageSettingsService $storageSettings,
-    ): Response {
+    ): Response|RedirectResponse {
         $tab = $request->tab();
+
+        if ($tab === 'flickr') {
+            return redirect()->route('connections.index', ['provider' => 'flickr']);
+        }
+
+        if ($tab === 'storage') {
+            return redirect()->route('connections.index', ['provider' => 'storage']);
+        }
 
         $configPayload = $runtimeConfig->indexPayload();
 
         return Inertia::render('Settings/Index', [
-            'tab' => $tab,
+            'tab' => 'general',
             'runtime_config' => $configPayload,
-            'flickr' => [
-                'status' => $flickrOAuth->status(),
-                'accounts' => $flickrOAuth->listAccounts()->values(),
-                'apps' => $appProfiles->listPublic()->values(),
-                'default_callback_url' => $appProfiles->defaultCallbackUrl(),
-                'default_app_profile' => 'main',
-                'settings' => [
-                    'default_app_profile' => XFlickrConfig::defaultAppProfile(),
-                    'global_pause' => XFlickrConfig::globalPause(),
-                ],
-            ],
-            'storage_accounts' => $storageSettings->accounts(),
-            'storage_apps' => $storageSettings->apps(),
-            'storage_redirects' => $storageSettings->redirects(),
-            'storage_drivers' => $storageSettings->drivers(),
+            'has_flickr_accounts' => $flickrOAuth->listAccounts()->isNotEmpty(),
+            'has_storage_accounts' => $storageSettings->accounts()->isNotEmpty(),
             'runtime_config_available' => app()->bound('config-store'),
         ]);
     }

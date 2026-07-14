@@ -84,11 +84,11 @@ The script builds containers, installs dependencies, runs migrations, starts Vit
 ### First-time setup
 
 1. Sign in at **http://localhost:8082/login** with `admin@local` and the admin password. On first Docker start, a random password is generated and printed once in the app container logs (or set `ADMIN_PASSWORD` in `.env` before starting). Change it anytime: `php artisan xflickr:auth:reset-password admin@local`.
-2. Open **http://localhost:8082/settings**
-3. **Flickr tab** — enter your [Flickr API](https://www.flickr.com/services/apps/create/) key and secret. Set the callback URL to `http://localhost:8082/flickr/callback` (or your `APP_URL` + `/flickr/callback`).
-4. Click **Connect Flickr** and authorize your account.
-5. **Storage tab** — add Google / Microsoft OAuth app credentials (or Cloudflare R2 keys), then connect a storage account.
-6. Go to **Flickr** → pick an account → **Crawl** to index contacts and catalogs.
+2. Open **http://localhost:8082/connections**
+3. **Flickr → Apps** — enter your [Flickr API](https://www.flickr.com/services/apps/create/) key and secret. Set the callback URL to `http://localhost:8082/flickr/callback` (or your `APP_URL` + `/flickr/callback`).
+4. Click **Connect** and authorize your account.
+5. **Storage** — add Google / Microsoft OAuth app credentials (or Cloudflare R2 keys), then connect a storage account.
+6. Go to **Connections** → **Flickr** → pick an account → **Crawl** to index contacts and catalogs.
 7. Use **Download** and **Upload** when you are ready to transfer files.
 
 ---
@@ -116,7 +116,7 @@ php artisan horizon
 php artisan schedule:work   # or cron: * * * * * php artisan schedule:run
 ```
 
-Configure Flickr app credentials in **Settings** before connecting accounts.
+Configure Flickr and storage credentials under **Connections** before connecting accounts.
 
 ---
 
@@ -130,9 +130,9 @@ Configure Flickr app credentials in **Settings** before connecting accounts.
 | Photosets | `/photosets` | Catalog browser — photosets |
 | Galleries | `/galleries` | Catalog browser — galleries |
 | Favorites | `/favorites` | Catalog browser — favorites |
-| Flickr | `/flickr/accounts` | Connected accounts — crawl, download, upload |
-| Operations | `/crawl/operations` | Live crawl runs and transfer batches |
-| Settings | `/settings` | Credentials, connections, runtime options |
+| Connections | `/connections` | Flickr + storage accounts and API apps |
+| Operations | `/operations` | Live crawl runs and transfer batches |
+| Settings | `/settings` | Runtime options |
 | Google Photos | `/storages/google-photos` | Browse uploaded Google Photos |
 | Google Drive | `/storages/google-drive` | Browse uploaded Google Drive files |
 | OneDrive | `/storages/onedrive` | Browse uploaded OneDrive files |

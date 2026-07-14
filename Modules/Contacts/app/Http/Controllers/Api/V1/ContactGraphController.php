@@ -6,7 +6,6 @@ namespace Modules\Contacts\Http\Controllers\Api\V1;
 
 use Illuminate\Http\JsonResponse;
 use JOOservices\LaravelController\Http\Controllers\BaseApiController;
-use JOOservices\XFlickrCrawler\Models\Connection;
 use Modules\Contacts\Http\Requests\Api\ContactGraphDeltaRequest;
 use Modules\Contacts\Http\Requests\Api\ContactGraphExpandRequest;
 use Modules\Contacts\Http\Requests\Api\ContactGraphSnapshotRequest;
@@ -16,6 +15,9 @@ use Modules\Contacts\Http\Resources\ContactGraphSnapshotResource;
 use Modules\Contacts\Services\ContactGraphExpandService;
 use Modules\Contacts\Services\ContactGraphQueryService;
 use Modules\Contacts\Support\ContactGraphRuntimeConfig;
+use Modules\Crawler\Models\Connection;
+use Modules\Flickr\Exceptions\FlickrTokenInvalidException;
+use Modules\Flickr\Exceptions\GlobalCrawlPauseException;
 
 final class ContactGraphController extends BaseApiController
 {
@@ -49,8 +51,12 @@ final class ContactGraphController extends BaseApiController
         Connection $connection,
         ContactGraphExpandService $expand,
     ): JsonResponse {
-        return $this->success(ContactGraphExpandResource::make(
-            $expand->expand($connection, $request->contactNsid()),
-        ));
+        try {
+            return $this->success(ContactGraphExpandResource::make(
+                $expand->expand($connection, $request->contactNsid()),
+            ));
+        } catch (FlickrTokenInvalidException|GlobalCrawlPauseException $exception) {
+            return $this->unprocessable($exception->getMessage());
+        }
     }
 }

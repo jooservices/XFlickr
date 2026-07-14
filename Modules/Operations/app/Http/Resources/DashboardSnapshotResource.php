@@ -24,6 +24,11 @@ final class DashboardSnapshotResource extends JsonResource
             'generated_at' => $snapshot['generated_at'] ?? null,
             'global' => $snapshot['global'] ?? [],
             'accounts' => $snapshot['accounts'] ?? [],
+            'databases' => $snapshot['databases'] ?? [
+                'mysql' => [],
+                'mongodb' => [],
+                'history' => [],
+            ],
             'alerts' => $snapshot['alerts'] ?? [],
         ];
     }

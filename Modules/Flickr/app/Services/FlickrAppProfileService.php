@@ -9,7 +9,7 @@ use App\Support\MaskedCredentialHint;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
-use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
+use Modules\Crawler\Support\XFlickrConfig;
 
 final class FlickrAppProfileService
 {

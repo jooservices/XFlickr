@@ -1,30 +1,41 @@
-import { Head } from '@inertiajs/react';
-import { useCallback, useState } from 'react';
+import { Head, router } from '@inertiajs/react';
+import { useCallback, useMemo, useState } from 'react';
 
+import type { BulkAction } from '@/Components/BulkActionBar';
+import BusyRegion from '@/Components/BusyRegion';
 import Button from '@/Components/Button';
 import CatalogOwnerNsidFilter from '@/Components/CatalogOwnerNsidFilter';
 import ContactNsidLinks from '@/Components/ContactNsidLinks';
 import CrawlActionBar from '@/Components/CrawlActionBar';
+import { bulkDownloadActionIcon, bulkUploadActionIcon } from '@/Components/CrawlTypeMenu';
 import DataTable from '@/Components/DataTable';
 import FlickrPhotoIdLinks from '@/Components/FlickrPhotoIdLinks';
 import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
+import PhotoDetailModal from '@/Components/PhotoDetailModal';
 import PhotoDownloadedCell from '@/Components/PhotoDownloadedCell';
 import PhotoGrid from '@/Components/PhotoGrid';
 import PhotoMembershipLinks from '@/Components/PhotoMembershipLinks';
 import Thumbnail from '@/Components/Thumbnail';
 import { useCatalogOwnerNsidTable } from '@/hooks/useCatalogOwnerNsidTable';
+import { useTableSelection } from '@/hooks/useTableSelection';
 import AppLayout from '@/Layouts/AppLayout';
 import { catalogPageCrumbs } from '@/lib/breadcrumbs';
 import { crawlSubjectForPhoto } from '@/lib/crawlSubject';
-import { flickrPhotoThumbnailUrl } from '@/lib/flickrPhoto';
+import { flickrAccountPath } from '@/lib/flickrAccount';
+import { flickrPhotoGridUrl } from '@/lib/flickrPhoto';
 import type { FlickrAccount, PageProps, Photo } from '@/types';
 
 interface Props extends PageProps {
     account: FlickrAccount | null;
 }
 
+function isPhotoSelectable(photo: Photo): boolean {
+    return (photo.download_status ?? 'none') !== 'downloading';
+}
+
 export default function CatalogPhotos({ account }: Props) {
     const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+    const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
     const {
         data: photos,
         meta,
@@ -38,6 +49,7 @@ export default function CatalogPhotos({ account }: Props) {
         sortDirection,
         handleSortChange,
         filterFormProps,
+        appliedOwnerNsid,
     } = useCatalogOwnerNsidTable<Photo>('owner_nsid', {
         fetchPath: '/api/v1/flickr/catalog/photos',
         initialSort: 'id',
@@ -45,6 +57,80 @@ export default function CatalogPhotos({ account }: Props) {
         perPage: viewMode === 'grid' ? 48 : 25,
         paginationMode: viewMode === 'grid' ? 'append' : 'replace',
     });
+
+    const liveSelectedPhoto = useMemo(() => {
+        if (selectedPhoto === null) {
+            return null;
+        }
+
+        return photos.find((photo) => photo.id === selectedPhoto.id) ?? selectedPhoto;
+    }, [photos, selectedPhoto]);
+
+    const ownerFilter = appliedOwnerNsid.trim();
+    const selectionClearKey = `${viewMode}|${sortKey}|${sortDirection}|${ownerFilter}`;
+
+    const selection = useTableSelection({
+        rowKey: (photo) => photo.flickr_photo_id,
+        rows: photos,
+        isRowSelectable: isPhotoSelectable,
+        clearWhen: selectionClearKey,
+        matchingTotal: meta?.total ?? null,
+        allowSelectMatching: Boolean(account?.public_id) && ownerFilter !== '',
+    });
+
+    const postBulk = useCallback(
+        (
+            url: string,
+            data: {
+                flickr_photo_ids?: string[];
+                select_all?: boolean;
+                owner_nsid?: string;
+            },
+        ) => {
+            router.post(url, data, {
+                preserveScroll: true,
+                onSuccess: () => selection.clear(),
+            });
+        },
+        [selection],
+    );
+
+    const bulkActions = useMemo<BulkAction<Photo>[]>(() => {
+        if (!account?.public_id) {
+            return [];
+        }
+
+        const accountPublicId = account.public_id;
+
+        return [
+            {
+                id: 'download',
+                label: 'Download',
+                icon: bulkDownloadActionIcon(),
+                onAction: ({ selectedKeys, isMatching }) => {
+                    postBulk(
+                        flickrAccountPath(accountPublicId, '/download'),
+                        isMatching
+                            ? { select_all: true, owner_nsid: ownerFilter }
+                            : { flickr_photo_ids: selectedKeys },
+                    );
+                },
+            },
+            {
+                id: 'upload',
+                label: 'Upload',
+                icon: bulkUploadActionIcon(),
+                onAction: ({ selectedKeys, isMatching }) => {
+                    postBulk(
+                        flickrAccountPath(accountPublicId, '/upload'),
+                        isMatching
+                            ? { select_all: true, owner_nsid: ownerFilter }
+                            : { flickr_photo_ids: selectedKeys },
+                    );
+                },
+            },
+        ];
+    }, [account?.public_id, ownerFilter, postBulk]);
 
     const switchViewMode = useCallback(
         (mode: 'table' | 'grid') => {
@@ -57,8 +143,6 @@ export default function CatalogPhotos({ account }: Props) {
         },
         [reset, viewMode],
     );
-
-    const showInitialLoading = loading && photos.length === 0;
 
     return (
         <AppLayout>
@@ -94,24 +178,31 @@ export default function CatalogPhotos({ account }: Props) {
                 />
 
                 <PageShellCanvas className="space-y-6" variant="plain">
-                {showInitialLoading ? (
-                    <p className="text-sm text-slate-500">Loading…</p>
-                ) : viewMode === 'grid' ? (
-                    <PhotoGrid
-                        photos={photos}
-                        accountPublicId={account?.public_id}
-                        hasMore={hasMore}
-                        loadingMore={loadingMore}
-                        onLoadMore={loadMore}
-                    />
+                {viewMode === 'grid' ? (
+                    <BusyRegion busy={loading} empty={photos.length === 0}>
+                        <PhotoGrid
+                            photos={photos}
+                            accountPublicId={account?.public_id}
+                            hasMore={hasMore}
+                            loadingMore={loadingMore}
+                            onLoadMore={loadMore}
+                            onPhotoClick={setSelectedPhoto}
+                        />
+                    </BusyRegion>
                 ) : (
                     <DataTable
+                        busy={loading}
                         columns={[
                             {
                                 key: 'thumbnail',
                                 label: '',
                                 render: (photo) => (
-                                    <Thumbnail url={flickrPhotoThumbnailUrl(photo)} alt={photo.title || 'Photo'} />
+                                    <Thumbnail
+                                        url={flickrPhotoGridUrl(photo)}
+                                        alt={photo.title || 'Photo'}
+                                        size="md"
+                                        onClick={() => setSelectedPhoto(photo)}
+                                    />
                                 ),
                             },
                             {
@@ -174,11 +265,15 @@ export default function CatalogPhotos({ account }: Props) {
                             },
                         ]}
                         data={photos}
-                        rowKey={(photo) => String(photo.id)}
+                        rowKey={(photo) => photo.flickr_photo_id}
                         sortKey={sortKey}
                         sortDirection={sortDirection}
                         onSortChange={handleSortChange}
                         emptyMessage="No photos found."
+                        selection={account?.public_id ? selection.tableSelection : undefined}
+                        bulkActions={account?.public_id ? bulkActions : undefined}
+                        onBulkClear={account?.public_id ? selection.clear : undefined}
+                        matchingLabel="photos"
                         actionsColumn={
                             account?.public_id
                                 ? (photo) => (
@@ -200,6 +295,12 @@ export default function CatalogPhotos({ account }: Props) {
                 )}
                 </PageShellCanvas>
             </PageShell>
+
+            <PhotoDetailModal
+                photo={liveSelectedPhoto}
+                accountPublicId={account?.public_id}
+                onClose={() => setSelectedPhoto(null)}
+            />
         </AppLayout>
     );
 }

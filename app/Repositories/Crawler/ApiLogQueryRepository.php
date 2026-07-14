@@ -8,7 +8,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use JOOservices\XFlickrCrawler\Models\ApiLog;
+use Modules\Crawler\Models\ApiLog;
 
 final class ApiLogQueryRepository
 {

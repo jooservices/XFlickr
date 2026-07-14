@@ -515,7 +515,7 @@ declare(strict_types=1);
 namespace App\Observers;
 
 use App\Models\FlickrAccount;
-use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Crawler\Models\Connection;
 
 final class FlickrAccountObserver
 {

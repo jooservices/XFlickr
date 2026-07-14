@@ -6,7 +6,7 @@ namespace Modules\Transfer\Services;
 
 use App\Repositories\Crawler\PhotoQueryRepository;
 use Illuminate\Validation\ValidationException;
-use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Crawler\Models\Connection;
 use Modules\Transfer\Enums\TransferItemStatus;
 use Modules\Transfer\Enums\TransferType;
 use Modules\Transfer\Jobs\DownloadPhotoJob;

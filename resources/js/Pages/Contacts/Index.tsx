@@ -119,13 +119,15 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
         navigateWithFilters({ search: '', page: 1 });
     }, [navigateWithFilters]);
 
-    const selectionClearKey = `${filters.search}|${filters.sort}|${filters.direction}|${starredOnly}|${viewMode}|${meta.current_page}`;
+    const selectionClearKey = `${filters.search}|${filters.sort}|${filters.direction}|${starredOnly}|${viewMode}`;
 
     const selection = useTableSelection({
         rowKey: (contact) => contact.nsid,
         rows: contacts,
         isRowSelectable: isContactSelectable,
         clearWhen: selectionClearKey,
+        matchingTotal: meta.total,
+        allowSelectMatching: viewMode === 'table',
     });
 
     const contactNsids = useMemo(() => contacts.map((contact) => contact.nsid).join(','), [contacts]);
@@ -172,7 +174,16 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
     }, [hasActiveOperations, contactNsids, account.public_id]);
 
     const postBulk = useCallback(
-        (url: string, data: { contact_nsids: string[]; types?: CrawlType[] }) => {
+        (
+            url: string,
+            data: {
+                contact_nsids?: string[];
+                types?: CrawlType[];
+                select_all?: boolean;
+                search?: string;
+                starred_only?: boolean;
+            },
+        ) => {
             router.post(url, data, {
                 preserveScroll: true,
                 onSuccess: () => selection.clear(),
@@ -181,27 +192,40 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
         [selection],
     );
 
+    const bulkPayload = useCallback(
+        (selectedKeys: string[], isMatching: boolean) => {
+            if (isMatching) {
+                return {
+                    select_all: true as const,
+                    search: filters.search || undefined,
+                    starred_only: starredOnly || undefined,
+                };
+            }
+
+            return { contact_nsids: selectedKeys };
+        },
+        [filters.search, starredOnly],
+    );
+
     const bulkActions = useMemo<BulkAction<ContactListItem>[]>(
         () => [
             {
                 id: 'download',
                 label: 'Download',
                 icon: bulkDownloadActionIcon(),
-                onAction: ({ selectedKeys }) => {
-                    postBulk(flickrAccountPath(account.public_id, '/download'), {
-                        contact_nsids: selectedKeys,
-                    });
+                onAction: ({ selectedKeys, isMatching }) => {
+                    postBulk(flickrAccountPath(account.public_id, '/download'), bulkPayload(selectedKeys, isMatching));
                 },
             },
             {
                 id: 'crawl',
                 label: 'Crawl',
                 icon: bulkCrawlActionIcon(),
-                menu: () => (
+                menu: ({ selectedKeys, isMatching }) => (
                     <CrawlTypeMenu
                         onSelect={(types: CrawlType[]) => {
                             postBulk(flickrAccountPath(account.public_id, '/contacts/crawl'), {
-                                contact_nsids: [...selection.selectedKeys],
+                                ...bulkPayload(selectedKeys, isMatching),
                                 types,
                             });
                         }}
@@ -212,14 +236,12 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
                 id: 'upload',
                 label: 'Upload',
                 icon: bulkUploadActionIcon(),
-                onAction: ({ selectedKeys }) => {
-                    postBulk(flickrAccountPath(account.public_id, '/upload'), {
-                        contact_nsids: selectedKeys,
-                    });
+                onAction: ({ selectedKeys, isMatching }) => {
+                    postBulk(flickrAccountPath(account.public_id, '/upload'), bulkPayload(selectedKeys, isMatching));
                 },
             },
         ],
-        [account.public_id, postBulk, selection.selectedKeys],
+        [account.public_id, bulkPayload, postBulk],
     );
 
     const goToPage = (page: number) => {
@@ -392,6 +414,7 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
                         selection={selection.tableSelection}
                         bulkActions={bulkActions}
                         onBulkClear={selection.clear}
+                        matchingLabel="contacts"
                     />
                 </PageShellCanvas>
             </PageShell>

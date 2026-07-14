@@ -31,7 +31,16 @@ export function downloadStoragePath(batch: TransferBatch): string {
 }
 
 export function fetchRunSortValue(
-    run: { id: number; connection_key: string; crawl_type: string; subject_nsid: string | null; photos_discovered: number; contacts_discovered: number; status: string },
+    run: {
+        id: number;
+        connection_key: string;
+        crawl_type: string;
+        subject_nsid: string | null;
+        photos_discovered: number;
+        contacts_discovered: number;
+        status: string;
+        started_at?: string | null;
+    },
     key: string,
     accountByNsid: Record<string, FlickrAccount>,
 ): string | number {
@@ -46,6 +55,8 @@ export function fetchRunSortValue(
             return run.subject_nsid ?? run.connection_key;
         case 'progress':
             return run.photos_discovered + run.contacts_discovered;
+        case 'started_at':
+            return run.started_at ?? '';
         case 'status':
             return run.status;
         default:

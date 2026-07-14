@@ -7,7 +7,7 @@ namespace App\Providers;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
-use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Crawler\Models\Connection;
 use Modules\Flickr\Support\ConnectionPublicIdService;
 use Modules\Storage\Contracts\StorageDownloadStreamer;
 use Modules\Storage\Services\StorageDownloadService;

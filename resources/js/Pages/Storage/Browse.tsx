@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import type { BulkAction } from '@/Components/BulkActionBar';
 import DataTable from '@/Components/DataTable';
 import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
+import LoadingIndicator from '@/Components/LoadingIndicator';
 import StorageReauthorizeBanner from '@/Components/Storage/StorageReauthorizeBanner';
 import Thumbnail from '@/Components/Thumbnail';
 import { useStorageBrowse } from '@/hooks/useStorageBrowse';
@@ -194,7 +195,7 @@ export default function StorageBrowse({
 
                     {accounts.length === 0 ? (
                         <a
-                            href="/settings?tab=storage"
+                            href="/connections?provider=storage"
                             className="text-sm font-medium text-cyan-700 hover:text-cyan-800"
                         >
                             Connect in Settings
@@ -225,20 +226,16 @@ export default function StorageBrowse({
                 ) : null}
 
                 {syncing && !selectedAccount?.needs_reauthorization ? (
-                    <div
-                        className="flex items-center gap-3 rounded-md border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-900"
-                        role="status"
-                        aria-live="polite"
-                    >
-                        <span
-                            className="inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-cyan-700 border-t-transparent"
-                            aria-hidden
+                    <div className="flex items-center gap-3 rounded-md border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-900">
+                        <LoadingIndicator
+                            size="sm"
+                            className="text-cyan-700 [&_svg]:text-cyan-700"
+                            label={
+                                syncMode === 'manual'
+                                    ? `Refreshing from ${provider_label}…`
+                                    : `Syncing from ${provider_label} in the background… Photos will appear as they are cached.`
+                            }
                         />
-                        <span>
-                            {syncMode === 'manual'
-                                ? `Refreshing from ${provider_label}…`
-                                : `Syncing from ${provider_label} in the background… Photos will appear as they are cached.`}
-                        </span>
                     </div>
                 ) : null}
 
@@ -251,11 +248,9 @@ export default function StorageBrowse({
                 {!selectedAccount?.needs_reauthorization && !containerId ? (
                     <div className="space-y-3">
                         <h2 className="text-lg font-medium text-slate-900">{container_label}s</h2>
-                        {loading && albums.length === 0 ? (
-                            <p className="text-sm text-slate-500">Loading…</p>
-                        ) : (
-                            <DataTable
-                                columns={[
+                        <DataTable
+                            busy={loading}
+                            columns={[
                                     {
                                         key: 'cover',
                                         label: 'Cover',
@@ -295,7 +290,6 @@ export default function StorageBrowse({
                                         : `No ${container_label.toLowerCase()}s found.`
                                 }
                             />
-                        )}
 
                         {meta?.has_more_albums ? (
                             <button
@@ -318,11 +312,9 @@ export default function StorageBrowse({
                                 Remove from album is only available inside an album (Google Photos API limitation).
                             </p>
                         ) : null}
-                        {loading && items.length === 0 ? (
-                            <p className="text-sm text-slate-500">Loading…</p>
-                        ) : (
-                            <DataTable
-                                columns={[
+                        <DataTable
+                            busy={loading}
+                            columns={[
                                     {
                                         key: 'thumbnail',
                                         label: '',
@@ -385,7 +377,6 @@ export default function StorageBrowse({
                                 }
                                 actionsLabel="Download"
                             />
-                        )}
 
                         {meta?.has_more_items ? (
                             <button

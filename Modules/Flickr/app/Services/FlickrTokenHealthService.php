@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Modules\Flickr\Services;
 
 use Illuminate\Support\Facades\Cache;
-use JOOservices\XFlickrCrawler\Models\Connection;
-use JOOservices\XFlickrCrawler\Services\FlickrClientFactory;
+use Modules\Crawler\Models\Connection;
+use Modules\Crawler\Services\FlickrClientFactory;
 use Modules\Flickr\Dto\FlickrTokenHealthResult;
 use Throwable;
 

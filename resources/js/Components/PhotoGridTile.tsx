@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 
 import { cn } from '@/lib/cn';
 
@@ -42,15 +42,31 @@ export default function PhotoGridTile({
     className,
 }: PhotoGridTileProps) {
     const hasHoverOverlay = Boolean(topRow || bottomRow || revealTopRowOnHover || revealBottomRowOnHover);
+    const isClickable = onClick !== undefined;
+
+    const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+        if (!onClick) {
+            return;
+        }
+
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onClick();
+        }
+    };
 
     return (
         <figure
             className={cn(
                 'group relative overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900',
-                onClick !== undefined && 'cursor-pointer',
+                isClickable && 'cursor-pointer',
                 className,
             )}
             onClick={onClick}
+            onKeyDown={isClickable ? handleKeyDown : undefined}
+            role={isClickable ? 'button' : undefined}
+            tabIndex={isClickable ? 0 : undefined}
+            aria-label={isClickable ? `Open ${alt}` : undefined}
         >
             <div className="relative aspect-square overflow-hidden bg-slate-100 dark:bg-slate-800">
                 {imageUrl ? (

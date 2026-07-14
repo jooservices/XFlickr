@@ -1,10 +1,11 @@
 import DownloadedBadge from '@/Components/DownloadedBadge';
+import LoadingIndicator from '@/Components/LoadingIndicator';
 import PhotoDownloadingOverlay from '@/Components/PhotoDownloadingOverlay';
 import PhotoFailedBadge from '@/Components/PhotoFailedBadge';
 import PhotoGridTile from '@/Components/PhotoGridTile';
 import PhotoTransferActions from '@/Components/PhotoTransferActions';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
-import { flickrPhotoThumbnailUrl } from '@/lib/flickrPhoto';
+import { flickrPhotoGridUrl } from '@/lib/flickrPhoto';
 import type { Photo } from '@/types';
 
 interface PhotoGridMacroProps {
@@ -13,6 +14,7 @@ interface PhotoGridMacroProps {
     hasMore?: boolean;
     loadingMore?: boolean;
     onLoadMore?: () => void;
+    onPhotoClick?: (photo: Photo) => void;
 }
 
 export default function PhotoGridMacro({
@@ -21,6 +23,7 @@ export default function PhotoGridMacro({
     hasMore = false,
     loadingMore = false,
     onLoadMore,
+    onPhotoClick,
 }: PhotoGridMacroProps) {
     const sentinelRef = useInfiniteScroll({
         hasMore,
@@ -34,9 +37,9 @@ export default function PhotoGridMacro({
 
     return (
         <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
                 {photos.map((photo) => {
-                    const url = flickrPhotoThumbnailUrl(photo);
+                    const url = flickrPhotoGridUrl(photo);
                     const downloadStatus = photo.download_status ?? 'none';
 
                     return (
@@ -44,6 +47,7 @@ export default function PhotoGridMacro({
                             key={photo.id}
                             imageUrl={url}
                             alt={photo.title || 'Photo'}
+                            onClick={onPhotoClick ? () => onPhotoClick(photo) : undefined}
                             revealTopRowOnHover={Boolean(accountPublicId)}
                             topRow={
                                 accountPublicId ? (
@@ -70,7 +74,11 @@ export default function PhotoGridMacro({
 
             {hasMore ? <div ref={sentinelRef} className="h-8" aria-hidden /> : null}
 
-            {loadingMore ? <p className="text-center text-sm text-slate-500">Loading more…</p> : null}
+            {loadingMore ? (
+                <div className="flex justify-center">
+                    <LoadingIndicator size="sm" label="Loading more…" />
+                </div>
+            ) : null}
         </div>
     );
 }

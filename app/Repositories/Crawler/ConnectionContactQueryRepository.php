@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories\Crawler;
 
-use JOOservices\XFlickrCrawler\Models\ConnectionContact;
+use Modules\Crawler\Models\ConnectionContact;
 
 final class ConnectionContactQueryRepository
 {

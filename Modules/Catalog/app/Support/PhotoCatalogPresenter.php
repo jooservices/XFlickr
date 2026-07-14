@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Modules\Catalog\Support;
 
 use Illuminate\Support\Facades\DB;
-use JOOservices\XFlickrCrawler\Models\Photo;
-use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
+use Modules\Crawler\Models\Photo;
+use Modules\Crawler\Support\XFlickrConfig;
 use Modules\Transfer\Enums\StoredFileStatus;
 use Modules\Transfer\Models\StoredFile;
 use Modules\Transfer\Repositories\StoredFileRepository;

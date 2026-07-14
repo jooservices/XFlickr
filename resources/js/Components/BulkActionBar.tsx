@@ -8,6 +8,7 @@ import { cn } from '@/lib/cn';
 export interface BulkActionContext<T> {
     selectedRows: T[];
     selectedKeys: string[];
+    isMatching: boolean;
 }
 
 export interface BulkAction<T> {
@@ -27,6 +28,11 @@ export interface BulkActionBarProps<T> {
     actions: BulkAction<T>[];
     onClear: () => void;
     className?: string;
+    isMatching?: boolean;
+    canSelectMatching?: boolean;
+    matchingTotal?: number | null;
+    onSelectMatching?: () => void;
+    matchingLabel?: string;
 }
 
 function resolveDisabled<T>(action: BulkAction<T>, context: BulkActionContext<T>): boolean {
@@ -44,6 +50,11 @@ export default function BulkActionBar<T>({
     actions,
     onClear,
     className,
+    isMatching = false,
+    canSelectMatching = false,
+    matchingTotal = null,
+    onSelectMatching,
+    matchingLabel = 'items',
 }: BulkActionBarProps<T>) {
     if (selectedCount === 0) {
         return null;
@@ -52,28 +63,51 @@ export default function BulkActionBar<T>({
     const context: BulkActionContext<T> = {
         selectedRows,
         selectedKeys,
+        isMatching,
     };
 
     return (
-        <div
-            role="toolbar"
-            aria-label="Bulk actions"
-            className={cn(
-                'flex flex-wrap items-center gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3',
-                className,
-            )}
-        >
-            <p className="text-sm font-medium text-slate-700 tabular-nums" aria-live="polite">
-                {selectedCount} selected
-            </p>
+        <div className={cn('border-b border-slate-200 bg-slate-50', className)}>
+            {canSelectMatching && matchingTotal !== null && onSelectMatching ? (
+                <div className="border-b border-slate-200 px-4 py-2 text-sm text-slate-600">
+                    All {selectedKeys.length.toLocaleString()} on this page are selected.{' '}
+                    <button
+                        type="button"
+                        className="font-medium text-cyan-700 hover:underline"
+                        onClick={onSelectMatching}
+                    >
+                        Select all {matchingTotal.toLocaleString()} matching {matchingLabel}
+                    </button>
+                </div>
+            ) : null}
 
-            <div className="flex flex-wrap items-center gap-2">
-                {actions.map((action) => {
-                    const disabled = resolveDisabled(action, context);
-                    const menu =
-                        typeof action.menu === 'function' ? action.menu(context) : action.menu;
+            <div role="toolbar" aria-label="Bulk actions" className="flex flex-wrap items-center gap-3 px-4 py-3">
+                <p className="text-sm font-medium text-slate-700 tabular-nums" aria-live="polite">
+                    {isMatching
+                        ? `All ${selectedCount.toLocaleString()} matching ${matchingLabel} selected`
+                        : `${selectedCount.toLocaleString()} selected`}
+                </p>
 
-                    if (menu !== undefined) {
+                <div className="flex flex-wrap items-center gap-2">
+                    {actions.map((action) => {
+                        const disabled = resolveDisabled(action, context);
+                        const menu =
+                            typeof action.menu === 'function' ? action.menu(context) : action.menu;
+
+                        if (menu !== undefined) {
+                            return (
+                                <ActionButton
+                                    key={action.id}
+                                    label={action.label}
+                                    icon={action.icon}
+                                    variant={action.variant}
+                                    size="sm"
+                                    disabled={disabled}
+                                    menu={menu}
+                                />
+                            );
+                        }
+
                         return (
                             <ActionButton
                                 key={action.id}
@@ -82,34 +116,22 @@ export default function BulkActionBar<T>({
                                 variant={action.variant}
                                 size="sm"
                                 disabled={disabled}
-                                menu={menu}
+                                onClick={() => action.onAction?.(context)}
                             />
                         );
-                    }
+                    })}
+                </div>
 
-                    return (
-                        <ActionButton
-                            key={action.id}
-                            label={action.label}
-                            icon={action.icon}
-                            variant={action.variant}
-                            size="sm"
-                            disabled={disabled}
-                            onClick={() => action.onAction?.(context)}
-                        />
-                    );
-                })}
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="ml-auto text-slate-600"
+                    onClick={onClear}
+                >
+                    Clear
+                </Button>
             </div>
-
-            <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="ml-auto text-slate-600"
-                onClick={onClear}
-            >
-                Clear
-            </Button>
         </div>
     );
 }

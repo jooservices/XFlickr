@@ -1,33 +1,80 @@
-import { router, useForm } from '@inertiajs/react';
-import { Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react';
-import { FormEvent, useMemo, useState } from 'react';
+import { router } from '@inertiajs/react';
+import {
+    ConfigPanel,
+    type ConfigEntry,
+    type ConfigRecord,
+    type ConfigValueType,
+} from '@jooservices/react-config';
+import { Activity, DatabaseZap, Globe2, LayoutTemplate, Network } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
-import type { ConfigValueType, CuratedConfigEntry, CustomConfigEntry } from '@/types';
+import type { CuratedConfigEntry, CustomConfigEntry } from '@/types';
 
 interface GeneralConfigPanelProps {
     curated: CuratedConfigEntry[];
     custom: CustomConfigEntry[];
     runtimeConfigAvailable: boolean;
+    onOpenCreateReady?: (openCreate: (() => void) | null) => void;
 }
 
-function formatValue(type: ConfigValueType, value: unknown): string {
-    if (type === 'bool') {
-        return value ? 'Yes' : 'No';
-    }
+const SETTINGS_TABS = [
+    {
+        id: 'operations',
+        label: 'Operations',
+        icon: Activity,
+        filter: (entry: ConfigEntry) => entry.meta?.section === 'operations',
+    },
+    {
+        id: 'crawl',
+        label: 'Crawl',
+        icon: Globe2,
+        filter: (entry: ConfigEntry) => entry.meta?.section === 'crawl',
+    },
+    {
+        id: 'discovery',
+        label: 'Discovery',
+        icon: Network,
+        filter: (entry: ConfigEntry) => entry.meta?.section === 'discovery',
+    },
+    {
+        id: 'application',
+        label: 'Application',
+        icon: LayoutTemplate,
+        filter: (entry: ConfigEntry) => entry.meta?.section === 'application',
+    },
+    { id: 'raw', label: 'Custom', icon: DatabaseZap, mode: 'raw' as const },
+];
 
-    if (value === null || value === undefined) {
-        return '—';
-    }
-
-    if (typeof value === 'object') {
-        return JSON.stringify(value);
-    }
-
-    return String(value);
+function toConfigEntry(entry: CuratedConfigEntry): ConfigEntry {
+    return {
+        path: entry.path,
+        label: entry.label,
+        description: entry.description,
+        group_label: entry.group_label,
+        type: entry.type,
+        tier: entry.tier,
+        sort: entry.sort,
+        effective_value: entry.effective_value,
+        source: entry.source,
+        stored: entry.stored,
+        meta: {
+            section: entry.section,
+            is_core: entry.is_core,
+        },
+    };
 }
 
-function valueToInput(type: ConfigValueType, value: unknown): string {
-    if (type === 'bool') {
+function toConfigRecord(entry: CustomConfigEntry): ConfigRecord {
+    return {
+        id: entry.id ?? entry.path,
+        path: entry.path,
+        type: entry.type,
+        value: entry.value,
+    };
+}
+
+function serializeValue(value: unknown): string {
+    if (typeof value === 'boolean') {
         return value ? 'true' : 'false';
     }
 
@@ -42,75 +89,63 @@ function valueToInput(type: ConfigValueType, value: unknown): string {
     return String(value);
 }
 
+function inertiaMutation(
+    method: 'post' | 'delete',
+    url: string,
+    data?: Record<string, string>,
+): Promise<void> {
+    return new Promise((resolve, reject) => {
+        router.visit(url, {
+            method,
+            data,
+            preserveScroll: true,
+            onSuccess: () => resolve(),
+            onError: (errors) => {
+                const first = Object.values(errors)[0];
+                reject(new Error(typeof first === 'string' ? first : 'Request failed.'));
+            },
+        });
+    });
+}
+
+function OpenCreateBridge({
+    openCreate,
+    onReady,
+}: {
+    openCreate: () => void;
+    onReady?: (openCreate: (() => void) | null) => void;
+}) {
+    useEffect(() => {
+        onReady?.(openCreate);
+
+        return () => onReady?.(null);
+    }, [openCreate, onReady]);
+
+    return null;
+}
+
 export default function GeneralConfigPanel({
     curated,
     custom,
     runtimeConfigAvailable,
+    onOpenCreateReady,
 }: GeneralConfigPanelProps) {
-    const [editing, setEditing] = useState<CuratedConfigEntry | CustomConfigEntry | null>(null);
-    const [addingCustom, setAddingCustom] = useState(false);
+    const [tab, setTab] = useState('operations');
+    const [query, setQuery] = useState('');
+    const [showExpert, setShowExpert] = useState(false);
+    const [showTechnicalKeys, setShowTechnicalKeys] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [processing, setProcessing] = useState(false);
 
-    const form = useForm({
-        path: '',
-        type: 'string' as ConfigValueType,
-        value: '',
-    });
+    const entries = useMemo(() => curated.map(toConfigEntry), [curated]);
+    const rawEntries = useMemo(() => custom.map(toConfigRecord), [custom]);
+    const corePaths = useMemo(() => new Set(curated.map((entry) => entry.path)), [curated]);
 
-    const grouped = useMemo(() => {
-        const groups = new Map<string, CuratedConfigEntry[]>();
-
-        for (const entry of curated) {
-            const list = groups.get(entry.group) ?? [];
-            list.push(entry);
-            groups.set(entry.group, list);
+    useEffect(() => {
+        if (!runtimeConfigAvailable) {
+            onOpenCreateReady?.(null);
         }
-
-        return Array.from(groups.entries());
-    }, [curated]);
-
-    const openEdit = (entry: CuratedConfigEntry | CustomConfigEntry) => {
-        form.setData({
-            path: entry.path,
-            type: entry.type,
-            value: valueToInput(
-                entry.type,
-                'effective_value' in entry ? entry.effective_value : entry.value,
-            ),
-        });
-        form.clearErrors();
-        setEditing(entry);
-        setAddingCustom(false);
-    };
-
-    const openAddCustom = () => {
-        form.setData({ path: '', type: 'string', value: '' });
-        form.clearErrors();
-        setEditing(null);
-        setAddingCustom(true);
-    };
-
-    const closeDialog = () => {
-        setEditing(null);
-        setAddingCustom(false);
-        form.reset();
-        form.clearErrors();
-    };
-
-    const save = (event: FormEvent) => {
-        event.preventDefault();
-        form.post('/settings/config', {
-            preserveScroll: true,
-            onSuccess: () => closeDialog(),
-        });
-    };
-
-    const resetConfig = (path: string) => {
-        router.post(`/settings/config/${encodeURIComponent(path)}/reset`, {}, { preserveScroll: true });
-    };
-
-    const deleteConfig = (path: string) => {
-        router.delete(`/settings/config/${encodeURIComponent(path)}`, { preserveScroll: true });
-    };
+    }, [runtimeConfigAvailable, onOpenCreateReady]);
 
     if (!runtimeConfigAvailable) {
         return (
@@ -121,190 +156,67 @@ export default function GeneralConfigPanel({
     }
 
     return (
-        <div className="space-y-8">
-            {grouped.map(([group, entries]) => (
-                <section key={group}>
-                    <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">{group}</h2>
-                    <div className="mt-3 divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
-                        {entries.map((entry) => (
-                            <div
-                                key={entry.path}
-                                className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-                            >
-                                <div className="min-w-0">
-                                    <p className="font-medium text-slate-900">{entry.label}</p>
-                                    <p className="text-xs text-slate-500">{entry.path}</p>
-                                    <p className="mt-1 text-sm text-slate-700">
-                                        {formatValue(entry.type, entry.effective_value)}
-                                        <span className="ml-2 text-xs text-slate-400">
-                                            ({entry.source === 'default' ? 'default' : 'stored'})
-                                        </span>
-                                    </p>
-                                </div>
-                                <div className="flex shrink-0 gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => openEdit(entry)}
-                                        className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-medium hover:bg-slate-50"
-                                    >
-                                        <Pencil className="size-3.5" />
-                                        Edit
-                                    </button>
-                                    {entry.stored ? (
-                                        <button
-                                            type="button"
-                                            onClick={() => resetConfig(entry.path)}
-                                            className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-medium hover:bg-slate-50"
-                                        >
-                                            <RotateCcw className="size-3.5" />
-                                            Reset
-                                        </button>
-                                    ) : null}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            ))}
+        <ConfigPanel
+            // Hide ConfigPanel's empty action row — New lives in PageShellIdentity actions.
+            className="[&>div:first-child]:hidden"
+            tabs={SETTINGS_TABS}
+            generalTab={false}
+            features={{ create: false }}
+            entries={entries}
+            rawEntries={rawEntries}
+            valueTypes={['string', 'int', 'float', 'bool', 'array', 'json', 'null']}
+            tab={tab}
+            onTabChange={setTab}
+            query={query}
+            onQueryChange={setQuery}
+            showExpert={showExpert}
+            onShowExpertChange={setShowExpert}
+            showTechnicalKeys={showTechnicalKeys}
+            onShowTechnicalKeysChange={setShowTechnicalKeys}
+            processing={processing}
+            errors={errors}
+            searchPlaceholder="Search settings by name, description, or key"
+            headerActions={({ openCreate }) => (
+                <OpenCreateBridge openCreate={openCreate} onReady={onOpenCreateReady} />
+            )}
+            onSave={async ({ path, type, value }) => {
+                setProcessing(true);
+                setErrors({});
 
-            {custom.length > 0 ? (
-                <section>
-                    <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Custom</h2>
-                    <div className="mt-3 divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
-                        {custom.map((entry) => (
-                            <div
-                                key={entry.path}
-                                className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-                            >
-                                <div className="min-w-0">
-                                    <p className="font-medium text-slate-900">{entry.path}</p>
-                                    <p className="mt-1 text-sm text-slate-700">{formatValue(entry.type, entry.value)}</p>
-                                </div>
-                                <div className="flex shrink-0 gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => openEdit(entry)}
-                                        className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-medium hover:bg-slate-50"
-                                    >
-                                        <Pencil className="size-3.5" />
-                                        Edit
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => deleteConfig(entry.path)}
-                                        className="inline-flex items-center gap-1 rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
-                                    >
-                                        <Trash2 className="size-3.5" />
-                                        Delete
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            ) : null}
+                try {
+                    await inertiaMutation('post', '/settings/config', {
+                        path,
+                        type: type as ConfigValueType,
+                        value: serializeValue(value),
+                    });
+                } catch (error) {
+                    setErrors({
+                        value: error instanceof Error ? error.message : 'Failed to save configuration.',
+                    });
+                    throw error;
+                } finally {
+                    setProcessing(false);
+                }
+            }}
+            onDelete={async (path) => {
+                setProcessing(true);
+                setErrors({});
 
-            <div>
-                <button
-                    type="button"
-                    onClick={openAddCustom}
-                    className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium shadow-sm hover:bg-slate-50"
-                >
-                    <Plus className="size-4" />
-                    Add custom config
-                </button>
-            </div>
-
-            {(editing || addingCustom) ? (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-                    <div className="w-full max-w-lg rounded-lg border border-slate-200 bg-white p-6 shadow-xl">
-                        <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-slate-900">
-                                {addingCustom ? 'Add custom config' : 'Edit config'}
-                            </h3>
-                            <button
-                                type="button"
-                                onClick={closeDialog}
-                                className="rounded-md p-1 text-slate-500 hover:bg-slate-100"
-                                aria-label="Close"
-                            >
-                                <X className="h-5 w-5" />
-                            </button>
-                        </div>
-
-                        <form className="space-y-4" onSubmit={save}>
-                            <label className="block text-sm">
-                                <span className="text-slate-600">Path (group.key)</span>
-                                <input
-                                    value={form.data.path}
-                                    onChange={(event) => form.setData('path', event.target.value)}
-                                    required
-                                    readOnly={!addingCustom}
-                                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 read-only:bg-slate-50"
-                                    placeholder="xflickr.example_key"
-                                />
-                            </label>
-
-                            <label className="block text-sm">
-                                <span className="text-slate-600">Type</span>
-                                <select
-                                    value={form.data.type}
-                                    onChange={(event) =>
-                                        form.setData('type', event.target.value as ConfigValueType)
-                                    }
-                                    disabled={!addingCustom && editing !== null && 'is_core' in editing && editing.is_core}
-                                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 disabled:bg-slate-50"
-                                >
-                                    {(['string', 'int', 'float', 'bool', 'array', 'json', 'null'] as const).map(
-                                        (type) => (
-                                            <option key={type} value={type}>
-                                                {type}
-                                            </option>
-                                        ),
-                                    )}
-                                </select>
-                            </label>
-
-                            <label className="block text-sm">
-                                <span className="text-slate-600">Value</span>
-                                {form.data.type === 'bool' ? (
-                                    <select
-                                        value={form.data.value}
-                                        onChange={(event) => form.setData('value', event.target.value)}
-                                        className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2"
-                                    >
-                                        <option value="true">true</option>
-                                        <option value="false">false</option>
-                                    </select>
-                                ) : (
-                                    <input
-                                        value={form.data.value}
-                                        onChange={(event) => form.setData('value', event.target.value)}
-                                        className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2"
-                                    />
-                                )}
-                            </label>
-
-                            <div className="flex justify-end gap-2">
-                                <button
-                                    type="button"
-                                    onClick={closeDialog}
-                                    className="rounded-md border border-slate-200 px-4 py-2 text-sm"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={form.processing}
-                                    className="rounded-md bg-cyan-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-                                >
-                                    {form.processing ? 'Saving…' : 'Save'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            ) : null}
-        </div>
+                try {
+                    if (corePaths.has(path)) {
+                        await inertiaMutation('post', `/settings/config/${encodeURIComponent(path)}/reset`);
+                    } else {
+                        await inertiaMutation('delete', `/settings/config/${encodeURIComponent(path)}`);
+                    }
+                } catch (error) {
+                    setErrors({
+                        value: error instanceof Error ? error.message : 'Failed to remove configuration.',
+                    });
+                    throw error;
+                } finally {
+                    setProcessing(false);
+                }
+            }}
+        />
     );
 }

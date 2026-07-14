@@ -3,8 +3,8 @@
 namespace Modules\Contacts\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use JOOservices\XFlickrCrawler\Events\ContactsCrawlCompleted;
 use Modules\Contacts\Listeners\HandleContactsCrawlCompletedForFullPass;
+use Modules\Crawler\Events\ContactsCrawlCompleted;
 
 class EventServiceProvider extends ServiceProvider
 {

@@ -60,7 +60,7 @@ Production stack uses `docker-compose.prod.yml` (project `xflickr-prod`). Extern
 
 **XFlickr** — self-hosted Flickr archive manager (Laravel 12 + React 19 + Inertia 3).
 
-- Crawling: `jooservices/xflickr-crawler`
+- Crawling: **`Modules/Crawler`** (`Modules\Crawler\*`; Artisan `xflickr:dispatch` / Horizon `xflickr` queue)
 - App credentials: **MongoDB** via laravel-config (`xflickr_app.*`, `storage_app.*`)
 - Connected accounts: **MySQL** (`flickr_accounts`, `storage_accounts`)
 - Local URL: **http://localhost:8082** (override `APP_HOST_PORT` in `.env`)
@@ -74,26 +74,31 @@ Mandatory backend flow:
 HTTP Request → Controller → FormRequest → Service → Repository → Model
 ```
 
-Same layering for Artisan: `Command → Service → Repository → Model` (no business logic in commands). Jobs call Services only.
+Same layering for Artisan: `Command → Service → Repository → Model` (no business logic in commands). Jobs call Services (and Repositories for work-item updates) — never `Model::query()` in Jobs/Commands.
+
+**Services never touch Eloquent directly** (`Model::query()`, `Model::create()`, `$model->update()`/`save()`/`delete()`, domain `DB::table`) — only Repositories do. Prefer reusable model scopes from the repository. Skill: [`ai/skills/form-request-service-repository/SKILL.md`](ai/skills/form-request-service-repository/SKILL.md). Crawler regression guard: `Modules/Crawler/tests/Unit/Architecture/CrawlerLayeringTest`.
 
 JSON API is **RESTful under `/api/v1/*`** (no imperative URI verbs). Business domains live in `Modules/{Name}` (`nwidart/laravel-modules`); thin `app/` is host bootstrap (providers, middleware, shared FormRequest traits, crawler query repos, `User`).
 
-| Module | Owns |
+| Module | Owns (summary) |
 |---|---|
-| **Auth** | Session login/logout (`LoginRequest` / `LogoutRequest`, `AuthService`); register (inactive until activated); self-serve password reset token URL (no email yet); CLI `xflickr:auth:activate-user` / `xflickr:auth:reset-password`; optional admin seed (`AdminUserSeeder`) |
-| **Settings** | Runtime config / app profiles |
-| **Operations** | Dashboard, ops snapshot/stream |
-| **Flickr** | OAuth, accounts, crawl-runs, rate-limit, token-health |
+| **Auth** | Session login/logout; register (inactive until activated); password reset token URL; CLI activate / reset-password; optional `AdminUserSeeder` |
+| **Crawler** | Crawl engine, catalog models, fetchers, `xflickr` queue jobs (`Modules\Crawler\*`) — DAG leaf |
+| **Settings** | Runtime config / Flickr & storage app profiles |
+| **Operations** | Dashboard, crawl ops UI, ops snapshot/stream APIs |
+| **Flickr** | Account OAuth, crawl-runs, rate-limit, token-health |
 | **Contacts** | Contacts, annotations, contact-graph, full-pass |
-| **Catalog** | Photos / photosets / galleries / favorites |
-| **Spider** | Spider runs / frontier |
-| **Transfer** | Download / upload / stored-files |
+| **Catalog** | Photos / photosets / galleries / favorites browse |
+| **Spider** | Opt-in spider runs / frontier |
+| **Transfer** | Download / upload / stored-files / transfer progress |
 | **Storage** | Storage OAuth, browse, sync, delete |
+
+Full **scope / purpose / features** per module: [docs/00-architecture/modules.md](docs/00-architecture/modules.md). Agent routing skill: `class-purpose-and-module-map`.
 
 | Layer | Owns |
 |---|---|
 | XFlickr app / Modules | OAuth, downloads, uploads, storage browse, transfer tracking, Settings UI |
-| `jooservices/xflickr-crawler` | Crawl runs, fetchers, rate limits, catalog tables |
+| **Crawler** module | Crawl runs, fetchers, rate limits, catalog tables |
 
 See [Application standards](docs/00-architecture/application-standards.md) and [Package boundaries](docs/00-architecture/package-boundaries.md).
 
@@ -101,9 +106,10 @@ See [Application standards](docs/00-architecture/application-standards.md) and [
 
 1. **Never touch local dev databases** — see Docker policy above.
 2. **Tests only via `scripts/test.sh`** — isolated test stack (`sqlite :memory:`, MongoDB `xflickr_test`).
-3. **Spider mode** — opt-in only (`spider.enabled` in runtime config); depth/caps in Settings → General; see [constraints](docs/05-maintenance/constraints.md) and [spider-mode](docs/02-user-guide/spider-mode.md). Manual per-contact crawls remain valid.
-4. **Inspect source first** — do not invent routes, commands, or behavior.
-5. **Minimize scope** — focused diffs; match existing conventions.
+3. **Test data** — every Eloquent model has a factory; incidental values use Faker/`fake()` (assert from the created model). See [testing.md](docs/04-development/testing.md) and skill `testing-and-quality-gates`.
+4. **Spider mode** — opt-in only (`spider.enabled` in runtime config); depth/caps in Settings → General; see [constraints](docs/05-maintenance/constraints.md) and [spider-mode](docs/02-user-guide/spider-mode.md). Manual per-contact crawls remain valid.
+5. **Inspect source first** — do not invent routes, commands, or behavior.
+6. **Minimize scope** — focused diffs; match existing conventions.
 
 ## Quality gates
 
@@ -114,7 +120,7 @@ bash scripts/test.sh gate
 bash scripts/test.sh gate:ci    # before push
 ```
 
-CI enforces **60% PHPUnit coverage** via `gate:ci` / `composer test:docker:coverage`.
+CI enforces **95% PHPUnit coverage** via `gate:ci` / `composer test:docker:coverage`.
 
 **Never:**
 
@@ -129,6 +135,7 @@ scripts/dev.sh
 | Task type | Read first |
 |---|---|
 | Any change | `repo-quality-foundation` |
+| Which module owns X? | `class-purpose-and-module-map` + [modules catalog](docs/00-architecture/modules.md) |
 | Docker / DB commands | `xflickr-docker-testing`, `docker-dev-stack-safety`, `operator-dev-docker` |
 | Crawl features | `crawler-pipeline-integrity` |
 | Download / upload | `transfer-pipeline-safety` |
@@ -137,6 +144,7 @@ scripts/dev.sh
 | Frontend pages | `react-inertia-frontend` |
 | API endpoints | `api-response-standards` |
 | New backend code | `form-request-service-repository` |
+| PHPUnit / factories / Faker | `testing-and-quality-gates` |
 | Non-trivial features | `multi-llm-plan-review` |
 | Before PR | `review-and-risk-assessment`, `documentation-sync` |
 
@@ -176,6 +184,7 @@ Non-trivial features: [AI development workflow](docs/04-development/ai-developme
 
 - [README.md](README.md) — user quick start
 - [docs/README.md](docs/README.md) — documentation hub
+- [Modules catalog](docs/00-architecture/modules.md) — scope, purpose, features per domain
 - [Contributing](docs/04-development/07-contributing.md)
 - [Known dangerous commands](docs/05-maintenance/known-dangerous-commands.md)
 - [Risks and gaps](docs/05-maintenance/BACKLOG.md)

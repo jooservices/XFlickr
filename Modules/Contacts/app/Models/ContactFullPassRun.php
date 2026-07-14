@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Modules\Contacts\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Modules\Contacts\Database\Factories\ContactFullPassRunFactory;
 use Modules\Spider\Enums\SpiderRunStatus;
 
 /**
@@ -13,6 +15,14 @@ use Modules\Spider\Enums\SpiderRunStatus;
  */
 class ContactFullPassRun extends Model
 {
+    /** @use HasFactory<ContactFullPassRunFactory> */
+    use HasFactory;
+
+    protected static function newFactory(): ContactFullPassRunFactory
+    {
+        return ContactFullPassRunFactory::new();
+    }
+
     protected $fillable = [
         'connection_key',
         'status',

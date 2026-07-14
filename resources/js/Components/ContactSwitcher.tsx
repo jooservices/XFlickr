@@ -3,6 +3,7 @@ import { Users } from 'lucide-react';
 import { useState } from 'react';
 
 import { ActionButton } from '@/Components/ActionBar';
+import LoadingIndicator from '@/Components/LoadingIndicator';
 import SearchField from '@/Components/SearchField';
 import { contactDisplayName, useContactSuggestions } from '@/hooks/useContactSuggestions';
 import { cn } from '@/lib/cn';
@@ -37,7 +38,9 @@ export default function ContactSwitcher({
             </div>
 
             {loading ? (
-                <p className="px-3 py-2 text-sm text-slate-500">Searching…</p>
+                <div className="px-3 py-2">
+                    <LoadingIndicator size="sm" label="Searching…" />
+                </div>
             ) : search.trim().length >= 2 && suggestions.length === 0 ? (
                 <p className="px-3 py-2 text-sm text-slate-500">No contacts found.</p>
             ) : (

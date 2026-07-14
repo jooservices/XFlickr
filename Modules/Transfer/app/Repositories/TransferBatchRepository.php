@@ -9,7 +9,7 @@ use Illuminate\Support\Collection;
 use Jooservices\LaravelRepository\Repositories\EloquentRepository;
 use Jooservices\LaravelRepository\Traits\HasCrud;
 use Jooservices\LaravelRepository\Traits\HasFilter;
-use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Crawler\Models\Connection;
 use Modules\Transfer\Enums\TransferBatchStatus;
 use Modules\Transfer\Models\TransferBatch;
 

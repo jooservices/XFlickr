@@ -52,7 +52,7 @@ services:
       EVENTS_EVENT_LOG_ENABLED: "true"
     volumes:
       - .:/var/www/html
-      - ../XFlickrCrawler:/var/www/html/vendor/jooservices/xflickr-crawler
+      - ./docker/php/pcov.ini:/usr/local/etc/php/conf.d/zz-pcov-directory.ini:ro
     depends_on:
       redis:
         condition: service_healthy

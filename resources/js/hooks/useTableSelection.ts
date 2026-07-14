@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export type TableSelectionState = 'none' | 'partial' | 'all';
 
+export type TableSelectionScope = 'keys' | 'matching';
+
 export interface DataTableSelectionProps<T> {
     selectedKeys: Set<string>;
     onToggle: (key: string) => void;
@@ -9,6 +11,11 @@ export interface DataTableSelectionProps<T> {
     selectionState: TableSelectionState;
     isRowSelectable?: (row: T) => boolean;
     rowLabel?: (row: T) => string;
+    scope: TableSelectionScope;
+    matchingTotal: number | null;
+    displayCount: number;
+    canSelectMatching: boolean;
+    onSelectMatching: () => void;
 }
 
 export interface UseTableSelectionOptions<T> {
@@ -16,6 +23,10 @@ export interface UseTableSelectionOptions<T> {
     rows: T[];
     isRowSelectable?: (row: T) => boolean;
     clearWhen?: unknown;
+    /** Total rows matching current filters (for select-all-matching). */
+    matchingTotal?: number | null;
+    /** When false, hide/disable the matching CTA even if totals allow it. */
+    allowSelectMatching?: boolean;
 }
 
 export function useTableSelection<T>({
@@ -23,11 +34,15 @@ export function useTableSelection<T>({
     rows,
     isRowSelectable,
     clearWhen,
+    matchingTotal = null,
+    allowSelectMatching = true,
 }: UseTableSelectionOptions<T>) {
     const [selectedKeys, setSelectedKeys] = useState<Set<string>>(() => new Set());
+    const [scope, setScope] = useState<TableSelectionScope>('keys');
 
     useEffect(() => {
         setSelectedKeys(new Set());
+        setScope('keys');
     }, [clearWhen]);
 
     const selectableRows = useMemo(
@@ -46,6 +61,10 @@ export function useTableSelection<T>({
     );
 
     const selectionState: TableSelectionState = useMemo(() => {
+        if (scope === 'matching') {
+            return 'all';
+        }
+
         if (selectableKeys.length === 0 || selectedOnPageCount === 0) {
             return 'none';
         }
@@ -55,12 +74,34 @@ export function useTableSelection<T>({
         }
 
         return 'partial';
-    }, [selectableKeys.length, selectedOnPageCount]);
+    }, [scope, selectableKeys.length, selectedOnPageCount]);
 
-    const isSelected = useCallback((key: string) => selectedKeys.has(key), [selectedKeys]);
+    const resolvedMatchingTotal =
+        matchingTotal !== null && matchingTotal !== undefined && matchingTotal > 0 ? matchingTotal : null;
+
+    const canSelectMatching =
+        allowSelectMatching &&
+        scope !== 'matching' &&
+        selectionState === 'all' &&
+        resolvedMatchingTotal !== null &&
+        resolvedMatchingTotal > selectableKeys.length;
+
+    const displayCount = scope === 'matching' && resolvedMatchingTotal !== null ? resolvedMatchingTotal : selectedKeys.size;
+
+    const isSelected = useCallback(
+        (key: string) => scope === 'matching' || selectedKeys.has(key),
+        [scope, selectedKeys],
+    );
 
     const toggle = useCallback(
         (key: string) => {
+            if (scope === 'matching') {
+                setScope('keys');
+                setSelectedKeys(new Set(selectableKeys.filter((candidate) => candidate !== key)));
+
+                return;
+            }
+
             setSelectedKeys((current) => {
                 const next = new Set(current);
 
@@ -73,10 +114,17 @@ export function useTableSelection<T>({
                 return next;
             });
         },
-        [],
+        [scope, selectableKeys],
     );
 
     const togglePage = useCallback(() => {
+        if (scope === 'matching') {
+            setScope('keys');
+            setSelectedKeys(new Set());
+
+            return;
+        }
+
         setSelectedKeys((current) => {
             const next = new Set(current);
 
@@ -94,15 +142,25 @@ export function useTableSelection<T>({
 
             return next;
         });
-    }, [selectionState, selectableKeys]);
+    }, [scope, selectionState, selectableKeys]);
+
+    const selectMatching = useCallback(() => {
+        if (!allowSelectMatching || resolvedMatchingTotal === null || resolvedMatchingTotal <= selectableKeys.length) {
+            return;
+        }
+
+        setScope('matching');
+        setSelectedKeys(new Set(selectableKeys));
+    }, [allowSelectMatching, resolvedMatchingTotal, selectableKeys]);
 
     const clear = useCallback(() => {
         setSelectedKeys(new Set());
+        setScope('keys');
     }, []);
 
     const selectedRows = useMemo(
-        () => rows.filter((row) => selectedKeys.has(rowKey(row))),
-        [rows, rowKey, selectedKeys],
+        () => rows.filter((row) => isSelected(rowKey(row))),
+        [rows, rowKey, isSelected],
     );
 
     const tableSelection: DataTableSelectionProps<T> = useMemo(
@@ -113,17 +171,39 @@ export function useTableSelection<T>({
             selectionState,
             isRowSelectable,
             rowLabel: rowKey,
+            scope,
+            matchingTotal: resolvedMatchingTotal,
+            displayCount,
+            canSelectMatching,
+            onSelectMatching: selectMatching,
         }),
-        [selectedKeys, toggle, togglePage, selectionState, isRowSelectable, rowKey],
+        [
+            selectedKeys,
+            toggle,
+            togglePage,
+            selectionState,
+            isRowSelectable,
+            rowKey,
+            scope,
+            resolvedMatchingTotal,
+            displayCount,
+            canSelectMatching,
+            selectMatching,
+        ],
     );
 
     return {
         selectedKeys,
         selectedRows,
-        selectedCount: selectedKeys.size,
+        selectedCount: displayCount,
         selectedOnPageCount,
-        hasSelection: selectedKeys.size > 0,
+        hasSelection: displayCount > 0,
         selectionState,
+        scope,
+        isMatching: scope === 'matching',
+        matchingTotal: resolvedMatchingTotal,
+        canSelectMatching,
+        selectMatching,
         isSelected,
         toggle,
         togglePage,

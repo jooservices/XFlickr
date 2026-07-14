@@ -1,0 +1,26 @@
+{
+    "name": "nwidart/crawler",
+    "description": "XFlickr crawl engine (former jooservices/xflickr-crawler)",
+    "authors": [
+        {
+            "name": "Viet Vu",
+            "email": "jooservices@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Crawler\\": "app/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Crawler\\Tests\\": "tests/"
+        }
+    }
+}

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Modules\Spider\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Modules\Spider\Database\Factories\SpiderRunFactory;
 use Modules\Spider\Enums\SpiderRunStatus;
 
 /**
@@ -13,6 +15,14 @@ use Modules\Spider\Enums\SpiderRunStatus;
  */
 class SpiderRun extends Model
 {
+    /** @use HasFactory<SpiderRunFactory> */
+    use HasFactory;
+
+    protected static function newFactory(): SpiderRunFactory
+    {
+        return SpiderRunFactory::new();
+    }
+
     protected $fillable = [
         'connection_key',
         'status',

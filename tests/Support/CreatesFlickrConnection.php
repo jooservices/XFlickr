@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
+use Database\Factories\Crawler\ConnectionFactory;
 use Illuminate\Support\Str;
-use JOOservices\XFlickrCrawler\Models\Connection;
 use Mockery;
+use Modules\Crawler\Models\Connection;
 use Modules\Flickr\Dto\FlickrTokenHealthResult;
 use Modules\Flickr\Services\FlickrTokenHealthService;
 use Tests\TestCase;
@@ -18,33 +19,49 @@ trait CreatesFlickrConnection
      */
     protected function createFlickrConnection(array $attributes = []): Connection
     {
-        $nsid = (string) ($attributes['connection_key'] ?? $attributes['nsid'] ?? 'me@N01');
-        unset($attributes['nsid']);
-
-        $tokenPayload = $attributes['token_payload'] ?? [
-            'oauthToken' => 't',
-            'oauthTokenSecret' => 's',
-            'userNsid' => $nsid,
-        ];
-        unset($attributes['token_payload']);
-
-        if (is_array($tokenPayload)) {
-            $tokenPayload = json_encode($tokenPayload, JSON_THROW_ON_ERROR);
+        if (array_key_exists('nsid', $attributes)) {
+            $attributes['connection_key'] = $attributes['nsid'];
+            unset($attributes['nsid']);
         }
 
-        $publicId = (string) ($attributes['public_id'] ?? (string) Str::uuid());
-        unset($attributes['public_id']);
+        if (! array_key_exists('connection_key', $attributes)) {
+            $attributes['connection_key'] = FlickrNsid::fake();
+        }
 
-        return Connection::query()->forceCreate(array_merge([
-            'public_id' => $publicId,
-            'connection_key' => $nsid,
-            'app_profile' => 'main',
-            'token_payload' => $tokenPayload,
-            'username' => null,
-            'fullname' => null,
-            'is_active' => true,
-            'connected_at' => now(),
-        ], $attributes));
+        $nsid = (string) $attributes['connection_key'];
+
+        if (! array_key_exists('token_payload', $attributes)) {
+            $attributes['token_payload'] = [
+                'oauthToken' => fake()->sha1(),
+                'oauthTokenSecret' => fake()->sha1(),
+                'userNsid' => $nsid,
+            ];
+        }
+
+        if (is_array($attributes['token_payload'])) {
+            $payload = $attributes['token_payload'];
+            if (! isset($payload['userNsid'])) {
+                $payload['userNsid'] = $nsid;
+            }
+            $attributes['token_payload'] = json_encode($payload, JSON_THROW_ON_ERROR);
+        }
+
+        if (! array_key_exists('public_id', $attributes)) {
+            $attributes['public_id'] = (string) Str::uuid();
+        }
+
+        if (! array_key_exists('username', $attributes)) {
+            $attributes['username'] = fake()->userName();
+        }
+
+        if (! array_key_exists('fullname', $attributes)) {
+            $attributes['fullname'] = fake()->name();
+        }
+
+        /** @var Connection $connection */
+        $connection = ConnectionFactory::new()->create($attributes);
+
+        return $connection;
     }
 
     protected function mockFlickrTokenHealth(bool $valid = true, ?string $errorMessage = null): void

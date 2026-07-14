@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Modules\Flickr\Services;
 
-use JOOservices\XFlickrCrawler\Enums\CrawlType;
-use JOOservices\XFlickrCrawler\Facades\FlickrService;
-use JOOservices\XFlickrCrawler\FlickrConnection;
-use JOOservices\XFlickrCrawler\Models\Connection;
-use JOOservices\XFlickrCrawler\Models\CrawlRun;
+use Modules\Crawler\Enums\CrawlType;
+use Modules\Crawler\Facades\FlickrService;
+use Modules\Crawler\FlickrConnection;
+use Modules\Crawler\Models\Connection;
+use Modules\Crawler\Models\CrawlRun;
+use Modules\Crawler\Support\XFlickrConfig;
 use Modules\Flickr\Exceptions\FlickrTokenInvalidException;
+use Modules\Flickr\Exceptions\GlobalCrawlPauseException;
 use RuntimeException;
 
 final class FlickrCrawlService
@@ -39,7 +41,7 @@ final class FlickrCrawlService
         ?int $spiderRunId = null,
         ?int $spiderFrontierItemId = null,
     ): CrawlRun {
-        $this->assertTokenHealthy($connection);
+        $this->assertCrawlAllowed($connection);
 
         return $this->crawlWithoutHealthCheck(
             $connection,
@@ -61,7 +63,7 @@ final class FlickrCrawlService
         ?int $spiderRunId = null,
         ?int $spiderFrontierItemId = null,
     ): array {
-        $this->assertTokenHealthy($connection);
+        $this->assertCrawlAllowed($connection);
 
         $runs = [];
         foreach ($types as $type) {
@@ -100,8 +102,12 @@ final class FlickrCrawlService
         };
     }
 
-    private function assertTokenHealthy(Connection $connection): void
+    private function assertCrawlAllowed(Connection $connection): void
     {
+        if (XFlickrConfig::globalPause()) {
+            throw GlobalCrawlPauseException::active();
+        }
+
         if (! $this->tokenHealth->probe($connection, useCache: true)->valid) {
             throw FlickrTokenInvalidException::forConnection($connection);
         }

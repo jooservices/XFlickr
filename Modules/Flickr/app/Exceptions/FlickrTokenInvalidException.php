@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Flickr\Exceptions;
 
-use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Crawler\Models\Connection;
 use RuntimeException;
 
 final class FlickrTokenInvalidException extends RuntimeException

@@ -8,7 +8,7 @@ use App\Repositories\Crawler\ApiLogQueryRepository;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
-use JOOservices\XFlickrCrawler\Facades\FlickrService;
+use Modules\Crawler\Facades\FlickrService;
 
 final class FlickrRateLimitUsageQueryService
 {

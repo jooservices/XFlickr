@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Modules\Catalog\Support;
 
 use Illuminate\Support\Facades\DB;
-use JOOservices\XFlickrCrawler\Models\Gallery;
-use JOOservices\XFlickrCrawler\Models\Photoset;
-use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
+use Modules\Crawler\Models\Gallery;
+use Modules\Crawler\Models\Photoset;
+use Modules\Crawler\Support\XFlickrConfig;
 
 final class CollectionCatalogPresenter
 {

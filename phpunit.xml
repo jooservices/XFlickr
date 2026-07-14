@@ -4,21 +4,69 @@
          bootstrap="vendor/autoload.php"
          colors="true"
 >
+    <!--
+      Suite layout mirrors XCrawlerII: one testsuite per module, pointing at
+      Modules/{Name}/tests (which contains Unit/ and Feature/). Host suite owns
+      tests/Unit + tests/Feature (architecture, shared app concerns). E2E stays out.
+    -->
     <testsuites>
-        <testsuite name="Unit">
+        <testsuite name="Host">
             <directory>tests/Unit</directory>
-            <directory>Modules/*/tests/Unit</directory>
-        </testsuite>
-        <testsuite name="Feature">
             <directory>tests/Feature</directory>
-            <directory>Modules/*/tests/Feature</directory>
+        </testsuite>
+        <testsuite name="Auth">
+            <directory>Modules/Auth/tests</directory>
+        </testsuite>
+        <testsuite name="Catalog">
+            <directory>Modules/Catalog/tests</directory>
+        </testsuite>
+        <testsuite name="Contacts">
+            <directory>Modules/Contacts/tests</directory>
+        </testsuite>
+        <testsuite name="Crawler">
+            <directory>Modules/Crawler/tests</directory>
+        </testsuite>
+        <testsuite name="Flickr">
+            <directory>Modules/Flickr/tests</directory>
+        </testsuite>
+        <testsuite name="Operations">
+            <directory>Modules/Operations/tests</directory>
+        </testsuite>
+        <testsuite name="Settings">
+            <directory>Modules/Settings/tests</directory>
+        </testsuite>
+        <testsuite name="Spider">
+            <directory>Modules/Spider/tests</directory>
+        </testsuite>
+        <testsuite name="Storage">
+            <directory>Modules/Storage/tests</directory>
+        </testsuite>
+        <testsuite name="Transfer">
+            <directory>Modules/Transfer/tests</directory>
         </testsuite>
     </testsuites>
     <source>
         <include>
             <directory>app</directory>
             <directory>Modules/Auth/app</directory>
+            <directory>Modules/Catalog/app</directory>
+            <directory>Modules/Contacts/app</directory>
+            <directory>Modules/Crawler/app</directory>
+            <directory>Modules/Flickr/app</directory>
+            <directory>Modules/Operations/app</directory>
+            <directory>Modules/Settings/app</directory>
+            <directory>Modules/Spider/app</directory>
+            <directory>Modules/Storage/app</directory>
+            <directory>Modules/Transfer/app</directory>
         </include>
+        <exclude>
+            <directory>Modules/*/app/Providers</directory>
+            <directory>Modules/*/database</directory>
+            <directory>Modules/*/routes</directory>
+            <directory>Modules/*/config</directory>
+            <directory>Modules/*/resources</directory>
+            <directory>app/Providers</directory>
+        </exclude>
     </source>
     <php>
         <ini name="memory_limit" value="512M"/>

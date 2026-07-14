@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Spider\Listeners;
 
-use JOOservices\XFlickrCrawler\Events\ContactsCrawlCompleted;
+use Modules\Crawler\Events\ContactsCrawlCompleted;
 use Modules\Spider\Services\SpiderPlannerService;
 
 final class HandleContactsCrawlCompleted

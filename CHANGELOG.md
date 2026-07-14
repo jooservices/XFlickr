@@ -8,6 +8,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Crawler connection and crawl-run persistence go through repositories (`ConnectionRepository`, `CrawlRunRepository`, `CrawlTargetRepository`, `ApiLogRepository`, plus catalog repos). Crawler Services/Commands/Jobs must not call Eloquent directly (`CrawlerLayeringTest`). Docs/skills/`AGENTS.md` enforce Service → Repository → Model; Prefer model scopes in repositories.
+- Absorbed `jooservices/xflickr-crawler` into in-repo **`Modules/Crawler`**. Engine PSR-4 is `Modules\Crawler\*` (aligned with other modules; was `JOOservices\XFlickrCrawler\*`). Removed the Packagist dependency and Docker bind-mounts of `../XFlickrCrawler`. Host `config/xflickr-crawler.php` remains the override; module config is defaults-only — do not delete the host file as a duplicate.
+- Test coverage: set PCOV `pcov.directory=/var/www/html` so module code under `Modules/` is counted (previously only `app/` was covered).
+- Connection-backed Flickr REST calls always use OAuth (`FlickrClientFactory` wraps clients with force-auth). Intentional anonymous API probes must use a plain `FlickrFactory` client and `RequestOptionsData(authenticated: false)`. Fixes private-photo downloads failing `flickr.photos.getSizes` with misleading `Photo not found`.
+
+### Added
+
+- Maintenance backlog **N-16**: planned Flickr client layering (`jooservices/flickr` → Crawler `FlickrClientFactory` → peers); see `docs/05-maintenance/flickr-client-factory-layering.md`.
+- Sticky app status footer (copyright + live Flickr API quota + Storage quota meters). Storage quota via `GET /api/v1/storage/quota` (OneDrive / Google Drive when available; Google Photos / R2 marked n/a).
+- Operations console panels (**Overview** / **Crawl** / **Transfers**): activity metrics, session activity chart, MySQL/Redis/MongoDB dependency probes, databases panel with live 24h chart, per-account quota/pending, richer fetch-run detail, and Open Horizon link. Spider start/stop moved to Flickr account Expand actions.
+- Dashboard **Databases** panel: MySQL/MongoDB reachability and data size, MySQL connection gauge, top MySQL tables, and a 24h size/connections chart (samples while Dashboard is open). Alerts for unreachable databases and high MySQL connection usage.
+
+### Changed
+
+- Catalog photos: larger table/grid thumbnails (Flickr `_n`), fewer grid columns, and click-to-open in-app photo detail modal (preview, memberships, download status, transfer actions) on Photos, Photoset show, and Favorites.
+- Catalog Photos table (with a Flickr account context): bulk Download / Upload via selected `flickr_photo_ids`, same BulkActionBar pattern as Contacts.
+- Contacts and Photos bulk selection supports Gmail-style **select all matching filters** (server resolves IDs from current search/starred or `owner_nsid`; no thousands of IDs from the browser).
+- Sidebar Live jobs sit in sidebar **content** (above the footer); sidebar footer is an empty matching bottom rail beside the main status footer (copyright + Flickr/Storage quotas). Both footers use a fixed `h-12` rail so heights always align; status meters are single-line.
+- Header **Pause** / **Resume** toggles global crawl pause; **Spider** opens a modal for `spider.enabled` + depth/caps with live crawl-load estimates. Enabling spider also clears global crawl pause. Expand Auto-expand preview includes account-scoped impact. Shared `Modal` (`Header` / `Body` / `Footer`, portals to `document.body`) keeps overlays viewport-centered. Flickr API quota meter lives in the sticky status footer (still also on Dashboard / Connections).
+- Operations page path is `/operations` (`/crawl/operations` redirects). Overview metric tones match Dashboard (slate by default; accent only when active/alert).
+- Operations live updates use short JSON polling only (no long-lived SSE). Dev `php artisan serve` is single-threaded; AppLayout SSE was freezing the whole site.
+- Operations page no longer hosts Spider Start/Stop (read-only process console). Enable spider in Settings → General; control runs from Expand on Flickr accounts.
+- Merged Flickr + Storage connect UX into **Connections** (`/connections`) with provider tabs (**Flickr** | **Storage**) only — credentials and connected accounts share one surface (no Accounts / Apps tabs). Top nav label is Connections. `/flickr/accounts` and Settings flickr/storage tabs redirect there.
+- Settings → General uses `@jooservices/react-config` `ConfigPanel` (collapsible groups, search, expert/technical-key toggles, per-key descriptions); curated catalog includes `description`, `group_label`, `section`, and `tier`. **New** custom config sits in `PageShellIdentity` actions (not inside the panel).
+- Header account menu (avatar initials + name/email) with Profile and Sign out; `/profile` Inertia page to update name, email, and password (current password required for email/password changes). Auth: `ProfileController` → `UpdateProfileRequest` → `UserService::updateProfile`.
+- Documented Laravel module catalog (scope, purpose, features) in `docs/00-architecture/modules.md`; linked from docs hub, `AGENTS.md`, `class-purpose-and-module-map`, and related architecture docs.
+- Frontend API wait affordances: shared `LoadingIndicator` / `PageLoading` / `BusyRegion`; `DataTable` accepts `busy` (page wait when empty, overlay when refetching). Catalog, Operations, Storage browse, and related panels use scoped waits instead of plain “Loading…” text.
+- Test data convention: every Eloquent model has a factory; incidental values use Faker (`CreatesFlickrConnection`, `FlickrNsid`, `database/factories/Crawler/*`); assert from created models. Documented in `docs/04-development/testing.md`, `AGENTS.md`, and `testing-and-quality-gates`.
+- Auth HTTP controllers use intent nouns: `LoginController`, `RegisterController`, `ForgotPasswordController`, `ResetPasswordController` (was Breeze-style `AuthenticatedSessionController` / `RegisteredUserController` / `PasswordResetLinkController` / `NewPasswordController`).
+- Module Feature tests live under `Controllers/` / `Commands/` / `Jobs/` (API under `Controllers/Api/V1/`); module-owned host Feature tests migrated into `Modules/*/tests`; misfiled service/repo Feature tests moved to `Unit/Services` or `Unit/Repositories`.
 - Operations standards parity: constructor DI + thin controllers (`CrawlOperationsService`, `OperationsStreamService`); dashboard uses `TransferCountsQueryService` and Flickr `listConnections()` (one-way `Operations → Flickr|Transfer|Spider`); co-located Operations Feature/Unit tests; architecture guard against reverse Operations imports.
 - Module Artisan commands use `xflickr:<module>:<name>`: `xflickr:auth:reset-password` (was `xflickr:user:password`; class `ResetPasswordCommand`), `xflickr:contacts:full-pass-expand`, `xflickr:flickr:doctor`, `xflickr:flickr:audit-api`, `xflickr:storage:verify-google-photos`. Crawler package commands (`xflickr:dispatch`, `xflickr:prune`, package `xflickr:doctor`) unchanged.
 - `ResetPasswordCommand` delegates to `UserService::resetPassword()` → `UserRepository` (Command → Service → Repository → Model).
@@ -31,6 +61,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Crawl start (account/contact/API/graph expand) returns a flash or 422 when global crawl pause is active instead of a 500 from the crawler package; spider/full-pass `expandRun` no-ops while paused.
+- Sidebar **Live** activity shows only in-flight (`running`) fetch/download/upload jobs; finished snapshot rows stay on Operations.
 - `FlickrCrawlService::crawl()` reuses `crawlWithoutHealthCheck()` (DRY).
 - `PhotoDownloadService::queuePendingPhotos()` batches completed-original lookups (no N+1).
 - Contact graph visibility membership uses O(1) set lookups.

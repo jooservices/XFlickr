@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\Contacts\Listeners;
 
-use JOOservices\XFlickrCrawler\Events\ContactsCrawlCompleted;
 use Modules\Contacts\Services\ContactFullPassPlannerService;
+use Modules\Crawler\Events\ContactsCrawlCompleted;
 
 final class HandleContactsCrawlCompletedForFullPass
 {

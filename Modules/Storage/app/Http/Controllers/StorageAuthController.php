@@ -31,9 +31,9 @@ final class StorageAuthController
         } catch (Throwable $exception) {
             Log::warning('Storage OAuth connect failed.', ['exception' => $exception]);
 
-            return redirect()->route('settings.index', ['tab' => 'storage'])->with(
+            return redirect()->route('connections.index', ['provider' => 'storage'])->with(
                 'error',
-                'Storage OAuth could not be started. Add app credentials for this provider in Settings first.',
+                'Storage OAuth could not be started. Add app credentials for this provider under Connections → Storage → Apps first.',
             );
         }
 
@@ -49,9 +49,9 @@ final class StorageAuthController
         } catch (Throwable $exception) {
             Log::warning('Storage OAuth reauthorize failed.', ['exception' => $exception]);
 
-            return redirect($returnUrl ?? route('settings.index', ['tab' => 'storage']))->with(
+            return redirect($returnUrl ?? route('connections.index', ['provider' => 'storage']))->with(
                 'error',
-                'Storage reauthorization could not be started. Check app credentials in Settings.',
+                'Storage reauthorization could not be started. Check app credentials under Connections → Storage → Apps.',
             );
         }
 
@@ -86,12 +86,12 @@ final class StorageAuthController
         $account = $accounts->find($request->accountId());
 
         if ($account === null) {
-            return redirect()->route('settings.index', ['tab' => 'storage'])->with('error', 'Storage account was not found.');
+            return redirect()->route('connections.index', ['provider' => 'storage'])->with('error', 'Storage account was not found.');
         }
 
         $accounts->disconnect($account);
 
-        return redirect()->route('settings.index', ['tab' => 'storage'])->with('success', 'Storage account disconnected.');
+        return redirect()->route('connections.index', ['provider' => 'storage'])->with('success', 'Storage account disconnected.');
     }
 
     public function setDefault(StorageAccountIdRequest $request, StorageAccountService $accounts): RedirectResponse
@@ -99,12 +99,12 @@ final class StorageAuthController
         $account = $accounts->find($request->accountId());
 
         if ($account === null) {
-            return redirect()->route('settings.index', ['tab' => 'storage'])->with('error', 'Storage account was not found.');
+            return redirect()->route('connections.index', ['provider' => 'storage'])->with('error', 'Storage account was not found.');
         }
 
         $accounts->setDefault($account);
 
-        return redirect()->route('settings.index', ['tab' => 'storage'])->with('success', 'Default storage account updated.');
+        return redirect()->route('connections.index', ['provider' => 'storage'])->with('success', 'Default storage account updated.');
     }
 
     public function connectR2(ConnectR2Request $request, StorageAccountService $accounts, StorageR2ConnectionVerifier $verifier): RedirectResponse
@@ -117,7 +117,7 @@ final class StorageAuthController
         } catch (Throwable $exception) {
             Log::warning('Cloudflare R2 connection verification failed.', ['exception' => $exception]);
 
-            return redirect()->route('settings.index', ['tab' => 'storage'])->with(
+            return redirect()->route('connections.index', ['provider' => 'storage'])->with(
                 'error',
                 'Cloudflare R2 connection failed. Check bucket, endpoint, and API token permissions.',
             );
@@ -129,6 +129,6 @@ final class StorageAuthController
             $credentials,
         );
 
-        return redirect()->route('settings.index', ['tab' => 'storage'])->with('success', 'Cloudflare R2 account connected.');
+        return redirect()->route('connections.index', ['provider' => 'storage'])->with('success', 'Cloudflare R2 account connected.');
     }
 }

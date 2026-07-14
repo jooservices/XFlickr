@@ -5,6 +5,7 @@ import FlickrAccountCardFooter from '@/Components/Flickr/FlickrAccountCardFooter
 import CrawlActionBar from '@/Components/macros/CrawlActionBar';
 import ExpandActionBar from '@/Components/macros/ExpandActionBar';
 import ProviderCard from '@/Components/ProviderCard';
+import { useFlickrTokenHealth } from '@/hooks/useFlickrTokenHealth';
 import { cn } from '@/lib/cn';
 import { crawlSubjectForAccount } from '@/lib/crawlSubject';
 import { flickrAccountPath } from '@/lib/flickrAccount';
@@ -21,29 +22,38 @@ const NAV_LINKS = [
 interface AccountOpsCardProps {
     account: FlickrAccountSummary;
     summary: CrawlSummary | null;
+    onReconnect?: () => void;
 }
 
-function accountStatusBadge(account: FlickrAccountSummary) {
-    if (account.is_active) {
-        return (
-            <span className="rounded bg-cyan-50 px-2 py-0.5 text-xs font-medium text-cyan-800">Active</span>
-        );
-    }
+function statusBadge(label: string, className: string) {
+    return <span className={`rounded px-2 py-0.5 text-xs font-medium ${className}`}>{label}</span>;
+}
 
+function accountStatusBadge(account: FlickrAccountSummary, tokenValid: boolean | null) {
     return (
-        <Button
-            variant="link"
-            size="xs"
-            onClick={() => router.post('/flickr/activate', { connection_key: account.nsid })}
-            className="px-0"
-        >
-            Set active
-        </Button>
+        <>
+            {account.is_active ? (
+                statusBadge('Active', 'bg-cyan-50 text-cyan-800')
+            ) : (
+                <Button
+                    variant="link"
+                    size="xs"
+                    onClick={() => router.post('/flickr/activate', { connection_key: account.nsid })}
+                    className="px-0"
+                >
+                    Set active
+                </Button>
+            )}
+            {account.is_connected && tokenValid === false
+                ? statusBadge('Token invalid — Reconnect', 'bg-amber-50 text-amber-800')
+                : null}
+        </>
     );
 }
 
-export default function AccountOpsCard({ account, summary }: AccountOpsCardProps) {
+export default function AccountOpsCard({ account, summary, onReconnect }: AccountOpsCardProps) {
     const displayName = account.username ?? account.nsid;
+    const tokenValid = useFlickrTokenHealth(account);
 
     return (
         <ProviderCard
@@ -62,8 +72,14 @@ export default function AccountOpsCard({ account, summary }: AccountOpsCardProps
                 </span>
             }
             subtitle={account.fullname ?? undefined}
-            isConnected
-            badges={accountStatusBadge(account)}
+            isConnected={account.is_connected}
+            onConnect={onReconnect}
+            onDisconnect={
+                account.is_connected
+                    ? () => router.post('/flickr/disconnect', { connection_key: account.nsid })
+                    : undefined
+            }
+            badges={accountStatusBadge(account, tokenValid)}
             footer={
                 summary ? (
                     <FlickrAccountCardFooter summary={summary} />
@@ -72,16 +88,28 @@ export default function AccountOpsCard({ account, summary }: AccountOpsCardProps
                 )
             }
             extraHeaderActions={
-                <>
-                    <CrawlActionBar
-                        scope="account"
-                        accountPublicId={account.public_id}
-                        subjectLabel={crawlSubjectForAccount(account)}
-                    />
-                    <ExpandActionBar accountPublicId={account.public_id} />
-                </>
+                account.is_connected ? (
+                    <>
+                        <CrawlActionBar
+                            scope="account"
+                            accountPublicId={account.public_id}
+                            subjectLabel={crawlSubjectForAccount(account)}
+                        />
+                        <ExpandActionBar accountPublicId={account.public_id} />
+                    </>
+                ) : null
             }
         >
+            <dl className="mb-3 grid gap-1 text-xs text-slate-500 sm:grid-cols-2">
+                <div>
+                    <dt className="inline">NSID: </dt>
+                    <dd className="inline">{account.nsid}</dd>
+                </div>
+                <div>
+                    <dt className="inline">App profile: </dt>
+                    <dd className="inline">{account.app_profile ?? 'main'}</dd>
+                </div>
+            </dl>
             <nav className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
                 {NAV_LINKS.map((link) => (
                     <Link

@@ -24,7 +24,7 @@ Browse, sync, and manage files uploaded to connected cloud storage accounts.
 
 1. Configure provider credentials in [Settings](settings.md) → Storage tab
 2. Connect a storage account
-3. Run [Upload](flickr-accounts.md) to push local files first
+3. Run [Upload](connections.md) to push local files first
 
 ## Related
 

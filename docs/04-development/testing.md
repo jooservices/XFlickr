@@ -37,8 +37,49 @@ Use `Tests\Concerns\SafeRefreshDatabase` in feature tests (not raw `Illuminate\F
 
 ## Writing tests
 
-- Feature tests in `tests/Feature/` for HTTP, jobs, and integration flows.
-- Unit tests in `tests/Unit/` for isolated logic and DTO hydration.
+Module-owned tests live under `Modules/{Name}/tests`. Host `tests/` keeps shared/cross-cutting suites only.
+
+**Feature** (HTTP, Artisan, jobs — use `SafeRefreshDatabase`):
+
+```
+Modules/{M}/tests/Feature/Controllers/<ControllerClass>Test.php
+Modules/{M}/tests/Feature/Controllers/Api/V1/<ControllerClass>Test.php   # API name collisions
+Modules/{M}/tests/Feature/Commands/<CommandClass>Test.php
+Modules/{M}/tests/Feature/Jobs/<JobClass>Test.php
+```
+
+**Unit** (services, repositories, architecture):
+
+```
+Modules/{M}/tests/Unit/Services/<ServiceClass>Test.php
+Modules/{M}/tests/Unit/Repositories/<RepositoryClass>Test.php
+tests/Unit/…   # host-shared (Architecture, Http/Requests, Support, Repositories)
+```
+
+Auth HTTP controllers use intent nouns: `LoginController`, `RegisterController`, `ForgotPasswordController`, `ResetPasswordController`.
+
+### Test data (factories + Faker)
+
+**Non-negotiable for new/changed tests:**
+
+1. **Every Eloquent model** (host `app/Models`, `Modules/*/app/Models`) **must have a factory** (`HasFactory` + `Modules/{M}/database/factories/` or `database/factories/`).
+2. **Incidental attributes use Faker** — prefer `Model::factory()->create()` / `fake()` / `FlickrNsid::fake()`. Do not hardcode NSIDs, emails, usernames, or paths unless the literal *is* the scenario under test (e.g. forbidden production password, seeder admin email from config).
+3. **Assert from the model** — `$connection->connection_key`, `$user->email`, never re-type the same hardcoded string in expectations.
+4. **Flickr connections** — use `CreatesFlickrConnection` (Faker defaults). Pass attribute overrides only when the test needs a specific value.
+5. **Crawler package models** (no vendor `HasFactory`) — use app-side factories under `database/factories/Crawler/` (`ConnectionFactory`, `ContactFactory`, `PhotoFactory`, …) or `CreatesFlickrConnection` for connections.
+6. **Scenario graphs** (A knows B) — generate each NSID with Faker into variables; wire relationships with those variables.
+
+```php
+// Prefer
+$connection = $this->createFlickrConnection();
+$response->assertInertia(fn ($page) => $page
+    ->where('accounts.0.nsid', $connection->connection_key));
+
+// Avoid
+$connection = $this->createFlickrConnection(['connection_key' => 'me@N01']);
+$response->assertInertia(fn ($page) => $page->where('accounts.0.nsid', 'me@N01'));
+```
+
 - Shared JSON fixtures: `tests/Fixtures/` loaded via `TestCase::loadFixture()`.
 - Use `Event::fake()` for domain event assertions.
 - Mock external APIs (Flickr, cloud storage) — do not call real services in tests.
@@ -53,7 +94,9 @@ npm run test:e2e      # Playwright (requires dev stack + built assets)
 
 ## Coverage ratchet
 
-CI enforces a **60%** statement coverage minimum via `bash scripts/test.sh gate:ci`.
+CI enforces a **95%** statement coverage minimum via `bash scripts/test.sh gate:ci`.
+
+PHPUnit suites mirror XCrawlerII: **one testsuite per module** (`Modules/{Name}/tests` containing `Unit/` + `Feature/`), plus a **Host** suite for `tests/Unit` and `tests/Feature`.
 
 ## Related
 

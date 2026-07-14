@@ -97,13 +97,13 @@ parameters:
 			path: Modules/Settings/app/Repositories/ConfigEntryRepository.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\ApiLog\:\:\$hour_start\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\ApiLog\:\:\$hour_start\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Repositories/Crawler/ApiLogQueryRepository.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\ApiLog\:\:\$requests\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\ApiLog\:\:\$requests\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Repositories/Crawler/ApiLogQueryRepository.php
@@ -175,43 +175,43 @@ parameters:
 			path: app/Repositories/Crawler/CatalogQueryRepository.php
 
 		-
-			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<JOOservices\\XFlickrCrawler\\Models\\Favorite\> given\.$#'
+			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<Modules\\Crawler\\Models\\Favorite\> given\.$#'
 			identifier: argument.type
 			count: 1
 			path: app/Repositories/Crawler/CatalogQueryRepository.php
 
 		-
-			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<JOOservices\\XFlickrCrawler\\Models\\Gallery\> given\.$#'
+			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<Modules\\Crawler\\Models\\Gallery\> given\.$#'
 			identifier: argument.type
 			count: 1
 			path: app/Repositories/Crawler/CatalogQueryRepository.php
 
 		-
-			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<JOOservices\\XFlickrCrawler\\Models\\Photo\> given\.$#'
+			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<Modules\\Crawler\\Models\\Photo\> given\.$#'
 			identifier: argument.type
 			count: 1
 			path: app/Repositories/Crawler/CatalogQueryRepository.php
 
 		-
-			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<JOOservices\\XFlickrCrawler\\Models\\Photoset\> given\.$#'
+			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<Modules\\Crawler\\Models\\Photoset\> given\.$#'
 			identifier: argument.type
 			count: 1
 			path: app/Repositories/Crawler/CatalogQueryRepository.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$nsid\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$nsid\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Repositories/Crawler/ContactQueryRepository.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$realname\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$realname\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Repositories/Crawler/ContactQueryRepository.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$username\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$username\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Repositories/Crawler/ContactQueryRepository.php
@@ -223,13 +223,13 @@ parameters:
 			path: app/Repositories/Crawler/ContactQueryRepository.php
 
 		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,JOOservices\\XFlickrCrawler\\Models\\Contact\>\:\:map\(\) contains unresolvable type\.$#'
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Modules\\Crawler\\Models\\Contact\>\:\:map\(\) contains unresolvable type\.$#'
 			identifier: argument.unresolvableType
 			count: 1
 			path: app/Repositories/Crawler/ContactQueryRepository.php
 
 		-
-			message: '#^Return type of call to method Illuminate\\Database\\Eloquent\\Collection\<int,JOOservices\\XFlickrCrawler\\Models\\Contact\>\:\:map\(\) contains unresolvable type\.$#'
+			message: '#^Return type of call to method Illuminate\\Database\\Eloquent\\Collection\<int,Modules\\Crawler\\Models\\Contact\>\:\:map\(\) contains unresolvable type\.$#'
 			identifier: method.unresolvableReturnType
 			count: 1
 			path: app/Repositories/Crawler/ContactQueryRepository.php
@@ -259,7 +259,7 @@ parameters:
 			path: app/Repositories/Crawler/CrawlRunQueryRepository.php
 
 		-
-			message: '#^Method App\\Repositories\\Crawler\\CrawlTargetQueryRepository\:\:groupedByRunIds\(\) should return Illuminate\\Support\\Collection\<int, Illuminate\\Support\\Collection\<int, JOOservices\\XFlickrCrawler\\Models\\CrawlTarget\>\> but returns Illuminate\\Database\\Eloquent\\Collection\<\(int\|string\), Illuminate\\Database\\Eloquent\\Collection\<int, JOOservices\\XFlickrCrawler\\Models\\CrawlTarget\>\>\.$#'
+			message: '#^Method App\\Repositories\\Crawler\\CrawlTargetQueryRepository\:\:groupedByRunIds\(\) should return Illuminate\\Support\\Collection\<int, Illuminate\\Support\\Collection\<int, Modules\\Crawler\\Models\\CrawlTarget\>\> but returns Illuminate\\Database\\Eloquent\\Collection\<\(int\|string\), Illuminate\\Database\\Eloquent\\Collection\<int, Modules\\Crawler\\Models\\CrawlTarget\>\>\.$#'
 			identifier: return.type
 			count: 1
 			path: app/Repositories/Crawler/CrawlTargetQueryRepository.php
@@ -434,43 +434,43 @@ parameters:
 			path: Modules/Transfer/app/Repositories/TransferItemRepository.php
 
 		-
-			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<JOOservices\\XFlickrCrawler\\Models\\CrawlRun\> given\.$#'
+			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<Modules\\Crawler\\Models\\CrawlRun\> given\.$#'
 			identifier: argument.type
 			count: 1
 			path: Modules/Flickr/app/Services/CrawlStatusQueryService.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$api_calls\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\CrawlRun\:\:\$api_calls\.$#'
 			identifier: property.notFound
 			count: 1
 			path: Modules/Operations/app/Services/DashboardService.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$completed_at\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\CrawlRun\:\:\$completed_at\.$#'
 			identifier: property.notFound
 			count: 1
 			path: Modules/Operations/app/Services/DashboardService.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$contacts_discovered\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\CrawlRun\:\:\$contacts_discovered\.$#'
 			identifier: property.notFound
 			count: 1
 			path: Modules/Operations/app/Services/DashboardService.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$failed_reason\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\CrawlRun\:\:\$failed_reason\.$#'
 			identifier: property.notFound
 			count: 1
 			path: Modules/Operations/app/Services/DashboardService.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$photos_discovered\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\CrawlRun\:\:\$photos_discovered\.$#'
 			identifier: property.notFound
 			count: 1
 			path: Modules/Operations/app/Services/DashboardService.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$started_at\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\CrawlRun\:\:\$started_at\.$#'
 			identifier: property.notFound
 			count: 1
 			path: Modules/Operations/app/Services/DashboardService.php
@@ -500,31 +500,31 @@ parameters:
 			path: Modules/Operations/app/Services/DashboardService.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlRun\:\:\$photos_discovered\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\CrawlRun\:\:\$photos_discovered\.$#'
 			identifier: property.notFound
 			count: 1
 			path: Modules/Contacts/app/Services/ContactCatalogDetailStatsService.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\CrawlTarget\:\:\$last_result_count\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\CrawlTarget\:\:\$last_result_count\.$#'
 			identifier: property.notFound
 			count: 1
 			path: Modules/Contacts/app/Services/ContactCrawlStateService.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$nsid\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$nsid\.$#'
 			identifier: property.notFound
 			count: 6
 			path: Modules/Contacts/app/Services/ContactListPresenter.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$realname\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$realname\.$#'
 			identifier: property.notFound
 			count: 1
 			path: Modules/Contacts/app/Services/ContactListPresenter.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$username\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$username\.$#'
 			identifier: property.notFound
 			count: 1
 			path: Modules/Contacts/app/Services/ContactListPresenter.php
@@ -566,31 +566,31 @@ parameters:
 			path: Modules/Flickr/app/Services/FlickrAppProfileService.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Photo\:\:\$flickr_photo_id\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Photo\:\:\$flickr_photo_id\.$#'
 			identifier: property.notFound
 			count: 2
 			path: Modules/Flickr/app/Services/FlickrPhotoSizeResolver.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Photo\:\:\$raw_payload\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Photo\:\:\$raw_payload\.$#'
 			identifier: property.notFound
 			count: 2
 			path: Modules/Flickr/app/Services/FlickrPhotoSizeResolver.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Photo\:\:\$raw_payload\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Photo\:\:\$raw_payload\.$#'
 			identifier: property.notFound
 			count: 2
 			path: Modules/Transfer/app/Services/PhotoDownloadExecutionService.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Photo\:\:\$flickr_photo_id\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Photo\:\:\$flickr_photo_id\.$#'
 			identifier: property.notFound
 			count: 3
 			path: Modules/Transfer/app/Services/PhotoDownloadService.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Photo\:\:\$owner_nsid\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Photo\:\:\$owner_nsid\.$#'
 			identifier: property.notFound
 			count: 4
 			path: Modules/Transfer/app/Services/PhotoDownloadService.php
@@ -620,15 +620,15 @@ parameters:
 			path: Modules/Transfer/app/Services/PhotoDownloadService.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Photo\:\:\$flickr_photo_id\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Photo\:\:\$flickr_photo_id\.$#'
 			identifier: property.notFound
 			count: 3
 			path: Modules/Transfer/app/Services/PhotoUploadService.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Photo\:\:\$owner_nsid\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Photo\:\:\$owner_nsid\.$#'
 			identifier: property.notFound
-			count: 3
+			count: 4
 			path: Modules/Transfer/app/Services/PhotoUploadService.php
 
 
@@ -789,58 +789,52 @@ parameters:
 			path: Modules/Transfer/app/Services/TransferProgressQueryService.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Gallery\:\:\$raw_payload\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Gallery\:\:\$raw_payload\.$#'
 			identifier: property.notFound
 			count: 1
 			path: Modules/Catalog/app/Support/CollectionCatalogPresenter.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Photoset\:\:\$raw_payload\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Photoset\:\:\$raw_payload\.$#'
 			identifier: property.notFound
 			count: 1
 			path: Modules/Catalog/app/Support/CollectionCatalogPresenter.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$family\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$family\.$#'
 			identifier: property.notFound
 			count: 1
 			path: Modules/Flickr/app/Support/ContactPresenter.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$friend\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$friend\.$#'
 			identifier: property.notFound
 			count: 1
 			path: Modules/Flickr/app/Support/ContactPresenter.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$nsid\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$nsid\.$#'
 			identifier: property.notFound
 			count: 1
 			path: Modules/Flickr/app/Support/ContactPresenter.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$raw_payload\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$raw_payload\.$#'
 			identifier: property.notFound
 			count: 1
 			path: Modules/Flickr/app/Support/ContactPresenter.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$realname\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$realname\.$#'
 			identifier: property.notFound
 			count: 1
 			path: Modules/Flickr/app/Support/ContactPresenter.php
 
 		-
-			message: '#^Access to an undefined property JOOservices\\XFlickrCrawler\\Models\\Contact\:\:\$username\.$#'
+			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$username\.$#'
 			identifier: property.notFound
 			count: 1
 			path: Modules/Flickr/app/Support/ContactPresenter.php
-
-		-
-			message: '#^Call to function is_object\(\) with object will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: Modules/Flickr/app/Support/FlickrPhotoUrlHelper.php
 
 		-
 			message: '#^Cannot call method toIso8601String\(\) on string\.$#'

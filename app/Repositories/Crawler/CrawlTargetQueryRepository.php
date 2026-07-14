@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Repositories\Crawler;
 
 use Illuminate\Support\Collection;
-use JOOservices\XFlickrCrawler\Enums\CrawlStatus;
-use JOOservices\XFlickrCrawler\Enums\TaskType;
-use JOOservices\XFlickrCrawler\Models\CrawlRun;
-use JOOservices\XFlickrCrawler\Models\CrawlTarget;
+use Modules\Crawler\Enums\CrawlStatus;
+use Modules\Crawler\Enums\TaskType;
+use Modules\Crawler\Models\CrawlRun;
+use Modules\Crawler\Models\CrawlTarget;
 
 final class CrawlTargetQueryRepository
 {

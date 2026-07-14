@@ -8,9 +8,14 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class OperationsStreamService
 {
-    private const int DEFAULT_MAX_STREAM_SECONDS = 60;
+    /**
+     * Dev uses single-worker `php artisan serve`. A long-lived SSE loop monopolizes that worker
+     * and freezes the whole app (including AppLayout, which used to open this stream on every page).
+     * Emit one snapshot and close; the UI polls `/api/v1/operations/snapshot` instead.
+     */
+    private const int DEFAULT_MAX_STREAM_SECONDS = 1;
 
-    private const int DEFAULT_POLL_INTERVAL_SECONDS = 5;
+    private const int DEFAULT_POLL_INTERVAL_SECONDS = 0;
 
     public function __construct(
         private readonly OperationsSnapshotService $operations,

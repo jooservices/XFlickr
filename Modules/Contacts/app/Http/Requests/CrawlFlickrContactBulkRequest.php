@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace Modules\Contacts\Http\Requests;
 
+use App\Http\Requests\Concerns\ResolvesBulkSelectAll;
 use App\Http\Requests\Concerns\ResolvesCrawlTypes;
 use App\Http\Requests\Request;
 
 final class CrawlFlickrContactBulkRequest extends Request
 {
+    use ResolvesBulkSelectAll;
     use ResolvesCrawlTypes;
 
     protected function prepareForValidation(): void
     {
         $this->prepareCrawlTypesForValidation();
+        $this->prepareBulkSelectAllForValidation();
 
         $contactNsids = $this->input('contact_nsids');
         if (is_string($contactNsids)) {
@@ -28,6 +31,7 @@ final class CrawlFlickrContactBulkRequest extends Request
     {
         return [
             ...$this->crawlTypeRules(),
+            ...$this->bulkSelectAllRules(),
             'contact_nsids' => ['sometimes', 'array'],
             'contact_nsids.*' => ['string'],
         ];

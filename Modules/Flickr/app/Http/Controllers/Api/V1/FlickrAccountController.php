@@ -6,8 +6,9 @@ namespace Modules\Flickr\Http\Controllers\Api\V1;
 
 use Illuminate\Http\JsonResponse;
 use JOOservices\LaravelController\Http\Controllers\BaseApiController;
-use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Crawler\Models\Connection;
 use Modules\Flickr\Exceptions\FlickrTokenInvalidException;
+use Modules\Flickr\Exceptions\GlobalCrawlPauseException;
 use Modules\Flickr\Http\Requests\CrawlFlickrAccountRequest;
 use Modules\Flickr\Http\Resources\CrawlRunAcceptedResource;
 use Modules\Flickr\Http\Resources\FlickrAccountResource;
@@ -34,7 +35,7 @@ final class FlickrAccountController extends BaseApiController
                 $request->crawlTypes(),
                 $request->subjectNsid(),
             );
-        } catch (FlickrTokenInvalidException $exception) {
+        } catch (FlickrTokenInvalidException|GlobalCrawlPauseException $exception) {
             return $this->unprocessable($exception->getMessage());
         }
 

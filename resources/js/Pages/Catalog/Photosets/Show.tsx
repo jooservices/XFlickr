@@ -1,11 +1,13 @@
 import { Head } from '@inertiajs/react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
+import BusyRegion from '@/Components/BusyRegion';
 import Card from '@/Components/Card';
 import ContactNsidLinks from '@/Components/ContactNsidLinks';
 import CrawlActionBar from '@/Components/CrawlActionBar';
 import FlickrPhotosetIdLinks from '@/Components/FlickrPhotosetIdLinks';
 import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/layout/page-shell';
+import PhotoDetailModal from '@/Components/PhotoDetailModal';
 import PhotoGrid from '@/Components/PhotoGrid';
 import { useRemoteDataTable } from '@/hooks/useRemoteDataTable';
 import AppLayout from '@/Layouts/AppLayout';
@@ -23,6 +25,7 @@ export default function CatalogPhotosetShow({ account, photoset }: Props) {
     const title = photoset.title?.trim() || 'Untitled';
     const coverUrl = flickrCollectionThumbnailUrl(photoset);
     const photoCount = photoset.photo_count ?? 0;
+    const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
 
     const filters = useMemo(() => ({ photoset_id: String(photoset.id) }), [photoset.id]);
 
@@ -36,7 +39,14 @@ export default function CatalogPhotosetShow({ account, photoset }: Props) {
     });
 
     const loadedTotal = meta?.total ?? photoCount;
-    const showInitialLoading = loading && photos.length === 0;
+
+    const liveSelectedPhoto = useMemo(() => {
+        if (selectedPhoto === null) {
+            return null;
+        }
+
+        return photos.find((photo) => photo.id === selectedPhoto.id) ?? selectedPhoto;
+    }, [photos, selectedPhoto]);
 
     return (
         <AppLayout>
@@ -118,20 +128,25 @@ export default function CatalogPhotosetShow({ account, photoset }: Props) {
                 <section className="space-y-3">
                     <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Photos</h2>
 
-                    {showInitialLoading ? (
-                        <p className="text-sm text-slate-500">Loading…</p>
-                    ) : (
+                    <BusyRegion busy={loading} empty={photos.length === 0}>
                         <PhotoGrid
                             photos={photos}
                             accountPublicId={account?.public_id}
                             hasMore={hasMore}
                             loadingMore={loadingMore}
                             onLoadMore={loadMore}
+                            onPhotoClick={setSelectedPhoto}
                         />
-                    )}
+                    </BusyRegion>
                 </section>
                 </PageShellCanvas>
             </PageShell>
+
+            <PhotoDetailModal
+                photo={liveSelectedPhoto}
+                accountPublicId={account?.public_id}
+                onClose={() => setSelectedPhoto(null)}
+            />
         </AppLayout>
     );
 }

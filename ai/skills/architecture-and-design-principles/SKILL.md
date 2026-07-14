@@ -16,9 +16,9 @@ New features, refactors, or when unsure where code belongs.
 ## Rules
 
 - **SRP:** Controllers route; Services decide; Repositories query; Jobs delegate.
-- **DIP:** Services depend on Repository abstractions, not Eloquent directly.
+- **DIP:** Services depend on Repositories — **never** call Eloquent/`Model::query()` from a Service, Command, or Job. Repositories own persistence; model scopes belong on Models and are invoked from Repositories.
 - **YAGNI:** No abstractions for one-time operations.
-- **Package boundary:** Crawl logic stays in `jooservices/xflickr-crawler` — do not reimplement fetchers.
+- **Package boundary:** Crawl logic stays in `Modules/Crawler` (`Modules\Crawler\*`) — do not reimplement fetchers.
 - **Manual crawl only:** Never add scheduled auto-spidering.
 - Stop and ask when requirements conflict with existing architecture.
 

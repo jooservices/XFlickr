@@ -7,12 +7,12 @@ namespace Modules\Contacts\Services;
 use App\Repositories\Crawler\ConnectionContactQueryRepository;
 use App\Repositories\Crawler\ContactQueryRepository;
 use App\Repositories\Crawler\SubjectContactQueryRepository;
-use JOOservices\XFlickrCrawler\Enums\CrawlRunStatus;
-use JOOservices\XFlickrCrawler\Models\Connection;
-use JOOservices\XFlickrCrawler\Models\Contact;
-use JOOservices\XFlickrCrawler\Models\CrawlRun;
 use Modules\Contacts\Repositories\ContactAnnotationRepository;
 use Modules\Contacts\Support\ContactGraphRuntimeConfig;
+use Modules\Crawler\Enums\CrawlRunStatus;
+use Modules\Crawler\Models\Connection;
+use Modules\Crawler\Models\Contact;
+use Modules\Crawler\Models\CrawlRun;
 
 final class ContactGraphQueryService
 {

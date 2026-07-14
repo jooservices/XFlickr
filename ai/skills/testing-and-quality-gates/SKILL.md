@@ -37,17 +37,23 @@ php artisan test                    # when .env points at dev
 
 ```bash
 bash scripts/test.sh gate:test -- # not supported; use:
-./scripts/test-docker.sh --filter=StorageBrowseTest
+./scripts/test-docker.sh --filter=LoginControllerTest
 ```
 
 ## Writing tests
 
-- Feature tests: `tests/Feature/` and `Modules/*/tests/Feature/` — use `Tests\Concerns\SafeRefreshDatabase`, not raw `RefreshDatabase`
-- Unit tests: `tests/Unit/` and `Modules/*/tests/Unit/` for isolated logic (module services under `Modules/{Name}/Tests/Unit`)
-- Module Auth example: `Modules/Auth/tests/Unit/Services/*`, `Modules/Auth/tests/Feature/*`
+- Feature: `Modules/{M}/tests/Feature/{Controllers,Commands,Jobs}/` — Controllers mirror app path (`Api/V1/` when needed). Use `SafeRefreshDatabase`, not raw `RefreshDatabase`.
+- Unit: `Modules/{M}/tests/Unit/{Services,Repositories}/` and host `tests/Unit/` for shared architecture/support.
+- Host `tests/Feature/` only for cross-module / non-module suites.
+- Auth HTTP: `LoginController`, `RegisterController`, `ForgotPasswordController`, `ResetPasswordController`; Auth Feature examples under `Modules/Auth/tests/Feature/Controllers/*` and `…/Commands/*`.
+- **Factories + Faker (required):** every app/module Eloquent model has a factory. Incidental test data uses `Model::factory()`, `fake()`, or `Tests\Support\FlickrNsid::fake()` — not hardcoded NSIDs/emails. Assert from created models (`$connection->connection_key`). Use `CreatesFlickrConnection` for Flickr connections. Crawler models: `database/factories/Crawler/*`. Hardcode only when the literal is the scenario (admin seeder email, forbidden production password).
 - Mock Flickr and cloud storage APIs — no real external calls
 - Use test stack only (`docker-compose.test.yml` via `scripts/test.sh`)
-- Prefer happy / unhappy / security / edge cases for Services (rate limits, production password bans, idempotent seeders)
+- Prefer happy / unhappy / weird / security cases for every public Service method (rate limits, production password bans, idempotent seeders, token redaction)
+- PHPUnit: one **testsuite per module** (`Modules/{Name}/tests` with `Unit/` + `Feature/`); Host suite owns `tests/Unit` + `tests/Feature`
+- Coverage floor: **95%** statement coverage (`TEST_COVERAGE_MIN`, `gate:ci`)
+- Lint: zero ESLint warnings (`npm run lint --max-warnings 0`); Pint/PHPStan/Deptrac must be clean
+- Filter example: `./scripts/test-docker.sh --filter=LoginControllerTest`
 
 ## Related skills
 

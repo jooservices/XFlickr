@@ -7,9 +7,9 @@ namespace App\Repositories\Crawler;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use JOOservices\XFlickrCrawler\Models\ConnectionContact;
-use JOOservices\XFlickrCrawler\Models\Photo;
-use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
+use Modules\Crawler\Models\ConnectionContact;
+use Modules\Crawler\Models\Photo;
+use Modules\Crawler\Support\XFlickrConfig;
 
 final class PhotoQueryRepository
 {
@@ -56,6 +56,24 @@ final class PhotoQueryRepository
         return Photo::query()
             ->where('flickr_photo_id', $flickrPhotoId)
             ->first($columns);
+    }
+
+    /**
+     * @param  list<string>  $flickrPhotoIds
+     * @param  list<string>  $columns
+     * @return Collection<int, Photo>
+     */
+    public function listByFlickrPhotoIds(
+        array $flickrPhotoIds,
+        array $columns = ['id', 'flickr_photo_id', 'owner_nsid'],
+    ): Collection {
+        if ($flickrPhotoIds === []) {
+            return collect();
+        }
+
+        return Photo::query()
+            ->whereIn('flickr_photo_id', $flickrPhotoIds)
+            ->get($columns);
     }
 
     public function countAll(): int

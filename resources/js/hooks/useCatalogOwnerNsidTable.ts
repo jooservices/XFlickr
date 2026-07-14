@@ -14,12 +14,13 @@ export function useCatalogOwnerNsidTable<T>(
     filterKey: OwnerNsidFilterKey,
     tableOptions: Omit<UseRemoteDataTableOptions, 'filters'>,
 ) {
-    const { draft, setDraft, filters, apply, clear, hasActiveFilter } = useOwnerNsidFilter(filterKey);
+    const { draft, setDraft, filters, apply, clear, hasActiveFilter, applied } = useOwnerNsidFilter(filterKey);
 
     const table = useRemoteDataTable<T>({
         ...tableOptions,
         filters,
     });
+    const { applyFilters: applyTableFilters } = table;
 
     const filterFormProps: CatalogOwnerNsidFilterProps = useMemo(
         () => ({
@@ -27,20 +28,22 @@ export function useCatalogOwnerNsidTable<T>(
             onChange: setDraft,
             onSubmit: () => {
                 apply();
-                table.applyFilters();
+                applyTableFilters();
             },
             onClear: hasActiveFilter
                 ? () => {
                       clear();
-                      table.applyFilters();
+                      applyTableFilters();
                   }
                 : undefined,
         }),
-        [apply, clear, draft, hasActiveFilter, setDraft, table.applyFilters],
+        [apply, applyTableFilters, clear, draft, hasActiveFilter, setDraft],
     );
 
     return {
         ...table,
+        filters,
+        appliedOwnerNsid: applied,
         filterFormProps,
     };
 }

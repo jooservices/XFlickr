@@ -9,12 +9,12 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use JOOservices\XFlickrCrawler\Models\ConnectionContact;
-use JOOservices\XFlickrCrawler\Models\Favorite;
-use JOOservices\XFlickrCrawler\Models\Gallery;
-use JOOservices\XFlickrCrawler\Models\Photo;
-use JOOservices\XFlickrCrawler\Models\Photoset;
-use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
+use Modules\Crawler\Models\ConnectionContact;
+use Modules\Crawler\Models\Favorite;
+use Modules\Crawler\Models\Gallery;
+use Modules\Crawler\Models\Photo;
+use Modules\Crawler\Models\Photoset;
+use Modules\Crawler\Support\XFlickrConfig;
 
 final class CatalogQueryRepository
 {

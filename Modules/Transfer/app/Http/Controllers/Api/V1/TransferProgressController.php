@@ -6,7 +6,7 @@ namespace Modules\Transfer\Http\Controllers\Api\V1;
 
 use Illuminate\Http\JsonResponse;
 use JOOservices\LaravelController\Http\Controllers\BaseApiController;
-use JOOservices\XFlickrCrawler\Models\Connection;
+use Modules\Crawler\Models\Connection;
 use Modules\Transfer\Http\Requests\Api\ListTransferBatchesRequest;
 use Modules\Transfer\Http\Resources\TransferBatchDetailResource;
 use Modules\Transfer\Http\Resources\TransferBatchResource;

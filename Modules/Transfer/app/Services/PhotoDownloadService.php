@@ -6,8 +6,8 @@ namespace Modules\Transfer\Services;
 
 use App\Repositories\Crawler\PhotoQueryRepository;
 use Illuminate\Support\Collection;
-use JOOservices\XFlickrCrawler\Models\Connection;
-use JOOservices\XFlickrCrawler\Models\Photo;
+use Modules\Crawler\Models\Connection;
+use Modules\Crawler\Models\Photo;
 use Modules\Transfer\Enums\TransferType;
 use Modules\Transfer\Jobs\DownloadPhotoJob;
 use Modules\Transfer\Jobs\FanOutTransferBatchJob;
@@ -28,13 +28,29 @@ final class PhotoDownloadService
 
     /**
      * @param  list<string>  $contactNsids
+     * @param  list<string>  $flickrPhotoIds
      */
     public function queueFromInput(
         Connection $connection,
         ?string $flickrPhotoId = null,
         ?string $contactNsid = null,
         array $contactNsids = [],
+        array $flickrPhotoIds = [],
     ): TransferQueueResult {
+        if ($flickrPhotoIds !== []) {
+            $queuedBatches = $this->queuePhotoDownloads($connection, $flickrPhotoIds);
+            $selectedCount = count($flickrPhotoIds);
+
+            return TransferQueueResult::success(
+                $queuedBatches === 0
+                    ? 'No download queued for selected photo(s).'
+                    : ($selectedCount === 1
+                        ? 'Photo download queued.'
+                        : "{$queuedBatches} download batch(es) queued for {$selectedCount} selected photo(s)."),
+                $queuedBatches,
+            );
+        }
+
         if ($flickrPhotoId !== null && $flickrPhotoId !== '') {
             $queuedBatches = $this->queuePhotoDownload($connection, $flickrPhotoId);
 
@@ -99,6 +115,27 @@ final class PhotoDownloadService
         }
 
         return $this->queuePendingPhotos($connection, collect([$photo]), $photo->owner_nsid);
+    }
+
+    /**
+     * @param  list<string>  $flickrPhotoIds
+     * @return int Number of batches queued
+     */
+    public function queuePhotoDownloads(Connection $connection, array $flickrPhotoIds): int
+    {
+        $photos = $this->photos->listByFlickrPhotoIds($flickrPhotoIds, ['id', 'flickr_photo_id', 'owner_nsid']);
+
+        if ($photos->isEmpty()) {
+            return 0;
+        }
+
+        $batchCount = 0;
+
+        foreach ($photos->groupBy('owner_nsid') as $ownerNsid => $ownerPhotos) {
+            $batchCount += $this->queuePendingPhotos($connection, $ownerPhotos, (string) $ownerNsid);
+        }
+
+        return $batchCount;
     }
 
     /**

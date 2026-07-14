@@ -26,6 +26,7 @@ final class FlickrPhotoUrlHelper
     ];
 
     /**
+     * @param  callable(string): object  $fetchGetSizes  Returns Flickr ApiResponseData for photo id
      * @return array{
      *     ok: bool,
      *     message: string|null,
@@ -33,22 +34,32 @@ final class FlickrPhotoUrlHelper
      *     candidates: list<array{url: string, variant: string}>
      * }
      */
-    public static function fetchSizesFromApi(object $photosApi, string $photoId): array
+    public static function fetchSizesFromApi(callable $fetchGetSizes, string $photoId): array
     {
-        if (! is_object($photosApi) || ! is_callable([$photosApi, 'getSizes'])) {
+        $response = $fetchGetSizes($photoId);
+        if (! isset($response->ok)) {
             return [
                 'ok' => false,
-                'message' => 'Flickr photos API does not support getSizes.',
+                'message' => 'Flickr photos API returned an invalid getSizes response.',
                 'raw_sizes' => [],
                 'candidates' => [],
             ];
         }
 
-        $response = $photosApi->getSizes($photoId);
         if (! $response->ok) {
+            $error = $response->error ?? null;
+            $errorCode = $error?->code;
+            $errorMessage = $error !== null
+                ? $error->message
+                : ((is_array($response->data ?? null) ? (string) ($response->data['message'] ?? '') : '')
+                    ?: 'flickr.photos.getSizes failed');
+            $message = $errorCode !== null
+                ? "code {$errorCode}: {$errorMessage}"
+                : $errorMessage;
+
             return [
                 'ok' => false,
-                'message' => (string) ($response->message ?? $response->stat ?? 'flickr.photos.getSizes failed'),
+                'message' => $message,
                 'raw_sizes' => [],
                 'candidates' => [],
             ];
@@ -66,11 +77,12 @@ final class FlickrPhotoUrlHelper
     }
 
     /**
+     * @param  callable(string): object  $fetchGetSizes
      * @return list<array{url: string, variant: string}>
      */
-    public static function allDownloadsFromGetSizes(object $photosApi, string $photoId): array
+    public static function allDownloadsFromGetSizes(callable $fetchGetSizes, string $photoId): array
     {
-        return self::fetchSizesFromApi($photosApi, $photoId)['candidates'];
+        return self::fetchSizesFromApi($fetchGetSizes, $photoId)['candidates'];
     }
 
     /**

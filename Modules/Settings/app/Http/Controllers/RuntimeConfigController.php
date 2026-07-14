@@ -8,6 +8,8 @@ use App\Support\Observability\AdminActionLogger;
 use Illuminate\Http\RedirectResponse;
 use Modules\Settings\Http\Requests\RuntimeConfigPathRequest;
 use Modules\Settings\Http\Requests\StoreRuntimeConfigRequest;
+use Modules\Settings\Http\Requests\ToggleGlobalCrawlPauseRequest;
+use Modules\Settings\Http\Requests\UpdateSpiderModeRequest;
 use Modules\Settings\Services\RuntimeConfigAdminService;
 
 final class RuntimeConfigController
@@ -24,6 +26,38 @@ final class RuntimeConfigController
         ]);
 
         return redirect()->route('settings.index', ['tab' => 'general'])->with('success', 'Configuration saved.');
+    }
+
+    public function updateCrawlPause(ToggleGlobalCrawlPauseRequest $request, RuntimeConfigAdminService $configAdmin, AdminActionLogger $audit): RedirectResponse
+    {
+        $paused = $request->paused();
+
+        $configAdmin->setGlobalCrawlPause($paused);
+
+        $audit->record('settings.global_crawl_pause.updated', [
+            'paused' => $paused,
+        ]);
+
+        return back()->with(
+            'success',
+            $paused ? 'Global crawl pause enabled.' : 'Global crawl pause cleared.',
+        );
+    }
+
+    public function updateSpiderMode(UpdateSpiderModeRequest $request, RuntimeConfigAdminService $configAdmin, AdminActionLogger $audit): RedirectResponse
+    {
+        $settings = $request->spiderSettings();
+
+        $configAdmin->updateSpiderMode($settings);
+
+        $audit->record('settings.spider_mode.updated', $settings);
+
+        return back()->with(
+            'success',
+            $settings['enabled']
+                ? 'Spider mode enabled; global crawl pause cleared.'
+                : 'Spider mode disabled.',
+        );
     }
 
     public function destroy(RuntimeConfigPathRequest $request, RuntimeConfigAdminService $configAdmin, AdminActionLogger $audit): RedirectResponse

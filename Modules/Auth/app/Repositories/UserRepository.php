@@ -34,6 +34,20 @@ final class UserRepository extends EloquentRepository
         return $user->fresh() ?? $user;
     }
 
+    public function updateProfile(User $user, string $name, string $email, ?string $plainPassword = null): User
+    {
+        $user->name = $name;
+        $user->email = $email;
+
+        if ($plainPassword !== null && $plainPassword !== '') {
+            $user->password = $plainPassword;
+        }
+
+        $user->save();
+
+        return $user->fresh() ?? $user;
+    }
+
     public function create(string $email, string $name, string $plainPassword, bool $active = false): User
     {
         /** @var User $user */

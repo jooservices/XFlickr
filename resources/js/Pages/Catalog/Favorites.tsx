@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
 
 import CatalogOwnerNsidFilter from '@/Components/CatalogOwnerNsidFilter';
 import ContactNsidLinks from '@/Components/ContactNsidLinks';
@@ -6,25 +7,37 @@ import CrawlActionBar from '@/Components/CrawlActionBar';
 import DataTable from '@/Components/DataTable';
 import FlickrPhotoIdLinks from '@/Components/FlickrPhotoIdLinks';
 import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
+import PhotoDetailModal from '@/Components/PhotoDetailModal';
 import Thumbnail from '@/Components/Thumbnail';
 import { useCatalogOwnerNsidTable } from '@/hooks/useCatalogOwnerNsidTable';
 import AppLayout from '@/Layouts/AppLayout';
 import { catalogPageCrumbs } from '@/lib/breadcrumbs';
 import { crawlSubjectForContact, crawlSubjectForPhoto } from '@/lib/crawlSubject';
-import { flickrPhotoThumbnailUrl } from '@/lib/flickrPhoto';
-import type { Favorite, FlickrAccount, PageProps } from '@/types';
+import { flickrPhotoGridUrl } from '@/lib/flickrPhoto';
+import type { Favorite, FlickrAccount, PageProps, Photo } from '@/types';
 
 interface Props extends PageProps {
     account: FlickrAccount | null;
 }
 
 export default function CatalogFavorites({ account }: Props) {
+    const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
     const { data: favorites, meta, setPage, loading, sortKey, sortDirection, handleSortChange, filterFormProps } =
         useCatalogOwnerNsidTable<Favorite>('subject_nsid', {
             fetchPath: '/api/v1/flickr/catalog/favorites',
             initialSort: 'id',
             initialDirection: 'desc',
         });
+
+    const liveSelectedPhoto = useMemo(() => {
+        if (selectedPhoto === null) {
+            return null;
+        }
+
+        const fromList = favorites.find((favorite) => favorite.photo?.id === selectedPhoto.id)?.photo;
+
+        return fromList ?? selectedPhoto;
+    }, [favorites, selectedPhoto]);
 
     return (
         <AppLayout>
@@ -47,24 +60,24 @@ export default function CatalogFavorites({ account }: Props) {
                 />
 
                 <PageShellCanvas className="space-y-6" variant="plain">
-                {loading ? (
-                    <p className="text-sm text-slate-500">Loading…</p>
-                ) : (
                     <DataTable
+                        busy={loading}
                         columns={[
                             {
                                 key: 'thumbnail',
                                 label: '',
-                                render: (favorite) => (
-                                    <Thumbnail
-                                        url={
-                                            favorite.photo
-                                                ? flickrPhotoThumbnailUrl(favorite.photo)
-                                                : null
-                                        }
-                                        alt={favorite.photo?.title || 'Photo'}
-                                    />
-                                ),
+                                render: (favorite) => {
+                                    const photo = favorite.photo;
+
+                                    return (
+                                        <Thumbnail
+                                            url={photo ? flickrPhotoGridUrl(photo) : null}
+                                            alt={photo?.title || 'Photo'}
+                                            size="md"
+                                            onClick={photo ? () => setSelectedPhoto(photo) : undefined}
+                                        />
+                                    );
+                                },
                             },
                             {
                                 key: 'xflickr_photo_id',
@@ -144,9 +157,14 @@ export default function CatalogFavorites({ account }: Props) {
                         meta={meta ?? undefined}
                         onPageChange={setPage}
                     />
-                )}
                 </PageShellCanvas>
             </PageShell>
+
+            <PhotoDetailModal
+                photo={liveSelectedPhoto}
+                accountPublicId={account?.public_id}
+                onClose={() => setSelectedPhoto(null)}
+            />
         </AppLayout>
     );
 }

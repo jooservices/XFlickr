@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Concerns;
 
 use Illuminate\Validation\Rule;
-use JOOservices\XFlickrCrawler\Enums\CrawlType;
+use Modules\Crawler\Enums\CrawlType;
 
 trait ResolvesCrawlTypes
 {

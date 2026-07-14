@@ -46,7 +46,7 @@ final class FlickrOAuthCallbackRequest extends Request
         $message = $validator->errors()->first() ?? 'Flickr OAuth callback was incomplete.';
 
         throw new HttpResponseException(
-            redirect()->route('settings.index', ['tab' => 'flickr'])->with('error', $message),
+            redirect()->route('connections.index', ['provider' => 'flickr'])->with('error', $message),
         );
     }
 

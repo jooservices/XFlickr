@@ -6,12 +6,13 @@ namespace Modules\Flickr\Console\Commands;
 
 use Illuminate\Console\Command;
 use JOOservices\Flickr\Config\FlickrConfig;
+use JOOservices\Flickr\DTO\Common\RequestOptionsData;
 use JOOservices\Flickr\Flickr;
 use JOOservices\Flickr\FlickrFactory;
-use JOOservices\XFlickrCrawler\Models\Connection;
-use JOOservices\XFlickrCrawler\Services\FlickrClientFactory;
-use JOOservices\XFlickrCrawler\Support\FlickrCrawlQueryParams;
-use JOOservices\XFlickrCrawler\Support\XFlickrConfig;
+use Modules\Crawler\Models\Connection;
+use Modules\Crawler\Services\FlickrClientFactory;
+use Modules\Crawler\Support\FlickrCrawlQueryParams;
+use Modules\Crawler\Support\XFlickrConfig;
 use Throwable;
 
 final class FlickrApiAuditCommand extends Command
@@ -53,7 +54,7 @@ final class FlickrApiAuditCommand extends Command
         $anonymousClient = FlickrFactory::make(FlickrConfig::from([
             'apiKey' => $credentials->apiKey,
             'apiSecret' => $credentials->apiSecret,
-        ]));
+        ]), transport: $clients->transport());
 
         $this->probe($client, 'flickr.test.login', []);
         $this->probe($client, 'flickr.contacts.getList', ['page' => 1, 'per_page' => 5]);
@@ -118,14 +119,19 @@ final class FlickrApiAuditCommand extends Command
                 'user_id' => $contactNsid,
                 'page' => 1,
                 'per_page' => 5,
-            ]);
+            ], authenticated: false);
         }
 
         if ($photoId !== '') {
             $this->line('');
             $this->info("Photo visibility probe: {$photoId}");
             $signedPhoto = $this->probeWithResponse($client, 'flickr.photos.getInfo', ['photo_id' => $photoId]);
-            $anonPhoto = $this->probeWithResponse($anonymousClient, 'flickr.photos.getInfo', ['photo_id' => $photoId]);
+            $anonPhoto = $this->probeWithResponse(
+                $anonymousClient,
+                'flickr.photos.getInfo',
+                ['photo_id' => $photoId],
+                authenticated: false,
+            );
 
             if ($signedPhoto['ok'] && $anonPhoto['ok']) {
                 $this->line('  <fg=green>✓</> App key can read photo '.$photoId);
@@ -191,9 +197,9 @@ final class FlickrApiAuditCommand extends Command
     /**
      * @param  array<string, mixed>  $params
      */
-    private function probe(Flickr $client, string $method, array $params): ?int
+    private function probe(Flickr $client, string $method, array $params, bool $authenticated = true): ?int
     {
-        $result = $this->probeWithResponse($client, $method, $params);
+        $result = $this->probeWithResponse($client, $method, $params, $authenticated);
         $ms = $result['ms'];
         $total = $result['total'];
         $ok = $result['ok'];
@@ -214,12 +220,16 @@ final class FlickrApiAuditCommand extends Command
      * @param  array<string, mixed>  $params
      * @return array{ok: bool, ms: int, total: ?int, code: ?int, message: string, data: array<string, mixed>}
      */
-    private function probeWithResponse(Flickr $client, string $method, array $params): array
+    private function probeWithResponse(Flickr $client, string $method, array $params, bool $authenticated = true): array
     {
         $started = hrtime(true);
 
         try {
-            $response = $client->raw()->call($method, $params);
+            $response = $client->raw()->call(
+                $method,
+                $params,
+                new RequestOptionsData(authenticated: $authenticated),
+            );
             $ms = (int) round((hrtime(true) - $started) / 1_000_000);
             $data = $response->data ?? [];
 

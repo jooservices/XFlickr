@@ -2,6 +2,7 @@ import { X } from 'lucide-react';
 import { useState } from 'react';
 
 import Button from '@/Components/Button';
+import { connectionsPath } from '@/lib/connections';
 import { dismissSettingsOnboarding, isSettingsOnboardingDismissed } from '@/lib/settingsOnboarding';
 
 interface OnboardingWizardProps {
@@ -58,14 +59,31 @@ export default function OnboardingWizard({ hasFlickrAccounts, hasStorageAccounts
                     <span>
                         {hasStorageAccounts
                             ? 'Storage connected — queue uploads from Contacts or Catalog.'
-                            : 'Optional: connect Google Photos, Drive, OneDrive, or R2 under Storages.'}
+                            : 'Optional: connect Google Photos, Drive, OneDrive, or R2 under Connections → Storage.'}
                     </span>
                 </li>
             </ol>
             {!hasFlickrAccounts ? (
                 <div className="mt-4">
-                    <Button type="button" variant="primary" onClick={() => window.location.assign('/flickr/oauth')}>
+                    <Button
+                        type="button"
+                        variant="primary"
+                        onClick={() => window.location.assign(connectionsPath({ provider: 'flickr' }))}
+                    >
                         Connect Flickr
+                    </Button>
+                </div>
+            ) : !hasStorageAccounts ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                    <Button type="button" variant="secondary" onClick={() => window.location.assign('/contacts')}>
+                        Open Contacts
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="primary"
+                        onClick={() => window.location.assign(connectionsPath({ provider: 'storage' }))}
+                    >
+                        Connect Storage
                     </Button>
                 </div>
             ) : (
