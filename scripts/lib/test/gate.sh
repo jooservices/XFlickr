@@ -151,6 +151,30 @@ test_gate_coverage() {
             printf '[FAIL] Coverage below %s%%\n' "$TEST_COVERAGE_MIN"
             TEST_GATE_FAILED=1
         fi
+
+        zero_files="$(
+            php -r '
+                $xml = simplexml_load_file("coverage.xml");
+                if ($xml === false) { exit(1); }
+                $zeros = [];
+                foreach ($xml->xpath("//file") ?: [] as $file) {
+                    $metrics = $file->metrics ?? null;
+                    if ($metrics === null) { continue; }
+                    $statements = (int) $metrics["statements"];
+                    $covered = (int) $metrics["coveredstatements"];
+                    if ($statements > 0 && $covered === 0) {
+                        $zeros[] = (string) $file["name"];
+                    }
+                }
+                echo implode("\n", $zeros);
+            ' 2>/dev/null || true
+        )"
+        if [[ -n "${zero_files}" ]]; then
+            printf '[FAIL] Zero-covered files:\n%s\n' "${zero_files}"
+            TEST_GATE_FAILED=1
+        else
+            printf '[PASS] No zero-covered files\n'
+        fi
     else
         printf '[FAIL] coverage.xml missing\n'
         TEST_GATE_FAILED=1
