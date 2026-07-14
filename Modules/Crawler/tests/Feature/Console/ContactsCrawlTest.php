@@ -9,7 +9,7 @@ use Modules\Crawler\Enums\CrawlRunStatus;
 use Modules\Crawler\Enums\CrawlStatus;
 use Modules\Crawler\Enums\TaskType;
 use Modules\Crawler\Facades\FlickrService;
-use Modules\Crawler\Jobs\FetchContactsPageJob;
+use Modules\Crawler\Jobs\FetchCrawlPageJob;
 use Modules\Crawler\Models\Connection;
 use Modules\Crawler\Models\CrawlRun;
 use Modules\Crawler\Models\CrawlTarget;
@@ -32,7 +32,7 @@ final class ContactsCrawlTest extends TestCase
             'page' => 1,
         ]);
 
-        Queue::assertPushed(FetchContactsPageJob::class);
+        Queue::assertPushed(FetchCrawlPageJob::class);
     }
 
     public function test_dispatch_command_dispatches_pending_targets(): void
@@ -62,6 +62,6 @@ final class ContactsCrawlTest extends TestCase
 
         $this->artisan('xflickr:dispatch')->assertSuccessful();
 
-        Queue::assertPushed(FetchContactsPageJob::class);
+        Queue::assertPushed(FetchCrawlPageJob::class);
     }
 }

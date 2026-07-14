@@ -57,4 +57,17 @@ bash scripts/test.sh up
 bash scripts/test.sh down
 ```
 
+## Queue job class renames (Horizon)
+
+Redis-serialized Horizon payloads store **FQCN** strings. Renaming or moving any queued job class (or a class nested in a job payload) without draining queues causes `Class not found` on workers.
+
+Operator sequence:
+
+1. Pause crawl dispatchers / stop enqueuing new work.
+2. Drain `xflickr*` queues to zero (Horizon dashboard or `php artisan horizon:status` / failed-jobs review).
+3. Deploy the rename.
+4. Resume dispatchers.
+
+Do not rename queued classes mid-flight on a busy queue. Historical note: Crawler absorption renamed `JOOservices\XFlickrCrawler\*` → `Modules\Crawler\*` — in-flight jobs at cutover would have failed without a drain. The 8-to-1 `Fetch*PageJob` → `FetchCrawlPageJob` consolidation (audit C5) is the same class of change and requires the same drain-before-deploy sequence.
+
 Full details: [Docker safety](docker-safety.md) and [`AGENTS.md`](../../AGENTS.md).

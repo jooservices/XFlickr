@@ -9,14 +9,14 @@ use JOOservices\Flickr\Client\FakeFlickrTransport;
 use Modules\Crawler\Enums\CrawlRunStatus;
 use Modules\Crawler\Enums\CrawlStatus;
 use Modules\Crawler\Enums\TaskType;
-use Modules\Crawler\Jobs\FetchContactsPageJob;
+use Modules\Crawler\Jobs\FetchCrawlPageJob;
 use Modules\Crawler\Models\Connection;
 use Modules\Crawler\Models\CrawlRun;
 use Modules\Crawler\Models\CrawlTarget;
 use Modules\Crawler\Services\FlickrClientFactory;
 use Modules\Crawler\Tests\TestCase;
 
-final class FetchContactsPageJobTest extends TestCase
+final class FetchCrawlPageJobTest extends TestCase
 {
     public function test_job_fetches_contacts_and_completes_target(): void
     {
@@ -114,6 +114,6 @@ final class FetchContactsPageJobTest extends TestCase
 
         $this->assertNotNull($pageTwo);
         $this->assertSame(CrawlStatus::Queued, $pageTwo->status);
-        Queue::assertPushed(FetchContactsPageJob::class, 1);
+        Queue::assertPushed(FetchCrawlPageJob::class, 1);
     }
 }

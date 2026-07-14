@@ -9,14 +9,9 @@ use Illuminate\Support\ServiceProvider;
 use Modules\Crawler\Console\DispatchCrawlTargetsCommand;
 use Modules\Crawler\Console\DoctorCommand;
 use Modules\Crawler\Console\PruneCrawlDataCommand;
-use Modules\Crawler\Contracts\PageFetcherContract;
 use Modules\Crawler\Facades\FlickrService;
-use Modules\Crawler\Fetchers\ContactsFetcher;
-use Modules\Crawler\Fetchers\SubjectContactsFetcher;
 use Modules\Crawler\FlickrCrawlerManager;
 use Modules\Crawler\Jobs\CrawlTargetJobFactory;
-use Modules\Crawler\Jobs\FetchContactsPageJob;
-use Modules\Crawler\Jobs\FetchSubjectContactsPageJob;
 use Modules\Crawler\Services\ConnectionRegistryService;
 use Modules\Crawler\Services\CrawlerCatalog;
 use Modules\Crawler\Services\CrawlerRuns;
@@ -51,14 +46,6 @@ final class CrawlerServiceProvider extends ServiceProvider
         $this->app->singleton(CrawlerRuns::class);
         $this->app->singleton(FlickrCatalogService::class);
         $this->app->singleton(FlickrFavoritesPersistence::class);
-
-        $this->app->when(FetchContactsPageJob::class)
-            ->needs(PageFetcherContract::class)
-            ->give(ContactsFetcher::class);
-
-        $this->app->when(FetchSubjectContactsPageJob::class)
-            ->needs(PageFetcherContract::class)
-            ->give(SubjectContactsFetcher::class);
 
         RepositoryRegistrar::register($this->app);
     }

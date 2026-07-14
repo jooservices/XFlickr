@@ -8,11 +8,7 @@ use Illuminate\Support\Facades\Queue;
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
 use Modules\Crawler\Enums\TaskType;
 use Modules\Crawler\Facades\FlickrService;
-use Modules\Crawler\Jobs\FetchFavoritesPageJob;
-use Modules\Crawler\Jobs\FetchGalleriesListJob;
-use Modules\Crawler\Jobs\FetchPeoplePhotosJob;
-use Modules\Crawler\Jobs\FetchPhotosetsListJob;
-use Modules\Crawler\Jobs\FetchSubjectContactsPageJob;
+use Modules\Crawler\Jobs\FetchCrawlPageJob;
 use Modules\Crawler\Tests\TestCase;
 
 final class CrawlTypesTest extends TestCase
@@ -29,7 +25,7 @@ final class CrawlTypesTest extends TestCase
             'subject_nsid' => '999@N01',
         ]);
 
-        Queue::assertPushed(FetchPeoplePhotosJob::class);
+        Queue::assertPushed(FetchCrawlPageJob::class);
     }
 
     public function test_photosets_starts_list_target(): void
@@ -43,7 +39,7 @@ final class CrawlTypesTest extends TestCase
             'task_type' => TaskType::PhotosetsList->value,
         ]);
 
-        Queue::assertPushed(FetchPhotosetsListJob::class);
+        Queue::assertPushed(FetchCrawlPageJob::class);
     }
 
     public function test_galleries_starts_list_target(): void
@@ -57,7 +53,7 @@ final class CrawlTypesTest extends TestCase
             'task_type' => TaskType::GalleriesList->value,
         ]);
 
-        Queue::assertPushed(FetchGalleriesListJob::class);
+        Queue::assertPushed(FetchCrawlPageJob::class);
     }
 
     public function test_favorites_starts_favorites_page_target(): void
@@ -72,7 +68,7 @@ final class CrawlTypesTest extends TestCase
             'subject_nsid' => '555@N01',
         ]);
 
-        Queue::assertPushed(FetchFavoritesPageJob::class);
+        Queue::assertPushed(FetchCrawlPageJob::class);
     }
 
     public function test_subject_contacts_starts_subject_contacts_page_target(): void
@@ -95,7 +91,7 @@ final class CrawlTypesTest extends TestCase
             'subject_nsid' => '444@N01',
         ]);
 
-        Queue::assertPushed(FetchSubjectContactsPageJob::class);
+        Queue::assertPushed(FetchCrawlPageJob::class);
     }
 
     public function test_global_pause_blocks_crawl_start(): void

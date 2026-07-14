@@ -18,7 +18,7 @@ use Modules\Crawler\Services\FlickrClientFactory;
 use Modules\Crawler\Tests\Support\FailingContactsFetcher;
 use Modules\Crawler\Tests\TestCase;
 
-final class FetchContactsPageJobErrorTest extends TestCase
+final class FetchCrawlPageJobErrorTest extends TestCase
 {
     public function test_job_fails_target_on_api_error(): void
     {

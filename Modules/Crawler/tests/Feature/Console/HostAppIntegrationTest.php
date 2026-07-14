@@ -8,8 +8,7 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Redis;
 use Modules\Crawler\Enums\TaskType;
 use Modules\Crawler\Facades\FlickrService;
-use Modules\Crawler\Jobs\FetchContactsPageJob;
-use Modules\Crawler\Jobs\FetchPeoplePhotosJob;
+use Modules\Crawler\Jobs\FetchCrawlPageJob;
 use Modules\Crawler\Services\FlickrRequestLimiter;
 use Modules\Crawler\Tests\TestCase;
 
@@ -33,7 +32,7 @@ final class HostAppIntegrationTest extends TestCase
         FlickrService::connection($this->connectionKey, $this->sampleToken(), appProfile: 'default')
             ->contacts();
 
-        Queue::assertPushedOn('xflickr', FetchContactsPageJob::class);
+        Queue::assertPushedOn('xflickr', FetchCrawlPageJob::class);
     }
 
     public function test_same_connection_key_shares_rate_limit_across_subject_nsids(): void
@@ -92,8 +91,8 @@ final class HostAppIntegrationTest extends TestCase
             'subject_nsid' => '999@N01',
         ]);
 
-        Queue::assertPushed(FetchContactsPageJob::class);
-        Queue::assertPushed(FetchPeoplePhotosJob::class);
+        Queue::assertPushed(FetchCrawlPageJob::class);
+        Queue::assertPushed(FetchCrawlPageJob::class);
     }
 
     public function test_dispatch_command_is_registered(): void

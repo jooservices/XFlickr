@@ -8,10 +8,7 @@ use JOOservices\Flickr\Client\FakeFlickrTransport;
 use Modules\Crawler\Enums\CrawlRunStatus;
 use Modules\Crawler\Enums\CrawlStatus;
 use Modules\Crawler\Enums\TaskType;
-use Modules\Crawler\Fetchers\GalleriesPhotosFetcher;
-use Modules\Crawler\Fetchers\PhotosetsPhotosFetcher;
-use Modules\Crawler\Jobs\FetchGalleriesPhotosJob;
-use Modules\Crawler\Jobs\FetchPhotosetsPhotosJob;
+use Modules\Crawler\Jobs\FetchCrawlPageJob;
 use Modules\Crawler\Models\Connection;
 use Modules\Crawler\Models\CrawlRun;
 use Modules\Crawler\Models\CrawlTarget;
@@ -23,16 +20,19 @@ use Modules\Crawler\Services\FlickrRequestLimiter;
 use Modules\Crawler\Services\FlickrSpiderService;
 use Modules\Crawler\Tests\Support\StubFlickrPermitAcquirer;
 use Modules\Crawler\Tests\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Support\FlickrNsid;
 
 final class FetchCollectionPhotosJobsTest extends TestCase
 {
-    public function test_photosets_photos_job_completes_target(): void
+    /**
+     * @return iterable<string, array{0: TaskType, 1: array<string, mixed>}>
+     */
+    public static function subjectIdTaskTypeProvider(): iterable
     {
-        [$target, $clients] = $this->prepareTarget(
+        yield 'photosets photos' => [
             TaskType::PhotosetsPhotos,
-            subjectId: (string) fake()->numerify('########'),
-            payload: [
+            [
                 'stat' => 'ok',
                 'photoset' => [
                     'page' => 1,
@@ -48,28 +48,11 @@ final class FetchCollectionPhotosJobsTest extends TestCase
                     ],
                 ],
             ],
-        );
+        ];
 
-        $this->app->instance(FlickrPermitAcquirer::class, new StubFlickrPermitAcquirer($this->grantedPermit()));
-
-        (new FetchPhotosetsPhotosJob($target->id))->handle(
-            $clients,
-            app(FlickrRequestLimiter::class),
-            app(FlickrApiOutcomeClassifier::class),
-            app(FlickrApiAuditService::class),
-            app(FlickrSpiderService::class),
-            app(PhotosetsPhotosFetcher::class),
-        );
-
-        $this->assertSame(CrawlStatus::Completed, $target->fresh()->status);
-    }
-
-    public function test_galleries_photos_job_completes_target(): void
-    {
-        [$target, $clients] = $this->prepareTarget(
+        yield 'galleries photos' => [
             TaskType::GalleriesPhotos,
-            subjectId: (string) fake()->numerify('########'),
-            payload: [
+            [
                 'stat' => 'ok',
                 'photos' => [
                     'page' => 1,
@@ -85,17 +68,29 @@ final class FetchCollectionPhotosJobsTest extends TestCase
                     ],
                 ],
             ],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    #[DataProvider('subjectIdTaskTypeProvider')]
+    public function test_job_completes_target_for_subject_id_task_types(TaskType $taskType, array $payload): void
+    {
+        [$target, $clients] = $this->prepareTarget(
+            $taskType,
+            subjectId: (string) fake()->numerify('########'),
+            payload: $payload,
         );
 
         $this->app->instance(FlickrPermitAcquirer::class, new StubFlickrPermitAcquirer($this->grantedPermit()));
 
-        (new FetchGalleriesPhotosJob($target->id))->handle(
+        (new FetchCrawlPageJob($target->id))->handle(
             $clients,
             app(FlickrRequestLimiter::class),
             app(FlickrApiOutcomeClassifier::class),
             app(FlickrApiAuditService::class),
             app(FlickrSpiderService::class),
-            app(GalleriesPhotosFetcher::class),
         );
 
         $this->assertSame(CrawlStatus::Completed, $target->fresh()->status);
@@ -111,13 +106,12 @@ final class FetchCollectionPhotosJobsTest extends TestCase
 
         $this->app->instance(FlickrPermitAcquirer::class, new StubFlickrPermitAcquirer($this->grantedPermit()));
 
-        (new FetchPhotosetsPhotosJob($target->id))->handle(
+        (new FetchCrawlPageJob($target->id))->handle(
             $clients,
             app(FlickrRequestLimiter::class),
             app(FlickrApiOutcomeClassifier::class),
             app(FlickrApiAuditService::class),
             app(FlickrSpiderService::class),
-            app(PhotosetsPhotosFetcher::class),
         );
 
         $this->assertSame(CrawlStatus::Processing, $target->fresh()->status);
