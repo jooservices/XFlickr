@@ -7,7 +7,6 @@ Single source of truth for known gaps. Detail lives in the linked audit finding 
 | ID | Item | Source | Priority | Since |
 |----|------|--------|----------|-------|
 | N-08 | Flickr `token_payload` plaintext (now `Modules/Crawler` connections) | [audit_claude_v2 §5](release-reviews/2026-07-06/audit_claude_v2.md) | P1 | v1.0.0 |
-| N-15 | Hardcoded download HTTP timeout (120s) | audit_claude_v2 §5 | P2 | v1.0.0 |
 | N-13 | README badges missing | audit_claude_v2 §5 | P2 | v1.0.0 |
 
 ## Blocked
@@ -18,6 +17,7 @@ _None — spider unblocked by crawler 1.3.0._
 
 | ID | Item | Resolved in | Evidence |
 |----|------|-------------|----------|
+| N-15 | Hardcoded download HTTP timeout (120s) | Unreleased | Curated `xflickr_download.timeout_seconds` in Settings; `DownloadRuntimeConfig` + `PhotoDownloadExecutionService` |
 | N-16 | Flickr client layering: SDK → Crawler `FlickrClientFactory` (auth true/false) → peers via Crawler/Flickr (not ad hoc `FlickrFactory`) | Unreleased | `FlickrClientFactory` (`authenticated` flag, `anonymousClient`), `FlickrClientFactoryLayeringTest` |
 | N-01 | Default admin credential / rotation | v1.2.0 | `ADMIN_PASSWORD`, `xflickr:auth:reset-password`, Auth `AdminUserSeeder` first-create only (optional / explicit class) |
 | N-02 | Unused `jooservices/dto` | v1.2.0 | `DownloadCandidateDto`, `OAuthAppConfigDto` wired at call sites |

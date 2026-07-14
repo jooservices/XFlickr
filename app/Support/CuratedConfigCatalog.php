@@ -233,6 +233,17 @@ final class CuratedConfigCatalog
                 tier: 'expert',
                 sort: 30,
             ),
+            $this->define(
+                path: 'xflickr_download.timeout_seconds',
+                label: 'Photo download HTTP timeout (seconds)',
+                description: 'Maximum seconds to wait for Flickr original download HTTP responses. Increase for large originals on slow links.',
+                type: 'int',
+                default: (int) config('xflickr.download.timeout_seconds', 120),
+                groupLabel: 'Transfer / Downloads',
+                section: 'transfers',
+                tier: 'operational',
+                sort: 10,
+            ),
         ];
     }
 

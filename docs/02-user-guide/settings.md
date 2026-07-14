@@ -20,6 +20,10 @@ Toggle pause from the top navbar (**Pause** / **Resume**) or under Settings → 
 
 Use the header **Spider** control for spider mode enable/caps (or Settings → General → Spider).
 
+## Transfers
+
+Under Settings → General → **Transfer / Downloads**, **Photo download HTTP timeout (seconds)** (`xflickr_download.timeout_seconds`) controls how long download jobs wait for Flickr original HTTP responses (30–900 seconds). Increase for large originals on slow links. The `.env` default (`XFLICKR_DOWNLOAD_TIMEOUT` via `config/xflickr.php`) applies when no runtime override is stored.
+
 ## Credential storage
 
 | Type | Stored in |

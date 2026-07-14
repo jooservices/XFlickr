@@ -18,6 +18,7 @@ use Modules\Transfer\Enums\StoredFileStatus;
 use Modules\Transfer\Enums\TransferItemStatus;
 use Modules\Transfer\Repositories\StoredFileRepository;
 use Modules\Transfer\Repositories\TransferItemRepository;
+use Modules\Transfer\Support\DownloadRuntimeConfig;
 use RuntimeException;
 
 final class PhotoDownloadExecutionService
@@ -29,6 +30,7 @@ final class PhotoDownloadExecutionService
         private readonly PhotoQueryRepository $photos,
         private readonly StoredFileRepository $storedFiles,
         private readonly TransferItemRepository $items,
+        private readonly DownloadRuntimeConfig $downloadConfig,
     ) {}
 
     public function execute(
@@ -74,7 +76,7 @@ final class PhotoDownloadExecutionService
             $partPath = "{$finalPath}.part";
 
             Storage::makeDirectory(dirname($finalPath));
-            $response = Http::timeout((int) config('xflickr.download.timeout_seconds', 120))->withHeaders([
+            $response = Http::timeout($this->downloadConfig->timeoutSeconds())->withHeaders([
                 'User-Agent' => 'XFlickr Download Client 1.0',
             ])->sink(Storage::path($partPath))->get($download->url);
 
