@@ -7,9 +7,8 @@ namespace Modules\Contacts\Tests\Feature;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
-use Modules\Contacts\Services\ContactCatalogDetailStatsService;
-use Modules\Contacts\Services\ContactDetailService;
 use Modules\Contacts\Services\ContactListSorter;
+use Modules\Contacts\Services\ContactStatsService;
 use Modules\Crawler\Enums\CrawlRunStatus;
 use Modules\Crawler\Enums\CrawlType;
 use Modules\Crawler\Models\ConnectionContact;
@@ -135,12 +134,8 @@ final class FlickrContactFrontendSupportTest extends TestCase
             ->where('crawl_state.photos.fetched', 1)
             ->missing('contact_detail'));
 
-        $payload = app(ContactDetailService::class)->forShow($connection, $contact->nsid);
-
-        $this->assertIsArray($payload);
-        $this->assertSame($contact->nsid, $payload['contact']['nsid']);
-        $this->assertArrayNotHasKey('contact_detail', $payload);
-        $this->assertNull(app(ContactDetailService::class)->forShow($connection, 'missing@N01'));
+        $this->get('/flickr/accounts/'.$connection->public_id.'/contacts/missing@N01')
+            ->assertNotFound();
     }
 
     public function test_favorites_catalog_api_filters_by_subject_nsid(): void
@@ -595,7 +590,7 @@ final class FlickrContactFrontendSupportTest extends TestCase
         $connection = $this->createFlickrConnection();
         $contactNsid = '555@N01';
 
-        $stats = app(ContactCatalogDetailStatsService::class)->forContact($connection, $contactNsid);
+        $stats = app(ContactStatsService::class)->detailStatsFor($connection, $contactNsid);
 
         $this->assertArrayHasKey('photos', $stats);
         $this->assertSame(0, $stats['photos']['db']);
@@ -618,7 +613,7 @@ final class FlickrContactFrontendSupportTest extends TestCase
             'completed_at' => now(),
         ]);
 
-        $stats = app(ContactCatalogDetailStatsService::class)->forContact($connection, $contactNsid);
+        $stats = app(ContactStatsService::class)->detailStatsFor($connection, $contactNsid);
 
         $this->assertSame(0, $stats['photos']['in_api']);
     }

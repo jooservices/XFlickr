@@ -11,18 +11,21 @@ use RegexIterator;
 use Tests\TestCase;
 
 /**
- * A6 module facades: peer modules may import only FlickrAccountsService,
- * StorageService, and ContactsService from Flickr/Storage/Contacts Services.
+ * A6 module facades: peer modules may import only FlickrAccountsService and
+ * StorageService from Flickr/Storage. Contacts has no cross-module facade —
+ * peer imports of Modules\Contacts\Services\* are forbidden.
  */
 final class ModuleFacadeImportTest extends TestCase
 {
     /**
-     * @var array<string, string>
+     * Facade class name, or null when no peer Services import is allowed.
+     *
+     * @var array<string, string|null>
      */
     private const FACADE_BY_TARGET = [
         'Flickr' => 'FlickrAccountsService',
         'Storage' => 'StorageService',
-        'Contacts' => 'ContactsService',
+        'Contacts' => null,
     ];
 
     #[Test]
@@ -46,8 +49,7 @@ final class ModuleFacadeImportTest extends TestCase
         $modulesRoot = base_path('Modules');
         $violations = [];
 
-        foreach (array_keys(self::FACADE_BY_TARGET) as $target) {
-            $allowedFacade = self::FACADE_BY_TARGET[$target];
+        foreach (self::FACADE_BY_TARGET as $target => $allowedFacade) {
             $pattern = '/use\s+Modules\\\\'.preg_quote($target, '/').'\\\\Services\\\\([^;]+);/';
 
             foreach ($this->phpFilesUnder($modulesRoot) as $file) {
@@ -69,11 +71,12 @@ final class ModuleFacadeImportTest extends TestCase
 
                 foreach ($matches[1] as $imported) {
                     $service = trim($imported);
-                    if ($service === $allowedFacade) {
+                    if ($allowedFacade !== null && $service === $allowedFacade) {
                         continue;
                     }
 
-                    $violations[] = "{$rel} imports Modules\\{$target}\\Services\\{$service} (allowed: {$allowedFacade})";
+                    $allowed = $allowedFacade ?? '(none — Contacts has no peer facade)';
+                    $violations[] = "{$rel} imports Modules\\{$target}\\Services\\{$service} (allowed: {$allowed})";
                 }
             }
         }

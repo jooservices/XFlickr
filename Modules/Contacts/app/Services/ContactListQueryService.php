@@ -87,7 +87,7 @@ final class ContactListQueryService
     /**
      * @return Builder<Contact>
      */
-    public function baseQuery(Connection $connection, ?string $search, bool $starredOnly = false): Builder
+    private function baseQuery(Connection $connection, ?string $search, bool $starredOnly = false): Builder
     {
         $query = $search !== null && $search !== ''
             ? $this->contacts->queryForConnectionWithSearch($connection->connection_key, $search)

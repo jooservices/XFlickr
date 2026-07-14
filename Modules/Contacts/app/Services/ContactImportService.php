@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Modules\Contacts\Services;
 
+use Modules\Contacts\Dto\ContactImportResult;
 use Modules\Crawler\Enums\CrawlType;
 use Modules\Crawler\Models\Connection;
 use Modules\Crawler\Services\FlickrCatalogService;
 use Modules\Flickr\Exceptions\FlickrUrlResolutionException;
 use Modules\Flickr\Services\FlickrAccountsService;
-use Modules\Flickr\Support\ConnectionPresenter;
 
 final class ContactImportService
 {
@@ -21,14 +21,6 @@ final class ContactImportService
 
     /**
      * @param  list<CrawlType>  $crawlTypes
-     * @return array{
-     *     nsid: string,
-     *     username: string|null,
-     *     realname: string|null,
-     *     already_linked: bool,
-     *     crawl_started: bool,
-     *     redirect_path: string
-     * }
      *
      * @throws FlickrUrlResolutionException
      */
@@ -37,7 +29,7 @@ final class ContactImportService
         string $url,
         bool $startCrawl = true,
         array $crawlTypes = [],
-    ): array {
+    ): ContactImportResult {
         $row = $this->flickrAccounts->resolveContactFromUrl($connection, $url);
         $nsid = (string) $row['nsid'];
         $alreadyLinked = $this->contactList->isLinked($connection, $nsid);
@@ -53,15 +45,18 @@ final class ContactImportService
             $crawlStarted = true;
         }
 
-        $publicId = ConnectionPresenter::toArray($connection)['public_id'];
+        $publicId = $this->flickrAccounts->ensurePublicId($connection);
 
-        return [
-            'nsid' => $nsid,
-            'username' => isset($row['username']) && is_string($row['username']) ? $row['username'] : null,
-            'realname' => isset($row['realname']) && is_string($row['realname']) ? $row['realname'] : null,
-            'already_linked' => $alreadyLinked,
-            'crawl_started' => $crawlStarted,
-            'redirect_path' => '/flickr/accounts/'.$publicId.'/contacts/'.rawurlencode($nsid),
-        ];
+        return new ContactImportResult(
+            nsid: $nsid,
+            username: isset($row['username']) && is_string($row['username']) ? $row['username'] : null,
+            realname: isset($row['realname']) && is_string($row['realname']) ? $row['realname'] : null,
+            alreadyLinked: $alreadyLinked,
+            crawlStarted: $crawlStarted,
+            redirectPath: route('flickr.accounts.contacts.show', [
+                'connection' => $publicId,
+                'contactNsid' => $nsid,
+            ], absolute: false),
+        );
     }
 }

@@ -59,7 +59,7 @@ final class ContactFullPassFrontierRepository extends EloquentRepository impleme
         /** @var Collection<int, ContactFullPassFrontierItem> */
         return $this->newQuery()
             ->where('contact_full_pass_run_id', $runId)
-            ->where('status', SpiderFrontierStatus::Pending->value)
+            ->pending()
             ->orderBy('depth')
             ->orderBy('id')
             ->limit($limit)
@@ -70,7 +70,7 @@ final class ContactFullPassFrontierRepository extends EloquentRepository impleme
     {
         return $this->newQuery()
             ->where('contact_full_pass_run_id', $runId)
-            ->where('status', $status->value)
+            ->withStatus($status)
             ->count();
     }
 

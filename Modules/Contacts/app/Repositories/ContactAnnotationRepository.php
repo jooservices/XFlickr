@@ -24,7 +24,7 @@ final class ContactAnnotationRepository extends EloquentRepository
     public function findForContact(string $connectionKey, string $contactNsid): ?ContactAnnotation
     {
         $annotation = $this->newQuery()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->where('contact_nsid', $contactNsid)
             ->first();
 
@@ -43,7 +43,7 @@ final class ContactAnnotationRepository extends EloquentRepository
 
         /** @var Collection<int, ContactAnnotation> $rows */
         $rows = $this->newQuery()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->whereIn('contact_nsid', $contactNsids)
             ->get();
 
@@ -87,7 +87,7 @@ final class ContactAnnotationRepository extends EloquentRepository
     public function starredContactNsids(string $connectionKey): array
     {
         return $this->newQuery()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->whereNotNull('starred_at')
             ->pluck('contact_nsid')
             ->map(fn (mixed $nsid): string => (string) $nsid)

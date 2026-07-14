@@ -10,15 +10,17 @@ use Inertia\Response;
 use Modules\Contacts\Http\Requests\CrawlFlickrContactBulkRequest;
 use Modules\Contacts\Http\Requests\CrawlFlickrContactRequest;
 use Modules\Contacts\Http\Requests\ListFlickrContactsRequest;
-use Modules\Contacts\Services\ContactDetailService;
+use Modules\Contacts\Services\ContactCrawlStateService;
 use Modules\Contacts\Services\ContactListPresenter;
 use Modules\Contacts\Services\ContactListQueryService;
 use Modules\Contacts\Services\ContactListSorter;
+use Modules\Contacts\Services\ContactStatsService;
 use Modules\Crawler\Models\Connection;
 use Modules\Flickr\Exceptions\FlickrTokenInvalidException;
 use Modules\Flickr\Exceptions\GlobalCrawlPauseException;
 use Modules\Flickr\Services\FlickrAccountsService;
 use Modules\Flickr\Support\ConnectionPresenter;
+use Modules\Flickr\Support\ContactPresenter;
 
 final class FlickrContactController
 {
@@ -61,12 +63,26 @@ final class FlickrContactController
     public function show(
         Connection $connection,
         string $contactNsid,
-        ContactDetailService $contacts,
+        ContactListQueryService $contactList,
+        ContactStatsService $stats,
+        ContactCrawlStateService $crawlState,
     ): Response {
-        $payload = $contacts->forShow($connection, $contactNsid);
-        abort_unless($payload !== null, 404);
+        abort_unless($contactList->isLinked($connection, $contactNsid), 404);
 
-        return Inertia::render('Contacts/Show', $payload);
+        $contact = $contactList->findContact($contactNsid);
+        $counts = $stats->catalogCountsFor($connection, [$contactNsid])[$contactNsid] ?? [
+            'photos' => 0,
+            'photosets' => 0,
+            'galleries' => 0,
+            'favorites' => 0,
+        ];
+
+        return Inertia::render('Contacts/Show', [
+            'account' => ConnectionPresenter::toArray($connection),
+            'contact' => ContactPresenter::toDetailArray($contact),
+            'catalog_stats' => $stats->detailStatsFor($connection, $contactNsid),
+            'crawl_state' => $crawlState->forContact($connection, $contactNsid, [$contactNsid => $counts]),
+        ]);
     }
 
     public function crawlBulk(

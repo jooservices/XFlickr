@@ -15,7 +15,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/contacts', [FlickrContactController::class, 'index']);
         Route::get('/contacts/progress', [ContactController::class, 'progress']);
         Route::get('/contacts/suggest', [ContactController::class, 'suggest']);
-        Route::post('/contacts/import', [ContactController::class, 'import']);
+        Route::post('/contacts', [ContactController::class, 'import']);
         Route::get('/contact-graph', [ContactGraphController::class, 'show']);
         Route::get('/contact-graph/delta', [ContactGraphController::class, 'delta']);
         Route::post('/contact-graph/expansions', [ContactGraphController::class, 'expand']);

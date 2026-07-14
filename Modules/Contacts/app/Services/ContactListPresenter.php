@@ -10,9 +10,8 @@ use Modules\Crawler\Models\Contact;
 final class ContactListPresenter
 {
     public function __construct(
-        private readonly ContactCatalogCountsService $catalogCounts,
+        private readonly ContactStatsService $stats,
         private readonly ContactCrawlStateService $crawlState,
-        private readonly ContactDownloadCountsService $downloadCounts,
         private readonly ContactAnnotationService $annotations,
     ) {}
 
@@ -38,9 +37,9 @@ final class ContactListPresenter
     public function present(Connection $connection, array $contacts): array
     {
         $contactNsids = array_map(fn (Contact $contact): string => $contact->nsid, $contacts);
-        $counts = $this->catalogCounts->forContacts($connection, $contactNsids);
+        $counts = $this->stats->catalogCountsFor($connection, $contactNsids);
         $crawlStates = $this->crawlState->forContacts($connection, $contactNsids, $counts);
-        $downloads = $this->downloadCounts->forContacts($connection, $contactNsids);
+        $downloads = $this->stats->downloadCountsFor($connection, $contactNsids);
         $annotationMap = $this->annotations->mapForContacts($connection->connection_key, $contactNsids);
 
         return array_map(function (Contact $contact) use ($counts, $crawlStates, $downloads, $annotationMap): array {

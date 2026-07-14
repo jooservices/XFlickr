@@ -48,19 +48,25 @@ Edge cleanups (A4): `DownloadCandidateDto` → Flickr; `OAuthAppConfigDto` → `
 
 ## Module service facades (A6)
 
-Peer modules must not import focused services from Flickr, Storage, or Contacts. Use the single facade per module:
+Peer modules must not import focused services from Flickr, Storage, or Contacts. Use the module facade where one exists:
 
 | Module | Facade | Peer import path |
 |--------|--------|------------------|
 | Flickr | `FlickrAccountsService` | `Modules\Flickr\Services\FlickrAccountsService` |
 | Storage | `StorageService` | `Modules\Storage\Services\StorageService` |
-| Contacts | `ContactsService` | `Modules\Contacts\Services\ContactsService` |
+| Contacts | *(none)* | Peer modules must not import `Modules\Contacts\Services\*`. Contacts UI/API lives in the Contacts module; recreate a facade only when a cross-module consumer appears. |
 
 Dto, Enums, Events, Contracts, Exceptions, Support, and Models remain direct imports. Internal controllers/services within each module may still use focused services. Enforced by `Tests\Unit\Architecture\ModuleFacadeImportTest`.
 
 ## Bridge: connection_key
 
-Connected Flickr accounts bridge to the crawler via `connection_key` (typically the account NSID). Public IDs and presenters live under `Modules/Flickr/Support`.
+Connected Flickr accounts bridge to the crawler via `connection_key` (typically the account NSID). Public ID assignment lives in `Modules\Flickr\Services\ConnectionPublicIdService`; presenters remain under `Modules/Flickr/Support`.
+
+## JOOecosystem packages
+
+Adopted: `laravel-config`, `laravel-repository`, `laravel-logging`, `laravel-controller`, `laravel-events`, `dto`, `flickr`.
+
+**Conscious skip:** `jooservices/laravel-activities` — audit-trail needs are covered by `laravel-logging`'s `ActivityLog` (wired via `AdminActionLogger`). Adopting both would split activity records; revisit only if laravel-activities gains capabilities ActivityLog lacks.
 
 ## What the app must not do
 

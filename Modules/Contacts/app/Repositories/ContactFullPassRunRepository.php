@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace Modules\Contacts\Repositories;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Jooservices\LaravelRepository\Repositories\EloquentRepository;
 use Jooservices\LaravelRepository\Traits\HasCrud;
 use Jooservices\LaravelRepository\Traits\HasFilter;
 use Modules\Contacts\Models\ContactFullPassRun;
 use Modules\Spider\Contracts\ConcurrentRunGuard;
-use Modules\Spider\Enums\SpiderRunStatus;
+use Modules\Spider\Contracts\RunWriteRepository;
 
 /**
  * @extends EloquentRepository<ContactFullPassRun>
  */
-final class ContactFullPassRunRepository extends EloquentRepository implements ConcurrentRunGuard
+final class ContactFullPassRunRepository extends EloquentRepository implements ConcurrentRunGuard, RunWriteRepository
 {
     use HasCrud;
     use HasFilter;
@@ -23,6 +24,21 @@ final class ContactFullPassRunRepository extends EloquentRepository implements C
     public function __construct(ContactFullPassRun $model)
     {
         parent::__construct($model);
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    public function updateRun(Model $run, array $attributes): void
+    {
+        $this->update((int) $run->getKey(), $attributes);
+        $run->fill($attributes);
+    }
+
+    public function incrementRun(Model $run, string $column, int $amount = 1): void
+    {
+        $this->newQuery()->whereKey($run->getKey())->increment($column, $amount);
+        $run->setAttribute($column, (int) $run->getAttribute($column) + $amount);
     }
 
     public function hasActiveRun(string $connectionKey): bool
@@ -33,8 +49,8 @@ final class ContactFullPassRunRepository extends EloquentRepository implements C
     public function findActiveForConnection(string $connectionKey): ?ContactFullPassRun
     {
         $run = $this->newQuery()
-            ->where('connection_key', $connectionKey)
-            ->where('status', SpiderRunStatus::Running->value)
+            ->forConnection($connectionKey)
+            ->running()
             ->latest('id')
             ->first();
 
@@ -44,7 +60,7 @@ final class ContactFullPassRunRepository extends EloquentRepository implements C
     public function findLatestForConnection(string $connectionKey): ?ContactFullPassRun
     {
         $run = $this->newQuery()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->latest('id')
             ->first();
 
@@ -58,7 +74,7 @@ final class ContactFullPassRunRepository extends EloquentRepository implements C
     {
         /** @var Collection<int, ContactFullPassRun> */
         return $this->newQuery()
-            ->where('status', SpiderRunStatus::Running->value)
+            ->running()
             ->orderBy('id')
             ->get();
     }

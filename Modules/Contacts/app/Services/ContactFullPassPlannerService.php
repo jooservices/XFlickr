@@ -14,6 +14,7 @@ use Modules\Contacts\Support\FullPassRuntimeConfig;
 use Modules\Crawler\Enums\CrawlType;
 use Modules\Crawler\Events\ContactsCrawlCompleted;
 use Modules\Crawler\Models\Connection;
+use Modules\Crawler\Repositories\ConnectionRepository;
 use Modules\Crawler\Support\XFlickrConfig;
 use Modules\Flickr\Exceptions\GlobalCrawlPauseException;
 use Modules\Flickr\Services\FlickrAccountsService;
@@ -41,6 +42,7 @@ final class ContactFullPassPlannerService
         private readonly FlickrAccountsService $crawls,
         private readonly FullPassRuntimeConfig $fullPassConfig,
         private readonly FrontierExpansion $frontierExpansion,
+        private readonly ConnectionRepository $connections,
     ) {}
 
     /**
@@ -49,7 +51,7 @@ final class ContactFullPassPlannerService
     public function createRun(array $attributes): ContactFullPassRun
     {
         /** @var ContactFullPassRun $run */
-        $run = $this->runs->newQuery()->create($attributes);
+        $run = $this->runs->create($attributes);
 
         return $run;
     }
@@ -92,7 +94,7 @@ final class ContactFullPassPlannerService
             return null;
         }
 
-        $run->update([
+        $this->runs->updateRun($run, [
             'status' => SpiderRunStatus::Paused,
             'paused_at' => now(),
         ]);
@@ -130,22 +132,34 @@ final class ContactFullPassPlannerService
         $subjectNsid = $event->subjectNsid;
 
         if ($subjectNsid === null || $subjectNsid === '') {
-            $this->frontierExpansion->enqueueDiscovered($run, $this->frontier, $event->discoveredContactNsids, 0);
+            $this->frontierExpansion->enqueueDiscovered(
+                $run,
+                $this->frontier,
+                $this->runs,
+                $event->discoveredContactNsids,
+                0,
+            );
         } else {
             $item = $this->frontier->findByRunAndContactNsid($run->id, $subjectNsid);
 
             if ($item instanceof ContactFullPassFrontierItem && $item->contact_full_pass_run_id === $run->id) {
-                $item->update([
+                $this->frontier->update($item->id, [
                     'status' => SpiderFrontierStatus::Crawled,
                     'crawled_at' => now(),
                 ]);
 
-                $this->frontierExpansion->enqueueDiscovered($run, $this->frontier, $event->discoveredContactNsids, $item->depth + 1);
+                $this->frontierExpansion->enqueueDiscovered(
+                    $run,
+                    $this->frontier,
+                    $this->runs,
+                    $event->discoveredContactNsids,
+                    $item->depth + 1,
+                );
             }
         }
 
         $this->expandRun($run);
-        $this->frontierExpansion->maybeCompleteRun($run, $this->frontier);
+        $this->frontierExpansion->maybeCompleteRun($run, $this->frontier, $this->runs);
     }
 
     /**
@@ -192,12 +206,10 @@ final class ContactFullPassPlannerService
             return 0;
         }
 
-        $connection = Connection::query()
-            ->where('connection_key', $run->connection_key)
-            ->first();
+        $connection = $this->connections->findByKey($run->connection_key);
 
         if (! $connection instanceof Connection) {
-            $this->frontierExpansion->pauseMissingConnection($run);
+            $this->frontierExpansion->pauseMissingConnection($run, $this->runs);
 
             return 0;
         }
@@ -206,7 +218,7 @@ final class ContactFullPassPlannerService
         $maxTotal = $this->fullPassConfig->maxContactsTotal();
 
         if ($run->contacts_crawled >= $maxTotal) {
-            $this->frontierExpansion->completeRun($run);
+            $this->frontierExpansion->completeRun($run, $this->runs);
 
             return 0;
         }
@@ -214,7 +226,7 @@ final class ContactFullPassPlannerService
         $pending = $this->frontier->nextPending($run->id, min($limit, $maxTotal - $run->contacts_crawled));
 
         if ($pending->isEmpty()) {
-            $this->frontierExpansion->maybeCompleteRun($run, $this->frontier);
+            $this->frontierExpansion->maybeCompleteRun($run, $this->frontier, $this->runs);
 
             return 0;
         }
@@ -228,11 +240,11 @@ final class ContactFullPassPlannerService
 
             if ($item->depth < $run->max_depth) {
                 $this->crawls->crawl($connection, CrawlType::Contacts, $item->contact_nsid);
-                $item->update([
+                $this->frontier->update($item->id, [
                     'status' => SpiderFrontierStatus::Queued,
                 ]);
             } else {
-                $item->update([
+                $this->frontier->update($item->id, [
                     'status' => SpiderFrontierStatus::Crawled,
                     'crawled_at' => now(),
                 ]);
@@ -241,7 +253,7 @@ final class ContactFullPassPlannerService
             $queued++;
         }
 
-        $run->increment('contacts_crawled', $queued);
+        $this->runs->incrementRun($run, 'contacts_crawled', $queued);
 
         return $queued;
     }

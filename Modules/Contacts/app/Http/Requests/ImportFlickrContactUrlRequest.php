@@ -6,6 +6,7 @@ namespace Modules\Contacts\Http\Requests;
 
 use App\Http\Requests\Concerns\ResolvesCrawlTypes;
 use App\Http\Requests\Request;
+use Illuminate\Validation\Rule;
 
 final class ImportFlickrContactUrlRequest extends Request
 {
@@ -17,6 +18,7 @@ final class ImportFlickrContactUrlRequest extends Request
     public function rules(): array
     {
         return array_merge([
+            'source' => ['required', 'string', Rule::in(['url'])],
             'url' => ['required', 'string', 'max:2048'],
             'start_crawl' => ['sometimes', 'boolean'],
         ], $this->crawlTypeRules());
