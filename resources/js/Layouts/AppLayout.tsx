@@ -20,6 +20,7 @@ import TokenHealthBanner from '@/Components/Flickr/TokenHealthBanner';
 import { APP_SIDEBAR_FOOTER_RESET_CLASS } from '@/Components/layout/appBottomRail';
 import AppSidebarFooter from '@/Components/layout/AppSidebarFooter';
 import AppStatusFooter from '@/Components/layout/AppStatusFooter';
+import CommandPalette, { CommandPaletteTrigger } from '@/Components/layout/CommandPalette';
 import GlobalCrawlPauseButton from '@/Components/layout/GlobalCrawlPauseButton';
 import { SpiderModeButton } from '@/Components/layout/SpiderModeButton';
 import UserAccountMenu from '@/Components/layout/UserAccountMenu';
@@ -220,6 +221,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
     const { app, auth, flash } = props;
     const globalPause = app.global_pause ?? false;
     const [tokenBannerVisible, setTokenBannerVisible] = useState(false);
+    const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
     const spider = app.spider ?? defaultSpider;
     const {
         snapshot: rateLimitSnapshot,
@@ -254,6 +256,14 @@ export default function AppLayout({ children }: PropsWithChildren) {
         [rateLimitSnapshot],
     );
 
+    const commandPaletteAccountPublicId = useMemo(() => {
+        const selected = (rateLimitSnapshot?.accounts ?? []).find(
+            (row) => row.account.nsid === selectedNsid,
+        );
+
+        return selected?.account.public_id ?? connectedFlickrAccounts[0]?.public_id ?? null;
+    }, [rateLimitSnapshot, selectedNsid, connectedFlickrAccounts]);
+
     const sidebarOffsetClass = stickySidebarOffsetClass({
         globalPause,
         tokenBannerVisible,
@@ -263,6 +273,12 @@ export default function AppLayout({ children }: PropsWithChildren) {
 
     return (
         <AppShell sidebarWidth="14rem">
+            <CommandPalette
+                open={commandPaletteOpen}
+                onOpenChange={setCommandPaletteOpen}
+                accountPublicId={commandPaletteAccountPublicId}
+            />
+
             <div className="sticky top-0 z-40">
                 {globalPause ? (
                     <div className="border-b border-rose-200 bg-rose-50 px-4 py-2 text-center text-sm font-medium text-rose-900">
@@ -285,6 +301,9 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         </AppShell.Brand>
 
                         <AppShell.HeaderMain>
+                            <div className="mr-2 flex items-center">
+                                <CommandPaletteTrigger onClick={() => setCommandPaletteOpen(true)} />
+                            </div>
                             <AppShell.HeaderNav>
                                 {topNav.map((item) => {
                                     const active =
