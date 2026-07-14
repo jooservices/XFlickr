@@ -7,6 +7,7 @@ import ContactDownloadCell from '@/Components/ContactDownloadCell';
 import ContactNsidLinks from '@/Components/ContactNsidLinks';
 import ContactAnnotationActions from '@/Components/Contacts/ContactAnnotationActions';
 import ContactViewModeToggle, { type ContactViewMode } from '@/Components/Contacts/ContactViewModeToggle';
+import ContactGraphShell from '@/Components/Contacts/Graph/ContactGraphShell';
 import ContactsSearchFilter from '@/Components/ContactsSearchFilter';
 import CrawlActionBar from '@/Components/CrawlActionBar';
 import CrawlTypeMenu, {
@@ -16,7 +17,6 @@ import CrawlTypeMenu, {
 } from '@/Components/CrawlTypeMenu';
 import DataTable from '@/Components/DataTable';
 import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
-import ContactGraphShell from '@/Components/macros/ContactGraphShell';
 import { usePolledResource } from '@/hooks/usePolledResource';
 import { useTableSelection } from '@/hooks/useTableSelection';
 import AppLayout from '@/Layouts/AppLayout';

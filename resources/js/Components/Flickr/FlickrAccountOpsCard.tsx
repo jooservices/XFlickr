@@ -1,1 +1,1 @@
-export { default } from '@/Components/macros/AccountOpsCard';
+export { default } from '@/Components/Flickr/AccountOpsCard';

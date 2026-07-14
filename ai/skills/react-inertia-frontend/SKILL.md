@@ -12,7 +12,7 @@ Keep frontend pages consistent with XCrawlerII-aligned AppShell / PageShell patt
 ## Structure
 
 - Pages: `resources/js/Pages/{Feature}/`
-- Shared components: `resources/js/Components/` (`ui/`, `macros/`, `layout/`)
+- Shared components: `resources/js/Components/` (`ui/`, `layout/`, plus PascalCase domain folders — `Contacts/Graph/`, `Flickr/`, `Catalog/`, `Transfer/`, …)
 - Master layout: `resources/js/Layouts/AppLayout.tsx` → JOO `AppShell`
 - Content layout: `resources/js/Components/layout/page-shell.tsx` → JOO `PageShell*`
 - Types: `resources/js/types.ts`
@@ -23,7 +23,7 @@ Keep frontend pages consistent with XCrawlerII-aligned AppShell / PageShell patt
 - Authenticated pages: `AppLayout` → `PageShell` → Identity / ControlBar / Canvas (not standalone `PageHeading`)
 - Use `Button` / `ActionButton` — not raw `<button>` for actions
 - Use shared `Modal` (`Modal.Header` / `Modal.Body` / `Modal.Footer`) for dialogs — portals to `document.body`
-- Use crawl/expand macros (`CrawlActionBar`, `ExpandActionBar`) for action groups
+- Use crawl/expand bars (`Flickr/CrawlActionBar`, `Flickr/ExpandActionBar`) for action groups
 - Use JOO / local `DataTable` for sortable tables; `MetricCard` for stats
 - Use `ProviderCard` for settings connection cards
 - Poll with `usePolledResource` against `/api/v1/*` (ESLint bans raw `setInterval` in hooks/Pages; UI countdowns use `useCountdown`)
@@ -47,7 +47,7 @@ Keep frontend pages consistent with XCrawlerII-aligned AppShell / PageShell patt
 
 ## Before adding UI
 
-Check existing Components and macros first. Prefer composing PageShell + macros over new page chrome.
+Check existing Components and domain folders first. Prefer composing PageShell + domain components over new page chrome.
 
 ## Related skills
 

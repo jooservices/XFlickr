@@ -1,13 +1,5 @@
-import { GitBranchPlus, Loader2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent, type RefObject } from 'react';
 
-import Button from '@/Components/Button';
-import ContactAnnotationActions from '@/Components/Contacts/ContactAnnotationActions';
-import ContactDetailPanel from '@/Components/Contacts/ContactDetailPanel';
-import ContactGraphDetailShell from '@/Components/Contacts/ContactGraphDetailShell';
-import ContactGraphHoverPopup from '@/Components/Contacts/ContactGraphHoverPopup';
-import { PageLoading } from '@/Components/LoadingIndicator';
-import ContactGraphToolbar from '@/Components/macros/ContactGraphToolbar';
 import { drawContactGraph, useContactGraphCanvas } from '@/hooks/useContactGraphCanvas';
 import { useElementSize } from '@/hooks/useElementSize';
 import { useGraphPanZoom } from '@/hooks/useGraphPanZoom';
@@ -35,25 +27,61 @@ interface ExpandingState {
     sinceEdgeId: number;
 }
 
-export interface ContactGraphShellProps {
-    accountPublicId: string;
-    rootNsid: string;
-    accountLabel: string;
-    onExit: () => void;
-}
-
 interface HoverState {
     nsid: string;
     clientX: number;
     clientY: number;
 }
 
-export default function ContactGraphShell({
+export interface UseContactGraphStateOptions {
+    accountPublicId: string;
+    rootNsid: string;
+    onExit: () => void;
+}
+
+export interface ContactGraphToolbarState {
+    directShown: number;
+    directTotal: number;
+    nodeCount: number;
+    hasMoreDirect: boolean;
+    loadMoreStep: number;
+    loadingMore: boolean;
+    isBrowserFullscreen: boolean;
+    currentDirectLimit: number;
+    onLoadMore: (nextLimit: number) => void;
+    onShowAll: () => void;
+    onToggleFullscreen: () => void;
+    onExit: () => void;
+}
+
+export interface UseContactGraphStateResult {
+    shellRef: RefObject<HTMLDivElement | null>;
+    canvasContainerRef: (node: HTMLDivElement | null) => void;
+    accountPublicId: string;
+    loading: boolean;
+    error: string | null;
+    loadSnapshot: (limit?: number, replace?: boolean) => Promise<void>;
+    canvasRef: RefObject<HTMLCanvasElement | null>;
+    panZoom: ReturnType<typeof useGraphPanZoom>;
+    handlePointerMove: (event: PointerEvent<HTMLCanvasElement>) => void;
+    handleClick: (event: MouseEvent<HTMLCanvasElement>) => void;
+    clearHovered: () => void;
+    hoveredNode: ContactGraphNode | undefined;
+    hovered: HoverState | null;
+    selectedNode: ContactGraphNode | undefined;
+    clearSelected: () => void;
+    toolbar: ContactGraphToolbarState;
+    handleExpand: (subjectNsid: string) => Promise<void>;
+    isExpandingSelected: boolean;
+    handleAnnotationUpdated: (payload: ContactAnnotationPayload) => void;
+    notes: Record<string, string | null>;
+}
+
+export function useContactGraphState({
     accountPublicId,
     rootNsid,
-    accountLabel,
     onExit,
-}: ContactGraphShellProps) {
+}: UseContactGraphStateOptions): UseContactGraphStateResult {
     const shellRef = useRef<HTMLDivElement>(null);
     const canvasContainer = useElementSize<HTMLDivElement>();
     const viewport = useMemo(
@@ -342,23 +370,38 @@ export default function ContactGraphShell({
             return;
         }
 
-        const tick = () => {
+        let cancelled = false;
+        let timeoutId = 0;
+
+        const tick = async () => {
+            if (cancelled) {
+                return;
+            }
+
             for (const [subjectNsid, state] of subjects) {
-                void pollDelta(subjectNsid, state).catch(() => undefined);
+                await pollDelta(subjectNsid, state).catch(() => undefined);
+            }
+
+            if (!cancelled) {
+                timeoutId = window.setTimeout(() => {
+                    void tick();
+                }, 1500);
             }
         };
 
-        tick();
-        const interval = setInterval(tick, 1500);
+        void tick();
 
-        return () => clearInterval(interval);
+        return () => {
+            cancelled = true;
+            window.clearTimeout(timeoutId);
+        };
     }, [expanding, pollDelta]);
 
     const selectedNode = selectedNsid ? nodes.get(selectedNsid) : undefined;
     const hoveredNode = hovered ? nodes.get(hovered.nsid) : undefined;
     const isExpandingSelected = selectedNsid ? expanding[selectedNsid] !== undefined : false;
 
-    async function toggleBrowserFullscreen() {
+    const toggleBrowserFullscreen = useCallback(async () => {
         const element = shellRef.current;
 
         if (!element) {
@@ -371,213 +414,177 @@ export default function ContactGraphShell({
         }
 
         await element.requestFullscreen();
-    }
+    }, []);
 
-    async function handleExpand(subjectNsid: string) {
-        setExpanding((current) => ({
-            ...current,
-            [subjectNsid]: current[subjectNsid] ?? { crawlRunId: 0, sinceEdgeId: 0 },
-        }));
-
-        try {
-            const subjectEdges = edges.filter((edge) => edge.from === subjectNsid);
-            const sinceEdgeId = subjectEdges.reduce((max, edge) => Math.max(max, edge.id), 0);
-
-            const result = await apiPost<{ data: ContactGraphExpandResult }>(
-                flickrApiAccountPath(accountPublicId, '/contact-graph/expansions'),
-                { contact_nsid: subjectNsid },
-            );
-
+    const handleExpand = useCallback(
+        async (subjectNsid: string) => {
             setExpanding((current) => ({
                 ...current,
-                [subjectNsid]: {
-                    crawlRunId: result.data.crawl_run_id,
-                    sinceEdgeId,
-                },
+                [subjectNsid]: current[subjectNsid] ?? { crawlRunId: 0, sinceEdgeId: 0 },
             }));
-        } catch {
-            setExpanding((current) => {
-                const next = { ...current };
-                delete next[subjectNsid];
+
+            try {
+                const subjectEdges = edges.filter((edge) => edge.from === subjectNsid);
+                const sinceEdgeId = subjectEdges.reduce((max, edge) => Math.max(max, edge.id), 0);
+
+                const result = await apiPost<{ data: ContactGraphExpandResult }>(
+                    flickrApiAccountPath(accountPublicId, '/contact-graph/expansions'),
+                    { contact_nsid: subjectNsid },
+                );
+
+                setExpanding((current) => ({
+                    ...current,
+                    [subjectNsid]: {
+                        crawlRunId: result.data.crawl_run_id,
+                        sinceEdgeId,
+                    },
+                }));
+            } catch {
+                setExpanding((current) => {
+                    const next = { ...current };
+                    delete next[subjectNsid];
+
+                    return next;
+                });
+            }
+        },
+        [accountPublicId, edges],
+    );
+
+    const handleAnnotationUpdated = useCallback(
+        (payload: ContactAnnotationPayload) => {
+            setNodes((current) => {
+                const next = new Map(current);
+                const existing = next.get(payload.nsid);
+
+                if (!existing) {
+                    return current;
+                }
+
+                next.set(payload.nsid, {
+                    ...existing,
+                    starred: payload.starred,
+                    note_preview: payload.note && payload.note.length > 80 ? `${payload.note.slice(0, 77)}...` : payload.note,
+                });
 
                 return next;
             });
-        }
-    }
 
-    function handleAnnotationUpdated(payload: ContactAnnotationPayload) {
-        setNodes((current) => {
-            const next = new Map(current);
-            const existing = next.get(payload.nsid);
+            setNotes((current) => ({
+                ...current,
+                [payload.nsid]: payload.note,
+            }));
 
-            if (!existing) {
-                return current;
+            requestRedraw();
+        },
+        [requestRedraw],
+    );
+
+    const handleLoadMore = useCallback(
+        (nextLimit: number) => {
+            void loadSnapshot(nextLimit, true);
+        },
+        [loadSnapshot],
+    );
+
+    const handlePointerMove = useCallback(
+        (event: PointerEvent<HTMLCanvasElement>) => {
+            panZoom.onPointerMove(event);
+
+            if (panZoom.isDragging()) {
+                return;
             }
 
-            next.set(payload.nsid, {
-                ...existing,
-                starred: payload.starred,
-                note_preview: payload.note && payload.note.length > 80 ? `${payload.note.slice(0, 77)}...` : payload.note,
-            });
+            const nearest = hitTest(event.clientX, event.clientY, layoutNodesRef.current, panZoom.transformRef.current);
 
-            return next;
-        });
+            if (nearest) {
+                setHovered((current) =>
+                    current?.nsid === nearest.nsid &&
+                    current.clientX === event.clientX &&
+                    current.clientY === event.clientY
+                        ? current
+                        : { nsid: nearest.nsid, clientX: event.clientX, clientY: event.clientY },
+                );
+            } else {
+                setHovered(null);
+            }
+        },
+        [hitTest, panZoom],
+    );
 
-        setNotes((current) => ({
-            ...current,
-            [payload.nsid]: payload.note,
-        }));
+    const handleClick = useCallback(
+        (event: MouseEvent<HTMLCanvasElement>) => {
+            if (panZoom.wasDragged()) {
+                panZoom.clearDragged();
+                return;
+            }
 
-        requestRedraw();
-    }
+            const nearest = hitTest(event.clientX, event.clientY, layoutNodesRef.current, panZoom.transformRef.current);
 
-    function handleLoadMore(nextLimit: number) {
-        void loadSnapshot(nextLimit, true);
-    }
-
-    function handlePointerMove(event: PointerEvent<HTMLCanvasElement>) {
-        panZoom.onPointerMove(event);
-
-        if (panZoom.isDragging()) {
-            return;
-        }
-
-        const nearest = hitTest(event.clientX, event.clientY, layoutNodesRef.current, panZoom.transformRef.current);
-
-        if (nearest) {
-            setHovered((current) =>
-                current?.nsid === nearest.nsid &&
-                current.clientX === event.clientX &&
-                current.clientY === event.clientY
-                    ? current
-                    : { nsid: nearest.nsid, clientX: event.clientX, clientY: event.clientY },
-            );
-        } else {
-            setHovered(null);
-        }
-    }
-
-    function handleClick(event: MouseEvent<HTMLCanvasElement>) {
-        if (panZoom.wasDragged()) {
-            panZoom.clearDragged();
-            return;
-        }
-
-        const nearest = hitTest(event.clientX, event.clientY, layoutNodesRef.current, panZoom.transformRef.current);
-
-        if (nearest) {
-            setSelectedNsid(nearest.nsid);
-        } else {
-            setSelectedNsid(null);
-        }
-    }
+            if (nearest) {
+                setSelectedNsid(nearest.nsid);
+            } else {
+                setSelectedNsid(null);
+            }
+        },
+        [hitTest, panZoom],
+    );
 
     const loadMoreStep = meta?.load_more_step ?? 100;
     const directTotal = meta?.direct_total ?? nodeList.length;
     const directShown = meta?.direct_shown ?? nodeList.length;
     const hasMoreDirect = meta?.has_more_direct ?? false;
 
-    return (
-        <div ref={shellRef} className="fixed inset-0 z-[100] flex flex-col bg-slate-100">
-            <ContactGraphToolbar
-                directShown={directShown}
-                directTotal={directTotal}
-                nodeCount={nodeList.length}
-                hasMoreDirect={hasMoreDirect}
-                loadMoreStep={loadMoreStep}
-                loadingMore={loadingMore}
-                isBrowserFullscreen={isBrowserFullscreen}
-                currentDirectLimit={directLimit ?? directShown}
-                onLoadMore={handleLoadMore}
-                onShowAll={() => handleLoadMore(0)}
-                onToggleFullscreen={() => void toggleBrowserFullscreen()}
-                onExit={onExit}
-            />
-
-            <div className="flex min-h-0 flex-1 overflow-hidden">
-                <div ref={canvasContainer.ref} className="relative min-w-0 flex-1 overflow-hidden">
-                {loading ? (
-                    <PageLoading label="Laying out graph…" className="h-full min-h-0" />
-                ) : error ? (
-                    <div className="flex h-full flex-col items-center justify-center gap-3">
-                        <p className="text-sm text-rose-700">{error}</p>
-                        <Button type="button" variant="secondary" size="sm" onClick={() => void loadSnapshot()}>
-                            Retry
-                        </Button>
-                    </div>
-                ) : (
-                    <canvas
-                        ref={canvasRef}
-                        className="h-full w-full cursor-grab active:cursor-grabbing"
-                        onWheel={panZoom.onWheel}
-                        onPointerDown={panZoom.onPointerDown}
-                        onPointerMove={handlePointerMove}
-                        onPointerUp={panZoom.onPointerUp}
-                        onPointerLeave={(event) => {
-                            panZoom.onPointerUp(event);
-                            setHovered(null);
-                        }}
-                        onClick={handleClick}
-                    />
-                )}
-
-                {hoveredNode && hovered && !loading && !error ? (
-                    <ContactGraphHoverPopup
-                        node={hoveredNode}
-                        accountLabel={accountLabel}
-                        clientX={hovered.clientX}
-                        clientY={hovered.clientY}
-                    />
-                ) : null}
-                </div>
-
-                {selectedNode && !loading && !error ? (
-                    <ContactGraphDetailShell onClose={() => setSelectedNsid(null)}>
-                        <ContactDetailPanel
-                            key={selectedNode.nsid}
-                            accountPublicId={accountPublicId}
-                            accountLabel={accountLabel}
-                            subject={selectedNode}
-                            onClose={() => setSelectedNsid(null)}
-                            actions={
-                                <>
-                                    <Button
-                                        type="button"
-                                        variant="primary"
-                                        size="sm"
-                                        disabled={isExpandingSelected}
-                                        onClick={() => void handleExpand(selectedNode.nsid)}
-                                    >
-                                        {isExpandingSelected ? (
-                                            <>
-                                                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                                                Expanding…
-                                            </>
-                                        ) : (
-                                            <>
-                                                <GitBranchPlus className="mr-1.5 h-4 w-4" />
-                                                {selectedNode.child_count > 0
-                                                    ? 'Re-expand contacts'
-                                                    : 'Expand contacts'}
-                                            </>
-                                        )}
-                                    </Button>
-
-                                    {!selectedNode.is_root ? (
-                                        <ContactAnnotationActions
-                                            accountPublicId={accountPublicId}
-                                            contactNsid={selectedNode.nsid}
-                                            starred={selectedNode.starred}
-                                            note={notes[selectedNode.nsid] ?? null}
-                                            onUpdated={handleAnnotationUpdated}
-                                        />
-                                    ) : null}
-                                </>
-                            }
-                        />
-                    </ContactGraphDetailShell>
-                ) : null}
-            </div>
-        </div>
+    const toolbar: ContactGraphToolbarState = useMemo(
+        () => ({
+            directShown,
+            directTotal,
+            nodeCount: nodeList.length,
+            hasMoreDirect,
+            loadMoreStep,
+            loadingMore,
+            isBrowserFullscreen,
+            currentDirectLimit: directLimit ?? directShown,
+            onLoadMore: handleLoadMore,
+            onShowAll: () => handleLoadMore(0),
+            onToggleFullscreen: () => void toggleBrowserFullscreen(),
+            onExit,
+        }),
+        [
+            directShown,
+            directTotal,
+            nodeList.length,
+            hasMoreDirect,
+            loadMoreStep,
+            loadingMore,
+            isBrowserFullscreen,
+            directLimit,
+            handleLoadMore,
+            toggleBrowserFullscreen,
+            onExit,
+        ],
     );
+
+    return {
+        shellRef,
+        canvasContainerRef: canvasContainer.ref,
+        accountPublicId,
+        loading,
+        error,
+        loadSnapshot,
+        canvasRef,
+        panZoom,
+        handlePointerMove,
+        handleClick,
+        clearHovered: () => setHovered(null),
+        hoveredNode,
+        hovered,
+        selectedNode,
+        clearSelected: () => setSelectedNsid(null),
+        toolbar,
+        handleExpand,
+        isExpandingSelected,
+        handleAnnotationUpdated,
+        notes,
+    };
 }

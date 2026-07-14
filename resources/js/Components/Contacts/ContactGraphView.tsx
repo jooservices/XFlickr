@@ -1,2 +1,2 @@
-export { default } from '@/Components/macros/ContactGraphShell';
-export type { ContactGraphShellProps as ContactGraphViewProps } from '@/Components/macros/ContactGraphShell';
+export { default } from '@/Components/Contacts/Graph/ContactGraphShell';
+export type { ContactGraphShellProps as ContactGraphViewProps } from '@/Components/Contacts/Graph/ContactGraphShell';

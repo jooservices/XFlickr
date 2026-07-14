@@ -1,1 +1,1 @@
-export { default } from '@/Components/macros/ExpandActionBar';
+export { default } from '@/Components/Flickr/ExpandActionBar';

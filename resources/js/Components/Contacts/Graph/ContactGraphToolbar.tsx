@@ -2,6 +2,7 @@ import { Maximize, Minimize, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import Button from '@/Components/Button';
+import ContactGraphLegend from '@/Components/Contacts/Graph/ContactGraphLegend';
 import LoadingIndicator from '@/Components/LoadingIndicator';
 
 export type ContactGraphToolbarProps = {
@@ -41,9 +42,7 @@ export default function ContactGraphToolbar({
                     {directShown.toLocaleString()} / {directTotal.toLocaleString()} direct contacts ·{' '}
                     {nodeCount.toLocaleString()} nodes · drag to pan · scroll to zoom
                 </p>
-                <p className="mt-0.5 text-[11px] text-slate-400">
-                    Dot size &amp; darkness = photos indexed · ★ = starred
-                </p>
+                <ContactGraphLegend />
             </div>
             <div className="flex shrink-0 flex-wrap items-center gap-2">
                 {hasMoreDirect ? (

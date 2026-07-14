@@ -3,10 +3,10 @@ import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
 import Button from '@/Components/Button';
+import AccountOpsCard from '@/Components/Flickr/AccountOpsCard';
 import type { FlickrAppSummary } from '@/Components/Flickr/FlickrAppProfileCard';
 import FlickrAppsPanel from '@/Components/Flickr/FlickrAppsPanel';
 import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
-import AccountOpsCard from '@/Components/macros/AccountOpsCard';
 import OnboardingWizard from '@/Components/Settings/OnboardingWizard';
 import StorageCredentialsPanel from '@/Components/Settings/StorageCredentialsPanel';
 import AppLayout from '@/Layouts/AppLayout';

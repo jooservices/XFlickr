@@ -10,9 +10,15 @@ resources/js/
 │   ├── ui/           # Primitives (Button, MetricCard, …)
 │   ├── layout/       # PageShell barrel over @jooservices/react-content
 │   ├── form/         # Form macros
-│   └── macros/       # Domain composites (ContactGraphShell, CrawlActionBar, …)
+│   ├── Contacts/     # Contact list/detail + Graph/ (ContactGraphShell, toolbar, legend)
+│   ├── Flickr/       # Account ops, crawl/expand action bars
+│   ├── Catalog/      # Photo grid macro
+│   ├── Transfer/     # Transfer batch panel
+│   ├── Operations/   # Operations console panels
+│   ├── Settings/     # Settings panels
+│   └── Storage/      # Storage browse/reauthorize UI
 ├── Layouts/          # AppLayout — master chrome (JOO AppShell)
-├── Pages/            # Inertia pages compose PageShell + macros
+├── Pages/            # Inertia pages compose PageShell + domain components
 ├── hooks/            # usePolledResource, domain hooks
 ├── lib/              # apiClient, apiPaths, utilities
 └── types.ts

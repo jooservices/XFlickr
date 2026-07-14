@@ -1,1 +1,1 @@
-export { default } from '@/Components/macros/PhotoGridMacro';
+export { default } from '@/Components/Catalog/PhotoGridMacro';

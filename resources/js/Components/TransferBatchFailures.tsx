@@ -1,1 +1,1 @@
-export { default } from '@/Components/macros/TransferBatchPanel';
+export { default } from '@/Components/Transfer/TransferBatchPanel';
