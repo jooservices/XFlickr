@@ -13,12 +13,12 @@ final class StorageAppProfileController
 {
     public function store(StoreStorageAppProfileRequest $request, StorageService $profiles, AdminActionLogger $audit): RedirectResponse
     {
-        $validated = $request->validated();
+        $dto = $request->toDto();
 
-        $profiles->saveAppProfile($validated);
+        $profiles->saveAppProfile($dto);
 
         $audit->record('settings.storage_app.saved', [
-            'provider' => $validated['provider'] ?? null,
+            'provider' => $dto->provider,
         ]);
 
         return redirect()

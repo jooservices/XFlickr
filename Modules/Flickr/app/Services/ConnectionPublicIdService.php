@@ -2,14 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Modules\Flickr\Support;
+namespace Modules\Flickr\Services;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Modules\Crawler\Models\Connection;
+use Modules\Crawler\Repositories\ConnectionRepository;
 
 final class ConnectionPublicIdService
 {
+    public function __construct(
+        private readonly ConnectionRepository $connections,
+    ) {}
+
     public function ensure(Connection $connection): string
     {
         $publicId = $connection->getAttribute('public_id');
@@ -20,9 +24,12 @@ final class ConnectionPublicIdService
 
         $publicId = (string) Str::uuid();
 
-        DB::table($connection->getTable())
-            ->where('id', $connection->id)
-            ->update(['public_id' => $publicId]);
+        $id = $connection->getKey();
+        if ($id !== null) {
+            $this->connections->updateById($id, [
+                'public_id' => $publicId,
+            ]);
+        }
 
         $connection->setAttribute('public_id', $publicId);
 

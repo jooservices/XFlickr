@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\Flickr\Tests\Unit\Services;
 
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use JOOservices\Flickr\Client\FakeFlickrTransport;
 use JOOservices\Flickr\Exceptions\AuthenticationException;
 use Modules\Crawler\Models\Connection;
@@ -205,5 +206,93 @@ final class FlickrOAuthServiceTest extends TestCase
             $fresh = Connection::query()->where('connection_key', $nsid)->first();
             $this->assertNotNull($fresh?->disconnected_at);
         }
+    }
+
+    public function test_complete_logs_success_without_raw_tokens(): void
+    {
+        Event::fake([FlickrAccountConnected::class]);
+        $this->mockFlickrTokenHealth(valid: true);
+        Log::spy();
+
+        $nsid = FlickrNsid::fake();
+        $transport = FakeFlickrTransport::new()
+            ->push('oauth_token=access-token&oauth_token_secret=access-secret&user_nsid='.$nsid.'&username=oauth-user&fullname=OAuth+User');
+
+        $service = new FlickrOAuthService(
+            app(FlickrAppProfileService::class),
+            app(FlickrTokenHealthService::class),
+            $transport,
+        );
+
+        $service->complete(
+            oauthToken: 'request-token-secret-value',
+            oauthVerifier: 'verifier-secret-value',
+            oauthTokenSecret: 'request-secret-value',
+            context: ['phase' => 'callback', 'oauth_token' => 'should-be-stripped'],
+        );
+
+        Log::shouldHaveReceived('info')
+            ->once()
+            ->withArgs(function (string $message, array $context): bool {
+                if ($message !== 'Flickr OAuth complete succeeded.') {
+                    return false;
+                }
+
+                $encoded = json_encode($context);
+
+                return is_string($encoded)
+                    && ! str_contains($encoded, 'request-token-secret-value')
+                    && ! str_contains($encoded, 'verifier-secret-value')
+                    && ! str_contains($encoded, 'request-secret-value')
+                    && ! str_contains($encoded, 'should-be-stripped')
+                    && isset($context['oauth_token_fp'])
+                    && isset($context['connection_key_fp'])
+                    && strlen((string) $context['oauth_token_fp']) === 12
+                    && ($context['phase'] ?? null) === 'callback';
+            });
+    }
+
+    public function test_complete_logs_failure_without_raw_tokens(): void
+    {
+        $this->mockFlickrTokenHealth(valid: false, errorMessage: 'Invalid auth token');
+        Log::spy();
+
+        $nsid = FlickrNsid::fake();
+        $transport = FakeFlickrTransport::new()
+            ->push('oauth_token=access-token&oauth_token_secret=access-secret&user_nsid='.$nsid.'&username=oauth-user&fullname=OAuth+User');
+
+        $service = new FlickrOAuthService(
+            app(FlickrAppProfileService::class),
+            app(FlickrTokenHealthService::class),
+            $transport,
+        );
+
+        try {
+            $service->complete('raw-oauth-token', 'raw-verifier', 'raw-secret', context: [
+                'oauth_token_secret' => 'must-not-log',
+            ]);
+            $this->fail('Expected AuthenticationException');
+        } catch (AuthenticationException) {
+            // expected
+        }
+
+        Log::shouldHaveReceived('warning')
+            ->once()
+            ->withArgs(function (string $message, array $context): bool {
+                if ($message !== 'Flickr OAuth complete failed.') {
+                    return false;
+                }
+
+                $encoded = json_encode($context);
+
+                return is_string($encoded)
+                    && ! str_contains($encoded, 'raw-oauth-token')
+                    && ! str_contains($encoded, 'raw-verifier')
+                    && ! str_contains($encoded, 'raw-secret')
+                    && ! str_contains($encoded, 'must-not-log')
+                    && isset($context['oauth_token_fp'])
+                    && strlen((string) $context['oauth_token_fp']) === 12
+                    && isset($context['error']);
+            });
     }
 }

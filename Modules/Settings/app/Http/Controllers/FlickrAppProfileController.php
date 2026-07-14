@@ -16,10 +16,10 @@ final class FlickrAppProfileController
 {
     public function store(StoreFlickrAppProfileRequest $request, FlickrAccountsService $profiles, AdminActionLogger $audit): RedirectResponse
     {
-        $validated = $request->validated();
+        $dto = $request->toDto();
 
         try {
-            $profiles->saveAppProfile($validated);
+            $profiles->saveAppProfile($dto);
         } catch (FlickrAppNotConfiguredException $exception) {
             throw ValidationException::withMessages([
                 'profile' => $exception->getMessage(),
@@ -27,7 +27,7 @@ final class FlickrAppProfileController
         }
 
         $audit->record('settings.flickr_app.saved', [
-            'profile' => $validated['profile'] ?? 'main',
+            'profile' => $dto->profile,
         ]);
 
         return redirect()

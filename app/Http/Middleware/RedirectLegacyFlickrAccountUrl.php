@@ -8,7 +8,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Modules\Crawler\Models\Connection;
-use Modules\Flickr\Support\ConnectionPublicIdService;
+use Modules\Flickr\Services\ConnectionPublicIdService;
 use Symfony\Component\HttpFoundation\Response;
 
 /**

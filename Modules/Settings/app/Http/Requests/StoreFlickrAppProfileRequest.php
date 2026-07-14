@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\Settings\Http\Requests;
 
 use App\Http\Requests\Request;
+use Modules\Flickr\Dto\FlickrAppProfileDto;
 
 final class StoreFlickrAppProfileRequest extends Request
 {
@@ -20,5 +21,10 @@ final class StoreFlickrAppProfileRequest extends Request
             'api_secret' => ['required', 'string', 'max:255'],
             'callback_url' => ['nullable', 'url', 'max:2048'],
         ];
+    }
+
+    public function toDto(): FlickrAppProfileDto
+    {
+        return FlickrAppProfileDto::from($this->validated());
     }
 }

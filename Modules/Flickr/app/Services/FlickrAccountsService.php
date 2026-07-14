@@ -9,6 +9,7 @@ use Modules\Crawler\Enums\CrawlType;
 use Modules\Crawler\Models\Connection;
 use Modules\Crawler\Models\CrawlRun;
 use Modules\Flickr\Dto\DownloadCandidateDto;
+use Modules\Flickr\Dto\FlickrAppProfileDto;
 use Modules\Flickr\Dto\FlickrTokenHealthResult;
 use Modules\Flickr\Services\RateLimit\Presenter;
 
@@ -23,6 +24,7 @@ final class FlickrAccountsService
         private readonly FlickrAppProfileService $appProfiles,
         private readonly FlickrPhotoSizeResolver $photoSizes,
         private readonly FlickrUrlResolverService $urlResolver,
+        private readonly ConnectionPublicIdService $publicIds,
     ) {}
 
     /**
@@ -135,12 +137,15 @@ final class FlickrAccountsService
         return $this->appProfiles->listPublic()->values()->all();
     }
 
-    /**
-     * @param  array{profile?: string, label?: string|null, api_key: string, api_secret: string, callback_url?: string|null}  $data
-     */
-    public function saveAppProfile(array $data): string
+    public function saveAppProfile(FlickrAppProfileDto $profile): string
     {
-        return $this->appProfiles->save($data);
+        return $this->appProfiles->save([
+            'profile' => $profile->profile,
+            'label' => $profile->label,
+            'api_key' => $profile->apiKey,
+            'api_secret' => $profile->apiSecret,
+            'callback_url' => $profile->callbackUrl,
+        ]);
     }
 
     public function deleteAppProfile(string $profile): string
@@ -164,5 +169,10 @@ final class FlickrAccountsService
     public function resolveContactFromUrl(Connection $connection, string $url): array
     {
         return $this->urlResolver->resolveContactRow($connection, $url);
+    }
+
+    public function ensurePublicId(Connection $connection): string
+    {
+        return $this->publicIds->ensure($connection);
     }
 }

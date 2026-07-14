@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Modules\Flickr\Services;
 
+use App\Support\ThirdPartyApiLogger;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use JOOservices\Flickr\Config\FlickrConfig;
 use JOOservices\Flickr\Contracts\Client\FlickrTransportContract;
 use JOOservices\Flickr\DTO\Auth\AccessTokenData;
@@ -17,6 +19,7 @@ use Modules\Crawler\Models\Connection;
 use Modules\Flickr\Events\FlickrAccountConnected;
 use Modules\Flickr\Events\FlickrAccountDisconnected;
 use Modules\Flickr\Support\ConnectionPresenter;
+use Throwable;
 
 final class FlickrOAuthService
 {
@@ -27,69 +30,106 @@ final class FlickrOAuthService
     ) {}
 
     /**
+     * @param  array<string, mixed>  $context
      * @return array{url: string, oauth_token: string, oauth_token_secret: string, app_profile: string}
      */
-    public function begin(?string $appProfile = null): array
+    public function begin(?string $appProfile = null, array $context = []): array
     {
         $profile = $appProfile ?? 'main';
-        $client = $this->clientForProfile($profile);
+        $startedAt = microtime(true);
 
-        $requestToken = $client->auth()->requestToken(AuthPermission::Read);
-        $url = $client->auth()->authorizationUrl($requestToken, AuthPermission::Read);
+        try {
+            $client = $this->clientForProfile($profile);
 
-        return [
-            'url' => $url,
-            'oauth_token' => $requestToken->oauthToken,
-            'oauth_token_secret' => $requestToken->oauthTokenSecret,
-            'app_profile' => $profile,
-        ];
+            $requestToken = $client->auth()->requestToken(AuthPermission::Read);
+            $url = $client->auth()->authorizationUrl($requestToken, AuthPermission::Read);
+
+            $payload = [
+                'url' => $url,
+                'oauth_token' => $requestToken->oauthToken,
+                'oauth_token_secret' => $requestToken->oauthTokenSecret,
+                'app_profile' => $profile,
+            ];
+
+            Log::info('Flickr OAuth begin succeeded.', $this->logContext($startedAt, $profile, [
+                'oauth_token_fp' => ThirdPartyApiLogger::fingerprint($requestToken->oauthToken),
+            ], $context));
+
+            return $payload;
+        } catch (Throwable $exception) {
+            Log::warning('Flickr OAuth begin failed.', $this->logContext($startedAt, $profile, [
+                'error' => $exception->getMessage(),
+            ], $context));
+
+            throw $exception;
+        }
     }
 
+    /**
+     * @param  array<string, mixed>  $context
+     */
     public function complete(
         string $oauthToken,
         string $oauthVerifier,
         string $oauthTokenSecret,
         string $appProfile = 'main',
+        array $context = [],
     ): Connection {
-        $client = $this->clientForProfile($appProfile);
+        $startedAt = microtime(true);
 
-        $accessToken = $client->auth()->accessToken($oauthToken, $oauthVerifier, $oauthTokenSecret);
-        $nsid = $accessToken->userNsid ?? 'unknown';
+        try {
+            $client = $this->clientForProfile($appProfile);
 
-        $connection = FlickrService::connections()->register(
-            connectionKey: $nsid,
-            tokenPayload: $this->tokenPayloadFromAccessToken($accessToken),
-            appProfile: $appProfile,
-            username: $accessToken->username,
-            fullname: $accessToken->fullname,
-            activate: true,
-        );
-
-        if ($connection->connection_key === 'unknown' && $accessToken->userNsid !== null) {
-            FlickrService::connections()->disconnect('unknown');
+            $accessToken = $client->auth()->accessToken($oauthToken, $oauthVerifier, $oauthTokenSecret);
+            $nsid = $accessToken->userNsid ?? 'unknown';
 
             $connection = FlickrService::connections()->register(
-                connectionKey: $accessToken->userNsid,
+                connectionKey: $nsid,
                 tokenPayload: $this->tokenPayloadFromAccessToken($accessToken),
                 appProfile: $appProfile,
                 username: $accessToken->username,
                 fullname: $accessToken->fullname,
                 activate: true,
             );
+
+            if ($connection->connection_key === 'unknown' && $accessToken->userNsid !== null) {
+                FlickrService::connections()->disconnect('unknown');
+
+                $connection = FlickrService::connections()->register(
+                    connectionKey: $accessToken->userNsid,
+                    tokenPayload: $this->tokenPayloadFromAccessToken($accessToken),
+                    appProfile: $appProfile,
+                    username: $accessToken->username,
+                    fullname: $accessToken->fullname,
+                    activate: true,
+                );
+            }
+
+            $connection = $connection->fresh() ?? $connection;
+            $this->assertTokenHealthyAfterConnect($connection, $appProfile);
+
+            $this->tokenHealth->forgetCache($connection);
+
+            event(new FlickrAccountConnected(
+                connectionKey: $connection->connection_key,
+                appProfile: $appProfile,
+                username: $accessToken->username,
+            ));
+
+            Log::info('Flickr OAuth complete succeeded.', $this->logContext($startedAt, $appProfile, [
+                'oauth_token_fp' => ThirdPartyApiLogger::fingerprint($oauthToken),
+                'connection_key_fp' => ThirdPartyApiLogger::fingerprint($connection->connection_key),
+            ], $context));
+
+            return $connection;
+        } catch (Throwable $exception) {
+            Log::warning('Flickr OAuth complete failed.', $this->logContext($startedAt, $appProfile, [
+                'error' => $exception->getMessage(),
+                'oauth_token_fp' => ThirdPartyApiLogger::fingerprint($oauthToken),
+            ], $context));
+
+            throw $exception;
         }
-
-        $connection = $connection->fresh() ?? $connection;
-        $this->assertTokenHealthyAfterConnect($connection, $appProfile);
-
-        $this->tokenHealth->forgetCache($connection);
-
-        event(new FlickrAccountConnected(
-            connectionKey: $connection->connection_key,
-            appProfile: $appProfile,
-            username: $accessToken->username,
-        ));
-
-        return $connection;
     }
 
     public function disconnect(string $connectionKey): void
@@ -208,6 +248,24 @@ final class FlickrOAuthService
             'userNsid' => $accessToken->userNsid,
             'username' => $accessToken->username,
             'fullname' => $accessToken->fullname,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $extra
+     * @param  array<string, mixed>  $context
+     * @return array<string, mixed>
+     */
+    private function logContext(float $startedAt, string $appProfile, array $extra = [], array $context = []): array
+    {
+        $logger = new ThirdPartyApiLogger;
+
+        return [
+            'provider' => 'flickr',
+            'app_profile' => $appProfile,
+            'duration_ms' => (int) round((microtime(true) - $startedAt) * 1000),
+            ...$logger->safeContext($extra),
+            ...$logger->safeContext($context),
         ];
     }
 }

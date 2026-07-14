@@ -6,6 +6,7 @@ namespace Modules\Settings\Http\Requests;
 
 use App\Http\Requests\Request;
 use Illuminate\Validation\Rule;
+use Modules\Storage\Dto\StorageAppProfileDto;
 use Modules\Storage\Enums\StorageDriver;
 
 final class StoreStorageAppProfileRequest extends Request
@@ -25,5 +26,10 @@ final class StoreStorageAppProfileRequest extends Request
             'client_secret' => ['required', 'string', 'max:2048'],
             'redirect' => ['nullable', 'url', 'max:2048'],
         ];
+    }
+
+    public function toDto(): StorageAppProfileDto
+    {
+        return StorageAppProfileDto::from($this->validated());
     }
 }

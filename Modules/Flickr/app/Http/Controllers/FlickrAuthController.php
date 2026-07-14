@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Flickr\Http\Controllers;
 
-use App\Support\ThirdPartyApiLogger;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Log;
 use JOOservices\Flickr\Exceptions\AuthenticationException;
 use JOOservices\Flickr\Exceptions\ConfigurationException;
 use Modules\Crawler\Exceptions\FlickrAppNotConfiguredException;
@@ -21,18 +19,12 @@ final class FlickrAuthController
     public function connect(BeginFlickrOAuthRequest $request, FlickrOAuthService $oauth): RedirectResponse
     {
         try {
-            $begin = $oauth->begin($request->appProfile());
-        } catch (ConfigurationException|FlickrAppNotConfiguredException $exception) {
-            Log::warning('Flickr OAuth connect failed (configuration).', [
-                'error' => $exception->getMessage(),
+            $begin = $oauth->begin($request->appProfile(), [
+                'phase' => 'connect',
             ]);
-
+        } catch (ConfigurationException|FlickrAppNotConfiguredException) {
             return redirect()->route('connections.index', ['provider' => 'flickr'])->with('error', 'Flickr app credentials are invalid or incomplete.');
         } catch (AuthenticationException $exception) {
-            Log::warning('Flickr OAuth connect failed (authentication).', [
-                'error' => $exception->getMessage(),
-            ]);
-
             return redirect()->route('connections.index', ['provider' => 'flickr'])->with(
                 'error',
                 'Flickr OAuth failed. Verify API key/secret and register callback URL '
@@ -58,23 +50,14 @@ final class FlickrAuthController
                 $request->oauthVerifier(),
                 $request->sessionSecret(),
                 $request->appProfile(),
+                ['phase' => 'callback'],
             );
-        } catch (AuthenticationException|ConfigurationException|FlickrAppNotConfiguredException $exception) {
-            Log::warning('Flickr OAuth callback failed (configuration or authentication).', [
-                'error' => $exception->getMessage(),
-                'oauth_token_fp' => ThirdPartyApiLogger::fingerprint($request->oauthToken()),
-            ]);
-
+        } catch (AuthenticationException|ConfigurationException|FlickrAppNotConfiguredException) {
             return redirect()->route('connections.index', ['provider' => 'flickr'])->with(
                 'error',
                 'Flickr account could not be connected. Check app credentials and try again.',
             );
-        } catch (Throwable $exception) {
-            Log::warning('Flickr OAuth callback failed.', [
-                'error' => $exception->getMessage(),
-                'oauth_token_fp' => ThirdPartyApiLogger::fingerprint($request->oauthToken()),
-            ]);
-
+        } catch (Throwable) {
             return redirect()->route('connections.index', ['provider' => 'flickr'])->with(
                 'error',
                 'Flickr account could not be connected due to an unexpected error.',

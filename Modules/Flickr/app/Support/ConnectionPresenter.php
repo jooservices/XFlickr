@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\Flickr\Support;
 
 use Modules\Crawler\Models\Connection;
+use Modules\Flickr\Services\ConnectionPublicIdService;
 
 final class ConnectionPresenter
 {

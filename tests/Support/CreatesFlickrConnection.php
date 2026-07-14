@@ -8,6 +8,7 @@ use Database\Factories\Crawler\ConnectionFactory;
 use Illuminate\Support\Str;
 use Mockery;
 use Modules\Crawler\Models\Connection;
+use Modules\Crawler\Services\FlickrClientFactory;
 use Modules\Flickr\Dto\FlickrTokenHealthResult;
 use Modules\Flickr\Services\FlickrTokenHealthService;
 use Tests\TestCase;
@@ -75,6 +76,24 @@ trait CreatesFlickrConnection
             ));
         $mock->shouldReceive('forgetCache')->zeroOrMoreTimes();
         $mock->shouldReceive('forgetCacheForKey')->zeroOrMoreTimes();
+        $mock->shouldReceive('auditEndpoints')->zeroOrMoreTimes()->andReturnUsing(
+            function (Connection $connection, string $contactNsid = '', string $profileUrl = '', string $photoId = '') {
+                return (new FlickrTokenHealthService(app(FlickrClientFactory::class)))
+                    ->auditEndpoints($connection, $contactNsid, $profileUrl, $photoId);
+            },
+        );
+        $mock->shouldReceive('probeCrawl')->zeroOrMoreTimes()->andReturnUsing(
+            function (...$args) {
+                return (new FlickrTokenHealthService(app(FlickrClientFactory::class)))
+                    ->probeCrawl(...$args);
+            },
+        );
+        $mock->shouldReceive('probeWithResponse')->zeroOrMoreTimes()->andReturnUsing(
+            function (...$args) {
+                return (new FlickrTokenHealthService(app(FlickrClientFactory::class)))
+                    ->probeWithResponse(...$args);
+            },
+        );
         $this->app->instance(FlickrTokenHealthService::class, $mock);
     }
 }
