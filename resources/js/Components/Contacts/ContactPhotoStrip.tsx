@@ -7,7 +7,7 @@ import LoadingIndicator from '@/Components/ui/LoadingIndicator';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { useRemoteDataTable } from '@/hooks/useRemoteDataTable';
 import { catalogOwnerUrl, photoSubtext } from '@/lib/catalog';
-import { flickrPhotoThumbnailUrl } from '@/lib/flickrPhoto';
+import { flickrPhotoGridUrl } from '@/lib/flickrPhoto';
 import type { Photo } from '@/types';
 
 const PHOTOS_PER_PAGE = 10;
@@ -116,15 +116,14 @@ export default function ContactPhotoStrip({ ownerNsid, photosCount }: ContactPho
                 </p>
             ) : (
                 <div
-                    className="grid min-h-64 flex-1 grid-cols-1 gap-3 overflow-y-auto sm:min-h-72 lg:min-h-[28rem]"
+                    className="grid min-h-64 flex-1 grid-cols-2 gap-3 overflow-y-auto sm:min-h-72 sm:grid-cols-3 lg:min-h-[28rem]"
                     onWheel={(event) => event.stopPropagation()}
                 >
                     {filteredPhotos.map((photo) => (
                         <PhotoGridTile
                             key={photo.id}
-                            imageUrl={flickrPhotoThumbnailUrl(photo)}
+                            imageUrl={flickrPhotoGridUrl(photo)}
                             alt={photo.title || 'Photo'}
-                            className="aspect-[4/3] w-full"
                             revealBottomRowOnHover
                             bottomRow={
                                 <span className="truncate text-xs text-white drop-shadow">

@@ -14,4 +14,13 @@ describe('contactCatalog', () => {
         expect(CRAWL_TYPE_OPTIONS[0]?.value).toBe('photos');
         expect(ALL_CRAWL_OPTION.label).toBe('All');
     });
+
+    it('maps catalog columns to ContactListSorter count keys', () => {
+        expect(CONTACT_CATALOG_COLUMNS.map((column) => [column.key, column.countKey])).toEqual([
+            ['photos', 'photos_count'],
+            ['favorites', 'favorites_count'],
+            ['photosets', 'photosets_count'],
+            ['galleries', 'galleries_count'],
+        ]);
+    });
 });

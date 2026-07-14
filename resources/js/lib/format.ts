@@ -1,3 +1,11 @@
+export function formatCount(value: number | null | undefined): string {
+    if (value === null || value === undefined) {
+        return '—';
+    }
+
+    return value.toLocaleString();
+}
+
 export function formatBytes(size: number | null): string {
     if (size === null) {
         return '—';

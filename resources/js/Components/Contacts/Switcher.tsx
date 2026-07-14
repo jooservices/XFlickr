@@ -75,7 +75,7 @@ export default function ContactSwitcher({
             <div className="border-t border-slate-100 px-3 py-2">
                 <a
                     href={flickrAccountPath(accountPublicId, '/contacts')}
-                    className="text-xs font-medium text-blue-600 hover:underline"
+                    className="text-xs font-medium text-cyan-700 hover:underline"
                 >
                     View all contacts
                 </a>

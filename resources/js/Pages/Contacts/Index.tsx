@@ -18,7 +18,9 @@ import CrawlTypeMenu, {
 import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/Layout/page-shell';
 import type { BulkAction } from '@/Components/ui/BulkActionBar';
 import Button from '@/Components/ui/Button';
+import Checkbox from '@/Components/ui/Checkbox';
 import DataTable from '@/Components/ui/DataTable';
+import EmptyState from '@/Components/ui/EmptyState';
 import { usePolledResource } from '@/hooks/usePolledResource';
 import { useTableSelection } from '@/hooks/useTableSelection';
 import AppLayout from '@/Layouts/AppLayout';
@@ -36,6 +38,20 @@ import type {
     PageProps,
     PaginatedMeta,
 } from '@/types';
+
+const SHOW_CATALOG_COUNTS_KEY = 'xflickr.contacts.showCatalogCounts';
+
+function readShowCatalogCounts(): boolean {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+
+    try {
+        return window.localStorage.getItem(SHOW_CATALOG_COUNTS_KEY) === '1';
+    } catch {
+        return false;
+    }
+}
 
 interface Props extends PageProps {
     account: FlickrAccount;
@@ -82,6 +98,7 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
     const [draft, setDraft] = useState(filters.search);
     const [contacts, setContacts] = useState(initialContacts);
     const [importOpen, setImportOpen] = useState(false);
+    const [showCatalogCounts, setShowCatalogCounts] = useState(readShowCatalogCounts);
     const viewMode: ContactViewMode = filters.view === 'graph' ? 'graph' : 'table';
     const starredOnly = filters.starred_only ?? false;
 
@@ -92,6 +109,22 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
     useEffect(() => {
         setDraft(filters.search);
     }, [filters.search]);
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem(SHOW_CATALOG_COUNTS_KEY, showCatalogCounts ? '1' : '0');
+        } catch {
+            // Ignore storage failures (private mode / quota).
+        }
+    }, [showCatalogCounts]);
+
+    const visibleCatalogColumns = useMemo(
+        () =>
+            showCatalogCounts
+                ? CONTACT_CATALOG_COLUMNS
+                : CONTACT_CATALOG_COLUMNS.filter((column) => column.key === 'photos'),
+        [showCatalogCounts],
+    );
 
     const hasActiveSearch = filters.search.trim().length > 0;
 
@@ -310,15 +343,20 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
                                 Import from URL
                             </Button>
                             <label className="inline-flex items-center gap-2 text-sm text-slate-700">
-                                <input
-                                    type="checkbox"
+                                <Checkbox
                                     checked={starredOnly}
                                     onChange={(event) =>
                                         navigateWithFilters({ starred_only: event.target.checked, page: 1 })
                                     }
-                                    className="rounded border-slate-300 text-cyan-700 focus:ring-cyan-600"
                                 />
                                 Starred only
+                            </label>
+                            <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                                <Checkbox
+                                    checked={showCatalogCounts}
+                                    onChange={(event) => setShowCatalogCounts(event.target.checked)}
+                                />
+                                Show catalog counts
                             </label>
                             <ContactViewModeToggle
                                 value={viewMode}
@@ -368,8 +406,9 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
                                     </div>
                                 ),
                             },
-                            ...CONTACT_CATALOG_COLUMNS.map((column) => ({
-                                key: column.key,
+                            ...visibleCatalogColumns.map((column) => ({
+                                // Sort key must match ContactListSorter (`photos_count`, …), not crawl type (`photos`).
+                                key: column.countKey,
                                 label: column.label,
                                 sortable: true,
                                 render: (contact: ContactListItem) => (
@@ -399,11 +438,34 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
                         sortDirection={filters.direction}
                         onSortChange={handleSortChange}
                         emptyMessage={
-                            starredOnly
-                                ? 'No starred contacts yet.'
-                                : filters.search
-                                  ? 'No contacts match your search.'
-                                  : 'No contacts yet. Run a contacts crawl first.'
+                            starredOnly ? (
+                                <EmptyState
+                                    title="No starred contacts yet."
+                                    description="Star contacts from the list to collect them here."
+                                />
+                            ) : filters.search ? (
+                                <EmptyState
+                                    title="No contacts match your search."
+                                    description={`Nothing matched “${filters.search}”. Try another name, username, or NSID.`}
+                                    action={
+                                        hasActiveSearch ? (
+                                            <Button type="button" variant="secondary" size="sm" onClick={clearSearch}>
+                                                Clear search
+                                            </Button>
+                                        ) : null
+                                    }
+                                />
+                            ) : (
+                                <EmptyState
+                                    title="No contacts in this account"
+                                    description="Run a contacts crawl from bulk actions or a row Crawl menu, or import a Flickr profile URL."
+                                    action={
+                                        <Button type="button" variant="secondary" size="sm" onClick={() => setImportOpen(true)}>
+                                            Import from URL
+                                        </Button>
+                                    }
+                                />
+                            )
                         }
                         actionsColumn={(contact) => (
                             <CrawlActionBar

@@ -1,6 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { formatBytes, formatRelativeTime, formatSyncedAt } from './format';
+import { formatBytes, formatCount, formatRelativeTime, formatSyncedAt } from './format';
+
+describe('formatCount', () => {
+    it('formats numbers and nullish values', () => {
+        expect(formatCount(null)).toBe('—');
+        expect(formatCount(undefined)).toBe('—');
+        expect(formatCount(0)).toBe('0');
+        expect(formatCount(1204)).toBe('1,204');
+    });
+});
 
 describe('formatBytes', () => {
     it('formats across size units', () => {

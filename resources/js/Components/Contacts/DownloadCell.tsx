@@ -1,6 +1,4 @@
-import { Loader2 } from 'lucide-react';
-
-import ProgressBar from '@/Components/ui/ProgressBar';
+import OperationStatusCell from '@/Components/ui/OperationStatusCell';
 import type { ContactDownloadState } from '@/types';
 
 interface ContactDownloadCellProps {
@@ -12,20 +10,13 @@ interface ContactDownloadCellProps {
 export default function ContactDownloadCell({ count, failedCount, state }: ContactDownloadCellProps) {
     if (state?.processing) {
         const completed = state.batch_completed ?? count;
-        const total = state.batch_total ?? null;
-        const progressMax = total ?? Math.max(completed, 1);
 
         return (
-            <div className="min-w-24 space-y-1">
-                <div className="flex items-center gap-1.5 text-blue-800">
-                    <Loader2 className="size-3 shrink-0 animate-spin" />
-                    <span className="tabular-nums text-sm font-medium">
-                        {total !== null && total !== undefined ? `${completed} / ${total}` : completed}
-                    </span>
-                </div>
-                <ProgressBar value={completed} max={progressMax} showLabel={false} />
-                <p className="text-xs text-blue-600">Downloading…</p>
-            </div>
+            <OperationStatusCell
+                completed={completed}
+                total={state.batch_total ?? null}
+                label="Downloading…"
+            />
         );
     }
 

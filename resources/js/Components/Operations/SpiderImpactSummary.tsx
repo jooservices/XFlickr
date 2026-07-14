@@ -1,13 +1,10 @@
+import { formatCount } from '@/lib/format';
 import type { SpiderImpactEstimate } from '@/types';
 
 type SpiderImpactSummaryProps = {
     impact: SpiderImpactEstimate;
     context: 'caps' | 'account';
 };
-
-function formatCount(value: number): string {
-    return value.toLocaleString();
-}
 
 export default function SpiderImpactSummary({ impact, context }: SpiderImpactSummaryProps) {
     return (

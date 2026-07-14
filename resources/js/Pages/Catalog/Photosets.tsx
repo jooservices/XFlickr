@@ -6,6 +6,7 @@ import CrawlActionBar from '@/Components/Flickr/CrawlActionBar';
 import FlickrPhotosetIdLinks from '@/Components/Flickr/PhotosetIdLinks';
 import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/Layout/page-shell';
 import DataTable from '@/Components/ui/DataTable';
+import EmptyState from '@/Components/ui/EmptyState';
 import Thumbnail from '@/Components/ui/Thumbnail';
 import { useCatalogOwnerNsidTable } from '@/hooks/useCatalogOwnerNsidTable';
 import AppLayout from '@/Layouts/AppLayout';
@@ -20,8 +21,17 @@ interface Props extends PageProps {
 }
 
 export default function CatalogPhotosets({ account }: Props) {
-    const { data: photosets, meta, setPage, loading, sortKey, sortDirection, handleSortChange, filterFormProps } =
-        useCatalogOwnerNsidTable<Photoset>('owner_nsid', {
+    const {
+        data: photosets,
+        meta,
+        setPage,
+        loading,
+        sortKey,
+        sortDirection,
+        handleSortChange,
+        filterFormProps,
+        appliedOwnerNsid,
+    } = useCatalogOwnerNsidTable<Photoset>('owner_nsid', {
             fetchPath: '/api/v1/flickr/catalog/photosets',
             initialSort: 'id',
             initialDirection: 'desc',
@@ -97,7 +107,16 @@ export default function CatalogPhotosets({ account }: Props) {
                         sortKey={sortKey}
                         sortDirection={sortDirection}
                         onSortChange={handleSortChange}
-                        emptyMessage="No photosets found."
+                        emptyMessage={
+                            <EmptyState
+                                title="No photosets found."
+                                description={
+                                    appliedOwnerNsid.trim()
+                                        ? `No photosets match owner NSID “${appliedOwnerNsid.trim()}”.`
+                                        : 'Crawl photosets for a contact to populate this catalog.'
+                                }
+                            />
+                        }
                         actionsColumn={
                             account?.public_id
                                 ? (photoset) => (

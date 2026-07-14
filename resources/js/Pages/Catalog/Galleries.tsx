@@ -6,6 +6,7 @@ import CrawlActionBar from '@/Components/Flickr/CrawlActionBar';
 import FlickrGalleryIdLinks from '@/Components/Flickr/GalleryIdLinks';
 import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/Layout/page-shell';
 import DataTable from '@/Components/ui/DataTable';
+import EmptyState from '@/Components/ui/EmptyState';
 import Thumbnail from '@/Components/ui/Thumbnail';
 import { useCatalogOwnerNsidTable } from '@/hooks/useCatalogOwnerNsidTable';
 import AppLayout from '@/Layouts/AppLayout';
@@ -19,8 +20,17 @@ interface Props extends PageProps {
 }
 
 export default function CatalogGalleries({ account }: Props) {
-    const { data: galleries, meta, setPage, loading, sortKey, sortDirection, handleSortChange, filterFormProps } =
-        useCatalogOwnerNsidTable<Gallery>('owner_nsid', {
+    const {
+        data: galleries,
+        meta,
+        setPage,
+        loading,
+        sortKey,
+        sortDirection,
+        handleSortChange,
+        filterFormProps,
+        appliedOwnerNsid,
+    } = useCatalogOwnerNsidTable<Gallery>('owner_nsid', {
             fetchPath: '/api/v1/flickr/catalog/galleries',
             initialSort: 'id',
             initialDirection: 'desc',
@@ -95,7 +105,16 @@ export default function CatalogGalleries({ account }: Props) {
                         sortKey={sortKey}
                         sortDirection={sortDirection}
                         onSortChange={handleSortChange}
-                        emptyMessage="No galleries found."
+                        emptyMessage={
+                            <EmptyState
+                                title="No galleries found."
+                                description={
+                                    appliedOwnerNsid.trim()
+                                        ? `No galleries match owner NSID “${appliedOwnerNsid.trim()}”.`
+                                        : 'Crawl galleries for a contact to populate this catalog.'
+                                }
+                            />
+                        }
                         actionsColumn={
                             account?.public_id
                                 ? (gallery) => (

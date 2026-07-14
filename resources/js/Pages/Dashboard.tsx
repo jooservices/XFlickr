@@ -13,6 +13,7 @@ import { useStorageQuota } from '@/hooks/useStorageQuota';
 import AppLayout from '@/Layouts/AppLayout';
 import { flickrAccountPath } from '@/lib/flickrAccount';
 import { resolveDefaultFlickrQuotaNsid } from '@/lib/flickrQuotaAccount';
+import { formatCount } from '@/lib/format';
 import { dashboardHasCompletedCrawl } from '@/lib/onboardingProgress';
 import type { DashboardSnapshot, FlickrAccount, PageProps } from '@/types';
 
@@ -22,10 +23,6 @@ interface Props extends PageProps {
 
 function accountLabel(account: FlickrAccount): string {
     return account.fullname || account.username || account.nsid;
-}
-
-function formatNumber(value: number): string {
-    return new Intl.NumberFormat().format(value);
 }
 
 const emptyDatabases: DashboardSnapshot['databases'] = {
@@ -134,17 +131,17 @@ export default function Dashboard() {
                     />
                     <div className="space-y-4">
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        <MetricCard label="Accounts" value={formatNumber(global.accounts)} tone="slate" />
+                        <MetricCard label="Accounts" value={formatCount(global.accounts)} tone="slate" />
                         <MetricCard
                             label="Active crawls"
-                            value={formatNumber(global.runs_running)}
-                            hint={`${formatNumber(global.pending_targets)} pending target(s)`}
+                            value={formatCount(global.runs_running)}
+                            hint={`${formatCount(global.pending_targets)} pending target(s)`}
                             tone={global.runs_running > 0 ? 'cyan' : 'slate'}
                         />
                         <MetricCard
                             label="Transfers"
-                            value={`${formatNumber(global.downloads_active + global.uploads_active)} active`}
-                            hint={`${formatNumber(global.failed_transfers_24h)} failed in 24h`}
+                            value={`${formatCount(global.downloads_active + global.uploads_active)} active`}
+                            hint={`${formatCount(global.failed_transfers_24h)} failed in 24h`}
                             tone={global.failed_transfers_24h > 0 ? 'rose' : 'slate'}
                         />
                     </div>
@@ -152,25 +149,25 @@ export default function Dashboard() {
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <MetricCard
                             label="Contacts"
-                            value={formatNumber(contactsCount)}
+                            value={formatCount(contactsCount)}
                             hint={catalogAccountHint}
                             tone="emerald"
                         />
                         <MetricCard
                             label="Photos"
-                            value={formatNumber(photosCount)}
-                            hint={`${formatNumber(photosWithSizesCount)} with sizes`}
+                            value={formatCount(photosCount)}
+                            hint={`${formatCount(photosWithSizesCount)} with sizes`}
                             tone="violet"
                         />
                         <MetricCard
                             label="Photosets"
-                            value={formatNumber(photosetsCount)}
+                            value={formatCount(photosetsCount)}
                             hint={catalogAccountHint}
                             tone="cyan"
                         />
                         <MetricCard
                             label="Galleries"
-                            value={formatNumber(galleriesCount)}
+                            value={formatCount(galleriesCount)}
                             hint={catalogAccountHint}
                             tone="amber"
                         />
@@ -191,7 +188,7 @@ export default function Dashboard() {
                             ) : null}
                             {global.failed_transfers_24h > 0 ? (
                                 <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
-                                    {formatNumber(global.failed_transfers_24h)} transfer item(s) failed in the last 24 hours. Check Operations.
+                                    {formatCount(global.failed_transfers_24h)} transfer item(s) failed in the last 24 hours. Check Operations.
                                 </div>
                             ) : null}
                             {databaseUnreachable ? (
@@ -251,7 +248,7 @@ export default function Dashboard() {
                                                         <span className="font-semibold text-slate-900">{row.runs.failed}</span> failed
                                                     </p>
                                                     <p className="mt-1 text-xs text-slate-500">
-                                                        Pending targets: {formatNumber(row.pending_targets)}
+                                                        Pending targets: {formatCount(row.pending_targets)}
                                                     </p>
                                                     <p className="mt-1 text-xs text-slate-500">Latest: {latestLabel}</p>
                                                 </div>
@@ -263,7 +260,7 @@ export default function Dashboard() {
                                                         <span className="font-semibold text-slate-900">{row.transfers.uploads_active}</span> uploads
                                                     </p>
                                                     <p className="mt-1 text-xs text-slate-500">
-                                                        Failed 24h: {formatNumber(row.transfers.failed_items_24h)}
+                                                        Failed 24h: {formatCount(row.transfers.failed_items_24h)}
                                                     </p>
                                                 </div>
                                             </div>

@@ -1,5 +1,4 @@
-import Button from '@/Components/ui/Button';
-import { cn } from '@/lib/cn';
+import SegmentedControl from '@/Components/ui/SegmentedControl';
 
 export type ContactViewMode = 'table' | 'graph';
 
@@ -8,24 +7,11 @@ interface ContactViewModeToggleProps {
     onChange: (mode: ContactViewMode) => void;
 }
 
+const OPTIONS = [
+    { value: 'table' as const, label: 'Table' },
+    { value: 'graph' as const, label: 'Graph' },
+];
+
 export default function ContactViewModeToggle({ value, onChange }: ContactViewModeToggleProps) {
-    return (
-        <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5">
-            {(['table', 'graph'] as const).map((mode) => (
-                <Button
-                    key={mode}
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onChange(mode)}
-                    className={cn(
-                        'min-w-20 capitalize',
-                        value === mode ? 'bg-cyan-50 text-cyan-800' : 'text-slate-600',
-                    )}
-                >
-                    {mode}
-                </Button>
-            ))}
-        </div>
-    );
+    return <SegmentedControl value={value} options={OPTIONS} onChange={onChange} />;
 }

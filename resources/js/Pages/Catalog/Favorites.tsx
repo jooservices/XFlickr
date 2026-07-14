@@ -8,6 +8,7 @@ import CrawlActionBar from '@/Components/Flickr/CrawlActionBar';
 import FlickrPhotoIdLinks from '@/Components/Flickr/PhotoIdLinks';
 import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/Layout/page-shell';
 import DataTable from '@/Components/ui/DataTable';
+import EmptyState from '@/Components/ui/EmptyState';
 import Thumbnail from '@/Components/ui/Thumbnail';
 import { useCatalogOwnerNsidTable } from '@/hooks/useCatalogOwnerNsidTable';
 import AppLayout from '@/Layouts/AppLayout';
@@ -22,8 +23,17 @@ interface Props extends PageProps {
 
 export default function CatalogFavorites({ account }: Props) {
     const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
-    const { data: favorites, meta, setPage, loading, sortKey, sortDirection, handleSortChange, filterFormProps } =
-        useCatalogOwnerNsidTable<Favorite>('subject_nsid', {
+    const {
+        data: favorites,
+        meta,
+        setPage,
+        loading,
+        sortKey,
+        sortDirection,
+        handleSortChange,
+        filterFormProps,
+        appliedOwnerNsid,
+    } = useCatalogOwnerNsidTable<Favorite>('subject_nsid', {
             fetchPath: '/api/v1/flickr/catalog/favorites',
             initialSort: 'id',
             initialDirection: 'desc',
@@ -134,7 +144,16 @@ export default function CatalogFavorites({ account }: Props) {
                         sortKey={sortKey}
                         sortDirection={sortDirection}
                         onSortChange={handleSortChange}
-                        emptyMessage="No favorites found."
+                        emptyMessage={
+                            <EmptyState
+                                title="No favorites found."
+                                description={
+                                    appliedOwnerNsid.trim()
+                                        ? `No favorites match contact NSID “${appliedOwnerNsid.trim()}”.`
+                                        : 'Crawl favorites for a contact to populate this catalog.'
+                                }
+                            />
+                        }
                         actionsColumn={
                             account?.public_id
                                 ? (favorite) =>

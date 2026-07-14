@@ -27,7 +27,7 @@ const variantClasses: Record<ButtonVariant, string> = {
         'rounded-md border border-amber-200 font-medium text-amber-800 hover:bg-amber-50 disabled:opacity-50',
     ghost:
         'rounded-md font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-50',
-    link: 'font-medium text-blue-600 hover:underline disabled:opacity-50',
+    link: 'font-medium text-cyan-700 hover:underline disabled:opacity-50',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
