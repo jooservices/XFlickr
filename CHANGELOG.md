@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- N-08 crawler connection `token_payload` encrypted at rest (`encrypted` cast, re-encrypt migration, `ConnectionTokenEncryptionTest`); documented in `SECURITY.md`.
+- N-13 README CI and Release badges.
 - N-15 curated download HTTP timeout: Settings → General **Transfer / Downloads** knob `xflickr_download.timeout_seconds` via `DownloadRuntimeConfig` (30–900 s clamp); `PhotoDownloadExecutionService` reads runtime value instead of raw `config()`.
 - N-16 Flickr client factory layering: `FlickrClientFactory` gains explicit `authenticated` flag (default true) and `anonymousClient()`; architecture guard `FlickrClientFactoryLayeringTest` restricts `FlickrFactory::make` to Crawler factory + Flickr OAuth.
 - FS-11 demo dataset seeder (`Database\Seeders\DemoDatasetSeeder`): one Flickr connection, ~30 contacts, ~100 photos across two photosets and one gallery, completed/failed download batches, and a Google Photos account with local browse cache. Operator path: `bash scripts/dev.sh seed --demo` (instructions: `bash scripts/test.sh e2e:prep`).
