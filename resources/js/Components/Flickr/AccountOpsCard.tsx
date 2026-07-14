@@ -1,10 +1,10 @@
 import { Link, router } from '@inertiajs/react';
 
-import Button from '@/Components/Button';
 import CrawlActionBar from '@/Components/Flickr/CrawlActionBar';
 import ExpandActionBar from '@/Components/Flickr/ExpandActionBar';
 import FlickrAccountCardFooter from '@/Components/Flickr/FlickrAccountCardFooter';
-import ProviderCard from '@/Components/ProviderCard';
+import Button from '@/Components/ui/Button';
+import ProviderCard from '@/Components/ui/ProviderCard';
 import { useFlickrCrawlSummary } from '@/hooks/useFlickrCrawlSummary';
 import { useFlickrTokenHealth } from '@/hooks/useFlickrTokenHealth';
 import { cn } from '@/lib/cn';

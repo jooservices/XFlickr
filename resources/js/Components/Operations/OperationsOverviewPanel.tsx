@@ -1,4 +1,4 @@
-import DatabaseUsagePanel from '@/Components/DatabaseUsagePanel';
+import DatabaseUsagePanel from '@/Components/Operations/DatabaseUsagePanel';
 import OperationsActivityChart from '@/Components/Operations/OperationsActivityChart';
 import MetricCard from '@/Components/ui/MetricCard';
 import type {

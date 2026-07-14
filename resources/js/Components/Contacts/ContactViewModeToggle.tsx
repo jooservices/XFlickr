@@ -1,4 +1,4 @@
-import Button from '@/Components/Button';
+import Button from '@/Components/ui/Button';
 import { cn } from '@/lib/cn';
 
 export type ContactViewMode = 'table' | 'graph';

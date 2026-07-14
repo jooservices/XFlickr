@@ -1,4 +1,4 @@
-import type { SortDirection } from '@/Components/DataTable';
+import type { SortDirection } from '@/Components/ui/DataTable';
 
 export function sortClientData<T>(
     data: T[],

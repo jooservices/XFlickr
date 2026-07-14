@@ -1,6 +1,6 @@
-import { APP_BOTTOM_RAIL_FOOTER_CLASS } from '@/Components/layout/appBottomRail';
-import NavbarRateLimit from '@/Components/NavbarRateLimit';
-import StorageQuotaMeter from '@/Components/StorageQuotaMeter';
+import { APP_BOTTOM_RAIL_FOOTER_CLASS } from '@/Components/Layout/appBottomRail';
+import NavbarRateLimit from '@/Components/Layout/NavbarRateLimit';
+import StorageQuotaMeter from '@/Components/Storage/QuotaMeter';
 import { storageAccountLabel } from '@/hooks/useStorageQuota';
 import { cn } from '@/lib/cn';
 import type { FlickrRateLimitSnapshot, RateLimitState, StorageQuotaAccountSummary, StorageQuotaState } from '@/types';

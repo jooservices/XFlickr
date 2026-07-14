@@ -1,9 +1,9 @@
 import { router } from '@inertiajs/react';
 
-import Button from '@/Components/Button';
-import ProviderCard from '@/Components/ProviderCard';
 import type { StorageAppSummary } from '@/Components/Settings/storageCredentialsTypes';
 import StorageReauthorizeBanner from '@/Components/Storage/StorageReauthorizeBanner';
+import Button from '@/Components/ui/Button';
+import ProviderCard from '@/Components/ui/ProviderCard';
 import { buttonVariants } from '@/lib/buttonVariants';
 import type { StorageAccount } from '@/types';
 

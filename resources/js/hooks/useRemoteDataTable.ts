@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { SortDirection } from '@/Components/DataTable';
+import type { SortDirection } from '@/Components/ui/DataTable';
 import { apiGet } from '@/lib/apiClient';
 import type { PaginatedMeta } from '@/types';
 

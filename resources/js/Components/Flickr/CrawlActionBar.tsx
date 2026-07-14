@@ -1,6 +1,6 @@
 import { router, usePage } from '@inertiajs/react';
 
-import CrawlDropdown, { type CrawlSubjectLabel } from '@/Components/CrawlDropdown';
+import CrawlDropdown, { type CrawlSubjectLabel } from '@/Components/Flickr/CrawlDropdown';
 import { flickrAccountPath, flickrContactPath } from '@/lib/flickrAccount';
 import type { CrawlType, CrawlTypeState, PageProps } from '@/types';
 

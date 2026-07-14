@@ -2,7 +2,7 @@ import { router } from '@inertiajs/react';
 import { Pause, Play } from 'lucide-react';
 import { useState } from 'react';
 
-import Button from '@/Components/Button';
+import Button from '@/Components/ui/Button';
 
 type GlobalCrawlPauseButtonProps = {
     paused: boolean;

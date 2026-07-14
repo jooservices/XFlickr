@@ -1,12 +1,12 @@
 import { Head } from '@inertiajs/react';
 
-import CatalogOwnerNsidFilter from '@/Components/CatalogOwnerNsidFilter';
-import ContactNsidLinks from '@/Components/ContactNsidLinks';
-import CrawlActionBar from '@/Components/CrawlActionBar';
-import DataTable from '@/Components/DataTable';
-import FlickrPhotosetIdLinks from '@/Components/FlickrPhotosetIdLinks';
-import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
-import Thumbnail from '@/Components/Thumbnail';
+import CatalogOwnerNsidFilter from '@/Components/Catalog/OwnerNsidFilter';
+import ContactNsidLinks from '@/Components/Contacts/NsidLinks';
+import CrawlActionBar from '@/Components/Flickr/CrawlActionBar';
+import FlickrPhotosetIdLinks from '@/Components/Flickr/PhotosetIdLinks';
+import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/Layout/page-shell';
+import DataTable from '@/Components/ui/DataTable';
+import Thumbnail from '@/Components/ui/Thumbnail';
 import { useCatalogOwnerNsidTable } from '@/hooks/useCatalogOwnerNsidTable';
 import AppLayout from '@/Layouts/AppLayout';
 import { catalogPageCrumbs } from '@/lib/breadcrumbs';

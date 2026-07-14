@@ -2,9 +2,9 @@ import { router } from '@inertiajs/react';
 import { Bug } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-import Button from '@/Components/Button';
-import Modal from '@/Components/Modal';
-import SpiderImpactSummary from '@/Components/SpiderImpactSummary';
+import SpiderImpactSummary from '@/Components/Operations/SpiderImpactSummary';
+import Button from '@/Components/ui/Button';
+import Modal from '@/Components/ui/Modal';
 import { estimateSpiderImpact } from '@/lib/spiderImpact';
 import type { SpiderSharedConfig } from '@/types';
 

@@ -1,24 +1,24 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import type { BulkAction } from '@/Components/BulkActionBar';
-import Button from '@/Components/Button';
-import ContactCatalogCell from '@/Components/ContactCatalogCell';
-import ContactDownloadCell from '@/Components/ContactDownloadCell';
-import ContactNsidLinks from '@/Components/ContactNsidLinks';
+import ContactCatalogCell from '@/Components/Contacts/CatalogCell';
 import ContactAnnotationActions from '@/Components/Contacts/ContactAnnotationActions';
 import ContactViewModeToggle, { type ContactViewMode } from '@/Components/Contacts/ContactViewModeToggle';
+import ContactDownloadCell from '@/Components/Contacts/DownloadCell';
 import ContactGraphShell from '@/Components/Contacts/Graph/ContactGraphShell';
 import ImportContactUrlModal from '@/Components/Contacts/ImportContactUrlModal';
-import ContactsSearchFilter from '@/Components/ContactsSearchFilter';
-import CrawlActionBar from '@/Components/CrawlActionBar';
+import ContactNsidLinks from '@/Components/Contacts/NsidLinks';
+import ContactsSearchFilter from '@/Components/Contacts/SearchFilter';
+import CrawlActionBar from '@/Components/Flickr/CrawlActionBar';
 import CrawlTypeMenu, {
     bulkCrawlActionIcon,
     bulkDownloadActionIcon,
     bulkUploadActionIcon,
-} from '@/Components/CrawlTypeMenu';
-import DataTable from '@/Components/DataTable';
-import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
+} from '@/Components/Flickr/CrawlTypeMenu';
+import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/Layout/page-shell';
+import type { BulkAction } from '@/Components/ui/BulkActionBar';
+import Button from '@/Components/ui/Button';
+import DataTable from '@/Components/ui/DataTable';
 import { usePolledResource } from '@/hooks/usePolledResource';
 import { useTableSelection } from '@/hooks/useTableSelection';
 import AppLayout from '@/Layouts/AppLayout';

@@ -2,10 +2,10 @@ import { router } from '@inertiajs/react';
 import { Search } from 'lucide-react';
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
-import Button from '@/Components/Button';
-import LoadingIndicator from '@/Components/LoadingIndicator';
-import Modal from '@/Components/Modal';
-import SearchField from '@/Components/SearchField';
+import Button from '@/Components/ui/Button';
+import LoadingIndicator from '@/Components/ui/LoadingIndicator';
+import Modal from '@/Components/ui/Modal';
+import SearchField from '@/Components/ui/SearchField';
 import {
     contactDisplayName,
     useContactSuggestions,

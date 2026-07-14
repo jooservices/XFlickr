@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 
-import ContactNsidLinks from '@/Components/ContactNsidLinks';
-import DataTable from '@/Components/DataTable';
-import PageSection from '@/Components/PageSection';
-import ProgressBar from '@/Components/ProgressBar';
-import StatusBadge from '@/Components/StatusBadge';
+import ContactNsidLinks from '@/Components/Contacts/NsidLinks';
+import DataTable from '@/Components/ui/DataTable';
+import PageSection from '@/Components/ui/PageSection';
+import ProgressBar from '@/Components/ui/ProgressBar';
+import StatusBadge from '@/Components/ui/StatusBadge';
 import { useTableSort } from '@/hooks/useTableSort';
 import { accountLabel, fetchRunSortValue } from '@/lib/crawlOperations';
 import { formatRelativeTime } from '@/lib/format';

@@ -1,5 +1,5 @@
-import Button from '@/Components/Button';
-import Modal from '@/Components/Modal';
+import Button from '@/Components/ui/Button';
+import Modal from '@/Components/ui/Modal';
 
 interface StorageDestinationPickerModalProps {
     open: boolean;

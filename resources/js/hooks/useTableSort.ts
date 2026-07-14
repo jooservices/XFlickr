@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import type { SortDirection } from '@/Components/DataTable';
+import type { SortDirection } from '@/Components/ui/DataTable';
 
 export interface UseTableSortOptions {
     initialSort?: string;

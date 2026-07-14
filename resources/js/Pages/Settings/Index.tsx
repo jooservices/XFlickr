@@ -2,10 +2,10 @@ import { Head } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
-import Button from '@/Components/Button';
-import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/layout/page-shell';
+import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/Layout/page-shell';
 import GeneralConfigPanel from '@/Components/Settings/GeneralConfigPanel';
 import OnboardingWizard from '@/Components/Settings/OnboardingWizard';
+import Button from '@/Components/ui/Button';
 import AppLayout from '@/Layouts/AppLayout';
 import { settingsCrumbs } from '@/lib/breadcrumbs';
 import type { PageProps, RuntimeConfigPayload } from '@/types';

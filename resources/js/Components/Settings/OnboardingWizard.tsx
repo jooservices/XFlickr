@@ -1,7 +1,7 @@
 import { Check, Circle, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import Button from '@/Components/Button';
+import Button from '@/Components/ui/Button';
 import { connectionsPath } from '@/lib/connections';
 import {
     buildOnboardingSteps,

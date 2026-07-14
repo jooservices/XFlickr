@@ -1,12 +1,12 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
-import ApiUsageChart from '@/Components/ApiUsageChart';
-import Card from '@/Components/Card';
-import DatabaseUsagePanel from '@/Components/DatabaseUsagePanel';
-import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/layout/page-shell';
-import RateLimitMeter from '@/Components/RateLimitMeter';
+import ApiUsageChart from '@/Components/Flickr/ApiUsageChart';
+import RateLimitMeter from '@/Components/Flickr/RateLimitMeter';
+import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/Layout/page-shell';
+import DatabaseUsagePanel from '@/Components/Operations/DatabaseUsagePanel';
 import OnboardingWizard from '@/Components/Settings/OnboardingWizard';
+import Card from '@/Components/ui/Card';
 import MetricCard from '@/Components/ui/MetricCard';
 import { usePolledResource } from '@/hooks/usePolledResource';
 import { useStorageQuota } from '@/hooks/useStorageQuota';

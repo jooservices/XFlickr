@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import type { CatalogOwnerNsidFilterProps } from '@/Components/CatalogOwnerNsidFilter';
+import type { CatalogOwnerNsidFilterProps } from '@/Components/Catalog/OwnerNsidFilter';
 import {
     useOwnerNsidFilter,
     type OwnerNsidFilterKey,

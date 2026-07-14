@@ -1,9 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
 
-import Card from '@/Components/Card';
-import CrawlActionBar from '@/Components/CrawlActionBar';
-import ExpandActionBar from '@/Components/ExpandActionBar';
-import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/layout/page-shell';
+import CrawlActionBar from '@/Components/Flickr/CrawlActionBar';
+import ExpandActionBar from '@/Components/Flickr/ExpandActionBar';
+import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/Layout/page-shell';
+import Card from '@/Components/ui/Card';
 import AppLayout from '@/Layouts/AppLayout';
 import { accountLabel, flickrAccountPageCrumbs } from '@/lib/breadcrumbs';
 import { crawlSubjectForAccount } from '@/lib/crawlSubject';

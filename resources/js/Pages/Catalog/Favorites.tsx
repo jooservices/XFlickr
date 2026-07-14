@@ -1,14 +1,14 @@
 import { Head } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
-import CatalogOwnerNsidFilter from '@/Components/CatalogOwnerNsidFilter';
-import ContactNsidLinks from '@/Components/ContactNsidLinks';
-import CrawlActionBar from '@/Components/CrawlActionBar';
-import DataTable from '@/Components/DataTable';
-import FlickrPhotoIdLinks from '@/Components/FlickrPhotoIdLinks';
-import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
-import PhotoDetailModal from '@/Components/PhotoDetailModal';
-import Thumbnail from '@/Components/Thumbnail';
+import CatalogOwnerNsidFilter from '@/Components/Catalog/OwnerNsidFilter';
+import PhotoDetailModal from '@/Components/Catalog/PhotoDetailModal';
+import ContactNsidLinks from '@/Components/Contacts/NsidLinks';
+import CrawlActionBar from '@/Components/Flickr/CrawlActionBar';
+import FlickrPhotoIdLinks from '@/Components/Flickr/PhotoIdLinks';
+import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/Layout/page-shell';
+import DataTable from '@/Components/ui/DataTable';
+import Thumbnail from '@/Components/ui/Thumbnail';
 import { useCatalogOwnerNsidTable } from '@/hooks/useCatalogOwnerNsidTable';
 import AppLayout from '@/Layouts/AppLayout';
 import { catalogPageCrumbs } from '@/lib/breadcrumbs';

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 
-import Button from '@/Components/Button';
-import LoadingIndicator from '@/Components/LoadingIndicator';
+import Button from '@/Components/ui/Button';
+import LoadingIndicator from '@/Components/ui/LoadingIndicator';
 import { apiGet, apiPost } from '@/lib/apiClient';
 import { flickrApiAccountPath } from '@/lib/flickrAccount';
 import type { FlickrAccount, TransferBatch, TransferItem } from '@/types';

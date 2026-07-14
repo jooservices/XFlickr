@@ -2,7 +2,7 @@ import { Link } from '@inertiajs/react';
 import { X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-import Button from '@/Components/Button';
+import Button from '@/Components/ui/Button';
 import {
     useInvalidFlickrTokenAccounts,
     type InvalidFlickrTokenAccount,

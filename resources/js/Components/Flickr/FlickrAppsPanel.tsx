@@ -1,12 +1,12 @@
 import { router, useForm } from '@inertiajs/react';
 import { FormEvent, useEffect, useState } from 'react';
 
-import Button from '@/Components/Button';
 import {
     FlickrAppProfileCard,
     type FlickrAppSummary,
 } from '@/Components/Flickr/FlickrAppProfileCard';
-import Modal from '@/Components/Modal';
+import Button from '@/Components/ui/Button';
+import Modal from '@/Components/ui/Modal';
 
 interface FlickrAppsPanelProps {
     apps: FlickrAppSummary[];

@@ -3,8 +3,8 @@ import { ChevronDown, Network, Users } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import Button from '@/Components/Button';
-import ExpandConfirmModal, { type ExpandMode } from '@/Components/ExpandConfirmModal';
+import ExpandConfirmModal, { type ExpandMode } from '@/Components/Flickr/ExpandConfirmModal';
+import Button from '@/Components/ui/Button';
 import { apiGet } from '@/lib/apiClient';
 import { flickrAccountPath, flickrApiAccountPath } from '@/lib/flickrAccount';
 import type { ExpandPreviewPayload } from '@/types';

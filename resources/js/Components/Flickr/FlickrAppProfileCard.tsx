@@ -1,8 +1,8 @@
 import { Trash2 } from 'lucide-react';
 import { type ReactNode } from 'react';
 
-import Button from '@/Components/Button';
-import ProviderCard from '@/Components/ProviderCard';
+import Button from '@/Components/ui/Button';
+import ProviderCard from '@/Components/ui/ProviderCard';
 
 export interface FlickrAppSummary {
     profile: string;

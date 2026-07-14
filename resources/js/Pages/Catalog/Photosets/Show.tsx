@@ -1,14 +1,14 @@
 import { Head } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
-import BusyRegion from '@/Components/BusyRegion';
-import Card from '@/Components/Card';
-import ContactNsidLinks from '@/Components/ContactNsidLinks';
-import CrawlActionBar from '@/Components/CrawlActionBar';
-import FlickrPhotosetIdLinks from '@/Components/FlickrPhotosetIdLinks';
-import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/layout/page-shell';
-import PhotoDetailModal from '@/Components/PhotoDetailModal';
-import PhotoGrid from '@/Components/PhotoGrid';
+import PhotoDetailModal from '@/Components/Catalog/PhotoDetailModal';
+import PhotoGrid from '@/Components/Catalog/PhotoGrid';
+import ContactNsidLinks from '@/Components/Contacts/NsidLinks';
+import CrawlActionBar from '@/Components/Flickr/CrawlActionBar';
+import FlickrPhotosetIdLinks from '@/Components/Flickr/PhotosetIdLinks';
+import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/Layout/page-shell';
+import BusyRegion from '@/Components/ui/BusyRegion';
+import Card from '@/Components/ui/Card';
 import { useRemoteDataTable } from '@/hooks/useRemoteDataTable';
 import AppLayout from '@/Layouts/AppLayout';
 import { catalogPhotosetShowCrumbs } from '@/lib/breadcrumbs';

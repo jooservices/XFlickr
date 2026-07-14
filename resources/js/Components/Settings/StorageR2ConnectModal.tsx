@@ -1,8 +1,8 @@
 import type { InertiaFormProps } from '@inertiajs/react';
 import { FormEvent } from 'react';
 
-import Button from '@/Components/Button';
-import Modal from '@/Components/Modal';
+import Button from '@/Components/ui/Button';
+import Modal from '@/Components/ui/Modal';
 
 interface R2FormData {
     label: string;

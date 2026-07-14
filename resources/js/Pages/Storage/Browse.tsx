@@ -1,12 +1,12 @@
 import { Head } from '@inertiajs/react';
 import { useMemo } from 'react';
 
-import type { BulkAction } from '@/Components/BulkActionBar';
-import DataTable from '@/Components/DataTable';
-import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
-import LoadingIndicator from '@/Components/LoadingIndicator';
+import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/Layout/page-shell';
 import StorageReauthorizeBanner from '@/Components/Storage/StorageReauthorizeBanner';
-import Thumbnail from '@/Components/Thumbnail';
+import type { BulkAction } from '@/Components/ui/BulkActionBar';
+import DataTable from '@/Components/ui/DataTable';
+import LoadingIndicator from '@/Components/ui/LoadingIndicator';
+import Thumbnail from '@/Components/ui/Thumbnail';
 import { useStorageBrowse } from '@/hooks/useStorageBrowse';
 import { useTableSelection } from '@/hooks/useTableSelection';
 import { useTableSort } from '@/hooks/useTableSort';

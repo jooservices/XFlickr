@@ -1,12 +1,12 @@
 import { GitBranchPlus, Loader2 } from 'lucide-react';
 
-import Button from '@/Components/Button';
 import ContactAnnotationActions from '@/Components/Contacts/ContactAnnotationActions';
 import ContactDetailPanel from '@/Components/Contacts/ContactDetailPanel';
 import ContactGraphDetailShell from '@/Components/Contacts/ContactGraphDetailShell';
 import ContactGraphHoverPopup from '@/Components/Contacts/ContactGraphHoverPopup';
 import ContactGraphToolbar from '@/Components/Contacts/Graph/ContactGraphToolbar';
-import { PageLoading } from '@/Components/LoadingIndicator';
+import Button from '@/Components/ui/Button';
+import { PageLoading } from '@/Components/ui/LoadingIndicator';
 import { useContactGraphState } from '@/hooks/useContactGraphState';
 
 export interface ContactGraphShellProps {

@@ -2,8 +2,8 @@ import { Link } from '@inertiajs/react';
 import { ExternalLink, Search, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import LoadingIndicator from '@/Components/LoadingIndicator';
-import PhotoGridTile from '@/Components/PhotoGridTile';
+import PhotoGridTile from '@/Components/Catalog/PhotoGridTile';
+import LoadingIndicator from '@/Components/ui/LoadingIndicator';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { useRemoteDataTable } from '@/hooks/useRemoteDataTable';
 import { catalogOwnerUrl, photoSubtext } from '@/lib/catalog';

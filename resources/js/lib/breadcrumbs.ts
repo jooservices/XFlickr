@@ -1,4 +1,4 @@
-import type { BreadcrumbItem } from '@/Components/Breadcrumbs';
+import type { BreadcrumbItem } from '@/Components/ui/Breadcrumbs';
 import { connectionsPath } from '@/lib/connections';
 import { flickrAccountPath } from '@/lib/flickrAccount';
 import type { FlickrAccount } from '@/types';

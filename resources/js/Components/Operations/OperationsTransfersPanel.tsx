@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 
-import ContactNsidLinks from '@/Components/ContactNsidLinks';
-import DataTable from '@/Components/DataTable';
-import PageSection from '@/Components/PageSection';
-import ProgressBar from '@/Components/ProgressBar';
-import StatusBadge from '@/Components/StatusBadge';
-import TransferBatchFailures from '@/Components/TransferBatchFailures';
+import ContactNsidLinks from '@/Components/Contacts/NsidLinks';
+import TransferBatchFailures from '@/Components/Transfer/TransferBatchPanel';
+import DataTable from '@/Components/ui/DataTable';
+import PageSection from '@/Components/ui/PageSection';
+import ProgressBar from '@/Components/ui/ProgressBar';
+import StatusBadge from '@/Components/ui/StatusBadge';
 import type { DownloadTransferBatch } from '@/hooks/useOperationsStream';
 import { useTableSort } from '@/hooks/useTableSort';
 import {

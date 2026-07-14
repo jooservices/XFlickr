@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import UserAccountMenu from '@/Components/layout/UserAccountMenu';
+import UserAccountMenu from '@/Components/Layout/UserAccountMenu';
 
 const { post } = vi.hoisted(() => ({
     post: vi.fn(),

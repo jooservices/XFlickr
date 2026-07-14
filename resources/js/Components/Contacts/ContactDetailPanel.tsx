@@ -2,8 +2,8 @@ import { Link } from '@inertiajs/react';
 import { X } from 'lucide-react';
 import { type ReactNode } from 'react';
 
-import Button from '@/Components/Button';
 import ContactPhotoStrip from '@/Components/Contacts/ContactPhotoStrip';
+import Button from '@/Components/ui/Button';
 import { flickrContactPath } from '@/lib/flickrAccount';
 
 export interface ContactDetailSubject {

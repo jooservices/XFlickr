@@ -1,8 +1,8 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEvent } from 'react';
 
-import Button from '@/Components/Button';
-import Input from '@/Components/Input';
+import Button from '@/Components/ui/Button';
+import Input from '@/Components/ui/Input';
 import GuestLayout from '@/Layouts/GuestLayout';
 
 type ForgotPasswordPageProps = {

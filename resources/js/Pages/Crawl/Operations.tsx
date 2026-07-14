@@ -7,7 +7,7 @@ import {
     PageShellCanvas,
     PageShellControlBar,
     PageShellIdentity,
-} from '@/Components/layout/page-shell';
+} from '@/Components/Layout/page-shell';
 import OperationsCrawlPanel from '@/Components/Operations/OperationsCrawlPanel';
 import OperationsOverviewPanel from '@/Components/Operations/OperationsOverviewPanel';
 import OperationsTransfersPanel from '@/Components/Operations/OperationsTransfersPanel';

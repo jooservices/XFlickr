@@ -1,10 +1,10 @@
 import { router } from '@inertiajs/react';
 import { useId, useState } from 'react';
 
-import Button from '@/Components/Button';
-import Input from '@/Components/Input';
-import LoadingIndicator from '@/Components/LoadingIndicator';
-import Modal from '@/Components/Modal';
+import Button from '@/Components/ui/Button';
+import Input from '@/Components/ui/Input';
+import LoadingIndicator from '@/Components/ui/LoadingIndicator';
+import Modal from '@/Components/ui/Modal';
 import { apiPost } from '@/lib/apiClient';
 import { flickrApiAccountPath } from '@/lib/flickrAccount';
 
@@ -57,8 +57,9 @@ export default function ImportContactUrlModal({
 
         try {
             const data = await apiPost<{ data: ImportResult }>(
-                flickrApiAccountPath(accountPublicId, '/contacts/import'),
+                flickrApiAccountPath(accountPublicId, '/contacts'),
                 {
+                    source: 'url',
                     url: trimmed,
                     start_crawl: startCrawl,
                 },

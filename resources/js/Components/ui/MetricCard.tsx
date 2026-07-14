@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import Card from '@/Components/Card';
+import Card from '@/Components/ui/Card';
 import { cn } from '@/lib/cn';
 
 type Tone = 'slate' | 'cyan' | 'violet' | 'amber' | 'emerald' | 'rose';

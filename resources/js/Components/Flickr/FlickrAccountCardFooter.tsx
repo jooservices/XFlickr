@@ -1,4 +1,4 @@
-import RateLimitMeter from '@/Components/RateLimitMeter';
+import RateLimitMeter from '@/Components/Flickr/RateLimitMeter';
 import type { CrawlSummary } from '@/types';
 
 interface FlickrAccountCardFooterProps {

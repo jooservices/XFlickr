@@ -1,6 +1,6 @@
 import { Star } from 'lucide-react';
 
-import Button from '@/Components/Button';
+import Button from '@/Components/ui/Button';
 import { cn } from '@/lib/cn';
 
 interface ContactStarButtonProps {

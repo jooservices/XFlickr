@@ -1,9 +1,9 @@
 import { Maximize, Minimize, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import Button from '@/Components/Button';
 import ContactGraphLegend from '@/Components/Contacts/Graph/ContactGraphLegend';
-import LoadingIndicator from '@/Components/LoadingIndicator';
+import Button from '@/Components/ui/Button';
+import LoadingIndicator from '@/Components/ui/LoadingIndicator';
 
 export type ContactGraphToolbarProps = {
     directShown: number;

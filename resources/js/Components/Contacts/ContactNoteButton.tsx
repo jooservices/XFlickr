@@ -1,7 +1,7 @@
 import { FileText } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import Button from '@/Components/Button';
+import Button from '@/Components/ui/Button';
 import { cn } from '@/lib/cn';
 
 interface ContactNoteButtonProps {
