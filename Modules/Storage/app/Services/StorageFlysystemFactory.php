@@ -41,6 +41,9 @@ class StorageFlysystemFactory
         };
     }
 
+    /**
+     * @param  array<string, mixed>  $credentials
+     */
     public function r2Client(array $credentials): S3Client
     {
         $config = StorageR2Config::from($credentials);

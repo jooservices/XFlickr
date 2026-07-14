@@ -132,6 +132,7 @@ final class CrawlRunQueryRepository
     /**
      * @param  list<string>  $contactNsids
      * @param  list<string>  $crawlTypes
+     * @param  list<string>  $statuses
      * @return Collection<int, CrawlRun>
      */
     public function listForContacts(
@@ -161,6 +162,10 @@ final class CrawlRunQueryRepository
         return CrawlRun::query()->where('connection_key', $connectionKey);
     }
 
+    /**
+     * @param  Builder<CrawlRun>  $query
+     * @return LengthAwarePaginator<int, CrawlRun>
+     */
     public function paginateQuery(Builder $query, int $perPage, int $page): LengthAwarePaginator
     {
         return $query->paginate($perPage, ['*'], 'page', $page);

@@ -14,6 +14,7 @@ final class MicrosoftProvider extends AbstractProvider implements ProviderInterf
 {
     protected $scopeSeparator = ' ';
 
+    /** @var list<string> */
     protected $scopes = [
         'User.Read',
     ];
@@ -46,6 +47,9 @@ final class MicrosoftProvider extends AbstractProvider implements ProviderInterf
         return (array) json_decode((string) $response->getBody(), true);
     }
 
+    /**
+     * @param  array<string, mixed>  $user
+     */
     protected function mapUserToObject(array $user): User
     {
         return (new User)->setRaw($user)->map([

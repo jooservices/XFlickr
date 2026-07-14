@@ -20,6 +20,9 @@ final class StorageRemoteAlbumRepository extends EloquentRepository
         parent::__construct($model);
     }
 
+    /**
+     * @return LengthAwarePaginator<int, StorageRemoteAlbum>
+     */
     public function paginateForParent(int $accountId, string $parentRemoteId, int $perPage, int $page): LengthAwarePaginator
     {
         return $this->newQuery()

@@ -45,6 +45,9 @@ final class StorageAccount extends Model
         ];
     }
 
+    /**
+     * @return HasMany<StorageUpload, $this>
+     */
     public function uploads(): HasMany
     {
         return $this->hasMany(StorageUpload::class, 'storage_account_id');

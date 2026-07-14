@@ -62,6 +62,9 @@ final class StoredFile extends Model
         });
     }
 
+    /**
+     * @return HasMany<StorageUpload, $this>
+     */
     public function uploads(): HasMany
     {
         return $this->hasMany(StorageUpload::class, 'stored_file_id');

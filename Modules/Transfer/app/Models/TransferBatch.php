@@ -35,11 +35,17 @@ final class TransferBatch extends Model
         'failed_count',
     ];
 
+    /**
+     * @return BelongsTo<StorageAccount, $this>
+     */
     public function storageAccount(): BelongsTo
     {
         return $this->belongsTo(StorageAccount::class, 'storage_account_id');
     }
 
+    /**
+     * @return HasMany<TransferItem, $this>
+     */
     public function items(): HasMany
     {
         return $this->hasMany(TransferItem::class, 'transfer_batch_id');

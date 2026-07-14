@@ -39,6 +39,9 @@ final class CatalogQueryRepository
         return Photoset::query()->find($id);
     }
 
+    /**
+     * @return LengthAwarePaginator<int, Photo>
+     */
     public function paginatePhotos(
         ?string $ownerNsid,
         ?int $photosetId,
@@ -69,6 +72,9 @@ final class CatalogQueryRepository
         return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
+    /**
+     * @return LengthAwarePaginator<int, Photoset>
+     */
     public function paginatePhotosets(?string $ownerNsid, string $sort, string $direction, int $perPage, int $page): LengthAwarePaginator
     {
         $query = Photoset::query();
@@ -81,6 +87,9 @@ final class CatalogQueryRepository
         return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
+    /**
+     * @return LengthAwarePaginator<int, Gallery>
+     */
     public function paginateGalleries(?string $ownerNsid, string $sort, string $direction, int $perPage, int $page): LengthAwarePaginator
     {
         $query = Gallery::query();
@@ -93,6 +102,9 @@ final class CatalogQueryRepository
         return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
+    /**
+     * @return LengthAwarePaginator<int, Favorite>
+     */
     public function paginateFavorites(
         ?string $connectionKey,
         ?string $subjectNsid,
@@ -116,10 +128,6 @@ final class CatalogQueryRepository
         return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
-    /**
-     * @param  list<string>  $ownerNsids
-     * @return array<string, int>
-     */
     public function countPhotosetsForConnection(string $connectionKey): int
     {
         return Photoset::query()
@@ -264,6 +272,9 @@ final class CatalogQueryRepository
             ->all();
     }
 
+    /**
+     * @return Builder<Photoset>
+     */
     public function photosetCountSubquery(): Builder
     {
         return Photoset::query()
@@ -271,6 +282,9 @@ final class CatalogQueryRepository
             ->groupBy('owner_nsid');
     }
 
+    /**
+     * @return Builder<Gallery>
+     */
     public function galleryCountSubquery(): Builder
     {
         return Gallery::query()
@@ -278,6 +292,9 @@ final class CatalogQueryRepository
             ->groupBy('owner_nsid');
     }
 
+    /**
+     * @return Builder<Favorite>
+     */
     public function favoriteCountSubquery(string $connectionKey): Builder
     {
         return Favorite::query()

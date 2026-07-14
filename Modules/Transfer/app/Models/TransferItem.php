@@ -26,6 +26,9 @@ final class TransferItem extends Model
         'error_message',
     ];
 
+    /**
+     * @return BelongsTo<TransferBatch, $this>
+     */
     public function batch(): BelongsTo
     {
         return $this->belongsTo(TransferBatch::class, 'transfer_batch_id');

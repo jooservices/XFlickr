@@ -22,6 +22,9 @@ final class ContactListQueryService
         private readonly ContactListSorter $sorter,
     ) {}
 
+    /**
+     * @return LengthAwarePaginator<int, Contact>
+     */
     public function paginateForConnection(
         Connection $connection,
         ?string $search,

@@ -83,13 +83,24 @@ final class StorageBrowseSyncService
 
         $state = $this->syncStates->findForParent($account->id, $parentRemoteId);
 
+        if ($state === null) {
+            return [
+                'albums_synced' => $albumsSynced,
+                'items_synced' => $itemsSynced,
+                'has_more' => false,
+                'last_synced_at' => null,
+                'albums_complete' => false,
+                'items_complete' => false,
+            ];
+        }
+
         return [
             'albums_synced' => $albumsSynced,
             'items_synced' => $itemsSynced,
-            'has_more' => $state !== null && (! $state->albums_complete || ! $state->items_complete),
-            'last_synced_at' => $state?->last_synced_at?->toIso8601String(),
-            'albums_complete' => $state?->albums_complete ?? false,
-            'items_complete' => $state?->items_complete ?? false,
+            'has_more' => ! $state->albums_complete || ! $state->items_complete,
+            'last_synced_at' => $state->last_synced_at?->toIso8601String(),
+            'albums_complete' => $state->albums_complete,
+            'items_complete' => $state->items_complete,
         ];
     }
 

@@ -55,6 +55,9 @@ final class StorageRemoteItem extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<StorageAccount, $this>
+     */
     public function storageAccount(): BelongsTo
     {
         return $this->belongsTo(StorageAccount::class, 'storage_account_id');

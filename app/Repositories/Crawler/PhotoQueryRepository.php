@@ -187,7 +187,7 @@ final class PhotoQueryRepository
 
     /**
      * @param  list<int>  $internalPhotoIds
-     * @return array{photoset_rows: Collection, gallery_rows: Collection}
+     * @return array{photoset_rows: Collection<int, object>, gallery_rows: Collection<int, object>}
      */
     public function photosetAndGalleryMemberships(array $internalPhotoIds): array
     {
@@ -234,6 +234,9 @@ final class PhotoQueryRepository
         ];
     }
 
+    /**
+     * @return Builder<Photo>
+     */
     public function ownerCountSubquery(): Builder
     {
         return Photo::query()
@@ -241,6 +244,9 @@ final class PhotoQueryRepository
             ->groupBy('owner_nsid');
     }
 
+    /**
+     * @param  array<string, mixed>  $rawPayload
+     */
     public function updateRawPayload(Photo $photo, array $rawPayload): void
     {
         $photo->update(['raw_payload' => $rawPayload]);

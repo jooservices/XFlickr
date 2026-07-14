@@ -12,6 +12,9 @@ use Modules\Crawler\Models\ApiLog;
 
 final class ApiLogQueryRepository
 {
+    /**
+     * @return LengthAwarePaginator<int, ApiLog>
+     */
     public function paginateForConnection(string $connectionKey, int $perPage, int $page): LengthAwarePaginator
     {
         return ApiLog::query()

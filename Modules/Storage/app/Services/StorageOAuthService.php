@@ -11,6 +11,7 @@ use Laravel\Socialite\Contracts\Factory as SocialiteFactory;
 use Laravel\Socialite\SocialiteManager;
 use Laravel\Socialite\Two\AbstractProvider;
 use Laravel\Socialite\Two\GoogleProvider;
+use Laravel\Socialite\Two\User as SocialiteUser;
 use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Services\OAuth\MicrosoftProvider;
@@ -48,6 +49,7 @@ final class StorageOAuthService
     public function complete(string $provider, string $code): StorageAccount
     {
         $driver = StorageDriver::from($provider);
+        /** @var SocialiteUser $socialUser */
         $socialUser = $this->provider($driver)->stateless()->user();
         $appConfig = $this->appConfig($driver);
 
