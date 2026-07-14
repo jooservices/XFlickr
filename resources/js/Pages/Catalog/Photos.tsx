@@ -298,6 +298,8 @@ export default function CatalogPhotos({ account }: Props) {
 
             <PhotoDetailModal
                 photo={liveSelectedPhoto}
+                photos={photos}
+                onSelectPhoto={setSelectedPhoto}
                 accountPublicId={account?.public_id}
                 onClose={() => setSelectedPhoto(null)}
             />

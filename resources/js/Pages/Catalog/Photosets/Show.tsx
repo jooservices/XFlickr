@@ -144,6 +144,8 @@ export default function CatalogPhotosetShow({ account, photoset }: Props) {
 
             <PhotoDetailModal
                 photo={liveSelectedPhoto}
+                photos={photos}
+                onSelectPhoto={setSelectedPhoto}
                 accountPublicId={account?.public_id}
                 onClose={() => setSelectedPhoto(null)}
             />

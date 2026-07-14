@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- FS-5 catalog photo lightbox keyboard navigation: `PhotoDetailModal` supports prev/next over the loaded page list (←/→ or J/K), `D` to queue download (same `/download` route as `CrawlActionBar`), footer nav buttons, and shortcut hints; wired on Catalog Photos, Photoset show, and Favorites.
 - FS-6 proactive Flickr token-health banner in `AppLayout`: probes connected accounts from the rate-limit snapshot, warns when `token_valid === false`, links to Connections, and supports per-account session dismiss.
 - N-08 crawler connection `token_payload` encrypted at rest (`encrypted` cast, re-encrypt migration, `ConnectionTokenEncryptionTest`); documented in `SECURITY.md`.
 - N-13 README CI and Release badges.

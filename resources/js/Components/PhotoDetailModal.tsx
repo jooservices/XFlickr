@@ -1,3 +1,7 @@
+import { router, usePage } from '@inertiajs/react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useCallback, useEffect, useMemo } from 'react';
+
 import Button from '@/Components/Button';
 import ContactNsidLinks from '@/Components/ContactNsidLinks';
 import CrawlActionBar from '@/Components/CrawlActionBar';
@@ -8,16 +12,118 @@ import PhotoMembershipLinks from '@/Components/PhotoMembershipLinks';
 import { buttonVariants } from '@/lib/buttonVariants';
 import { flickrPhotoPageUrl } from '@/lib/catalog';
 import { crawlSubjectForPhoto } from '@/lib/crawlSubject';
+import { flickrAccountPath } from '@/lib/flickrAccount';
 import { flickrPhotoPreviewUrl } from '@/lib/flickrPhoto';
-import type { Photo } from '@/types';
+import { adjacentPhotoIndex, shouldIgnorePhotoModalShortcut } from '@/lib/photoNavigation';
+import type { PageProps, Photo } from '@/types';
 
 interface PhotoDetailModalProps {
     photo: Photo | null;
+    photos?: Photo[];
+    onSelectPhoto?: (photo: Photo) => void;
     accountPublicId?: string | null;
     onClose: () => void;
 }
 
-export default function PhotoDetailModal({ photo, accountPublicId, onClose }: PhotoDetailModalProps) {
+export default function PhotoDetailModal({
+    photo,
+    photos = [],
+    onSelectPhoto,
+    accountPublicId,
+    onClose,
+}: PhotoDetailModalProps) {
+    const { app } = usePage<PageProps>().props;
+    const crawlPaused = app.global_pause ?? false;
+
+    const navigationEnabled = photos.length > 0 && onSelectPhoto !== undefined;
+
+    const canGoPrev = useMemo(() => {
+        if (!navigationEnabled || photo === null) {
+            return false;
+        }
+
+        return adjacentPhotoIndex(photos, photo, -1) !== null;
+    }, [navigationEnabled, photo, photos]);
+
+    const canGoNext = useMemo(() => {
+        if (!navigationEnabled || photo === null) {
+            return false;
+        }
+
+        return adjacentPhotoIndex(photos, photo, 1) !== null;
+    }, [navigationEnabled, photo, photos]);
+
+    const navigate = useCallback(
+        (direction: -1 | 1) => {
+            if (!navigationEnabled || photo === null || onSelectPhoto === undefined) {
+                return;
+            }
+
+            const nextIndex = adjacentPhotoIndex(photos, photo, direction);
+            if (nextIndex === null) {
+                return;
+            }
+
+            onSelectPhoto(photos[nextIndex]);
+        },
+        [navigationEnabled, onSelectPhoto, photo, photos],
+    );
+
+    const queueDownload = useCallback(() => {
+        if (!accountPublicId || photo === null || crawlPaused) {
+            return;
+        }
+
+        router.post(
+            flickrAccountPath(accountPublicId, '/download'),
+            { flickr_photo_id: photo.flickr_photo_id },
+            { preserveScroll: true },
+        );
+    }, [accountPublicId, crawlPaused, photo]);
+
+    useEffect(() => {
+        if (photo === null) {
+            return;
+        }
+
+        function onKeyDown(event: KeyboardEvent) {
+            if (shouldIgnorePhotoModalShortcut(event)) {
+                return;
+            }
+
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                onClose();
+                return;
+            }
+
+            if (navigationEnabled) {
+                if (event.key === 'ArrowLeft' || event.key === 'k') {
+                    event.preventDefault();
+                    navigate(-1);
+                    return;
+                }
+
+                if (event.key === 'ArrowRight' || event.key === 'j') {
+                    event.preventDefault();
+                    navigate(1);
+                    return;
+                }
+            }
+
+            if ((event.key === 'd' || event.key === 'D') && accountPublicId) {
+                event.preventDefault();
+                queueDownload();
+            }
+        }
+
+        document.addEventListener('keydown', onKeyDown);
+
+        return () => {
+            document.removeEventListener('keydown', onKeyDown);
+        };
+    }, [accountPublicId, navigate, navigationEnabled, onClose, photo, queueDownload]);
+
     if (photo === null) {
         return null;
     }
@@ -94,7 +200,7 @@ export default function PhotoDetailModal({ photo, accountPublicId, onClose }: Ph
                     </dl>
                 </div>
             </Modal.Body>
-            <Modal.Footer className="justify-between sm:justify-between">
+            <Modal.Footer className="flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-2">
                     <a
                         href={flickrUrl}
@@ -115,6 +221,38 @@ export default function PhotoDetailModal({ photo, accountPublicId, onClose }: Ph
                         />
                     ) : null}
                 </div>
+
+                {navigationEnabled ? (
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => navigate(-1)}
+                            disabled={!canGoPrev}
+                            aria-label="Previous photo"
+                        >
+                            <ChevronLeft className="h-4 w-4" aria-hidden />
+                            Previous
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => navigate(1)}
+                            disabled={!canGoNext}
+                            aria-label="Next photo"
+                        >
+                            Next
+                            <ChevronRight className="h-4 w-4" aria-hidden />
+                        </Button>
+                        <p className="hidden text-xs text-slate-400 sm:block">
+                            ← → or J/K navigate
+                            {accountPublicId ? ' · D download' : ''} · Esc close
+                        </p>
+                    </div>
+                ) : null}
+
                 <Button type="button" variant="secondary" size="sm" onClick={onClose}>
                     Close
                 </Button>

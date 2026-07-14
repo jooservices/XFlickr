@@ -29,15 +29,20 @@ export default function CatalogFavorites({ account }: Props) {
             initialDirection: 'desc',
         });
 
+    const navigablePhotos = useMemo(
+        () => favorites.flatMap((favorite) => (favorite.photo ? [favorite.photo] : [])),
+        [favorites],
+    );
+
     const liveSelectedPhoto = useMemo(() => {
         if (selectedPhoto === null) {
             return null;
         }
 
-        const fromList = favorites.find((favorite) => favorite.photo?.id === selectedPhoto.id)?.photo;
+        const fromList = navigablePhotos.find((photo) => photo.id === selectedPhoto.id);
 
         return fromList ?? selectedPhoto;
-    }, [favorites, selectedPhoto]);
+    }, [navigablePhotos, selectedPhoto]);
 
     return (
         <AppLayout>
@@ -162,6 +167,8 @@ export default function CatalogFavorites({ account }: Props) {
 
             <PhotoDetailModal
                 photo={liveSelectedPhoto}
+                photos={navigablePhotos}
+                onSelectPhoto={setSelectedPhoto}
                 accountPublicId={account?.public_id}
                 onClose={() => setSelectedPhoto(null)}
             />
