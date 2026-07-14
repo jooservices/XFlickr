@@ -8,14 +8,10 @@ use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Services\GooglePhotos\DeleteService;
-use Modules\Storage\Services\Tokens\GoogleTokenService;
-use Tests\Concerns\SafeRefreshDatabase;
-use Tests\TestCase;
+use Modules\Storage\Tests\TestCase;
 
 final class DeleteServiceTest extends TestCase
 {
-    use SafeRefreshDatabase;
-
     public function test_delete_many_requires_album_id(): void
     {
         $account = StorageAccount::factory()->googlePhotos()->create();
@@ -33,10 +29,6 @@ final class DeleteServiceTest extends TestCase
     {
         $account = StorageAccount::factory()->googlePhotos()->create();
         $mediaId = 'media-'.fake()->uuid();
-
-        $this->mock(GoogleTokenService::class, function ($mock): void {
-            $mock->shouldReceive('accessToken')->andReturn('access-token');
-        });
 
         Http::fake([
             'photoslibrary.googleapis.com/v1/albums/*:batchRemoveMediaItems' => Http::response([], 200),
@@ -57,10 +49,6 @@ final class DeleteServiceTest extends TestCase
         $account = StorageAccount::factory()->googlePhotos()->create();
         $firstId = 'media-'.fake()->uuid();
         $secondId = 'media-'.fake()->uuid();
-
-        $this->mock(GoogleTokenService::class, function ($mock): void {
-            $mock->shouldReceive('accessToken')->andReturn('access-token');
-        });
 
         Http::fake([
             'photoslibrary.googleapis.com/v1/albums/*:batchRemoveMediaItems' => Http::response([
@@ -84,10 +72,6 @@ final class DeleteServiceTest extends TestCase
     {
         $account = StorageAccount::factory()->googlePhotos()->create();
         $mediaId = 'media-'.fake()->uuid();
-
-        $this->mock(GoogleTokenService::class, function ($mock): void {
-            $mock->shouldReceive('accessToken')->andReturn('access-token');
-        });
 
         Http::fake([
             'photoslibrary.googleapis.com/v1/albums/*:batchRemoveMediaItems' => Http::response('denied', 500),

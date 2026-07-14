@@ -9,8 +9,8 @@ use JOOservices\LaravelConfig\Contracts\ConfigStore;
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
 use Modules\Crawler\Contracts\PageFetcherContract;
 use Modules\Crawler\DTO\FlickrPermit;
-use Modules\Crawler\Fetchers\ContactsFetcher;
-use Modules\Crawler\Jobs\FetchContactsPageJob;
+use Modules\Crawler\Enums\TaskType;
+use Modules\Crawler\Jobs\FetchCrawlPageJob;
 use Modules\Crawler\Services\FlickrApiAuditService;
 use Modules\Crawler\Services\FlickrApiOutcomeClassifier;
 use Modules\Crawler\Services\FlickrClientFactory;
@@ -63,6 +63,30 @@ abstract class TestCase extends HostTestCase
         RuntimeConfig::refresh();
     }
 
+    protected function loadModuleFixture(string $relativePath): string
+    {
+        $path = __DIR__.'/Fixtures/'.$relativePath;
+        $contents = file_get_contents($path);
+        if ($contents === false) {
+            throw new \RuntimeException("Fixture not found: {$relativePath}");
+        }
+
+        return $contents;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function loadJsonFixture(string $relativePath): array
+    {
+        $decoded = json_decode($this->loadModuleFixture($relativePath), true);
+        if (! is_array($decoded)) {
+            throw new \RuntimeException("Fixture must decode to array: {$relativePath}");
+        }
+
+        return $decoded;
+    }
+
     protected function requiresRedis(): void
     {
         try {
@@ -109,6 +133,28 @@ abstract class TestCase extends HostTestCase
         bool $useRealPermitAcquirer = false,
         ?PageFetcherContract $fetcher = null,
     ): void {
+        $this->runCrawlPageJob(
+            TaskType::ContactsPage,
+            $targetId,
+            $permitOverride,
+            $clients,
+            $useRealPermitAcquirer,
+            $fetcher,
+        );
+    }
+
+    /**
+     * Runs the consolidated FetchCrawlPageJob as the queue worker would, resolving the
+     * fetcher for the target's task type unless a test double is supplied.
+     */
+    protected function runCrawlPageJob(
+        TaskType $taskType,
+        int $targetId,
+        ?FlickrPermit $permitOverride = null,
+        ?FlickrClientFactory $clients = null,
+        bool $useRealPermitAcquirer = false,
+        ?PageFetcherContract $fetcher = null,
+    ): void {
         if ($useRealPermitAcquirer) {
             $this->app->instance(FlickrPermitAcquirer::class, new FlickrPermitAcquirer);
         } else {
@@ -118,13 +164,16 @@ abstract class TestCase extends HostTestCase
             );
         }
 
-        (new FetchContactsPageJob($targetId))->handle(
+        if ($fetcher !== null) {
+            $this->app->instance($taskType->fetcherClass(), $fetcher);
+        }
+
+        (new FetchCrawlPageJob($targetId))->handle(
             $clients ?? app(FlickrClientFactory::class),
             app(FlickrRequestLimiter::class),
             app(FlickrApiOutcomeClassifier::class),
             app(FlickrApiAuditService::class),
             app(FlickrSpiderService::class),
-            $fetcher ?? app(ContactsFetcher::class),
         );
     }
 }

@@ -5,19 +5,15 @@ declare(strict_types=1);
 namespace Modules\Storage\Tests\Unit\Services;
 
 use Aws\S3\S3Client;
-use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Http;
 use Mockery;
 use Modules\Storage\Models\StorageAccount;
-use Modules\Storage\Services\StorageFlysystemFactory;
 use Modules\Storage\Services\StorageUploadService;
-use Tests\Concerns\SafeRefreshDatabase;
-use Tests\TestCase;
+use Modules\Storage\Support\StorageR2Config;
+use Modules\Storage\Tests\TestCase;
 
 final class StorageUploadServiceTest extends TestCase
 {
-    use SafeRefreshDatabase;
-
     public function test_upload_stream_delegates_to_google_photos_and_caches_item(): void
     {
         Http::fake([
@@ -60,12 +56,7 @@ final class StorageUploadServiceTest extends TestCase
     public function test_upload_stream_writes_r2_object_and_returns_metadata(): void
     {
         $account = StorageAccount::factory()->r2()->create();
-        $objectKey = $account->credentials['prefix'].'/remote/photo.jpg';
-
-        $disk = Mockery::mock(Filesystem::class);
-        $disk->shouldReceive('writeStream')
-            ->once()
-            ->with($objectKey, Mockery::type('resource'));
+        $objectKey = StorageR2Config::from($account->credentials ?? [])->objectKey('remote/photo.jpg');
 
         $client = Mockery::mock(S3Client::class);
         $client->shouldReceive('headObject')->once()->andReturn([
@@ -73,9 +64,8 @@ final class StorageUploadServiceTest extends TestCase
             'ContentLength' => 11,
         ]);
 
-        $this->mock(StorageFlysystemFactory::class, function ($mock) use ($disk, $client): void {
-            $mock->shouldReceive('diskForAccount')->once()->andReturn($disk);
-            $mock->shouldReceive('r2Client')->once()->andReturn($client);
+        ['disk' => $disk] = $this->bindInMemoryDisk(function ($factory) use ($client): void {
+            $factory->shouldReceive('r2Client')->once()->andReturn($client);
         });
 
         $tempFile = tempnam(sys_get_temp_dir(), 'xflickr-r2-upload-');
@@ -94,22 +84,20 @@ final class StorageUploadServiceTest extends TestCase
 
         $this->assertSame('remote/photo.jpg', $result['path']);
         $this->assertSame('etag-upload', $result['etag']);
+        $this->assertTrue($disk->exists($objectKey));
+        $this->assertSame('image-bytes', $disk->get($objectKey));
     }
 
     public function test_upload_stream_returns_null_etag_when_head_object_fails(): void
     {
         $account = StorageAccount::factory()->r2()->create();
-        $objectKey = $account->credentials['prefix'].'/remote/photo.jpg';
-
-        $disk = Mockery::mock(Filesystem::class);
-        $disk->shouldReceive('writeStream')->once();
+        $objectKey = StorageR2Config::from($account->credentials ?? [])->objectKey('remote/photo.jpg');
 
         $client = Mockery::mock(S3Client::class);
         $client->shouldReceive('headObject')->once()->andThrow(new \RuntimeException('missing object'));
 
-        $this->mock(StorageFlysystemFactory::class, function ($mock) use ($disk, $client): void {
-            $mock->shouldReceive('diskForAccount')->once()->andReturn($disk);
-            $mock->shouldReceive('r2Client')->once()->andReturn($client);
+        ['disk' => $disk] = $this->bindInMemoryDisk(function ($factory) use ($client): void {
+            $factory->shouldReceive('r2Client')->once()->andReturn($client);
         });
 
         $tempFile = tempnam(sys_get_temp_dir(), 'xflickr-r2-upload-');
@@ -128,5 +116,6 @@ final class StorageUploadServiceTest extends TestCase
 
         $this->assertSame('remote/photo.jpg', $result['path']);
         $this->assertNull($result['etag']);
+        $this->assertTrue($disk->exists($objectKey));
     }
 }

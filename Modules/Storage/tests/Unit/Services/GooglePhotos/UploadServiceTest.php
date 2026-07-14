@@ -7,23 +7,15 @@ namespace Modules\Storage\Tests\Unit\Services\GooglePhotos;
 use Illuminate\Support\Facades\Http;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Services\GooglePhotos\UploadService;
-use Modules\Storage\Services\Tokens\GoogleTokenService;
+use Modules\Storage\Tests\TestCase;
 use RuntimeException;
-use Tests\Concerns\SafeRefreshDatabase;
-use Tests\TestCase;
 
 final class UploadServiceTest extends TestCase
 {
-    use SafeRefreshDatabase;
-
     public function test_upload_file_throws_when_upload_http_request_fails(): void
     {
         $account = StorageAccount::factory()->googlePhotos()->create();
         $localPath = $this->tempImage('upload-fail.jpg');
-
-        $this->mock(GoogleTokenService::class, function ($mock): void {
-            $mock->shouldReceive('accessToken')->andReturn('access-token');
-        });
 
         Http::fake([
             'photoslibrary.googleapis.com/v1/uploads' => Http::response('denied', 403),
@@ -45,10 +37,6 @@ final class UploadServiceTest extends TestCase
         $account = StorageAccount::factory()->googlePhotos()->create();
         $localPath = $this->tempImage('empty-token.jpg');
 
-        $this->mock(GoogleTokenService::class, function ($mock): void {
-            $mock->shouldReceive('accessToken')->andReturn('access-token');
-        });
-
         Http::fake([
             'photoslibrary.googleapis.com/v1/uploads' => Http::response('   ', 200),
         ]);
@@ -68,10 +56,6 @@ final class UploadServiceTest extends TestCase
     {
         $account = StorageAccount::factory()->googlePhotos()->create();
         $localPath = $this->tempImage('batch-fail.jpg');
-
-        $this->mock(GoogleTokenService::class, function ($mock): void {
-            $mock->shouldReceive('accessToken')->andReturn('access-token');
-        });
 
         Http::fake([
             'photoslibrary.googleapis.com/v1/uploads' => Http::response('upload-token', 200),
@@ -95,10 +79,6 @@ final class UploadServiceTest extends TestCase
     {
         $account = StorageAccount::factory()->googlePhotos()->create();
         $localPath = $this->tempImage('missing-media-id.jpg');
-
-        $this->mock(GoogleTokenService::class, function ($mock): void {
-            $mock->shouldReceive('accessToken')->andReturn('access-token');
-        });
 
         Http::fake([
             'photoslibrary.googleapis.com/v1/uploads' => Http::response('upload-token', 200),

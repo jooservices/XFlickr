@@ -5,34 +5,29 @@ declare(strict_types=1);
 namespace Modules\Storage\Tests\Unit\Services\R2;
 
 use Illuminate\Contracts\Filesystem\Filesystem;
+use Mockery;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Services\R2\DeleteService;
-use Modules\Storage\Services\StorageFlysystemFactory;
+use Modules\Storage\Support\StorageR2Config;
+use Modules\Storage\Tests\TestCase;
 use RuntimeException;
-use Tests\Concerns\SafeRefreshDatabase;
-use Tests\TestCase;
 
 final class DeleteServiceTest extends TestCase
 {
-    use SafeRefreshDatabase;
-
     public function test_delete_many_removes_existing_objects(): void
     {
         $account = StorageAccount::factory()->r2()->create();
         $itemId = 'album/photo.jpg';
+        $key = StorageR2Config::from($account->credentials ?? [])->objectKey($itemId);
 
-        $disk = $this->createMock(Filesystem::class);
-        $disk->expects($this->once())->method('exists')->willReturn(true);
-        $disk->expects($this->once())->method('delete')->with($account->credentials['prefix'].'/'.$itemId);
-
-        $this->mock(StorageFlysystemFactory::class, function ($mock) use ($disk): void {
-            $mock->shouldReceive('diskForAccount')->once()->andReturn($disk);
-        });
+        ['disk' => $disk] = $this->bindInMemoryDisk();
+        $disk->put($key, 'photo-bytes');
 
         $result = app(DeleteService::class)->deleteMany($account, [$itemId]);
 
         $this->assertSame([$itemId], $result['deleted']);
         $this->assertSame([], $result['failed']);
+        $this->assertFalse($disk->exists($key));
     }
 
     public function test_delete_many_treats_missing_objects_as_deleted(): void
@@ -40,13 +35,7 @@ final class DeleteServiceTest extends TestCase
         $account = StorageAccount::factory()->r2()->create();
         $itemId = 'missing.jpg';
 
-        $disk = $this->createMock(Filesystem::class);
-        $disk->expects($this->once())->method('exists')->willReturn(false);
-        $disk->expects($this->never())->method('delete');
-
-        $this->mock(StorageFlysystemFactory::class, function ($mock) use ($disk): void {
-            $mock->shouldReceive('diskForAccount')->once()->andReturn($disk);
-        });
+        $this->bindInMemoryDisk();
 
         $result = app(DeleteService::class)->deleteMany($account, [$itemId]);
 
@@ -59,9 +48,9 @@ final class DeleteServiceTest extends TestCase
         $failingId = 'broken.jpg';
         $successId = 'ok.jpg';
 
-        $disk = $this->createMock(Filesystem::class);
-        $disk->method('exists')->willReturn(true);
-        $disk->method('delete')->willReturnCallback(function (string $key) use ($failingId): bool {
+        $disk = Mockery::mock(Filesystem::class);
+        $disk->shouldReceive('exists')->andReturn(true);
+        $disk->shouldReceive('delete')->andReturnUsing(function (string $key) use ($failingId): bool {
             if (str_contains($key, $failingId)) {
                 throw new RuntimeException('Delete denied');
             }
@@ -69,8 +58,8 @@ final class DeleteServiceTest extends TestCase
             return true;
         });
 
-        $this->mock(StorageFlysystemFactory::class, function ($mock) use ($disk): void {
-            $mock->shouldReceive('diskForAccount')->once()->andReturn($disk);
+        $this->bindInMemoryDisk(function ($factory) use ($disk): void {
+            $factory->shouldReceive('diskForAccount')->once()->andReturn($disk);
         });
 
         $result = app(DeleteService::class)->deleteMany($account, [$failingId, $successId]);

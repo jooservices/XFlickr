@@ -4,12 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Storage\Tests\Unit\Services;
 
-use Google\Client as GoogleClient;
-use GuzzleHttp\Client as GuzzleClient;
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
-use Illuminate\Contracts\Filesystem\Filesystem;
 use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Models\StorageRemoteItem;
@@ -18,20 +13,17 @@ use Modules\Storage\Services\GoogleDrive\DeleteService as GoogleDriveDeleteServi
 use Modules\Storage\Services\R2\DeleteService as R2DeleteService;
 use Modules\Storage\Services\StorageDeleteService;
 use Modules\Storage\Services\StorageDriverRegistry;
-use Modules\Storage\Services\StorageFlysystemFactory;
-use Modules\Storage\Services\Tokens\GoogleTokenService;
+use Modules\Storage\Support\StorageR2Config;
+use Modules\Storage\Tests\TestCase;
 use Modules\Transfer\Models\StoredFile;
-use Tests\Concerns\SafeRefreshDatabase;
-use Tests\TestCase;
 
 final class StorageDeleteDriversTest extends TestCase
 {
-    use SafeRefreshDatabase;
-
     public function test_r2_delete_driver_purges_cache_when_items_deleted(): void
     {
         $account = StorageAccount::factory()->r2()->create();
         $itemId = 'album/photo.jpg';
+        $key = StorageR2Config::from($account->credentials ?? [])->objectKey($itemId);
 
         StorageRemoteItem::factory()->create([
             'storage_account_id' => $account->id,
@@ -48,13 +40,8 @@ final class StorageDeleteDriversTest extends TestCase
             'status' => 'completed',
         ]);
 
-        $disk = $this->createMock(Filesystem::class);
-        $disk->expects($this->once())->method('exists')->willReturn(true);
-        $disk->expects($this->once())->method('delete')->with($account->credentials['prefix'].'/'.$itemId);
-
-        $this->mock(StorageFlysystemFactory::class, function ($mock) use ($disk): void {
-            $mock->shouldReceive('diskForAccount')->once()->andReturn($disk);
-        });
+        ['disk' => $disk] = $this->bindInMemoryDisk();
+        $disk->put($key, 'photo-bytes');
 
         $driver = app(StorageDriverRegistry::class)->deleteDriver(StorageDriver::R2);
         $this->assertInstanceOf(R2DeleteService::class, $driver);
@@ -62,6 +49,7 @@ final class StorageDeleteDriversTest extends TestCase
         $result = app(StorageDeleteService::class)->deleteMany($account, StorageDriver::R2, [$itemId]);
 
         $this->assertSame([$itemId], $result['deleted']);
+        $this->assertFalse($disk->exists($key));
         $this->assertDatabaseMissing('storage_remote_items', [
             'storage_account_id' => $account->id,
             'remote_id' => $itemId,
@@ -83,20 +71,9 @@ final class StorageDeleteDriversTest extends TestCase
             'parent_remote_id' => '',
         ]);
 
-        $handler = HandlerStack::create(new MockHandler([
+        $this->bindGoogleClient([
             new Response(204),
-        ]));
-        $googleClient = new GoogleClient;
-        $googleClient->setHttpClient(new GuzzleClient(['handler' => $handler]));
-        $googleClient->setAccessToken([
-            'access_token' => fake()->sha256(),
-            'created' => time(),
-            'expires_in' => 3600,
         ]);
-
-        $this->mock(GoogleTokenService::class, function ($mock) use ($googleClient): void {
-            $mock->shouldReceive('clientForAccount')->once()->andReturn($googleClient);
-        });
 
         $driver = app(StorageDriverRegistry::class)->deleteDriver(StorageDriver::GoogleDrive);
         $this->assertInstanceOf(GoogleDriveDeleteService::class, $driver);

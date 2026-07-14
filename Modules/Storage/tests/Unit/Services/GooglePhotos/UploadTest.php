@@ -8,13 +8,10 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Services\GooglePhotos\UploadService;
-use Tests\Concerns\SafeRefreshDatabase;
-use Tests\TestCase;
+use Modules\Storage\Tests\TestCase;
 
 final class UploadTest extends TestCase
 {
-    use SafeRefreshDatabase;
-
     public function test_uploads_media_item_via_google_photos_api(): void
     {
         Log::spy();

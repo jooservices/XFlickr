@@ -11,6 +11,7 @@ use GuzzleHttp\Psr7\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Modules\Storage\Models\StorageAccount;
+use Modules\Storage\Repositories\StorageAccountRepository;
 use Modules\Storage\Services\StorageQuotaQueryService;
 use Modules\Storage\Services\Tokens\GoogleTokenService;
 use Tests\Concerns\SafeRefreshDatabase;
@@ -147,16 +148,20 @@ final class StorageQuotaQueryServiceTest extends TestCase
 
     public function test_snapshot_reports_google_drive_api_errors(): void
     {
-        StorageAccount::factory()->googleDrive()->create();
-
-        $this->mock(GoogleTokenService::class, function ($mock): void {
-            $mock->shouldReceive('clientForAccount')->andThrow(new \RuntimeException('Drive token expired'));
-        });
+        StorageAccount::factory()->googleDrive()->create([
+            'credentials' => [
+                'access_token' => '',
+                'refresh_token' => '',
+                'client_id' => '',
+                'client_secret' => '',
+                'expires_at' => now()->subMinute()->toIso8601String(),
+            ],
+        ]);
 
         $snapshot = app(StorageQuotaQueryService::class)->snapshot();
 
         $this->assertSame('error', $snapshot['accounts'][0]['status']);
-        $this->assertSame('Drive token expired', $snapshot['accounts'][0]['message']);
+        $this->assertSame('Google credentials are incomplete.', $snapshot['accounts'][0]['message']);
     }
 
     public function test_snapshot_reports_onedrive_token_errors(): void
@@ -300,8 +305,25 @@ final class StorageQuotaQueryServiceTest extends TestCase
             'expires_in' => 3600,
         ]);
 
-        $this->mock(GoogleTokenService::class, function ($mock) use ($googleClient): void {
-            $mock->shouldReceive('clientForAccount')->andReturn($googleClient);
-        });
+        $accounts = app(StorageAccountRepository::class);
+        $this->app->instance(
+            GoogleTokenService::class,
+            new class($googleClient, $accounts) extends GoogleTokenService
+            {
+                public function __construct(
+                    private readonly Client $boundClient,
+                    StorageAccountRepository $accounts,
+                ) {
+                    parent::__construct($accounts);
+                }
+
+                public function clientForAccount(array $credentials, StorageAccount $account): Client
+                {
+                    $this->accessToken($credentials, $account);
+
+                    return $this->boundClient;
+                }
+            },
+        );
     }
 }

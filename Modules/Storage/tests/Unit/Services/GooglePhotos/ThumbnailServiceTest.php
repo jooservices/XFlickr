@@ -7,14 +7,11 @@ namespace Modules\Storage\Tests\Unit\Services\GooglePhotos;
 use Illuminate\Support\Facades\Http;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Services\GooglePhotos\ThumbnailService;
+use Modules\Storage\Tests\TestCase;
 use RuntimeException;
-use Tests\Concerns\SafeRefreshDatabase;
-use Tests\TestCase;
 
 final class ThumbnailServiceTest extends TestCase
 {
-    use SafeRefreshDatabase;
-
     public function test_stream_returns_image_response_for_valid_media_item(): void
     {
         $account = StorageAccount::factory()->googlePhotos()->create();

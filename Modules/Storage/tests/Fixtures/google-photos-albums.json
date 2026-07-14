@@ -1,0 +1,11 @@
+{
+  "albums": [
+    {
+      "id": "album-1",
+      "title": "Vacation",
+      "coverPhotoBaseUrl": "https://example.com/cover",
+      "mediaItemsCount": "3"
+    }
+  ],
+  "nextPageToken": "album-next"
+}

@@ -10,6 +10,7 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use Modules\Storage\Models\StorageAccount;
+use Modules\Storage\Repositories\StorageAccountRepository;
 use Modules\Storage\Services\GoogleDrive\DeleteService;
 use Modules\Storage\Services\Tokens\GoogleTokenService;
 use Tests\Concerns\SafeRefreshDatabase;
@@ -39,9 +40,26 @@ final class DeleteServiceTest extends TestCase
             'expires_in' => 3600,
         ]);
 
-        $this->mock(GoogleTokenService::class, function ($mock) use ($googleClient): void {
-            $mock->shouldReceive('clientForAccount')->once()->andReturn($googleClient);
-        });
+        $accounts = app(StorageAccountRepository::class);
+        $this->app->instance(
+            GoogleTokenService::class,
+            new class($googleClient, $accounts) extends GoogleTokenService
+            {
+                public function __construct(
+                    private readonly GoogleClient $boundClient,
+                    StorageAccountRepository $accounts,
+                ) {
+                    parent::__construct($accounts);
+                }
+
+                public function clientForAccount(array $credentials, StorageAccount $account): GoogleClient
+                {
+                    $this->accessToken($credentials, $account);
+
+                    return $this->boundClient;
+                }
+            },
+        );
 
         $result = app(DeleteService::class)->deleteMany(
             $account,

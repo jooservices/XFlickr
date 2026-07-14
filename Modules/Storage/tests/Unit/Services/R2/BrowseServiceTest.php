@@ -9,8 +9,7 @@ use DateTimeImmutable;
 use Mockery;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Services\R2\BrowseService;
-use Modules\Storage\Services\StorageFlysystemFactory;
-use Tests\TestCase;
+use Modules\Storage\Tests\TestCase;
 
 final class BrowseServiceTest extends TestCase
 {
@@ -43,8 +42,8 @@ final class BrowseServiceTest extends TestCase
                 ];
             });
 
-        $this->mock(StorageFlysystemFactory::class, function ($mock) use ($client): void {
-            $mock->shouldReceive('r2Client')->once()->andReturn($client);
+        $this->bindInMemoryDisk(function ($factory) use ($client): void {
+            $factory->shouldReceive('r2Client')->once()->andReturn($client);
         });
 
         $result = app(BrowseService::class)->browse(
@@ -89,8 +88,8 @@ final class BrowseServiceTest extends TestCase
                 'NextContinuationToken' => 'item-page-3',
             ]);
 
-        $this->mock(StorageFlysystemFactory::class, function ($mock) use ($client): void {
-            $mock->shouldReceive('r2Client')->once()->andReturn($client);
+        $this->bindInMemoryDisk(function ($factory) use ($client): void {
+            $factory->shouldReceive('r2Client')->once()->andReturn($client);
         });
 
         $result = app(BrowseService::class)->browse(
@@ -112,13 +111,12 @@ final class BrowseServiceTest extends TestCase
     public function test_browse_can_return_only_albums(): void
     {
         $account = StorageAccount::factory()->r2()->make();
-        $credentials = $account->credentials ?? [];
 
         $client = Mockery::mock(S3Client::class);
         $client->shouldReceive('listObjectsV2')->once()->andReturn(['CommonPrefixes' => []]);
 
-        $this->mock(StorageFlysystemFactory::class, function ($mock) use ($client): void {
-            $mock->shouldReceive('r2Client')->once()->andReturn($client);
+        $this->bindInMemoryDisk(function ($factory) use ($client): void {
+            $factory->shouldReceive('r2Client')->once()->andReturn($client);
         });
 
         $result = app(BrowseService::class)->browse(
@@ -166,8 +164,8 @@ final class BrowseServiceTest extends TestCase
                 ];
             });
 
-        $this->mock(StorageFlysystemFactory::class, function ($mock) use ($client): void {
-            $mock->shouldReceive('r2Client')->once()->andReturn($client);
+        $this->bindInMemoryDisk(function ($factory) use ($client): void {
+            $factory->shouldReceive('r2Client')->once()->andReturn($client);
         });
 
         $result = app(BrowseService::class)->browse(
@@ -190,12 +188,11 @@ final class BrowseServiceTest extends TestCase
     {
         $credentials = StorageAccount::factory()->r2()->make()->credentials ?? [];
 
-        $factory = Mockery::mock(StorageFlysystemFactory::class);
-        $factory->shouldReceive('verifyR2Credentials')
-            ->once()
-            ->with($credentials);
-
-        $this->instance(StorageFlysystemFactory::class, $factory);
+        $this->bindInMemoryDisk(function ($factory) use ($credentials): void {
+            $factory->shouldReceive('verifyR2Credentials')
+                ->once()
+                ->with($credentials);
+        });
 
         app(BrowseService::class)->verifyConnection($credentials);
     }

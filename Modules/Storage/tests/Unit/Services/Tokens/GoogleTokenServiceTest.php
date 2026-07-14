@@ -11,6 +11,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use Mockery;
 use Modules\Storage\Models\StorageAccount;
+use Modules\Storage\Repositories\StorageAccountRepository;
 use Modules\Storage\Services\Tokens\GoogleTokenService;
 use RuntimeException;
 use Tests\Concerns\SafeRefreshDatabase;
@@ -71,7 +72,7 @@ final class GoogleTokenServiceTest extends TestCase
         ]);
         $googleClient->fetchAccessTokenWithRefreshToken('refresh-token');
 
-        $service = Mockery::mock(GoogleTokenService::class)->makePartial();
+        $service = Mockery::mock(GoogleTokenService::class, [app(StorageAccountRepository::class)])->makePartial();
         $service->shouldReceive('client')->once()->andReturn($googleClient);
 
         $accessToken = $service->accessToken($account->credentials ?? [], $account);
@@ -98,7 +99,7 @@ final class GoogleTokenServiceTest extends TestCase
             new Response(200, ['Content-Type' => 'application/json'], '{}'),
         ]);
 
-        $service = Mockery::mock(GoogleTokenService::class)->makePartial();
+        $service = Mockery::mock(GoogleTokenService::class, [app(StorageAccountRepository::class)])->makePartial();
         $service->shouldReceive('client')->once()->andReturn($googleClient);
 
         $this->expectException(RuntimeException::class);
@@ -120,7 +121,7 @@ final class GoogleTokenServiceTest extends TestCase
             ],
         ]);
 
-        $service = Mockery::mock(GoogleTokenService::class)->makePartial();
+        $service = Mockery::mock(GoogleTokenService::class, [app(StorageAccountRepository::class)])->makePartial();
         $service->shouldReceive('accessToken')->once()->andReturn($token);
         $service->shouldReceive('client')->once()->andReturn(new GoogleClient);
 

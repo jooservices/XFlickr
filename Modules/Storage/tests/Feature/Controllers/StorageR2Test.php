@@ -9,14 +9,10 @@ use Modules\Storage\Dto\StorageStreamResult;
 use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Services\StorageAccountScopeService;
-use Modules\Storage\Services\StorageFlysystemFactory;
-use Tests\Concerns\SafeRefreshDatabase;
-use Tests\TestCase;
+use Modules\Storage\Tests\TestCase;
 
 final class StorageR2Test extends TestCase
 {
-    use SafeRefreshDatabase;
-
     public function test_r2_driver_does_not_require_oauth_or_app_credentials(): void
     {
         $driver = StorageDriver::R2;
@@ -49,8 +45,8 @@ final class StorageR2Test extends TestCase
 
     public function test_can_connect_r2_account_with_valid_credentials(): void
     {
-        $this->mock(StorageFlysystemFactory::class, function ($mock): void {
-            $mock->shouldReceive('verifyR2Credentials')->once();
+        $this->bindInMemoryDisk(function ($factory): void {
+            $factory->shouldReceive('verifyR2Credentials')->once();
         });
 
         $response = $this->post('/storage/connect/r2', [

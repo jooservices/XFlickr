@@ -42,6 +42,30 @@ abstract class TestCase extends HostTestCase
         RuntimeConfig::refresh();
     }
 
+    protected function loadModuleFixture(string $relativePath): string
+    {
+        $path = __DIR__.'/Fixtures/'.$relativePath;
+        $contents = file_get_contents($path);
+        if ($contents === false) {
+            throw new \RuntimeException("Fixture not found: {$relativePath}");
+        }
+
+        return $contents;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function loadJsonFixture(string $relativePath): array
+    {
+        $decoded = json_decode($this->loadModuleFixture($relativePath), true);
+        if (! is_array($decoded)) {
+            throw new \RuntimeException("Fixture must decode to array: {$relativePath}");
+        }
+
+        return $decoded;
+    }
+
     protected function bindFakeFlickrTransport(FakeFlickrTransport $transport): FakeFlickrTransport
     {
         $this->bindFlickrTransport($transport);

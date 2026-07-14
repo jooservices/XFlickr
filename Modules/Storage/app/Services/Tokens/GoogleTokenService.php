@@ -6,10 +6,15 @@ namespace Modules\Storage\Services\Tokens;
 
 use Google\Client as GoogleClient;
 use Modules\Storage\Models\StorageAccount;
+use Modules\Storage\Repositories\StorageAccountRepository;
 use RuntimeException;
 
 class GoogleTokenService
 {
+    public function __construct(
+        private readonly StorageAccountRepository $accounts,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $credentials
      */
@@ -62,7 +67,7 @@ class GoogleTokenService
             throw new RuntimeException('Google token refresh failed.');
         }
 
-        $account->update([
+        $this->accounts->update($account->id, [
             'credentials' => $this->refreshedCredentials($credentials, $token),
         ]);
 

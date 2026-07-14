@@ -7,32 +7,19 @@ namespace Modules\Storage\Tests\Unit\Services\GooglePhotos;
 use Illuminate\Support\Facades\Http;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Services\GooglePhotos\BrowseService;
-use Modules\Storage\Services\Tokens\GoogleTokenService;
-use Tests\Concerns\SafeRefreshDatabase;
-use Tests\TestCase;
+use Modules\Storage\Tests\TestCase;
 
 final class BrowseServiceTest extends TestCase
 {
-    use SafeRefreshDatabase;
-
     public function test_browse_lists_albums_and_media_items(): void
     {
         $account = StorageAccount::factory()->googlePhotos()->create();
 
-        $this->mock(GoogleTokenService::class, function ($mock): void {
-            $mock->shouldReceive('accessToken')->andReturn('access-token');
-        });
-
         Http::fake([
-            'photoslibrary.googleapis.com/v1/albums*' => Http::response([
-                'albums' => [[
-                    'id' => 'album-1',
-                    'title' => 'Vacation',
-                    'coverPhotoBaseUrl' => 'https://example.com/cover',
-                    'mediaItemsCount' => '3',
-                ]],
-                'nextPageToken' => 'album-next',
-            ], 200),
+            'photoslibrary.googleapis.com/v1/albums*' => Http::response(
+                $this->loadJsonFixture('google-photos-albums.json'),
+                200,
+            ),
             'photoslibrary.googleapis.com/v1/mediaItems:search' => Http::response([
                 'mediaItems' => [[
                     'id' => 'media-1',
@@ -65,10 +52,6 @@ final class BrowseServiceTest extends TestCase
     {
         $account = StorageAccount::factory()->googlePhotos()->create();
 
-        $this->mock(GoogleTokenService::class, function ($mock): void {
-            $mock->shouldReceive('accessToken')->andReturn('access-token');
-        });
-
         Http::fake([
             'photoslibrary.googleapis.com/v1/mediaItems:search' => Http::response([
                 'mediaItems' => [],
@@ -93,10 +76,6 @@ final class BrowseServiceTest extends TestCase
     public function test_browse_uses_thumbnail_route_when_cover_media_id_is_present(): void
     {
         $account = StorageAccount::factory()->googlePhotos()->create();
-
-        $this->mock(GoogleTokenService::class, function ($mock): void {
-            $mock->shouldReceive('accessToken')->andReturn('access-token');
-        });
 
         Http::fake([
             'photoslibrary.googleapis.com/v1/albums*' => Http::response([

@@ -6,10 +6,6 @@ namespace Modules\Storage\Tests\Unit\Services;
 
 use Aws\S3\S3Client;
 use DateTimeImmutable;
-use Google\Client as GoogleClient;
-use GuzzleHttp\Client as GuzzleClient;
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use Mockery;
 use Modules\Storage\Enums\StorageDriver;
@@ -17,15 +13,10 @@ use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Services\GoogleDrive\BrowseService as GoogleDriveBrowseService;
 use Modules\Storage\Services\R2\BrowseService as R2BrowseService;
 use Modules\Storage\Services\StorageDriverRegistry;
-use Modules\Storage\Services\StorageFlysystemFactory;
-use Modules\Storage\Services\Tokens\GoogleTokenService;
-use Tests\Concerns\SafeRefreshDatabase;
-use Tests\TestCase;
+use Modules\Storage\Tests\TestCase;
 
 final class StorageBrowseDriversTest extends TestCase
 {
-    use SafeRefreshDatabase;
-
     public function test_google_drive_browse_driver_returns_provider_folders_and_files(): void
     {
         $account = StorageAccount::factory()->googleDrive()->create();
@@ -33,14 +24,14 @@ final class StorageBrowseDriversTest extends TestCase
         $fileId = fake()->uuid();
 
         $this->bindGoogleClient([
-            [
+            new Response(200, ['Content-Type' => 'application/json'], (string) json_encode([
                 'files' => [[
                     'id' => $folderId,
                     'name' => fake()->words(2, true),
                     'mimeType' => 'application/vnd.google-apps.folder',
                 ]],
-            ],
-            [
+            ], JSON_THROW_ON_ERROR)),
+            new Response(200, ['Content-Type' => 'application/json'], (string) json_encode([
                 'files' => [[
                     'id' => $fileId,
                     'name' => fake()->word().'.jpg',
@@ -48,7 +39,7 @@ final class StorageBrowseDriversTest extends TestCase
                     'size' => '1024',
                     'modifiedTime' => now()->toIso8601String(),
                 ]],
-            ],
+            ], JSON_THROW_ON_ERROR)),
         ]);
 
         $driver = app(StorageDriverRegistry::class)->browseDriver(StorageDriver::GoogleDrive);
@@ -86,8 +77,8 @@ final class StorageBrowseDriversTest extends TestCase
                 ];
             });
 
-        $this->mock(StorageFlysystemFactory::class, function ($mock) use ($client): void {
-            $mock->shouldReceive('r2Client')->once()->andReturn($client);
+        $this->bindInMemoryDisk(function ($factory) use ($client): void {
+            $factory->shouldReceive('r2Client')->once()->andReturn($client);
         });
 
         $driver = app(StorageDriverRegistry::class)->browseDriver(StorageDriver::R2);
@@ -99,33 +90,5 @@ final class StorageBrowseDriversTest extends TestCase
         $this->assertCount(1, $result->items);
         $this->assertSame('album-one', $result->albums[0]['id'] ?? null);
         $this->assertSame('album-one/photo.jpg', $result->items[0]['id'] ?? null);
-    }
-
-    /**
-     * @param  list<array<string, mixed>>  $payloads
-     */
-    private function bindGoogleClient(array $payloads): void
-    {
-        $responses = array_map(
-            fn (array $payload): Response => new Response(
-                200,
-                ['Content-Type' => 'application/json'],
-                (string) json_encode($payload, JSON_THROW_ON_ERROR),
-            ),
-            $payloads,
-        );
-
-        $handler = HandlerStack::create(new MockHandler($responses));
-        $googleClient = new GoogleClient;
-        $googleClient->setHttpClient(new GuzzleClient(['handler' => $handler]));
-        $googleClient->setAccessToken([
-            'access_token' => fake()->sha256(),
-            'created' => time(),
-            'expires_in' => 3600,
-        ]);
-
-        $this->mock(GoogleTokenService::class, function ($mock) use ($googleClient): void {
-            $mock->shouldReceive('clientForAccount')->andReturn($googleClient);
-        });
     }
 }

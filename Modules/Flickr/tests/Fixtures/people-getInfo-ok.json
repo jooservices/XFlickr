@@ -1,0 +1,8 @@
+{
+  "stat": "ok",
+  "person": {
+    "id": "94529704@N02",
+    "username": {"_content": "fixture-user"},
+    "realname": {"_content": "Fixture User"}
+  }
+}

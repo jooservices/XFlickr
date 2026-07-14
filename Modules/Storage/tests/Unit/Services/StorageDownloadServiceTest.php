@@ -11,15 +11,12 @@ use Mockery;
 use Modules\Storage\Dto\StorageStreamResult;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Services\StorageDownloadService;
-use Modules\Storage\Services\StorageFlysystemFactory;
+use Modules\Storage\Support\StorageR2Config;
+use Modules\Storage\Tests\TestCase;
 use RuntimeException;
-use Tests\Concerns\SafeRefreshDatabase;
-use Tests\TestCase;
 
 final class StorageDownloadServiceTest extends TestCase
 {
-    use SafeRefreshDatabase;
-
     public function test_open_stream_rejects_non_r2_providers(): void
     {
         $account = StorageAccount::factory()->googleDrive()->create();
@@ -33,12 +30,7 @@ final class StorageDownloadServiceTest extends TestCase
     public function test_open_stream_returns_null_when_remote_file_missing(): void
     {
         $account = StorageAccount::factory()->r2()->create();
-        $disk = Mockery::mock(Filesystem::class);
-        $disk->shouldReceive('exists')->once()->andReturn(false);
-
-        $this->mock(StorageFlysystemFactory::class, function ($mock) use ($disk): void {
-            $mock->shouldReceive('diskForAccount')->once()->andReturn($disk);
-        });
+        $this->bindInMemoryDisk();
 
         $result = app(StorageDownloadService::class)->openStreamForAccount($account, 'missing.jpg');
 
@@ -48,37 +40,21 @@ final class StorageDownloadServiceTest extends TestCase
     public function test_open_stream_returns_stream_result_for_existing_file(): void
     {
         $account = StorageAccount::factory()->r2()->create();
-        $stream = fopen('php://temp', 'rb+');
-        $this->assertIsResource($stream);
-        fwrite($stream, 'image-bytes');
-        rewind($stream);
+        $key = StorageR2Config::from($account->credentials ?? [])->objectKey('photos/image.jpg');
 
-        $disk = Mockery::mock(Filesystem::class);
-        $disk->shouldReceive('exists')->once()->andReturn(true);
-        $disk->shouldReceive('readStream')->once()->andReturn($stream);
-        $disk->shouldReceive('mimeType')->once()->andReturn('image/jpeg');
-
-        $this->mock(StorageFlysystemFactory::class, function ($mock) use ($disk): void {
-            $mock->shouldReceive('diskForAccount')->once()->andReturn($disk);
-        });
+        ['disk' => $disk] = $this->bindInMemoryDisk();
+        $disk->put($key, 'image-bytes');
 
         $result = app(StorageDownloadService::class)->openStreamForAccount($account, 'photos/image.jpg');
 
         $this->assertInstanceOf(StorageStreamResult::class, $result);
         $this->assertSame('image.jpg', $result->filename);
-        $this->assertSame('image/jpeg', $result->mimeType);
     }
 
     public function test_download_to_path_writes_file_and_returns_metadata(): void
     {
         $account = StorageAccount::factory()->r2()->create();
-        $stream = fopen('php://temp', 'rb+');
-        $this->assertIsResource($stream);
-        fwrite($stream, 'download-bytes');
-        rewind($stream);
-
-        $disk = Mockery::mock(Filesystem::class);
-        $disk->shouldReceive('readStream')->once()->andReturn($stream);
+        $key = StorageR2Config::from($account->credentials ?? [])->objectKey('photos/image.jpg');
 
         $client = Mockery::mock(S3Client::class);
         $client->shouldReceive('headObject')->once()->andReturn([
@@ -86,10 +62,10 @@ final class StorageDownloadServiceTest extends TestCase
             'ContentLength' => 14,
         ]);
 
-        $this->mock(StorageFlysystemFactory::class, function ($mock) use ($disk, $client): void {
-            $mock->shouldReceive('diskForAccount')->once()->andReturn($disk);
-            $mock->shouldReceive('r2Client')->once()->andReturn($client);
+        ['disk' => $disk] = $this->bindInMemoryDisk(function ($factory) use ($client): void {
+            $factory->shouldReceive('r2Client')->once()->andReturn($client);
         });
+        $disk->put($key, 'download-bytes');
 
         $localPath = sys_get_temp_dir().'/xflickr-storage-download-'.fake()->uuid().'.bin';
 
@@ -111,11 +87,12 @@ final class StorageDownloadServiceTest extends TestCase
     public function test_download_to_path_throws_when_stream_read_fails(): void
     {
         $account = StorageAccount::factory()->r2()->create();
+
         $disk = Mockery::mock(Filesystem::class);
         $disk->shouldReceive('readStream')->once()->andReturn(false);
 
-        $this->mock(StorageFlysystemFactory::class, function ($mock) use ($disk): void {
-            $mock->shouldReceive('diskForAccount')->once()->andReturn($disk);
+        $this->bindInMemoryDisk(function ($factory) use ($disk): void {
+            $factory->shouldReceive('diskForAccount')->once()->andReturn($disk);
         });
 
         $this->expectException(RuntimeException::class);

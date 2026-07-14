@@ -1,0 +1,7 @@
+{
+  "access_token": "ya29.test-access-token",
+  "expires_in": 3600,
+  "refresh_token": "1//test-refresh-token",
+  "scope": "https://www.googleapis.com/auth/photoslibrary.readonly",
+  "token_type": "Bearer"
+}

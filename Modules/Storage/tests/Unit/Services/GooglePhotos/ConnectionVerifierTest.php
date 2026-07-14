@@ -9,14 +9,11 @@ use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
 use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Services\GooglePhotos\ConnectionVerifier;
+use Modules\Storage\Tests\TestCase;
 use RuntimeException;
-use Tests\Concerns\SafeRefreshDatabase;
-use Tests\TestCase;
 
 final class ConnectionVerifierTest extends TestCase
 {
-    use SafeRefreshDatabase;
-
     public function test_verify_rejects_non_google_photos_account(): void
     {
         $account = StorageAccount::factory()->r2()->create();
