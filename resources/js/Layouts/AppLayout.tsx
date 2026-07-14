@@ -14,8 +14,9 @@ import {
     Settings,
     Users,
 } from 'lucide-react';
-import { type PropsWithChildren, type ReactNode, useMemo } from 'react';
+import { type PropsWithChildren, type ReactNode, useMemo, useState } from 'react';
 
+import TokenHealthBanner from '@/Components/Flickr/TokenHealthBanner';
 import { APP_SIDEBAR_FOOTER_RESET_CLASS } from '@/Components/layout/appBottomRail';
 import AppSidebarFooter from '@/Components/layout/AppSidebarFooter';
 import AppStatusFooter from '@/Components/layout/AppStatusFooter';
@@ -153,6 +154,26 @@ function sidebarCountForItem(
     return catalogCounts[countKey];
 }
 
+function stickySidebarOffsetClass({
+    globalPause,
+    tokenBannerVisible,
+}: {
+    globalPause: boolean;
+    tokenBannerVisible: boolean;
+}): string | undefined {
+    const bannerCount = (globalPause ? 1 : 0) + (tokenBannerVisible ? 1 : 0);
+
+    if (bannerCount === 0) {
+        return undefined;
+    }
+
+    if (bannerCount === 1) {
+        return 'lg:!top-[5.75rem] lg:!max-h-[calc(100vh-5.75rem)]';
+    }
+
+    return 'lg:!top-[8.25rem] lg:!max-h-[calc(100vh-8.25rem)]';
+}
+
 const topNav = [
     { href: '/operations', label: 'Operations', icon: Activity },
     {
@@ -198,6 +219,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
     const { props, url } = usePage<PageProps>();
     const { app, auth, flash } = props;
     const globalPause = app.global_pause ?? false;
+    const [tokenBannerVisible, setTokenBannerVisible] = useState(false);
     const spider = app.spider ?? defaultSpider;
     const {
         snapshot: rateLimitSnapshot,
@@ -227,6 +249,16 @@ export default function AppLayout({ children }: PropsWithChildren) {
         [rateLimitSnapshot],
     );
 
+    const connectedFlickrAccounts = useMemo(
+        () => (rateLimitSnapshot?.accounts ?? []).map((row) => row.account),
+        [rateLimitSnapshot],
+    );
+
+    const sidebarOffsetClass = stickySidebarOffsetClass({
+        globalPause,
+        tokenBannerVisible,
+    });
+
     const path = url.split('?')[0] ?? '';
 
     return (
@@ -237,6 +269,11 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         Global crawl pause is active — jobs will not dispatch until resumed.
                     </div>
                 ) : null}
+
+                <TokenHealthBanner
+                    accounts={connectedFlickrAccounts}
+                    onVisibleChange={setTokenBannerVisible}
+                />
 
                 <AppShell.Header className="!static">
                     <AppShell.HeaderRow>
@@ -286,10 +323,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
 
             <AppShell.Body>
                 <AppShell.Sidebar
-                    className={cn(
-                        APP_SIDEBAR_FOOTER_RESET_CLASS,
-                        globalPause ? 'lg:!top-[5.75rem] lg:!max-h-[calc(100vh-5.75rem)]' : undefined,
-                    )}
+                    className={cn(APP_SIDEBAR_FOOTER_RESET_CLASS, sidebarOffsetClass)}
                     footer={<AppSidebarFooter />}
                 >
                     <div className="flex min-h-full flex-col">

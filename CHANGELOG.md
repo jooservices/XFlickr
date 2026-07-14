@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- FS-6 proactive Flickr token-health banner in `AppLayout`: probes connected accounts from the rate-limit snapshot, warns when `token_valid === false`, links to Connections, and supports per-account session dismiss.
 - N-08 crawler connection `token_payload` encrypted at rest (`encrypted` cast, re-encrypt migration, `ConnectionTokenEncryptionTest`); documented in `SECURITY.md`.
 - N-13 README CI and Release badges.
 - N-15 curated download HTTP timeout: Settings → General **Transfer / Downloads** knob `xflickr_download.timeout_seconds` via `DownloadRuntimeConfig` (30–900 s clamp); `PhotoDownloadExecutionService` reads runtime value instead of raw `config()`.
