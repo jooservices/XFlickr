@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Crawler\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Crawler\Support\XFlickrConfig;
 
@@ -40,5 +41,14 @@ final class Photo extends Model
     public function getTable(): string
     {
         return XFlickrConfig::table('photos');
+    }
+
+    /**
+     * @param  Builder<Photo>  $query
+     * @return Builder<Photo>
+     */
+    public function scopeForOwner(Builder $query, string $nsid): Builder
+    {
+        return $query->where('owner_nsid', $nsid);
     }
 }

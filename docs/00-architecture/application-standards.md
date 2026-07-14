@@ -42,6 +42,7 @@ Value objects / result DTOs live under `Modules/*/Dto/` (or host `app/Dto/`); be
 - Single responsibility; hold business rules under `Modules/*/Services/`.
 - Depend on Repositories for all persistence — **never** Eloquent/`Model::query()` / `$model->update()` from Services (or Controllers/Commands).
 - `DB::transaction()` wrapping Repository calls is fine.
+- Operations DB introspection is a sanctioned exception: `DatabaseUsageService` and `ServicesDependencyProbeService` may use `DB::select` / driver status queries for dashboard probes (enforced via whitelist in `tests/Unit/Architecture/ServiceLayeringTest`).
 - Two Services must not depend on each other bidirectionally — use an orchestrator Service for shared workflows.
 
 ### Commands / Jobs
@@ -60,11 +61,11 @@ Value objects / result DTOs live under `Modules/*/Dto/` (or host `app/Dto/`); be
 - Module-owned: `Modules/*/Repositories/`
 - Shared crawler reads: `app/Repositories/Crawler/`
 - Registered in `RepositoryServiceProvider`.
-- Prefer meaningful Eloquent model scopes for reusable filters (repositories call scopes; they do not re-encode the same `where` everywhere).
+- Prefer meaningful Eloquent model scopes for reusable filters (repositories call scopes; they do not re-encode the same `where` everywhere). Predicates that repeat ≥3 times or name a domain state become classic `scopeX` methods; repositories compose those scopes.
 
 ### Models
 
-- Casts, relationships, and named local scopes for reusable query fragments.
+- Casts, relationships, and named local scopes for reusable query fragments. Predicates that repeat ≥3 times or name a domain state become classic `scopeX` methods (not `#[Scope]`); repositories compose those scopes.
 - No Service/Repository imports (deptrac Model layer is empty of outbound deps).
 
 ## Dependency injection

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Modules\Crawler\Models\Connection;
-use Modules\Flickr\Support\ConnectionPublicIdService;
+use Modules\Flickr\Services\ConnectionPublicIdService;
 use Modules\Storage\Contracts\StorageDownloadStreamer;
 use Modules\Storage\Services\StorageDownloadService;
 

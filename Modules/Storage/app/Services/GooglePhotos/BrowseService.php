@@ -129,34 +129,7 @@ final class BrowseService implements StorageBrowseDriver
         $maxEmptyPages = 15;
 
         for ($attempt = 0; $attempt < $maxEmptyPages; $attempt++) {
-            $body = ['pageSize' => max($perPage, 25)];
-            if ($nextPageToken !== null && $nextPageToken !== '') {
-                $body['pageToken'] = $nextPageToken;
-            }
-            if ($albumId !== null && $albumId !== '') {
-                $body['albumId'] = $albumId;
-            }
-
-            $endpoint = self::API_BASE.'/mediaItems:search';
-            $startedAt = microtime(true);
-            $response = Http::withToken($accessToken)
-                ->timeout(30)
-                ->post($endpoint, $body);
-            $this->apiLogger->logRequest(
-                'google_photos',
-                'POST',
-                $endpoint,
-                $startedAt,
-                $response,
-                null,
-                ['account_id' => $accountId],
-            );
-
-            if (! $response->successful()) {
-                throw new RuntimeException($this->errorMessage($response->json(), 'Google Photos media search failed.'));
-            }
-
-            $payload = $response->json();
+            $payload = $this->postMediaSearchPage($accessToken, $perPage, $nextPageToken, $albumId, $accountId);
             $rawItems = is_array($payload['mediaItems'] ?? null) ? $payload['mediaItems'] : [];
             $nextPageToken = isset($payload['nextPageToken']) ? (string) $payload['nextPageToken'] : null;
 
@@ -165,25 +138,7 @@ final class BrowseService implements StorageBrowseDriver
                     continue;
                 }
 
-                $baseUrl = isset($mediaItem['baseUrl']) ? (string) $mediaItem['baseUrl'] : null;
-                $productUrl = isset($mediaItem['productUrl']) ? (string) $mediaItem['productUrl'] : null;
-                $metadata = is_array($mediaItem['mediaMetadata'] ?? null) ? $mediaItem['mediaMetadata'] : [];
-                $webUrl = $productUrl !== null && $productUrl !== ''
-                    ? $productUrl
-                    : ($baseUrl !== null && $baseUrl !== '' ? $baseUrl : null);
-
-                $items[] = [
-                    'id' => (string) ($mediaItem['id'] ?? ''),
-                    'name' => (string) ($mediaItem['filename'] ?? 'Untitled'),
-                    'mime_type' => isset($mediaItem['mimeType']) ? (string) $mediaItem['mimeType'] : null,
-                    'thumbnail_url' => isset($mediaItem['id']) && $accountId !== null
-                        ? '/api/v1/storage/google-photos/thumbnail?account_id='.$accountId.'&media_id='.urlencode((string) $mediaItem['id'])
-                        : null,
-                    'size' => null,
-                    'modified_at' => isset($metadata['creationTime']) ? (string) $metadata['creationTime'] : null,
-                    'path' => null,
-                    'web_url' => $webUrl,
-                ];
+                $items[] = $this->mapMediaItemToBrowseItem($mediaItem, $accountId);
 
                 if (count($items) >= $perPage) {
                     break 2;
@@ -203,6 +158,75 @@ final class BrowseService implements StorageBrowseDriver
         return [
             'items' => $items,
             'nextPageToken' => $nextPageToken,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function postMediaSearchPage(
+        string $accessToken,
+        int $perPage,
+        ?string $pageToken,
+        ?string $albumId,
+        ?int $accountId,
+    ): array {
+        $body = ['pageSize' => max($perPage, 25)];
+        if ($pageToken !== null && $pageToken !== '') {
+            $body['pageToken'] = $pageToken;
+        }
+        if ($albumId !== null && $albumId !== '') {
+            $body['albumId'] = $albumId;
+        }
+
+        $endpoint = self::API_BASE.'/mediaItems:search';
+        $startedAt = microtime(true);
+        $response = Http::withToken($accessToken)
+            ->timeout(30)
+            ->post($endpoint, $body);
+        $this->apiLogger->logRequest(
+            'google_photos',
+            'POST',
+            $endpoint,
+            $startedAt,
+            $response,
+            null,
+            ['account_id' => $accountId],
+        );
+
+        if (! $response->successful()) {
+            throw new RuntimeException($this->errorMessage($response->json(), 'Google Photos media search failed.'));
+        }
+
+        $payload = $response->json();
+
+        return is_array($payload) ? $payload : [];
+    }
+
+    /**
+     * @param  array<string, mixed>  $mediaItem
+     * @return array<string, mixed>
+     */
+    private function mapMediaItemToBrowseItem(array $mediaItem, ?int $accountId): array
+    {
+        $baseUrl = isset($mediaItem['baseUrl']) ? (string) $mediaItem['baseUrl'] : null;
+        $productUrl = isset($mediaItem['productUrl']) ? (string) $mediaItem['productUrl'] : null;
+        $metadata = is_array($mediaItem['mediaMetadata'] ?? null) ? $mediaItem['mediaMetadata'] : [];
+        $webUrl = $productUrl !== null && $productUrl !== ''
+            ? $productUrl
+            : ($baseUrl !== null && $baseUrl !== '' ? $baseUrl : null);
+
+        return [
+            'id' => (string) ($mediaItem['id'] ?? ''),
+            'name' => (string) ($mediaItem['filename'] ?? 'Untitled'),
+            'mime_type' => isset($mediaItem['mimeType']) ? (string) $mediaItem['mimeType'] : null,
+            'thumbnail_url' => isset($mediaItem['id']) && $accountId !== null
+                ? '/api/v1/storage/google-photos/thumbnail?account_id='.$accountId.'&media_id='.urlencode((string) $mediaItem['id'])
+                : null,
+            'size' => null,
+            'modified_at' => isset($metadata['creationTime']) ? (string) $metadata['creationTime'] : null,
+            'path' => null,
+            'web_url' => $webUrl,
         ];
     }
 

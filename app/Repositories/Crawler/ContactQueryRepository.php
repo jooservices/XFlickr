@@ -20,7 +20,7 @@ final class ContactQueryRepository
             ->whereIn(
                 'nsid',
                 ConnectionContact::query()
-                    ->where('connection_key', $connectionKey)
+                    ->forConnection($connectionKey)
                     ->select('contact_nsid'),
             );
     }

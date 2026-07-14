@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\Storage\Services\GooglePhotos;
 
 use GuzzleHttp\Psr7\Utils;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Services\Tokens\GoogleTokenService;
@@ -35,6 +36,18 @@ final class UploadService
 
         $accessToken = $this->tokens->accessToken($credentials, $account);
         $filename = basename($remotePath) !== '' ? basename($remotePath) : basename($localPath);
+
+        $uploadToken = $this->performUpload($account, $accessToken, $stream, $filename);
+        $mediaItem = $this->createMediaItem($account, $accessToken, $filename, $uploadToken);
+
+        return $this->presentMediaItem($mediaItem, $filename);
+    }
+
+    /**
+     * @param  resource  $stream
+     */
+    private function performUpload(StorageAccount $account, string $accessToken, $stream, string $filename): string
+    {
         $body = Utils::streamFor($stream);
 
         try {
@@ -69,6 +82,14 @@ final class UploadService
             throw new RuntimeException('Google Photos upload token was empty.');
         }
 
+        return $uploadToken;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function createMediaItem(StorageAccount $account, string $accessToken, string $filename, string $uploadToken): array
+    {
         $startedAt = microtime(true);
         $createResponse = Http::withToken($accessToken)
             ->timeout(60)
@@ -99,6 +120,14 @@ final class UploadService
             throw new RuntimeException($this->apiError($createResponse->json(), 'Google Photos media item creation failed.'));
         }
 
+        return $this->extractMediaItemFromCreateResponse($createResponse);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function extractMediaItemFromCreateResponse(Response $createResponse): array
+    {
         $payload = $createResponse->json();
         $results = is_array($payload) ? ($payload['newMediaItemResults'][0] ?? null) : null;
         $mediaItem = is_array($results) ? ($results['mediaItem'] ?? null) : null;
@@ -110,8 +139,18 @@ final class UploadService
             throw new RuntimeException($message);
         }
 
-        $baseUrl = is_array($mediaItem) ? (string) ($mediaItem['baseUrl'] ?? '') : '';
-        $mimeType = is_array($mediaItem) ? (string) ($mediaItem['mimeType'] ?? 'image/jpeg') : 'image/jpeg';
+        return is_array($mediaItem) ? $mediaItem : [];
+    }
+
+    /**
+     * @param  array<string, mixed>  $mediaItem
+     * @return array{id: string, path: string, etag: null, name: string, mime_type: string, thumbnail_url: string|null, modified_at: string}
+     */
+    private function presentMediaItem(array $mediaItem, string $filename): array
+    {
+        $mediaId = (string) ($mediaItem['id'] ?? '');
+        $baseUrl = (string) ($mediaItem['baseUrl'] ?? '');
+        $mimeType = (string) ($mediaItem['mimeType'] ?? 'image/jpeg');
         $creationTime = is_array($mediaItem['mediaMetadata'] ?? null)
             ? (string) ($mediaItem['mediaMetadata']['creationTime'] ?? '')
             : '';

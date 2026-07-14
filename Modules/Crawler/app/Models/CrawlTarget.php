@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\Crawler\Models;
 
+use BackedEnum;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -72,5 +74,50 @@ final class CrawlTarget extends Model
     public function crawlRun(): BelongsTo
     {
         return $this->belongsTo(CrawlRun::class, 'xflickr_crawl_run_id');
+    }
+
+    /**
+     * @param  Builder<CrawlTarget>  $query
+     * @return Builder<CrawlTarget>
+     */
+    public function scopeWithStatus(Builder $query, BackedEnum|string $status): Builder
+    {
+        return $query->where('status', $status instanceof BackedEnum ? $status->value : $status);
+    }
+
+    /**
+     * @param  Builder<CrawlTarget>  $query
+     * @return Builder<CrawlTarget>
+     */
+    public function scopePending(Builder $query): Builder
+    {
+        return $query->where('status', CrawlStatus::Pending);
+    }
+
+    /**
+     * @param  Builder<CrawlTarget>  $query
+     * @return Builder<CrawlTarget>
+     */
+    public function scopeProcessing(Builder $query): Builder
+    {
+        return $query->where('status', CrawlStatus::Processing);
+    }
+
+    /**
+     * @param  Builder<CrawlTarget>  $query
+     * @return Builder<CrawlTarget>
+     */
+    public function scopeCompleted(Builder $query): Builder
+    {
+        return $query->where('status', CrawlStatus::Completed);
+    }
+
+    /**
+     * @param  Builder<CrawlTarget>  $query
+     * @return Builder<CrawlTarget>
+     */
+    public function scopeFailed(Builder $query): Builder
+    {
+        return $query->where('status', CrawlStatus::Failed);
     }
 }

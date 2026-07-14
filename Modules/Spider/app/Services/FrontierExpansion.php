@@ -6,6 +6,7 @@ namespace Modules\Spider\Services;
 
 use Illuminate\Database\Eloquent\Model;
 use Modules\Spider\Contracts\FrontierRepositoryContract;
+use Modules\Spider\Contracts\RunWriteRepository;
 use Modules\Spider\Enums\SpiderFrontierStatus;
 use Modules\Spider\Enums\SpiderRunStatus;
 
@@ -20,6 +21,7 @@ final class FrontierExpansion
     public function enqueueDiscovered(
         Model $run,
         FrontierRepositoryContract $frontier,
+        RunWriteRepository $runs,
         array $contactNsids,
         int $depth,
     ): void {
@@ -44,12 +46,15 @@ final class FrontierExpansion
         }
 
         if ($discovered > 0) {
-            $run->increment('contacts_discovered', $discovered);
+            $runs->incrementRun($run, 'contacts_discovered', $discovered);
         }
     }
 
-    public function maybeCompleteRun(Model $run, FrontierRepositoryContract $frontier): void
-    {
+    public function maybeCompleteRun(
+        Model $run,
+        FrontierRepositoryContract $frontier,
+        RunWriteRepository $runs,
+    ): void {
         $status = $run->getAttribute('status');
 
         if ($status !== SpiderRunStatus::Running) {
@@ -66,20 +71,20 @@ final class FrontierExpansion
             return;
         }
 
-        $this->completeRun($run);
+        $this->completeRun($run, $runs);
     }
 
-    public function completeRun(Model $run): void
+    public function completeRun(Model $run, RunWriteRepository $runs): void
     {
-        $run->update([
+        $runs->updateRun($run, [
             'status' => SpiderRunStatus::Completed,
             'completed_at' => now(),
         ]);
     }
 
-    public function pauseMissingConnection(Model $run): void
+    public function pauseMissingConnection(Model $run, RunWriteRepository $runs): void
     {
-        $run->update([
+        $runs->updateRun($run, [
             'status' => SpiderRunStatus::Paused,
             'paused_at' => now(),
         ]);

@@ -38,7 +38,7 @@ final class StoredFileRepository extends EloquentRepository
         return $this->newQuery()
             ->whereIn('flickr_photo_id', $flickrPhotoIds)
             ->where('variant', 'original')
-            ->where('status', StoredFileStatus::Completed->value)
+            ->completed()
             ->pluck('flickr_photo_id')
             ->all();
     }
@@ -66,7 +66,7 @@ final class StoredFileRepository extends EloquentRepository
         return $this->newQuery()
             ->where('flickr_photo_id', $flickrPhotoId)
             ->where('variant', 'original')
-            ->where('status', StoredFileStatus::Completed->value)
+            ->completed()
             ->exists();
     }
 
@@ -169,7 +169,7 @@ final class StoredFileRepository extends EloquentRepository
     {
         return $this->newQuery()
             ->where('variant', 'original')
-            ->where('status', StoredFileStatus::Completed->value)
+            ->completed()
             ->selectRaw('owner_nsid as contact_nsid, count(*) as aggregate')
             ->groupBy('owner_nsid');
     }

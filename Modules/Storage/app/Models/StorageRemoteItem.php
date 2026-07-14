@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Storage\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -61,6 +62,15 @@ final class StorageRemoteItem extends Model
     public function storageAccount(): BelongsTo
     {
         return $this->belongsTo(StorageAccount::class, 'storage_account_id');
+    }
+
+    /**
+     * @param  Builder<StorageRemoteItem>  $query
+     * @return Builder<StorageRemoteItem>
+     */
+    public function scopeForAccount(Builder $query, int $storageAccountId): Builder
+    {
+        return $query->where('storage_account_id', $storageAccountId);
     }
 
     /**

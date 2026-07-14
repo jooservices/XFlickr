@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Repositories\Crawler;
 
 use Illuminate\Support\Collection;
-use Modules\Crawler\Enums\CrawlStatus;
 use Modules\Crawler\Enums\TaskType;
 use Modules\Crawler\Models\CrawlRun;
 use Modules\Crawler\Models\CrawlTarget;
@@ -16,7 +15,7 @@ final class CrawlTargetQueryRepository
     {
         return CrawlTarget::query()
             ->whereHas('crawlRun', fn ($q) => $q->where('connection_key', $connectionKey))
-            ->where('status', 'pending')
+            ->pending()
             ->count();
     }
 
@@ -31,7 +30,7 @@ final class CrawlTargetQueryRepository
 
         return CrawlTarget::query()
             ->whereHas('crawlRun', fn ($q) => $q->whereIn('connection_key', $connectionKeys))
-            ->where('status', 'pending')
+            ->pending()
             ->count();
     }
 
@@ -91,7 +90,7 @@ final class CrawlTargetQueryRepository
             ->where('xflickr_crawl_run_id', $runId)
             ->whereIn('task_type', array_map(fn (TaskType $type): string => $type->value, $taskTypes))
             ->where('subject_nsid', $subjectNsid)
-            ->where('status', CrawlStatus::Completed)
+            ->completed()
             ->sum('last_result_count');
     }
 }

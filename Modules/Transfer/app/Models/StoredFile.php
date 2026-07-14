@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Modules\Transfer\Models;
 
+use BackedEnum;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Modules\Storage\Models\StorageUpload;
 use Modules\Transfer\Database\Factories\StoredFileFactory;
+use Modules\Transfer\Enums\StoredFileStatus;
 
 final class StoredFile extends Model
 {
@@ -68,5 +71,41 @@ final class StoredFile extends Model
     public function uploads(): HasMany
     {
         return $this->hasMany(StorageUpload::class, 'stored_file_id');
+    }
+
+    /**
+     * @param  Builder<StoredFile>  $query
+     * @return Builder<StoredFile>
+     */
+    public function scopeWithStatus(Builder $query, BackedEnum|string $status): Builder
+    {
+        return $query->where('status', $status instanceof BackedEnum ? $status->value : $status);
+    }
+
+    /**
+     * @param  Builder<StoredFile>  $query
+     * @return Builder<StoredFile>
+     */
+    public function scopePending(Builder $query): Builder
+    {
+        return $query->where('status', StoredFileStatus::Pending->value);
+    }
+
+    /**
+     * @param  Builder<StoredFile>  $query
+     * @return Builder<StoredFile>
+     */
+    public function scopeCompleted(Builder $query): Builder
+    {
+        return $query->where('status', StoredFileStatus::Completed->value);
+    }
+
+    /**
+     * @param  Builder<StoredFile>  $query
+     * @return Builder<StoredFile>
+     */
+    public function scopeFailed(Builder $query): Builder
+    {
+        return $query->where('status', StoredFileStatus::Failed->value);
     }
 }

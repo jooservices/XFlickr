@@ -80,14 +80,14 @@ final class TransferItemRepository extends EloquentRepository
     {
         return $this->newQuery()
             ->where('transfer_batch_id', $batchId)
-            ->where('status', $status->value)
+            ->withStatus($status)
             ->count();
     }
 
     public function countFailedSince(\DateTimeInterface $since): int
     {
         return $this->newQuery()
-            ->where('status', TransferItemStatus::Failed->value)
+            ->failed()
             ->where('created_at', '>=', $since)
             ->count();
     }
@@ -95,7 +95,7 @@ final class TransferItemRepository extends EloquentRepository
     public function countFailedForConnectionSince(string $connectionKey, \DateTimeInterface $since): int
     {
         return $this->newQuery()
-            ->where('status', TransferItemStatus::Failed->value)
+            ->failed()
             ->where('created_at', '>=', $since)
             ->whereHas('batch', fn ($q) => $q->where('connection_key', $connectionKey))
             ->count();
@@ -127,7 +127,7 @@ final class TransferItemRepository extends EloquentRepository
     {
         $value = $this->newQuery()
             ->where('transfer_batch_id', $batchId)
-            ->where('status', TransferItemStatus::Failed->value)
+            ->failed()
             ->whereNotNull('error_message')
             ->orderByDesc('id')
             ->value('error_message');
@@ -153,7 +153,7 @@ final class TransferItemRepository extends EloquentRepository
         /** @var Collection<int, TransferItem> */
         return $this->newQuery()
             ->where('transfer_batch_id', $batchId)
-            ->where('status', TransferItemStatus::Failed->value)
+            ->failed()
             ->orderByDesc('id')
             ->limit($limit)
             ->get(['id', 'flickr_photo_id', 'status', 'error_message', 'updated_at']);

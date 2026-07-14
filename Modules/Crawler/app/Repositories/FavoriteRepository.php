@@ -37,7 +37,7 @@ final class FavoriteRepository
     public function countForSubject(string $connectionKey, string $subjectNsid): int
     {
         return Favorite::query()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->where('subject_nsid', $subjectNsid)
             ->count();
     }

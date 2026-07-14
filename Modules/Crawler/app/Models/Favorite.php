@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Crawler\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -37,5 +38,14 @@ final class Favorite extends Model
     public function photo(): BelongsTo
     {
         return $this->belongsTo(Photo::class, 'xflickr_photo_id');
+    }
+
+    /**
+     * @param  Builder<Favorite>  $query
+     * @return Builder<Favorite>
+     */
+    public function scopeForConnection(Builder $query, string $key): Builder
+    {
+        return $query->where('connection_key', $key);
     }
 }

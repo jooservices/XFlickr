@@ -84,16 +84,16 @@ final class TransferBatchRepository extends EloquentRepository
     {
         return $this->newQuery()
             ->where('type', $type)
-            ->where('status', $status)
+            ->withStatus($status)
             ->count();
     }
 
     public function countActiveForConnection(string $connectionKey, string $type): int
     {
         return $this->newQuery()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->where('type', $type)
-            ->where('status', TransferBatchStatus::Running->value)
+            ->running()
             ->count();
     }
 
@@ -110,7 +110,7 @@ final class TransferBatchRepository extends EloquentRepository
         return $this->newQuery()
             ->whereIn('connection_key', $connectionKeys)
             ->where('type', $type)
-            ->where('status', TransferBatchStatus::Running->value)
+            ->running()
             ->selectRaw('connection_key, count(*) as aggregate')
             ->groupBy('connection_key')
             ->pluck('aggregate', 'connection_key')
@@ -129,9 +129,9 @@ final class TransferBatchRepository extends EloquentRepository
         }
 
         return $this->newQuery()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->where('type', 'download')
-            ->where('status', TransferBatchStatus::Running->value)
+            ->running()
             ->whereIn('subject_nsid', $subjectNsids)
             ->get(['subject_nsid', 'completed_count', 'total_count']);
     }
@@ -141,7 +141,7 @@ final class TransferBatchRepository extends EloquentRepository
      */
     public function queryForConnection(string $connectionKey): Builder
     {
-        return $this->newQuery()->where('connection_key', $connectionKey);
+        return $this->newQuery()->forConnection($connectionKey);
     }
 
     public function updateCounts(TransferBatch $batch, int $completed, int $failed, TransferBatchStatus $status): void

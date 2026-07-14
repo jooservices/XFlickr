@@ -43,73 +43,95 @@ final class BrowseService implements StorageBrowseDriver
             '$select' => 'id,name,folder,file,size,lastModifiedDateTime,webUrl,thumbnails',
         ];
 
-        $albums = [];
-        $items = [];
-        $nextAlbumToken = null;
-        $nextItemToken = null;
+        $albumResult = $includeAlbums
+            ? $this->fetchAlbumPage($accessToken, $account->id, $path, $query, $albumPageToken, $itemPageToken)
+            : ['albums' => [], 'nextPageToken' => null];
 
-        if ($includeAlbums) {
-            if ($albumPageToken !== null && $albumPageToken !== '') {
-                $folderResponse = $this->loggedGet($accessToken, $albumPageToken, $account->id);
-                if (! $folderResponse->successful()) {
-                    throw new RuntimeException($this->errorMessage($folderResponse));
-                }
-                $folderPayload = $folderResponse->json();
-                foreach ($this->foldersFromPayload(is_array($folderPayload) ? $folderPayload : []) as $album) {
-                    $albums[] = $album;
-                }
-                $nextAlbumToken = isset($folderPayload['@odata.nextLink']) ? (string) $folderPayload['@odata.nextLink'] : null;
-            } elseif ($itemPageToken === null || $itemPageToken === '') {
-                $folderResponse = $this->loggedGet(
-                    $accessToken,
-                    self::GRAPH_BASE.$path,
-                    $account->id,
-                    array_merge($query, [
-                        '$filter' => 'folder ne null',
-                    ]),
-                );
-                if (! $folderResponse->successful()) {
-                    throw new RuntimeException($this->errorMessage($folderResponse));
-                }
-                $folderPayload = $folderResponse->json();
-                foreach ($this->foldersFromPayload(is_array($folderPayload) ? $folderPayload : []) as $album) {
-                    $albums[] = $album;
-                }
-                $nextAlbumToken = isset($folderPayload['@odata.nextLink']) ? (string) $folderPayload['@odata.nextLink'] : null;
-            }
-        }
-
-        if ($includeItems) {
-            if ($itemPageToken !== null && $itemPageToken !== '') {
-                $fileResponse = $this->loggedGet($accessToken, $itemPageToken, $account->id);
-            } else {
-                $fileResponse = $this->loggedGet(
-                    $accessToken,
-                    self::GRAPH_BASE.$path,
-                    $account->id,
-                    array_merge($query, [
-                        '$filter' => 'file ne null',
-                    ]),
-                );
-            }
-
-            if (! $fileResponse->successful()) {
-                throw new RuntimeException($this->errorMessage($fileResponse));
-            }
-
-            $filePayload = $fileResponse->json();
-            foreach ($this->filesFromPayload(is_array($filePayload) ? $filePayload : []) as $item) {
-                $items[] = $item;
-            }
-            $nextItemToken = isset($filePayload['@odata.nextLink']) ? (string) $filePayload['@odata.nextLink'] : null;
-        }
+        $itemResult = $includeItems
+            ? $this->fetchItemPage($accessToken, $account->id, $path, $query, $itemPageToken)
+            : ['items' => [], 'nextPageToken' => null];
 
         return new StorageBrowseResult(
-            albums: $albums,
-            items: $items,
-            albumNextPageToken: $nextAlbumToken,
-            itemNextPageToken: $nextItemToken,
+            albums: $albumResult['albums'],
+            items: $itemResult['items'],
+            albumNextPageToken: $albumResult['nextPageToken'],
+            itemNextPageToken: $itemResult['nextPageToken'],
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $query
+     * @return array{albums: list<array<string, mixed>>, nextPageToken: string|null}
+     */
+    private function fetchAlbumPage(
+        string $accessToken,
+        int $accountId,
+        string $path,
+        array $query,
+        ?string $albumPageToken,
+        ?string $itemPageToken,
+    ): array {
+        if ($albumPageToken !== null && $albumPageToken !== '') {
+            $folderResponse = $this->loggedGet($accessToken, $albumPageToken, $accountId);
+        } elseif ($itemPageToken === null || $itemPageToken === '') {
+            $folderResponse = $this->loggedGet(
+                $accessToken,
+                self::GRAPH_BASE.$path,
+                $accountId,
+                array_merge($query, [
+                    '$filter' => 'folder ne null',
+                ]),
+            );
+        } else {
+            return ['albums' => [], 'nextPageToken' => null];
+        }
+
+        if (! $folderResponse->successful()) {
+            throw new RuntimeException($this->errorMessage($folderResponse));
+        }
+
+        $folderPayload = $folderResponse->json();
+
+        return [
+            'albums' => $this->foldersFromPayload(is_array($folderPayload) ? $folderPayload : []),
+            'nextPageToken' => isset($folderPayload['@odata.nextLink']) ? (string) $folderPayload['@odata.nextLink'] : null,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $query
+     * @return array{items: list<array<string, mixed>>, nextPageToken: string|null}
+     */
+    private function fetchItemPage(
+        string $accessToken,
+        int $accountId,
+        string $path,
+        array $query,
+        ?string $itemPageToken,
+    ): array {
+        if ($itemPageToken !== null && $itemPageToken !== '') {
+            $fileResponse = $this->loggedGet($accessToken, $itemPageToken, $accountId);
+        } else {
+            $fileResponse = $this->loggedGet(
+                $accessToken,
+                self::GRAPH_BASE.$path,
+                $accountId,
+                array_merge($query, [
+                    '$filter' => 'file ne null',
+                ]),
+            );
+        }
+
+        if (! $fileResponse->successful()) {
+            throw new RuntimeException($this->errorMessage($fileResponse));
+        }
+
+        $filePayload = $fileResponse->json();
+
+        return [
+            'items' => $this->filesFromPayload(is_array($filePayload) ? $filePayload : []),
+            'nextPageToken' => isset($filePayload['@odata.nextLink']) ? (string) $filePayload['@odata.nextLink'] : null,
+        ];
     }
 
     /**

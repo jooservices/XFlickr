@@ -29,7 +29,7 @@ final class StorageRemoteAlbumRepository extends EloquentRepository
     public function paginateForParent(int $accountId, string $parentRemoteId, int $perPage, int $page): LengthAwarePaginator
     {
         return $this->newQuery()
-            ->where('storage_account_id', $accountId)
+            ->forAccount($accountId)
             ->where('parent_remote_id', $parentRemoteId)
             ->orderBy('title')
             ->paginate($perPage, ['*'], 'album_page', max(1, $page));
@@ -52,7 +52,7 @@ final class StorageRemoteAlbumRepository extends EloquentRepository
     public function deleteAllForAccount(int $accountId): void
     {
         $this->newQuery()
-            ->where('storage_account_id', $accountId)
+            ->forAccount($accountId)
             ->delete();
     }
 }

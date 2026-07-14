@@ -80,7 +80,7 @@ final class SubjectContactRepository
     public function discoveredContactNsids(string $connectionKey, string $subjectNsid): array
     {
         return SubjectContact::query()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->where('subject_nsid', $subjectNsid)
             ->orderBy('contact_nsid')
             ->pluck('contact_nsid')

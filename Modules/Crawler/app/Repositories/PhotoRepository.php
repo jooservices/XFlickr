@@ -61,6 +61,6 @@ final class PhotoRepository
 
     public function countByOwnerNsid(string $ownerNsid): int
     {
-        return Photo::query()->where('owner_nsid', $ownerNsid)->count();
+        return Photo::query()->forOwner($ownerNsid)->count();
     }
 }

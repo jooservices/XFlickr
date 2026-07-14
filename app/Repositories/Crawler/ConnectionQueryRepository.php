@@ -11,14 +11,14 @@ final class ConnectionQueryRepository
     public function findByConnectionKey(string $connectionKey): ?Connection
     {
         return Connection::query()
-            ->where('connection_key', $connectionKey)
+            ->byConnectionKey($connectionKey)
             ->first();
     }
 
     public function findByConnectionKeyOrFail(string $connectionKey): Connection
     {
         return Connection::query()
-            ->where('connection_key', $connectionKey)
+            ->byConnectionKey($connectionKey)
             ->firstOrFail();
     }
 

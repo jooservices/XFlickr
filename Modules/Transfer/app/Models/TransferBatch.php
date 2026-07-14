@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Modules\Transfer\Models;
 
+use BackedEnum;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Transfer\Database\Factories\TransferBatchFactory;
+use Modules\Transfer\Enums\TransferBatchStatus;
 
 final class TransferBatch extends Model
 {
@@ -49,5 +52,50 @@ final class TransferBatch extends Model
     public function items(): HasMany
     {
         return $this->hasMany(TransferItem::class, 'transfer_batch_id');
+    }
+
+    /**
+     * @param  Builder<TransferBatch>  $query
+     * @return Builder<TransferBatch>
+     */
+    public function scopeForConnection(Builder $query, string $key): Builder
+    {
+        return $query->where('connection_key', $key);
+    }
+
+    /**
+     * @param  Builder<TransferBatch>  $query
+     * @return Builder<TransferBatch>
+     */
+    public function scopeWithStatus(Builder $query, BackedEnum|string $status): Builder
+    {
+        return $query->where('status', $status instanceof BackedEnum ? $status->value : $status);
+    }
+
+    /**
+     * @param  Builder<TransferBatch>  $query
+     * @return Builder<TransferBatch>
+     */
+    public function scopeRunning(Builder $query): Builder
+    {
+        return $query->where('status', TransferBatchStatus::Running->value);
+    }
+
+    /**
+     * @param  Builder<TransferBatch>  $query
+     * @return Builder<TransferBatch>
+     */
+    public function scopeCompleted(Builder $query): Builder
+    {
+        return $query->where('status', TransferBatchStatus::Completed->value);
+    }
+
+    /**
+     * @param  Builder<TransferBatch>  $query
+     * @return Builder<TransferBatch>
+     */
+    public function scopeFailed(Builder $query): Builder
+    {
+        return $query->where('status', TransferBatchStatus::Failed->value);
     }
 }

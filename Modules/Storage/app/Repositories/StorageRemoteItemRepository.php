@@ -30,7 +30,7 @@ final class StorageRemoteItemRepository extends EloquentRepository
     public function paginateForParent(int $accountId, string $parentRemoteId, int $perPage, int $page): LengthAwarePaginator
     {
         return $this->newQuery()
-            ->where('storage_account_id', $accountId)
+            ->forAccount($accountId)
             ->where('parent_remote_id', $parentRemoteId)
             ->orderByDesc('modified_at')
             ->orderByDesc('id')
@@ -80,7 +80,7 @@ final class StorageRemoteItemRepository extends EloquentRepository
     public function listRemoteIdsForParent(int $accountId, string $parentRemoteId): array
     {
         return $this->newQuery()
-            ->where('storage_account_id', $accountId)
+            ->forAccount($accountId)
             ->where('parent_remote_id', $parentRemoteId)
             ->pluck('remote_id')
             ->map(static fn (mixed $id): string => (string) $id)
@@ -97,7 +97,7 @@ final class StorageRemoteItemRepository extends EloquentRepository
         }
 
         $query = $this->newQuery()
-            ->where('storage_account_id', $accountId)
+            ->forAccount($accountId)
             ->whereIn('remote_id', $remoteIds);
 
         if ($parentRemoteId !== null) {
@@ -110,7 +110,7 @@ final class StorageRemoteItemRepository extends EloquentRepository
     public function deleteAllForParent(int $accountId, string $parentRemoteId): void
     {
         $this->newQuery()
-            ->where('storage_account_id', $accountId)
+            ->forAccount($accountId)
             ->where('parent_remote_id', $parentRemoteId)
             ->delete();
     }

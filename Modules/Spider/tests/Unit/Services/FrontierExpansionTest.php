@@ -9,6 +9,7 @@ use Modules\Spider\Database\Factories\SpiderRunFactory;
 use Modules\Spider\Enums\SpiderFrontierStatus;
 use Modules\Spider\Enums\SpiderRunStatus;
 use Modules\Spider\Repositories\SpiderFrontierRepository;
+use Modules\Spider\Repositories\SpiderRunRepository;
 use Modules\Spider\Services\FrontierExpansion;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\FlickrNsid;
@@ -25,6 +26,7 @@ final class FrontierExpansionTest extends TestCase
             'contacts_discovered' => 0,
         ]);
         $frontier = app(SpiderFrontierRepository::class);
+        $runs = app(SpiderRunRepository::class);
         $knownNsid = FlickrNsid::fake();
         $newNsid = FlickrNsid::fake();
         $tooDeepNsid = FlickrNsid::fake();
@@ -39,6 +41,7 @@ final class FrontierExpansionTest extends TestCase
         app(FrontierExpansion::class)->enqueueDiscovered(
             $run,
             $frontier,
+            $runs,
             [$knownNsid, $newNsid, $tooDeepNsid],
             depth: 2,
         );
@@ -53,6 +56,7 @@ final class FrontierExpansionTest extends TestCase
         app(FrontierExpansion::class)->enqueueDiscovered(
             $run,
             $frontier,
+            $runs,
             [$newNsid],
             depth: 1,
         );
@@ -78,7 +82,11 @@ final class FrontierExpansionTest extends TestCase
             'status' => SpiderFrontierStatus::Crawled,
         ]);
 
-        app(FrontierExpansion::class)->maybeCompleteRun($run, app(SpiderFrontierRepository::class));
+        app(FrontierExpansion::class)->maybeCompleteRun(
+            $run,
+            app(SpiderFrontierRepository::class),
+            app(SpiderRunRepository::class),
+        );
 
         $run->refresh();
         $this->assertSame(SpiderRunStatus::Completed, $run->status);
@@ -91,7 +99,7 @@ final class FrontierExpansionTest extends TestCase
             'status' => SpiderRunStatus::Running,
         ]);
 
-        app(FrontierExpansion::class)->pauseMissingConnection($run);
+        app(FrontierExpansion::class)->pauseMissingConnection($run, app(SpiderRunRepository::class));
 
         $run->refresh();
         $this->assertSame(SpiderRunStatus::Paused, $run->status);

@@ -34,7 +34,7 @@ final class StorageUploadRepository extends EloquentRepository
         }
 
         return $this->newQuery()
-            ->where('storage_account_id', $storageAccountId)
+            ->forAccount($storageAccountId)
             ->whereIn('stored_file_id', $storedFileIds)
             ->where('status', StorageUploadStatus::Completed->value)
             ->pluck('stored_file_id')
@@ -45,7 +45,7 @@ final class StorageUploadRepository extends EloquentRepository
     {
         return $this->newQuery()
             ->where('stored_file_id', $storedFileId)
-            ->where('storage_account_id', $storageAccountId)
+            ->forAccount($storageAccountId)
             ->where('status', StorageUploadStatus::Completed->value)
             ->exists();
     }
@@ -70,7 +70,7 @@ final class StorageUploadRepository extends EloquentRepository
     {
         $this->newQuery()
             ->where('stored_file_id', $storedFileId)
-            ->where('storage_account_id', $storageAccountId)
+            ->forAccount($storageAccountId)
             ->update($attributes);
     }
 
@@ -122,7 +122,7 @@ final class StorageUploadRepository extends EloquentRepository
         }
 
         $this->newQuery()
-            ->where('storage_account_id', $storageAccountId)
+            ->forAccount($storageAccountId)
             ->where(function ($query) use ($remoteIds): void {
                 $query->whereIn('remote_file_id', $remoteIds)
                     ->orWhereIn('remote_path', $remoteIds);

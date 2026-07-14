@@ -62,6 +62,16 @@ final class ConnectionRepository
             ->update($attributes);
     }
 
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    public function updateById(int|string $id, array $attributes): int
+    {
+        return Connection::query()
+            ->whereKey($id)
+            ->update($attributes);
+    }
+
     public function disconnect(string $connectionKey): void
     {
         $connection = $this->findByKey($connectionKey);

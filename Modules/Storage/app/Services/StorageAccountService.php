@@ -36,7 +36,7 @@ final class StorageAccountService
             );
 
             if (! $this->accounts->hasDefaultForProvider($provider)) {
-                $account->update(['is_default' => true]);
+                $this->accounts->update($account->id, ['is_default' => true]);
             }
 
             $account = $account->fresh() ?? $account;
@@ -71,7 +71,7 @@ final class StorageAccountService
             $mergedTokens['client_secret'] = $existing['client_secret'];
         }
 
-        $account->update([
+        $this->accounts->update($account->id, [
             'credentials' => $this->buildCredentials($mergedTokens),
             'connected_at' => now(),
         ]);
@@ -90,7 +90,7 @@ final class StorageAccountService
             provider: $provider,
         ));
 
-        $account->delete();
+        $this->accounts->delete($accountId);
 
         if ($wasDefault) {
             $this->accounts->promoteFirstAsDefault($provider);
@@ -101,7 +101,7 @@ final class StorageAccountService
     {
         $this->accounts->connectInTransaction(function () use ($account): StorageAccount {
             $this->accounts->clearDefaultForProvider($account->provider);
-            $account->update(['is_default' => true]);
+            $this->accounts->update($account->id, ['is_default' => true]);
 
             return $account->fresh() ?? $account;
         });
@@ -163,7 +163,7 @@ final class StorageAccountService
             );
 
             if (! $this->accounts->hasDefaultForProvider($provider)) {
-                $account->update(['is_default' => true]);
+                $this->accounts->update($account->id, ['is_default' => true]);
             }
 
             $account = $account->fresh() ?? $account;

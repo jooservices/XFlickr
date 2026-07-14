@@ -59,7 +59,7 @@ final class ConnectionContactRepository
     public function listByConnectionKey(string $connectionKey): Collection
     {
         return ConnectionContact::query()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->orderBy('discovered_at')
             ->get();
     }

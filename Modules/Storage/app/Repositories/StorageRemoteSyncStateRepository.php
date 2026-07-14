@@ -25,7 +25,7 @@ final class StorageRemoteSyncStateRepository extends EloquentRepository
     public function findForParent(int $accountId, string $parentRemoteId): ?StorageRemoteSyncState
     {
         return $this->newQuery()
-            ->where('storage_account_id', $accountId)
+            ->forAccount($accountId)
             ->where('parent_remote_id', $parentRemoteId)
             ->first();
     }
@@ -33,7 +33,7 @@ final class StorageRemoteSyncStateRepository extends EloquentRepository
     public function lockForParent(int $accountId, string $parentRemoteId): ?StorageRemoteSyncState
     {
         return $this->newQuery()
-            ->where('storage_account_id', $accountId)
+            ->forAccount($accountId)
             ->where('parent_remote_id', $parentRemoteId)
             ->lockForUpdate()
             ->first();
@@ -56,7 +56,7 @@ final class StorageRemoteSyncStateRepository extends EloquentRepository
     public function deleteForParent(int $accountId, string $parentRemoteId): void
     {
         $this->newQuery()
-            ->where('storage_account_id', $accountId)
+            ->forAccount($accountId)
             ->where('parent_remote_id', $parentRemoteId)
             ->delete();
     }
@@ -67,7 +67,7 @@ final class StorageRemoteSyncStateRepository extends EloquentRepository
     public function updateReconcileSeenRemoteIds(int $accountId, string $parentRemoteId, array $mergedIds): void
     {
         $this->newQuery()
-            ->where('storage_account_id', $accountId)
+            ->forAccount($accountId)
             ->where('parent_remote_id', $parentRemoteId)
             ->update(['reconcile_seen_remote_ids' => $mergedIds]);
     }
@@ -75,7 +75,7 @@ final class StorageRemoteSyncStateRepository extends EloquentRepository
     public function clearReconcileState(int $accountId, string $parentRemoteId): void
     {
         $this->newQuery()
-            ->where('storage_account_id', $accountId)
+            ->forAccount($accountId)
             ->where('parent_remote_id', $parentRemoteId)
             ->update([
                 'reconciling' => false,

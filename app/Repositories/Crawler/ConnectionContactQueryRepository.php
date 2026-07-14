@@ -11,7 +11,7 @@ final class ConnectionContactQueryRepository
     public function existsForConnection(string $connectionKey, string $contactNsid): bool
     {
         return ConnectionContact::query()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->where('contact_nsid', $contactNsid)
             ->exists();
     }
@@ -22,7 +22,7 @@ final class ConnectionContactQueryRepository
     public function nsidsForConnection(string $connectionKey): array
     {
         return ConnectionContact::query()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->pluck('contact_nsid')
             ->map(fn (mixed $nsid): string => (string) $nsid)
             ->all();
@@ -31,7 +31,7 @@ final class ConnectionContactQueryRepository
     public function countForConnection(string $connectionKey): int
     {
         return ConnectionContact::query()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->count();
     }
 }

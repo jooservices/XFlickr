@@ -64,7 +64,7 @@ final class CatalogQueryRepository
         }
 
         if ($ownerNsid !== null && $ownerNsid !== '') {
-            $query->where('owner_nsid', $ownerNsid);
+            $query->forOwner($ownerNsid);
         }
 
         $query = $this->sorter->apply($query, $sort, $direction, self::PHOTO_SORTS);
@@ -116,7 +116,7 @@ final class CatalogQueryRepository
         $query = Favorite::query()->with('photo');
 
         if ($connectionKey !== null && $connectionKey !== '') {
-            $query->where('connection_key', $connectionKey);
+            $query->forConnection($connectionKey);
         }
 
         if ($subjectNsid !== null && $subjectNsid !== '') {
@@ -134,7 +134,7 @@ final class CatalogQueryRepository
             ->whereIn(
                 'owner_nsid',
                 ConnectionContact::query()
-                    ->where('connection_key', $connectionKey)
+                    ->forConnection($connectionKey)
                     ->select('contact_nsid'),
             )
             ->count();
@@ -146,7 +146,7 @@ final class CatalogQueryRepository
             ->whereIn(
                 'owner_nsid',
                 ConnectionContact::query()
-                    ->where('connection_key', $connectionKey)
+                    ->forConnection($connectionKey)
                     ->select('contact_nsid'),
             )
             ->count();
@@ -263,7 +263,7 @@ final class CatalogQueryRepository
         }
 
         return Favorite::query()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->whereIn('subject_nsid', $subjectNsids)
             ->groupBy('subject_nsid')
             ->selectRaw('subject_nsid, count(*) as aggregate')
@@ -298,7 +298,7 @@ final class CatalogQueryRepository
     public function favoriteCountSubquery(string $connectionKey): Builder
     {
         return Favorite::query()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->selectRaw('subject_nsid as contact_nsid, count(*) as aggregate')
             ->groupBy('subject_nsid');
     }

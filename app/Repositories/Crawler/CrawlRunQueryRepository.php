@@ -15,8 +15,8 @@ final class CrawlRunQueryRepository
     public function countByConnectionAndStatus(string $connectionKey, string $status): int
     {
         return CrawlRun::query()
-            ->where('connection_key', $connectionKey)
-            ->where('status', $status)
+            ->forConnection($connectionKey)
+            ->withStatus($status)
             ->count();
     }
 
@@ -110,9 +110,19 @@ final class CrawlRunQueryRepository
     public function latestForConnection(string $connectionKey): ?CrawlRun
     {
         return CrawlRun::query()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->orderByDesc('id')
             ->first();
+    }
+
+    public function findForConnection(string $connectionKey, int $id): ?CrawlRun
+    {
+        $run = CrawlRun::query()
+            ->forConnection($connectionKey)
+            ->whereKey($id)
+            ->first();
+
+        return $run instanceof CrawlRun ? $run : null;
     }
 
     public function findLatestCompleted(
@@ -121,10 +131,10 @@ final class CrawlRunQueryRepository
         string $crawlType,
     ): ?CrawlRun {
         return CrawlRun::query()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->where('subject_nsid', $subjectNsid)
             ->where('crawl_type', $crawlType)
-            ->where('status', CrawlRunStatus::Completed)
+            ->completed()
             ->orderByDesc('id')
             ->first(['id', 'photos_discovered']);
     }
@@ -146,7 +156,7 @@ final class CrawlRunQueryRepository
         }
 
         return CrawlRun::query()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->whereIn('subject_nsid', $contactNsids)
             ->whereIn('crawl_type', $crawlTypes)
             ->whereIn('status', $statuses)
@@ -159,7 +169,7 @@ final class CrawlRunQueryRepository
      */
     public function queryForConnection(string $connectionKey): Builder
     {
-        return CrawlRun::query()->where('connection_key', $connectionKey);
+        return CrawlRun::query()->forConnection($connectionKey);
     }
 
     /**

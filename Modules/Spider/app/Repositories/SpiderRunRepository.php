@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace Modules\Spider\Repositories;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Jooservices\LaravelRepository\Repositories\EloquentRepository;
 use Jooservices\LaravelRepository\Traits\HasCrud;
 use Jooservices\LaravelRepository\Traits\HasFilter;
-use Modules\Spider\Enums\SpiderRunStatus;
+use Modules\Spider\Contracts\RunWriteRepository;
 use Modules\Spider\Models\SpiderRun;
 
 /**
  * @extends EloquentRepository<SpiderRun>
  */
-final class SpiderRunRepository extends EloquentRepository
+final class SpiderRunRepository extends EloquentRepository implements RunWriteRepository
 {
     use HasCrud;
     use HasFilter;
@@ -24,11 +25,26 @@ final class SpiderRunRepository extends EloquentRepository
         parent::__construct($model);
     }
 
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    public function updateRun(Model $run, array $attributes): void
+    {
+        $this->update((int) $run->getKey(), $attributes);
+        $run->fill($attributes);
+    }
+
+    public function incrementRun(Model $run, string $column, int $amount = 1): void
+    {
+        $this->newQuery()->whereKey($run->getKey())->increment($column, $amount);
+        $run->setAttribute($column, (int) $run->getAttribute($column) + $amount);
+    }
+
     public function findActiveForConnection(string $connectionKey): ?SpiderRun
     {
         $run = $this->newQuery()
-            ->where('connection_key', $connectionKey)
-            ->where('status', SpiderRunStatus::Running->value)
+            ->forConnection($connectionKey)
+            ->running()
             ->latest('id')
             ->first();
 
@@ -38,7 +54,7 @@ final class SpiderRunRepository extends EloquentRepository
     public function findLatestForConnection(string $connectionKey): ?SpiderRun
     {
         $run = $this->newQuery()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->latest('id')
             ->first();
 
@@ -52,7 +68,7 @@ final class SpiderRunRepository extends EloquentRepository
     {
         /** @var Collection<int, SpiderRun> */
         return $this->newQuery()
-            ->where('status', SpiderRunStatus::Running->value)
+            ->running()
             ->orderBy('id')
             ->get();
     }

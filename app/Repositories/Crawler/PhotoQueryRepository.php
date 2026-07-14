@@ -20,14 +20,14 @@ final class PhotoQueryRepository
     public function listByOwnerNsid(string $ownerNsid, array $columns = ['id', 'flickr_photo_id', 'owner_nsid']): Collection
     {
         return Photo::query()
-            ->where('owner_nsid', $ownerNsid)
+            ->forOwner($ownerNsid)
             ->get($columns);
     }
 
     public function existsForOwnerNsid(string $ownerNsid): bool
     {
         return Photo::query()
-            ->where('owner_nsid', $ownerNsid)
+            ->forOwner($ownerNsid)
             ->exists();
     }
 
@@ -42,7 +42,7 @@ final class PhotoQueryRepository
         array $columns = ['id', 'flickr_photo_id', 'owner_nsid'],
     ): void {
         Photo::query()
-            ->where('owner_nsid', $ownerNsid)
+            ->forOwner($ownerNsid)
             ->select($columns)
             ->orderBy('id')
             ->chunk($chunkSize, $callback);
@@ -92,7 +92,7 @@ final class PhotoQueryRepository
             ->whereIn(
                 'owner_nsid',
                 ConnectionContact::query()
-                    ->where('connection_key', $connectionKey)
+                    ->forConnection($connectionKey)
                     ->select('contact_nsid'),
             )
             ->count();
@@ -104,7 +104,7 @@ final class PhotoQueryRepository
             ->whereIn(
                 'owner_nsid',
                 ConnectionContact::query()
-                    ->where('connection_key', $connectionKey)
+                    ->forConnection($connectionKey)
                     ->select('contact_nsid'),
             )
             ->whereNotNull('raw_payload->sizes')
@@ -161,7 +161,7 @@ final class PhotoQueryRepository
     public function countWithSizesForOwner(string $ownerNsid): int
     {
         return Photo::query()
-            ->where('owner_nsid', $ownerNsid)
+            ->forOwner($ownerNsid)
             ->whereNotNull('raw_payload->sizes')
             ->count();
     }

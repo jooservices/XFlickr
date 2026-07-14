@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\Crawler\Models;
 
+use BackedEnum;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
@@ -67,5 +69,50 @@ final class CrawlRun extends Model
     public function targets(): HasMany
     {
         return $this->hasMany(CrawlTarget::class, 'xflickr_crawl_run_id');
+    }
+
+    /**
+     * @param  Builder<CrawlRun>  $query
+     * @return Builder<CrawlRun>
+     */
+    public function scopeForConnection(Builder $query, string $key): Builder
+    {
+        return $query->where('connection_key', $key);
+    }
+
+    /**
+     * @param  Builder<CrawlRun>  $query
+     * @return Builder<CrawlRun>
+     */
+    public function scopeWithStatus(Builder $query, BackedEnum|string $status): Builder
+    {
+        return $query->where('status', $status instanceof BackedEnum ? $status->value : $status);
+    }
+
+    /**
+     * @param  Builder<CrawlRun>  $query
+     * @return Builder<CrawlRun>
+     */
+    public function scopeRunning(Builder $query): Builder
+    {
+        return $query->where('status', CrawlRunStatus::Running);
+    }
+
+    /**
+     * @param  Builder<CrawlRun>  $query
+     * @return Builder<CrawlRun>
+     */
+    public function scopeCompleted(Builder $query): Builder
+    {
+        return $query->where('status', CrawlRunStatus::Completed);
+    }
+
+    /**
+     * @param  Builder<CrawlRun>  $query
+     * @return Builder<CrawlRun>
+     */
+    public function scopeFailed(Builder $query): Builder
+    {
+        return $query->where('status', CrawlRunStatus::Failed);
     }
 }

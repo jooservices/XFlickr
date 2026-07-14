@@ -5,11 +5,34 @@ declare(strict_types=1);
 namespace Modules\Crawler\Repositories;
 
 use Illuminate\Database\Eloquent\Collection;
-use Modules\Crawler\Enums\CrawlRunStatus;
+use Modules\Crawler\Enums\CrawlType;
 use Modules\Crawler\Models\CrawlRun;
 
 final class CrawlRunRepository
 {
+    public function findRunningContactsCrawl(string $connectionKey, ?string $subjectNsid): ?CrawlRun
+    {
+        $query = CrawlRun::query()
+            ->forConnection($connectionKey)
+            ->where('crawl_type', CrawlType::Contacts->value)
+            ->running()
+            ->orderByDesc('id');
+
+        if ($subjectNsid === null) {
+            $query->where(function ($builder) use ($connectionKey): void {
+                $builder
+                    ->whereNull('subject_nsid')
+                    ->orWhere('subject_nsid', $connectionKey);
+            });
+        } else {
+            $query->where('subject_nsid', $subjectNsid);
+        }
+
+        $run = $query->first();
+
+        return $run instanceof CrawlRun ? $run : null;
+    }
+
     /**
      * @param  array<string, mixed>  $attributes
      */
@@ -41,8 +64,8 @@ final class CrawlRunRepository
     public function activeForConnection(string $connectionKey): Collection
     {
         return CrawlRun::query()
-            ->where('connection_key', $connectionKey)
-            ->where('status', CrawlRunStatus::Running)
+            ->forConnection($connectionKey)
+            ->running()
             ->with('targets')
             ->orderByDesc('started_at')
             ->get();
@@ -54,7 +77,7 @@ final class CrawlRunRepository
     public function recentForConnection(string $connectionKey, int $limit = 20): Collection
     {
         return CrawlRun::query()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->with('targets')
             ->orderByDesc('started_at')
             ->limit($limit)

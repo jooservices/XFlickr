@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\Spider\Models;
 
+use BackedEnum;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -43,5 +45,41 @@ class SpiderFrontierItem extends Model
     public function spiderRun(): BelongsTo
     {
         return $this->belongsTo(SpiderRun::class);
+    }
+
+    /**
+     * @param  Builder<SpiderFrontierItem>  $query
+     * @return Builder<SpiderFrontierItem>
+     */
+    public function scopeWithStatus(Builder $query, BackedEnum|string $status): Builder
+    {
+        return $query->where('status', $status instanceof BackedEnum ? $status->value : $status);
+    }
+
+    /**
+     * @param  Builder<SpiderFrontierItem>  $query
+     * @return Builder<SpiderFrontierItem>
+     */
+    public function scopePending(Builder $query): Builder
+    {
+        return $query->where('status', SpiderFrontierStatus::Pending);
+    }
+
+    /**
+     * @param  Builder<SpiderFrontierItem>  $query
+     * @return Builder<SpiderFrontierItem>
+     */
+    public function scopeQueued(Builder $query): Builder
+    {
+        return $query->where('status', SpiderFrontierStatus::Queued);
+    }
+
+    /**
+     * @param  Builder<SpiderFrontierItem>  $query
+     * @return Builder<SpiderFrontierItem>
+     */
+    public function scopeCrawled(Builder $query): Builder
+    {
+        return $query->where('status', SpiderFrontierStatus::Crawled);
     }
 }

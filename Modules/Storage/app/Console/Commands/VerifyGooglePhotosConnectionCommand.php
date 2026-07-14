@@ -29,24 +29,8 @@ final class VerifyGooglePhotosConnectionCommand extends Command
 
         $report = $verifier->verify($account);
 
-        $oauth = $report['oauth_app'];
-        $this->line('OAuth app (Client ID):');
-        $this->line('  Configured in Settings: '.($oauth['configured_client_id'] ?? 'not set'));
-        $this->line('  Stored on account:      '.($oauth['account_client_id'] ?? 'not set'));
-        $this->line('  Client IDs match:       '.($oauth['client_ids_match'] ? 'yes' : 'no'));
-        $this->newLine();
-
-        $auth = $report['authorization'];
-        if ($auth['needs_reauthorization']) {
-            $this->warn('Authorization: additional scopes required — reauthorize in Settings or Storages → Google Photos.');
-            foreach ($auth['missing_scopes'] as $scope) {
-                $this->line('  - '.($scope['label'] ?? $scope['scope']));
-            }
-            $this->newLine();
-        } else {
-            $this->info('Authorization: scopes OK for app-created content.');
-            $this->newLine();
-        }
+        $this->displayOAuthSection($report['oauth_app']);
+        $this->displayAuthorizationSection($report['authorization']);
 
         $library = $report['library'];
         if ($library['error'] !== null) {
@@ -61,6 +45,47 @@ final class VerifyGooglePhotosConnectionCommand extends Command
             return self::FAILURE;
         }
 
+        $this->displayLibrarySection($library);
+
+        return self::SUCCESS;
+    }
+
+    /**
+     * @param  array<string, mixed>  $oauth
+     */
+    private function displayOAuthSection(array $oauth): void
+    {
+        $this->line('OAuth app (Client ID):');
+        $this->line('  Configured in Settings: '.($oauth['configured_client_id'] ?? 'not set'));
+        $this->line('  Stored on account:      '.($oauth['account_client_id'] ?? 'not set'));
+        $this->line('  Client IDs match:       '.($oauth['client_ids_match'] ? 'yes' : 'no'));
+        $this->newLine();
+    }
+
+    /**
+     * @param  array<string, mixed>  $auth
+     */
+    private function displayAuthorizationSection(array $auth): void
+    {
+        if ($auth['needs_reauthorization']) {
+            $this->warn('Authorization: additional scopes required — reauthorize in Settings or Storages → Google Photos.');
+            foreach ($auth['missing_scopes'] as $scope) {
+                $this->line('  - '.($scope['label'] ?? $scope['scope']));
+            }
+            $this->newLine();
+
+            return;
+        }
+
+        $this->info('Authorization: scopes OK for app-created content.');
+        $this->newLine();
+    }
+
+    /**
+     * @param  array<string, mixed>  $library
+     */
+    private function displayLibrarySection(array $library): void
+    {
         $this->info('App-created library content visible to this Client ID:');
         $this->line('  Albums:      '.$library['album_count'].($library['truncated'] ? '+' : ''));
         $this->line('  Media items: '.$library['media_item_count'].($library['truncated'] ? '+' : ''));
@@ -70,27 +95,51 @@ final class VerifyGooglePhotosConnectionCommand extends Command
         $this->newLine();
 
         if ($library['album_count'] === 0 && $library['media_item_count'] === 0) {
-            $this->warn('No albums or photos found for this OAuth Client ID.');
-            $this->line('If you uploaded via JFlickr, confirm it used the same Google OAuth Client ID as XFlickr Settings.');
-        } else {
-            if ($library['sample_albums'] !== []) {
-                $this->line('Sample albums:');
-                foreach ($library['sample_albums'] as $album) {
-                    $count = $album['media_items_count'] ?? '—';
-                    $this->line("  - {$album['title']} ({$count} items) [{$album['id']}]");
-                }
-                $this->newLine();
-            }
+            $this->displayEmptyLibraryGuidance();
 
-            if ($library['sample_media_items'] !== []) {
-                $this->line('Sample photos:');
-                foreach ($library['sample_media_items'] as $item) {
-                    $this->line("  - {$item['filename']} [{$item['id']}]");
-                }
-            }
+            return;
         }
 
-        return self::SUCCESS;
+        $this->displaySampleAlbums($library['sample_albums'] ?? []);
+        $this->displaySampleMediaItems($library['sample_media_items'] ?? []);
+    }
+
+    private function displayEmptyLibraryGuidance(): void
+    {
+        $this->warn('No albums or photos found for this OAuth Client ID.');
+        $this->line('If you uploaded via JFlickr, confirm it used the same Google OAuth Client ID as XFlickr Settings.');
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $sampleAlbums
+     */
+    private function displaySampleAlbums(array $sampleAlbums): void
+    {
+        if ($sampleAlbums === []) {
+            return;
+        }
+
+        $this->line('Sample albums:');
+        foreach ($sampleAlbums as $album) {
+            $count = $album['media_items_count'] ?? '—';
+            $this->line("  - {$album['title']} ({$count} items) [{$album['id']}]");
+        }
+        $this->newLine();
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $sampleMediaItems
+     */
+    private function displaySampleMediaItems(array $sampleMediaItems): void
+    {
+        if ($sampleMediaItems === []) {
+            return;
+        }
+
+        $this->line('Sample photos:');
+        foreach ($sampleMediaItems as $item) {
+            $this->line("  - {$item['filename']} [{$item['id']}]");
+        }
     }
 
     private function resolveAccount(): ?StorageAccount

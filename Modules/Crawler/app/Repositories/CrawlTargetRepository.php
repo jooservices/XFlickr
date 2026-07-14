@@ -59,7 +59,7 @@ final class CrawlTargetRepository
     public function recoverStalled(CarbonInterface $cutoff): int
     {
         return CrawlTarget::query()
-            ->where('status', CrawlStatus::Processing)
+            ->processing()
             ->where('updated_at', '<', $cutoff)
             ->update([
                 'status' => CrawlStatus::Pending,
@@ -86,7 +86,7 @@ final class CrawlTargetRepository
     {
         CrawlTarget::query()
             ->where('xflickr_crawl_run_id', $runId)
-            ->where('status', CrawlStatus::Pending)
+            ->pending()
             ->where(function (Builder $query) use ($now): void {
                 $query->whereNull('next_run_at')->orWhere('next_run_at', '<=', $now);
             })
@@ -122,7 +122,7 @@ final class CrawlTargetRepository
     {
         return CrawlTarget::query()
             ->where('xflickr_crawl_run_id', $runId)
-            ->where('status', CrawlStatus::Completed)
+            ->completed()
             ->count();
     }
 
@@ -130,7 +130,7 @@ final class CrawlTargetRepository
     {
         return CrawlTarget::query()
             ->where('xflickr_crawl_run_id', $runId)
-            ->where('status', CrawlStatus::Failed)
+            ->failed()
             ->orderBy('id')
             ->first();
     }
@@ -142,7 +142,7 @@ final class CrawlTargetRepository
     {
         return (int) CrawlTarget::query()
             ->where('xflickr_crawl_run_id', $runId)
-            ->where('status', CrawlStatus::Completed)
+            ->completed()
             ->whereIn('task_type', $taskTypes)
             ->sum('last_result_count');
     }
@@ -150,7 +150,7 @@ final class CrawlTargetRepository
     public function deleteCompletedOlderThan(CarbonInterface $cutoff): int
     {
         return CrawlTarget::query()
-            ->where('status', CrawlStatus::Completed)
+            ->completed()
             ->where('last_crawled_at', '<', $cutoff)
             ->delete();
     }

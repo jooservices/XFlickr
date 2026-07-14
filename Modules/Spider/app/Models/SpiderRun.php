@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\Spider\Models;
 
+use BackedEnum;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -51,5 +53,32 @@ class SpiderRun extends Model
     public function frontierItems(): HasMany
     {
         return $this->hasMany(SpiderFrontierItem::class);
+    }
+
+    /**
+     * @param  Builder<SpiderRun>  $query
+     * @return Builder<SpiderRun>
+     */
+    public function scopeForConnection(Builder $query, string $key): Builder
+    {
+        return $query->where('connection_key', $key);
+    }
+
+    /**
+     * @param  Builder<SpiderRun>  $query
+     * @return Builder<SpiderRun>
+     */
+    public function scopeWithStatus(Builder $query, BackedEnum|string $status): Builder
+    {
+        return $query->where('status', $status instanceof BackedEnum ? $status->value : $status);
+    }
+
+    /**
+     * @param  Builder<SpiderRun>  $query
+     * @return Builder<SpiderRun>
+     */
+    public function scopeRunning(Builder $query): Builder
+    {
+        return $query->where('status', SpiderRunStatus::Running);
     }
 }

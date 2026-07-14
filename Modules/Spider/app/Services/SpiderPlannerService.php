@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Modules\Crawler\Enums\CrawlType;
 use Modules\Crawler\Events\ContactsCrawlCompleted;
 use Modules\Crawler\Models\Connection;
+use Modules\Crawler\Repositories\ConnectionRepository;
 use Modules\Crawler\Support\XFlickrConfig;
 use Modules\Flickr\Exceptions\GlobalCrawlPauseException;
 use Modules\Flickr\Services\FlickrAccountsService;
@@ -30,6 +31,7 @@ final class SpiderPlannerService
         private readonly FlickrAccountsService $crawls,
         private readonly SpiderRuntimeConfig $spiderConfig,
         private readonly FrontierExpansion $frontierExpansion,
+        private readonly ConnectionRepository $connections,
     ) {}
 
     public function isEnabled(): bool
@@ -43,7 +45,7 @@ final class SpiderPlannerService
     public function createRun(array $attributes): SpiderRun
     {
         /** @var SpiderRun $run */
-        $run = $this->runs->newQuery()->create($attributes);
+        $run = $this->runs->create($attributes);
 
         return $run;
     }
@@ -96,7 +98,7 @@ final class SpiderPlannerService
             return null;
         }
 
-        $run->update([
+        $this->runs->updateRun($run, [
             'status' => SpiderRunStatus::Paused,
             'paused_at' => now(),
         ]);
@@ -125,12 +127,10 @@ final class SpiderPlannerService
             return 0;
         }
 
-        $connection = Connection::query()
-            ->where('connection_key', $run->connection_key)
-            ->first();
+        $connection = $this->connections->findByKey($run->connection_key);
 
         if (! $connection instanceof Connection) {
-            $this->frontierExpansion->pauseMissingConnection($run);
+            $this->frontierExpansion->pauseMissingConnection($run, $this->runs);
 
             return 0;
         }
@@ -139,7 +139,7 @@ final class SpiderPlannerService
         $maxTotal = $this->spiderConfig->maxContactsTotal();
 
         if ($run->contacts_crawled >= $maxTotal) {
-            $this->frontierExpansion->completeRun($run);
+            $this->frontierExpansion->completeRun($run, $this->runs);
 
             return 0;
         }
@@ -147,7 +147,7 @@ final class SpiderPlannerService
         $pending = $this->frontier->nextPending($run->id, min($limit, $maxTotal - $run->contacts_crawled));
 
         if ($pending->isEmpty()) {
-            $this->frontierExpansion->maybeCompleteRun($run, $this->frontier);
+            $this->frontierExpansion->maybeCompleteRun($run, $this->frontier, $this->runs);
 
             return 0;
         }
@@ -164,14 +164,14 @@ final class SpiderPlannerService
                 $item->id,
             );
 
-            $item->update([
+            $this->frontier->update($item->id, [
                 'status' => SpiderFrontierStatus::Queued,
             ]);
 
             $queued++;
         }
 
-        $run->increment('contacts_crawled', $queued);
+        $this->runs->incrementRun($run, 'contacts_crawled', $queued);
 
         return $queued;
     }
@@ -182,28 +182,40 @@ final class SpiderPlannerService
             return;
         }
 
-        $run = $this->runs->newQuery()->find($event->spiderRunId);
+        $run = $this->runs->find($event->spiderRunId);
 
         if (! $run instanceof SpiderRun || $run->status !== SpiderRunStatus::Running) {
             return;
         }
 
         if ($event->spiderFrontierItemId !== null) {
-            $item = SpiderFrontierItem::query()->find($event->spiderFrontierItemId);
+            $item = $this->frontier->find($event->spiderFrontierItemId);
 
             if ($item instanceof SpiderFrontierItem && $item->spider_run_id === $run->id) {
-                $item->update([
+                $this->frontier->update($item->id, [
                     'status' => SpiderFrontierStatus::Crawled,
                     'crawled_at' => now(),
                 ]);
 
-                $this->frontierExpansion->enqueueDiscovered($run, $this->frontier, $event->discoveredContactNsids, $item->depth + 1);
+                $this->frontierExpansion->enqueueDiscovered(
+                    $run,
+                    $this->frontier,
+                    $this->runs,
+                    $event->discoveredContactNsids,
+                    $item->depth + 1,
+                );
             }
         } else {
-            $this->frontierExpansion->enqueueDiscovered($run, $this->frontier, $event->discoveredContactNsids, 0);
+            $this->frontierExpansion->enqueueDiscovered(
+                $run,
+                $this->frontier,
+                $this->runs,
+                $event->discoveredContactNsids,
+                0,
+            );
         }
 
-        $this->frontierExpansion->maybeCompleteRun($run, $this->frontier);
+        $this->frontierExpansion->maybeCompleteRun($run, $this->frontier, $this->runs);
     }
 
     /**

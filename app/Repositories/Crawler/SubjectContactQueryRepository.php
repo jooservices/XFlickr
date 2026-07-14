@@ -15,7 +15,7 @@ final class SubjectContactQueryRepository
     public function listEdgesForConnection(string $connectionKey): array
     {
         return SubjectContact::query()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->orderBy('id')
             ->get(['id', 'subject_nsid', 'contact_nsid'])
             ->map(fn (SubjectContact $row): array => [
@@ -32,7 +32,7 @@ final class SubjectContactQueryRepository
     public function listEdgesForSubjectSince(string $connectionKey, string $subjectNsid, int $sinceId): array
     {
         return SubjectContact::query()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->where('subject_nsid', $subjectNsid)
             ->where('id', '>', $sinceId)
             ->orderBy('id')
@@ -48,7 +48,7 @@ final class SubjectContactQueryRepository
     public function countForSubject(string $connectionKey, string $subjectNsid): int
     {
         return SubjectContact::query()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->where('subject_nsid', $subjectNsid)
             ->count();
     }
@@ -59,7 +59,7 @@ final class SubjectContactQueryRepository
     public function contactNsidsForSubject(string $connectionKey, string $subjectNsid): Collection
     {
         return SubjectContact::query()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->where('subject_nsid', $subjectNsid)
             ->orderBy('id')
             ->pluck('contact_nsid')
@@ -69,7 +69,7 @@ final class SubjectContactQueryRepository
     public function maxEdgeIdForSubject(string $connectionKey, string $subjectNsid): int
     {
         $id = SubjectContact::query()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->where('subject_nsid', $subjectNsid)
             ->max('id');
 
@@ -79,7 +79,7 @@ final class SubjectContactQueryRepository
     public function existsInNetwork(string $connectionKey, string $contactNsid): bool
     {
         return SubjectContact::query()
-            ->where('connection_key', $connectionKey)
+            ->forConnection($connectionKey)
             ->where(function ($query) use ($contactNsid): void {
                 $query
                     ->where('subject_nsid', $contactNsid)

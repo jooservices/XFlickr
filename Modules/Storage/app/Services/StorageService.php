@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\Storage\Services;
 
 use Illuminate\Support\Collection;
+use Modules\Storage\Dto\StorageAppProfileDto;
 
 final class StorageService
 {
@@ -46,12 +47,15 @@ final class StorageService
         return $this->settings->drivers();
     }
 
-    /**
-     * @param  array{provider: string, label?: string|null, client_id: string, client_secret: string, redirect?: string|null}  $data
-     */
-    public function saveAppProfile(array $data): string
+    public function saveAppProfile(StorageAppProfileDto $profile): string
     {
-        return $this->appProfiles->save($data);
+        return $this->appProfiles->save([
+            'provider' => $profile->provider,
+            'label' => $profile->label,
+            'client_id' => $profile->clientId,
+            'client_secret' => $profile->clientSecret,
+            'redirect' => $profile->redirect,
+        ]);
     }
 
     /**

@@ -6,6 +6,7 @@ namespace Modules\Storage\Services\Tokens;
 
 use Illuminate\Support\Facades\Http;
 use Modules\Storage\Models\StorageAccount;
+use Modules\Storage\Repositories\StorageAccountRepository;
 use Modules\Storage\Support\StorageApiLogger;
 use RuntimeException;
 
@@ -13,6 +14,7 @@ final class MicrosoftTokenService
 {
     public function __construct(
         private readonly StorageApiLogger $apiLogger,
+        private readonly StorageAccountRepository $accounts,
     ) {}
 
     /**
@@ -62,7 +64,7 @@ final class MicrosoftTokenService
             throw new RuntimeException('OneDrive token refresh failed.');
         }
 
-        $account->update([
+        $this->accounts->update($account->id, [
             'credentials' => $this->refreshedCredentials($credentials, $token),
         ]);
 

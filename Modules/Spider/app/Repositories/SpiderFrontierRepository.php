@@ -49,7 +49,7 @@ final class SpiderFrontierRepository extends EloquentRepository implements Front
         /** @var Collection<int, SpiderFrontierItem> */
         return $this->newQuery()
             ->where('spider_run_id', $spiderRunId)
-            ->where('status', SpiderFrontierStatus::Pending->value)
+            ->pending()
             ->orderBy('depth')
             ->orderBy('id')
             ->limit($limit)
@@ -75,7 +75,7 @@ final class SpiderFrontierRepository extends EloquentRepository implements Front
     {
         return $this->newQuery()
             ->where('spider_run_id', $spiderRunId)
-            ->where('status', $status->value)
+            ->withStatus($status)
             ->count();
     }
 
