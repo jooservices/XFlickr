@@ -159,6 +159,37 @@ final class StorageQuotaQueryServiceTest extends TestCase
         $this->assertSame('Drive token expired', $snapshot['accounts'][0]['message']);
     }
 
+    public function test_snapshot_reports_onedrive_token_errors(): void
+    {
+        StorageAccount::factory()->oneDrive()->create([
+            'credentials' => [
+                'access_token' => 'expired',
+                'refresh_token' => 'refresh-token',
+                'client_id' => 'client-id',
+                'client_secret' => 'client-secret',
+                'expires_at' => now()->subMinute()->toIso8601String(),
+            ],
+        ]);
+
+        Http::fake([
+            'login.microsoftonline.com/common/oauth2/v2.0/token' => Http::response(['error' => 'invalid_grant'], 400),
+        ]);
+
+        $snapshot = app(StorageQuotaQueryService::class)->snapshot();
+
+        $this->assertSame('error', $snapshot['accounts'][0]['status']);
+        $this->assertSame('OneDrive token refresh failed.', $snapshot['accounts'][0]['message']);
+        Http::assertSentCount(1);
+    }
+
+    public function test_snapshot_returns_empty_accounts_when_none_configured(): void
+    {
+        $snapshot = app(StorageQuotaQueryService::class)->snapshot();
+
+        $this->assertSame([], $snapshot['accounts']);
+        $this->assertNotEmpty($snapshot['generated_at']);
+    }
+
     public function test_snapshot_ignores_invalid_cached_payload(): void
     {
         $account = StorageAccount::factory()->oneDrive()->create();
