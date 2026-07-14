@@ -2,12 +2,14 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { BulkAction } from '@/Components/BulkActionBar';
+import Button from '@/Components/Button';
 import ContactCatalogCell from '@/Components/ContactCatalogCell';
 import ContactDownloadCell from '@/Components/ContactDownloadCell';
 import ContactNsidLinks from '@/Components/ContactNsidLinks';
 import ContactAnnotationActions from '@/Components/Contacts/ContactAnnotationActions';
 import ContactViewModeToggle, { type ContactViewMode } from '@/Components/Contacts/ContactViewModeToggle';
 import ContactGraphShell from '@/Components/Contacts/Graph/ContactGraphShell';
+import ImportContactUrlModal from '@/Components/Contacts/ImportContactUrlModal';
 import ContactsSearchFilter from '@/Components/ContactsSearchFilter';
 import CrawlActionBar from '@/Components/CrawlActionBar';
 import CrawlTypeMenu, {
@@ -79,6 +81,7 @@ function isContactSelectable(contact: ContactListItem): boolean {
 export default function ContactsIndex({ account, contacts: initialContacts, meta, filters }: Props) {
     const [draft, setDraft] = useState(filters.search);
     const [contacts, setContacts] = useState(initialContacts);
+    const [importOpen, setImportOpen] = useState(false);
     const viewMode: ContactViewMode = filters.view === 'graph' ? 'graph' : 'table';
     const starredOnly = filters.starred_only ?? false;
 
@@ -303,6 +306,9 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
                     }
                     actions={
                         <div className="flex flex-wrap items-center gap-3">
+                            <Button type="button" variant="secondary" size="sm" onClick={() => setImportOpen(true)}>
+                                Import from URL
+                            </Button>
                             <label className="inline-flex items-center gap-2 text-sm text-slate-700">
                                 <input
                                     type="checkbox"
@@ -320,6 +326,12 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
                             />
                         </div>
                     }
+                />
+
+                <ImportContactUrlModal
+                    accountPublicId={account.public_id}
+                    open={importOpen}
+                    onClose={() => setImportOpen(false)}
                 />
 
                 <PageShellCanvas className="space-y-6" variant="plain">

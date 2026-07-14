@@ -7,10 +7,14 @@ namespace Modules\Contacts\Tests\Feature\Controllers\Api\V1;
 use Database\Factories\Crawler\ConnectionContactFactory;
 use Database\Factories\Crawler\ContactFactory;
 use Illuminate\Support\Facades\Bus;
+use JOOservices\Flickr\Client\FakeFlickrTransport;
+use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
 use Modules\Crawler\Jobs\FetchPeoplePhotosJob;
 use Modules\Crawler\Models\Contact;
+use Modules\Crawler\Services\FlickrClientFactory;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
+use Tests\Support\FlickrNsid;
 use Tests\TestCase;
 
 final class ContactControllerTest extends TestCase
@@ -90,5 +94,78 @@ final class ContactControllerTest extends TestCase
 
         $response->assertUnprocessable();
         $response->assertJsonValidationErrors(['types.0']);
+    }
+
+    public function test_import_resolves_url_links_contact_and_starts_crawl(): void
+    {
+        Bus::fake([FetchPeoplePhotosJob::class]);
+
+        $this->seedFlickrAppCredentials();
+        $connection = $this->createFlickrConnection(['app_profile' => 'main']);
+        $nsid = FlickrNsid::fake();
+
+        $this->app->instance(
+            FlickrClientFactory::class,
+            new FlickrClientFactory(
+                FakeFlickrTransport::new()
+                    ->pushJson([
+                        'stat' => 'ok',
+                        'user' => ['id' => $nsid],
+                    ])
+                    ->pushJson([
+                        'stat' => 'ok',
+                        'person' => [
+                            'username' => ['_content' => 'imported-user'],
+                            'realname' => ['_content' => 'Imported User'],
+                        ],
+                    ]),
+            ),
+        );
+
+        $response = $this->postJson(
+            '/api/v1/flickr/accounts/'.$connection->public_id.'/contacts/import',
+            [
+                'url' => 'https://www.flickr.com/photos/imported-user/',
+                'start_crawl' => true,
+                'types' => ['photos'],
+            ],
+        );
+
+        $response->assertOk();
+        $response->assertJsonPath('data.nsid', $nsid);
+        $response->assertJsonPath('data.already_linked', false);
+        $response->assertJsonPath('data.crawl_started', true);
+        $response->assertJsonPath(
+            'data.redirect_path',
+            '/flickr/accounts/'.$connection->public_id.'/contacts/'.rawurlencode($nsid),
+        );
+
+        $this->assertDatabaseHas('xflickr_connection_contacts', [
+            'connection_key' => $connection->connection_key,
+            'contact_nsid' => $nsid,
+        ]);
+    }
+
+    public function test_import_rejects_invalid_host(): void
+    {
+        $this->seedFlickrAppCredentials();
+        $connection = $this->createFlickrConnection(['app_profile' => 'main']);
+
+        $response = $this->postJson(
+            '/api/v1/flickr/accounts/'.$connection->public_id.'/contacts/import',
+            ['url' => 'https://example.com/people/x', 'start_crawl' => false],
+        );
+
+        $response->assertUnprocessable();
+    }
+
+    private function seedFlickrAppCredentials(): void
+    {
+        RuntimeConfig::set('xflickr_app.main', [
+            'apiKey' => 'test-api-key-12345',
+            'apiSecret' => 'test-api-secret',
+            'callbackUrl' => 'http://localhost/flickr/callback',
+        ], 'json');
+        RuntimeConfig::refresh();
     }
 }

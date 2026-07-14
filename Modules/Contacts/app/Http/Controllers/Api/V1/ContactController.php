@@ -9,13 +9,17 @@ use JOOservices\LaravelController\Http\Controllers\BaseApiController;
 use Modules\Contacts\Http\Requests\CrawlFlickrContactRequest;
 use Modules\Contacts\Http\Requests\FlickrContactProgressRequest;
 use Modules\Contacts\Http\Requests\FlickrContactSuggestRequest;
+use Modules\Contacts\Http\Requests\ImportFlickrContactUrlRequest;
 use Modules\Contacts\Http\Resources\ContactCrawlRunAcceptedResource;
+use Modules\Contacts\Http\Resources\ContactImportResource;
 use Modules\Contacts\Http\Resources\ContactProgressResource;
 use Modules\Contacts\Http\Resources\ContactSuggestionResource;
+use Modules\Contacts\Services\ContactImportService;
 use Modules\Contacts\Services\ContactListPresenter;
 use Modules\Contacts\Services\ContactListQueryService;
 use Modules\Crawler\Models\Connection;
 use Modules\Flickr\Exceptions\FlickrTokenInvalidException;
+use Modules\Flickr\Exceptions\FlickrUrlResolutionException;
 use Modules\Flickr\Exceptions\GlobalCrawlPauseException;
 use Modules\Flickr\Services\FlickrAccountsService;
 
@@ -67,5 +71,26 @@ final class ContactController extends BaseApiController
         }
 
         return $this->accepted(ContactCrawlRunAcceptedResource::make([]), 'Contact crawl started.');
+    }
+
+    public function import(
+        ImportFlickrContactUrlRequest $request,
+        Connection $connection,
+        ContactImportService $imports,
+    ): JsonResponse {
+        try {
+            $result = $imports->import(
+                $connection,
+                $request->url(),
+                $request->startCrawl(),
+                $request->crawlTypes(),
+            );
+        } catch (FlickrUrlResolutionException $exception) {
+            return $this->unprocessable($exception->getMessage());
+        } catch (FlickrTokenInvalidException|GlobalCrawlPauseException $exception) {
+            return $this->unprocessable($exception->getMessage());
+        }
+
+        return $this->success(ContactImportResource::make($result), 'Contact imported.');
     }
 }

@@ -22,6 +22,7 @@ final class FlickrAccountsService
         private readonly CrawlStatusQueryService $crawlStatus,
         private readonly FlickrAppProfileService $appProfiles,
         private readonly FlickrPhotoSizeResolver $photoSizes,
+        private readonly FlickrUrlResolverService $urlResolver,
     ) {}
 
     /**
@@ -155,5 +156,13 @@ final class FlickrAccountsService
     public function resolvePhotoSize(string $flickrPhotoId, Connection $connection): DownloadCandidateDto
     {
         return $this->photoSizes->resolve($flickrPhotoId, $connection);
+    }
+
+    /**
+     * @return array{nsid: string, username: string|null, realname: string|null, friend: int, family: int}
+     */
+    public function resolveContactFromUrl(Connection $connection, string $url): array
+    {
+        return $this->urlResolver->resolveContactRow($connection, $url);
     }
 }

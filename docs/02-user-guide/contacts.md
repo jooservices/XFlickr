@@ -28,6 +28,6 @@ Click a contact row to open the detail view with catalog links and individual cr
 
 ## Notes
 
-- Contacts appear after an account-level **contacts** crawl.
+- Contacts usually appear after an account-level **contacts** crawl. You can also use **Import from URL** on the contacts page to paste a Flickr people, photostream, or photo page URL — we resolve the owner, link them to this account, and can start a crawl immediately.
 - Catalog counts are zero until that contact has been crawled.
 - All operations use the discovering account's Flickr connection token.
