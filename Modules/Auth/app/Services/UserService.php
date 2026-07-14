@@ -87,9 +87,8 @@ final class UserService
 
         $url = url('/reset-password/'.$plainToken.'?email='.urlencode($email));
 
-        Log::info('Password reset URL generated (email not sent).', [
+        Log::info('Password reset token generated.', [
             'email' => $email,
-            'reset_url' => $url,
         ]);
 
         RateLimiter::clear('forgot-password|'.$ip.'|'.Str::lower($email));

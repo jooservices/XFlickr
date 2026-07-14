@@ -25,6 +25,7 @@ Do not include secrets, API keys, OAuth tokens, cookies, session values, private
 - Encrypted `token_payload` and `credentials` columns — protect database backups.
 - Accidental exposure of downloaded Flickr photos on shared servers.
 - Running tests or migrations against the local dev stack, wiping user data (see [Docker safety](docs/05-maintenance/docker-safety.md)).
+- Password reset tokens are **hashed at rest** (`password_reset_tokens`). The plaintext token appears only in the operator-facing flash/`resetUrl` (and CLI flows) — **never** in application logs. Email delivery of reset links is not implemented yet.
 
 ## Dependency and Config Security
 

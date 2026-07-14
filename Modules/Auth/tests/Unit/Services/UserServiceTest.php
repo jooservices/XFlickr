@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Support\AdminCredentialResolver;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
@@ -81,12 +82,29 @@ final class UserServiceTest extends TestCase
     {
         User::factory()->create(['email' => 'admin@local']);
 
+        Log::spy();
+
         $url = $this->users->requestPasswordReset('admin@local');
 
         $this->assertNotNull($url);
         $this->assertStringContainsString('/reset-password/', $url);
         $this->assertStringContainsString('email=admin%40local', $url);
         $this->assertDatabaseHas('password_reset_tokens', ['email' => 'admin@local']);
+
+        Log::shouldHaveReceived('info')
+            ->once()
+            ->withArgs(function (string $message, array $context): bool {
+                if ($message !== 'Password reset token generated.') {
+                    return false;
+                }
+
+                $serialized = json_encode($context);
+
+                return is_string($serialized)
+                    && str_contains($serialized, 'admin@local')
+                    && ! str_contains($serialized, 'reset-password')
+                    && ! str_contains($serialized, 'reset_url');
+            });
     }
 
     public function test_request_password_reset_returns_null_for_unknown_or_inactive(): void
