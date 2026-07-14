@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - A6 module facades: peer modules import only `FlickrAccountsService`, `StorageService`, and `ContactsService` from Flickr/Storage/Contacts `Services\` (architecture test `ModuleFacadeImportTest`). Focused services remain for internal module use.
+- A8 host-test placement: module-owned leftovers migrated from `tests/` into `Modules/*/tests/`; host keeps architecture, crawler query repos, shared Support, and cross-cutting glue only (`ModuleOwnedHostTestPlacementTest`).
 - Storage/Transfer refactor (A1–A5): removed per-provider `Drivers/` classes (browse/delete services implement contracts directly); moved `StorageBrowseResult`, `StorageStreamResult`, and `TransferQueueResult` into module `Dto` namespaces; grouped provider services under `GooglePhotos/`, `GoogleDrive/`, `OneDrive/`, `R2/`, `Tokens/` and Flickr rate-limit under `RateLimit/`; folded `CrawlOperationsService` into `CrawlOperationsController` and `StorageR2ConnectionVerifier` into `R2\BrowseService::verifyConnection`.
 - Third-party I/O logging via `App\Support\ThirdPartyApiLogger` (StorageApiLogger wraps it). Google Photos `mediaItems:batchCreate` logs `upload_token_present` only; Flickr OAuth / token probe / crawl pause+invalid paths log fingerprints (≤12 hex) never raw secrets (`SECURITY.md`).
 - Password reset logging omits the reset URL/token (email only); `SECURITY.md` documents hashed-at-rest tokens and flash/CLI delivery.
@@ -21,6 +22,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - Module service facades (A6): `FlickrAccountsService`, `StorageService`, `ContactsService` — cross-module entry points for Flickr accounts/crawl/health, storage settings/upload, and contact list queries.
+- A8 host-test migration: module-owned leftovers moved into `Modules/*/tests/` (`FlickrPhotoUrlHelper`, `FlickrTokenHealth`, `StorageR2Config`, `FlickrAccountConnected` event, `XFlickrCrawlConfig`, `FlickrContactFrontendSupport`, `SpiderRuntimeConfig`, `ContactGraphRuntimeConfig`); architecture guard `ModuleOwnedHostTestPlacementTest`.
+- A10 `ContactListQueryService::baseQuery()` shared starred/search builder for `paginateForConnection` and `listNsidsForConnection`; unit tests for starred+search and empty-starred cases.
+- T1 money-path unit backfill: `PhotoDownloadExecutionService` missing-connection edge, `TransferBatchReconciler` all-success and null-batch edges, `FlickrCrawlService::crawlMany` global-pause edge.
 - Module DAG allowlist test (`ModuleDependencyDirectionTest`: `ALLOWED` + `KNOWN_VIOLATIONS`) for audit A4; target matrix documented in `package-boundaries.md`.
 - Maintenance backlog **N-16**: planned Flickr client layering (`jooservices/flickr` → Crawler `FlickrClientFactory` → peers); see `docs/05-maintenance/flickr-client-factory-layering.md`.
 - Sticky app status footer (copyright + live Flickr API quota + Storage quota meters). Storage quota via `GET /api/v1/storage/quota` (OneDrive / Google Drive when available; Google Photos / R2 marked n/a).

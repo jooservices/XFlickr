@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature;
+namespace Modules\Contacts\Tests\Feature;
 
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;

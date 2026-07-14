@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Support;
+namespace Modules\Spider\Tests\Unit\Support;
 
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
 use Modules\Spider\Support\SpiderRuntimeConfig;

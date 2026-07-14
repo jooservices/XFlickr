@@ -121,4 +121,42 @@ final class TransferBatchReconcilerTest extends TestCase
         $this->assertSame(0, $batch->completed_count);
         $this->assertSame(TransferBatchStatus::Failed->value, $batch->status);
     }
+
+    public function test_it_marks_batch_completed_when_all_items_succeed(): void
+    {
+        $connection = $this->createFlickrConnection();
+
+        $batch = TransferBatch::query()->create([
+            'type' => 'download',
+            'connection_key' => $connection->connection_key,
+            'subject_nsid' => 'friend@N01',
+            'status' => TransferBatchStatus::Running->value,
+            'total_count' => 2,
+        ]);
+
+        TransferItem::query()->create([
+            'transfer_batch_id' => $batch->id,
+            'flickr_photo_id' => 'photo-1',
+            'status' => 'completed',
+        ]);
+        TransferItem::query()->create([
+            'transfer_batch_id' => $batch->id,
+            'flickr_photo_id' => 'photo-2',
+            'status' => 'completed',
+        ]);
+
+        app(TransferBatchReconciler::class)->reconcile($batch);
+
+        $batch->refresh();
+        $this->assertSame(TransferBatchStatus::Completed->value, $batch->status);
+        $this->assertSame(2, $batch->completed_count);
+        $this->assertSame(0, $batch->failed_count);
+    }
+
+    public function test_reconcile_no_ops_for_null_batch(): void
+    {
+        app(TransferBatchReconciler::class)->reconcile(null);
+
+        $this->assertTrue(true);
+    }
 }

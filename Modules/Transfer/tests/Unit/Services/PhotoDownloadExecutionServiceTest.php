@@ -291,4 +291,31 @@ final class PhotoDownloadExecutionServiceTest extends TestCase
 
         $lock->release();
     }
+
+    public function test_it_throws_when_connection_is_missing(): void
+    {
+        Storage::fake('local');
+
+        $ownerNsid = FlickrNsid::fake();
+        $photoId = (string) fake()->numerify('########');
+
+        Photo::query()->create([
+            'flickr_photo_id' => $photoId,
+            'owner_nsid' => $ownerNsid,
+            'title' => 'Orphan',
+            'secret' => 'abc123',
+            'server' => '65535',
+            'raw_payload' => [],
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('was not found');
+
+        app(PhotoDownloadExecutionService::class)->execute(
+            $photoId,
+            $ownerNsid,
+            FlickrNsid::fake(),
+            null,
+        );
+    }
 }

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Events;
+namespace Modules\Flickr\Tests\Feature\Events;
 
 use Illuminate\Support\Facades\Event;
 use Modules\Flickr\Events\FlickrAccountConnected;

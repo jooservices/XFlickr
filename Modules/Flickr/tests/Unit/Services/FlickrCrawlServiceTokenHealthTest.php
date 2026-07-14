@@ -68,4 +68,20 @@ final class FlickrCrawlServiceTokenHealthTest extends TestCase
                     && isset($context['connection_key_fp']));
         }
     }
+
+    public function test_crawl_many_throws_when_global_pause_is_active(): void
+    {
+        $connection = $this->createFlickrConnection();
+
+        RuntimeConfig::set('xflickr.global_pause', true, 'bool');
+        RuntimeConfig::refresh();
+
+        $this->expectException(GlobalCrawlPauseException::class);
+
+        app(FlickrCrawlService::class)->crawlMany(
+            $connection,
+            [CrawlType::Photos, CrawlType::Favorites],
+            FlickrNsid::fake(),
+        );
+    }
 }

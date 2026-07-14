@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature;
+namespace Modules\Crawler\Tests\Unit\Support;
 
 use Modules\Crawler\Support\XFlickrConfig;
 use Tests\Concerns\SafeRefreshDatabase;

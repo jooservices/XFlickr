@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit;
+namespace Modules\Storage\Tests\Unit\Support;
 
 use Modules\Storage\Support\StorageR2Config;
 use PHPUnit\Framework\TestCase;

@@ -7,6 +7,7 @@ namespace Modules\Contacts\Services;
 use App\Repositories\Crawler\ConnectionContactQueryRepository;
 use App\Repositories\Crawler\ContactQueryRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Modules\Contacts\Repositories\ContactAnnotationRepository;
 use Modules\Crawler\Models\Connection;
@@ -30,19 +31,7 @@ final class ContactListQueryService
         int $page,
         bool $starredOnly = false,
     ): LengthAwarePaginator {
-        $query = $search !== null && $search !== ''
-            ? $this->contacts->queryForConnectionWithSearch($connection->connection_key, $search)
-            : $this->contacts->queryForConnection($connection->connection_key);
-
-        if ($starredOnly) {
-            $starredNsids = $this->annotations->starredContactNsids($connection->connection_key);
-
-            if ($starredNsids === []) {
-                $query->whereRaw('1 = 0');
-            } else {
-                $query->whereIn('nsid', $starredNsids);
-            }
-        }
+        $query = $this->baseQuery($connection, $search, $starredOnly);
 
         $query = $this->sorter->apply($query, $connection, $sort, $direction);
 
@@ -57,19 +46,7 @@ final class ContactListQueryService
         ?string $search = null,
         bool $starredOnly = false,
     ): array {
-        $query = $search !== null && $search !== ''
-            ? $this->contacts->queryForConnectionWithSearch($connection->connection_key, $search)
-            : $this->contacts->queryForConnection($connection->connection_key);
-
-        if ($starredOnly) {
-            $starredNsids = $this->annotations->starredContactNsids($connection->connection_key);
-
-            if ($starredNsids === []) {
-                return [];
-            }
-
-            $query->whereIn('nsid', $starredNsids);
-        }
+        $query = $this->baseQuery($connection, $search, $starredOnly);
 
         /** @var list<string> $nsids */
         $nsids = $query->orderBy('nsid')->pluck('nsid')->all();
@@ -102,5 +79,27 @@ final class ContactListQueryService
     public function findContact(string $contactNsid): Contact
     {
         return $this->contacts->findByNsid($contactNsid);
+    }
+
+    /**
+     * @return Builder<Contact>
+     */
+    public function baseQuery(Connection $connection, ?string $search, bool $starredOnly = false): Builder
+    {
+        $query = $search !== null && $search !== ''
+            ? $this->contacts->queryForConnectionWithSearch($connection->connection_key, $search)
+            : $this->contacts->queryForConnection($connection->connection_key);
+
+        if ($starredOnly) {
+            $starredNsids = $this->annotations->starredContactNsids($connection->connection_key);
+
+            if ($starredNsids === []) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->whereIn('nsid', $starredNsids);
+            }
+        }
+
+        return $query;
     }
 }
