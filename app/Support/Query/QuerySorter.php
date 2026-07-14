@@ -10,9 +10,11 @@ use Illuminate\Database\Eloquent\Model;
 final class QuerySorter
 {
     /**
-     * @param  Builder<Model>  $query
+     * @template TModel of Model
+     *
+     * @param  Builder<TModel>  $query
      * @param  list<string>  $allowedColumns
-     * @return Builder<Model>
+     * @return Builder<TModel>
      */
     public function apply(
         Builder $query,

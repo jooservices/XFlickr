@@ -13,6 +13,9 @@ use Modules\Crawler\Models\Connection;
 use Modules\Transfer\Enums\TransferBatchStatus;
 use Modules\Transfer\Models\TransferBatch;
 
+/**
+ * @extends EloquentRepository<TransferBatch>
+ */
 final class TransferBatchRepository extends EloquentRepository
 {
     use HasCrud;

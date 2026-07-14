@@ -9,6 +9,9 @@ use Jooservices\LaravelRepository\Traits\HasCrud;
 use Jooservices\LaravelRepository\Traits\HasFilter;
 use Modules\Storage\Models\StorageRemoteSyncState;
 
+/**
+ * @extends EloquentRepository<StorageRemoteSyncState>
+ */
 final class StorageRemoteSyncStateRepository extends EloquentRepository
 {
     use HasCrud;

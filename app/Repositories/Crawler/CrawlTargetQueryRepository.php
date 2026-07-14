@@ -63,16 +63,23 @@ final class CrawlTargetQueryRepository
      * @param  list<int>  $runIds
      * @return Collection<int, Collection<int, CrawlTarget>>
      */
+    /**
+     * @param  list<int>  $runIds
+     * @return Collection<int, Collection<int, CrawlTarget>>
+     */
     public function groupedByRunIds(array $runIds): Collection
     {
         if ($runIds === []) {
             return collect();
         }
 
-        return CrawlTarget::query()
+        /** @var Collection<int, Collection<int, CrawlTarget>> $grouped */
+        $grouped = CrawlTarget::query()
             ->whereIn('xflickr_crawl_run_id', $runIds)
             ->get(['xflickr_crawl_run_id', 'task_type', 'subject_nsid', 'status', 'last_result_count', 'page'])
             ->groupBy('xflickr_crawl_run_id');
+
+        return $grouped;
     }
 
     /**

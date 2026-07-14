@@ -74,13 +74,12 @@ final class ContactListSorter
                 $this->storedFiles->completedOriginalCountSubquery(),
                 $direction,
             ),
-            default => $query->orderBy("{$table}.username", 'asc'),
         };
     }
 
     /**
      * @param  Builder<Contact>  $query
-     * @param  Builder<Model>  $countQuery
+     * @param  Builder<covariant Model>  $countQuery
      * @return Builder<Contact>
      */
     private function orderBySubqueryCount(Builder $query, string $table, Builder $countQuery, string $direction): Builder

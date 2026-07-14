@@ -175,7 +175,7 @@ final class StorageBrowseSyncService
                     'mime_type' => $item['mime_type'] ?? null,
                     'thumbnail_url' => $item['thumbnail_url'] ?? null,
                     'size' => isset($item['size']) && is_numeric($item['size']) ? (int) $item['size'] : null,
-                    'modified_at' => isset($item['modified_at']) && $item['modified_at'] !== null
+                    'modified_at' => isset($item['modified_at'])
                         ? Carbon::parse((string) $item['modified_at'])
                         : null,
                     'web_url' => $item['web_url'] ?? null,

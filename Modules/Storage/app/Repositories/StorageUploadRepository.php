@@ -10,6 +10,9 @@ use Jooservices\LaravelRepository\Traits\HasFilter;
 use Modules\Storage\Enums\StorageUploadStatus;
 use Modules\Storage\Models\StorageUpload;
 
+/**
+ * @extends EloquentRepository<StorageUpload>
+ */
 final class StorageUploadRepository extends EloquentRepository
 {
     use HasCrud;

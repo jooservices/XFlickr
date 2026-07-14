@@ -12,6 +12,9 @@ use Modules\Spider\Contracts\FrontierRepositoryContract;
 use Modules\Spider\Enums\SpiderFrontierStatus;
 use Modules\Spider\Models\SpiderFrontierItem;
 
+/**
+ * @extends EloquentRepository<SpiderFrontierItem>
+ */
 final class SpiderFrontierRepository extends EloquentRepository implements FrontierRepositoryContract
 {
     use HasCrud;

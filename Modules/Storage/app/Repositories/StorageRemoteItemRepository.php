@@ -11,6 +11,9 @@ use Jooservices\LaravelRepository\Traits\HasCrud;
 use Jooservices\LaravelRepository\Traits\HasFilter;
 use Modules\Storage\Models\StorageRemoteItem;
 
+/**
+ * @extends EloquentRepository<StorageRemoteItem>
+ */
 final class StorageRemoteItemRepository extends EloquentRepository
 {
     use HasCrud;

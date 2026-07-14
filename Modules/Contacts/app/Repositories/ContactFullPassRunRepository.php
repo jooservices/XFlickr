@@ -12,6 +12,9 @@ use Modules\Contacts\Models\ContactFullPassRun;
 use Modules\Spider\Contracts\ConcurrentRunGuard;
 use Modules\Spider\Enums\SpiderRunStatus;
 
+/**
+ * @extends EloquentRepository<ContactFullPassRun>
+ */
 final class ContactFullPassRunRepository extends EloquentRepository implements ConcurrentRunGuard
 {
     use HasCrud;

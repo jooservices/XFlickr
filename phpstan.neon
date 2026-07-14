@@ -21,4 +21,6 @@ parameters:
         - Modules/*/database/*
         - Modules/*/tests/*
         - Modules/*/config/*
+    stubFiles:
+        - phpstan/stubs/EloquentRepository.stub
     treatPhpDocTypesAsCertain: false

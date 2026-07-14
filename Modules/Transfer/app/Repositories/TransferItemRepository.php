@@ -11,6 +11,9 @@ use Jooservices\LaravelRepository\Traits\HasFilter;
 use Modules\Transfer\Enums\TransferItemStatus;
 use Modules\Transfer\Models\TransferItem;
 
+/**
+ * @extends EloquentRepository<TransferItem>
+ */
 final class TransferItemRepository extends EloquentRepository
 {
     use HasCrud;

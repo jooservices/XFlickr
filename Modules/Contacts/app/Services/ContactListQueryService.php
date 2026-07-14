@@ -67,7 +67,7 @@ final class ContactListQueryService
     }
 
     /**
-     * @return Collection<int, array{nsid: string, username: string|null, realname: string|null}>
+     * @return Collection<int, mixed>
      */
     public function suggest(Connection $connection, string $search, int $limit): Collection
     {

@@ -12,6 +12,9 @@ use Jooservices\LaravelRepository\Traits\HasFilter;
 use Modules\Transfer\Enums\StoredFileStatus;
 use Modules\Transfer\Models\StoredFile;
 
+/**
+ * @extends EloquentRepository<StoredFile>
+ */
 final class StoredFileRepository extends EloquentRepository
 {
     use HasCrud;

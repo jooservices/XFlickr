@@ -18,7 +18,7 @@ final class FlickrAppProfileService
     ) {}
 
     /**
-     * @return Collection<int, array{profile: string, label: string|null, api_key_hint: string, callback_url: string|null, accounts_count: int}>
+     * @return Collection<int, mixed>
      */
     public function listPublic(): Collection
     {
@@ -141,7 +141,7 @@ final class FlickrAppProfileService
             return $stored;
         }
 
-        $envCallback = env('FLICKR_CALLBACK_URL');
+        $envCallback = config('services.flickr.callback_url');
         if (is_string($envCallback) && $envCallback !== '') {
             return $envCallback;
         }

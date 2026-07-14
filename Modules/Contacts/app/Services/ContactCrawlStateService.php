@@ -59,7 +59,7 @@ final class ContactCrawlStateService
             $connection->connection_key,
             $contactNsids,
             self::CONTACT_CRAWL_TYPES,
-            [CrawlRunStatus::Running, CrawlRunStatus::Completed],
+            [CrawlRunStatus::Running->value, CrawlRunStatus::Completed->value],
         );
 
         $runningRunIds = $runs

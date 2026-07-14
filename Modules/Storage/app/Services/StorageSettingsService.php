@@ -31,7 +31,10 @@ final class StorageSettingsService
      */
     public function apps(): Collection
     {
-        return $this->appProfiles->listPublic()->values();
+        /** @var Collection<int, array<string, mixed>> $apps */
+        $apps = $this->appProfiles->listPublic()->values();
+
+        return $apps;
     }
 
     /**
@@ -47,12 +50,15 @@ final class StorageSettingsService
      */
     public function drivers(): Collection
     {
-        return collect(StorageDriver::all())->map(fn (StorageDriver $driver): array => [
+        /** @var Collection<int, array<string, mixed>> $drivers */
+        $drivers = collect(StorageDriver::all())->map(fn (StorageDriver $driver): array => [
             'value' => $driver->value,
             'label' => $driver->label(),
             'requires_oauth' => $driver->requiresOAuth(),
             'requires_app' => $driver->requiresApp(),
             'requires_account' => $driver->requiresAccount(),
         ])->values();
+
+        return $drivers;
     }
 }

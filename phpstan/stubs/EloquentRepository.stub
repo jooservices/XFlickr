@@ -1,0 +1,39 @@
+<?php
+
+namespace Jooservices\LaravelRepository\Repositories;
+
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+
+/**
+ * @template TModel of Model
+ */
+class EloquentRepository
+{
+    /**
+     * @var Builder<TModel>|null
+     */
+    protected ?Builder $query;
+
+    /**
+     * @param TModel $model
+     */
+    public function __construct(
+        protected Model $model,
+    ) {}
+
+    /**
+     * @return TModel
+     */
+    public function getModel(): Model {}
+
+    /**
+     * @return Builder<TModel>
+     */
+    public function newQuery(): Builder {}
+
+    /**
+     * @return Builder<TModel>
+     */
+    protected function getQuery(): Builder {}
+}

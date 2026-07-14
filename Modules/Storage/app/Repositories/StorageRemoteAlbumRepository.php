@@ -10,6 +10,9 @@ use Jooservices\LaravelRepository\Traits\HasCrud;
 use Jooservices\LaravelRepository\Traits\HasFilter;
 use Modules\Storage\Models\StorageRemoteAlbum;
 
+/**
+ * @extends EloquentRepository<StorageRemoteAlbum>
+ */
 final class StorageRemoteAlbumRepository extends EloquentRepository
 {
     use HasCrud;

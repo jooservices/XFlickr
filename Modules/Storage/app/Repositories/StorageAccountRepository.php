@@ -11,6 +11,9 @@ use Jooservices\LaravelRepository\Traits\HasCrud;
 use Jooservices\LaravelRepository\Traits\HasFilter;
 use Modules\Storage\Models\StorageAccount;
 
+/**
+ * @extends EloquentRepository<StorageAccount>
+ */
 final class StorageAccountRepository extends EloquentRepository
 {
     use HasCrud;
@@ -95,8 +98,14 @@ final class StorageAccountRepository extends EloquentRepository
             ->update(['is_default' => false]);
     }
 
+    /**
+     * @param  callable(): StorageAccount  $callback
+     */
     public function connectInTransaction(callable $callback): StorageAccount
     {
-        return DB::transaction($callback);
+        /** @var StorageAccount $account */
+        $account = DB::transaction(static fn (): StorageAccount => $callback());
+
+        return $account;
     }
 }

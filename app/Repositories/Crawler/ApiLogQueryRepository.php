@@ -24,7 +24,7 @@ final class ApiLogQueryRepository
     }
 
     /**
-     * @return Collection<int, object{hour_start: string, requests: int}>
+     * @return Collection<int, array{hour_start: string, requests: int}>
      */
     public function hourlyCountsForConnection(string $connectionKey, CarbonImmutable $since): Collection
     {
@@ -40,10 +40,16 @@ final class ApiLogQueryRepository
             ->toBase()
             ->get();
 
-        return $rows->map(static fn (object $row): object => (object) [
-            'hour_start' => (string) $row->hour_start,
-            'requests' => (int) $row->requests,
-        ]);
+        /** @var list<array{hour_start: string, requests: int}> $counts */
+        $counts = $rows
+            ->map(static fn (object $row): array => [
+                'hour_start' => (string) $row->hour_start,
+                'requests' => (int) $row->requests,
+            ])
+            ->values()
+            ->all();
+
+        return collect($counts);
     }
 
     private function hourBucketExpression(): string

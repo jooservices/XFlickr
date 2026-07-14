@@ -11,6 +11,9 @@ use Jooservices\LaravelRepository\Traits\HasFilter;
 use Modules\Spider\Enums\SpiderRunStatus;
 use Modules\Spider\Models\SpiderRun;
 
+/**
+ * @extends EloquentRepository<SpiderRun>
+ */
 final class SpiderRunRepository extends EloquentRepository
 {
     use HasCrud;

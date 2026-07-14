@@ -18,7 +18,7 @@ final class StorageAppProfileService
     ) {}
 
     /**
-     * @return Collection<int, array{provider: string, label: string, client_id_hint: string, redirect: string|null, accounts_count: int}>
+     * @return Collection<int, mixed>
      */
     public function listPublic(): Collection
     {

@@ -8,6 +8,9 @@ use App\Models\User;
 use Jooservices\LaravelRepository\Repositories\EloquentRepository;
 use Jooservices\LaravelRepository\Traits\HasCrud;
 
+/**
+ * @extends EloquentRepository<User>
+ */
 final class UserRepository extends EloquentRepository
 {
     use HasCrud;

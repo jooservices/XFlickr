@@ -9,6 +9,9 @@ use Jooservices\LaravelRepository\Repositories\EloquentRepository;
 use Jooservices\LaravelRepository\Traits\HasCrud;
 use Modules\Contacts\Models\ContactAnnotation;
 
+/**
+ * @extends EloquentRepository<ContactAnnotation>
+ */
 final class ContactAnnotationRepository extends EloquentRepository
 {
     use HasCrud;

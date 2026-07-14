@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'flickr' => [
+        'callback_url' => env('FLICKR_CALLBACK_URL'),
+    ],
+
 ];

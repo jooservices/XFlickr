@@ -12,6 +12,9 @@ use Modules\Contacts\Models\ContactFullPassFrontierItem;
 use Modules\Spider\Contracts\FrontierRepositoryContract;
 use Modules\Spider\Enums\SpiderFrontierStatus;
 
+/**
+ * @extends EloquentRepository<ContactFullPassFrontierItem>
+ */
 final class ContactFullPassFrontierRepository extends EloquentRepository implements FrontierRepositoryContract
 {
     use HasCrud;

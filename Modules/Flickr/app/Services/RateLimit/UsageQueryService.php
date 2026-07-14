@@ -46,7 +46,7 @@ final class UsageQueryService
 
         $countsByHour = [];
         foreach ($this->apiLogs->hourlyCountsForConnection($connectionKey, $seriesStart) as $row) {
-            $countsByHour[$row->hour_start] = $row->requests;
+            $countsByHour[$row['hour_start']] = $row['requests'];
         }
 
         $buckets = [];

@@ -86,13 +86,13 @@ final class ContactQueryRepository
     }
 
     /**
-     * @return Collection<int, array{nsid: string, username: string|null, realname: string|null}>
+     * @return Collection<int, mixed>
      */
     public function suggestForConnection(string $connectionKey, string $search, int $limit): Collection
     {
         $like = '%'.$search.'%';
 
-        return $this->queryForConnection($connectionKey)
+        $suggestions = $this->queryForConnection($connectionKey)
             ->where(function ($builder) use ($like): void {
                 $builder
                     ->where('username', 'like', $like)
@@ -107,7 +107,11 @@ final class ContactQueryRepository
                 'username' => $contact->username,
                 'realname' => $contact->realname,
             ])
-            ->values();
+            ->values()
+            ->all();
+
+        /** @var list<array{nsid: string, username: string|null, realname: string|null}> $suggestions */
+        return collect($suggestions);
     }
 
     /**

@@ -187,7 +187,7 @@ final class PhotoQueryRepository
 
     /**
      * @param  list<int>  $internalPhotoIds
-     * @return array{photoset_rows: Collection<int, object>, gallery_rows: Collection<int, object>}
+     * @return array{photoset_rows: Collection<int, mixed>, gallery_rows: Collection<int, mixed>}
      */
     public function photosetAndGalleryMemberships(array $internalPhotoIds): array
     {
@@ -229,8 +229,8 @@ final class PhotoQueryRepository
             ]);
 
         return [
-            'photoset_rows' => $photosetRows,
-            'gallery_rows' => $galleryRows,
+            'photoset_rows' => collect($photosetRows->all()),
+            'gallery_rows' => collect($galleryRows->all()),
         ];
     }
 

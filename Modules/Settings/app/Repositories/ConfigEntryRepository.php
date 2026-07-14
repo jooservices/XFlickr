@@ -10,6 +10,9 @@ use Jooservices\LaravelRepository\Repositories\EloquentRepository;
 use Jooservices\LaravelRepository\Traits\HasCrud;
 use Jooservices\LaravelRepository\Traits\HasFilter;
 
+/**
+ * @extends EloquentRepository<ConfigModel>
+ */
 final class ConfigEntryRepository extends EloquentRepository
 {
     use HasCrud;
