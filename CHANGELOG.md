@@ -51,6 +51,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- PHPStan baseline burn-down: add Eloquent `@property` docs on Crawler catalog models and Storage account/browse models; type ApiLog hourly aggregates via `toBase()` — baseline **139 → 83** (crawler `property.notFound` cleared; remaining Socialite OAuth shape only).
 - Catalog photos: larger table/grid thumbnails (Flickr `_n`), fewer grid columns, and click-to-open in-app photo detail modal (preview, memberships, download status, transfer actions) on Photos, Photoset show, and Favorites.
 - Catalog Photos table (with a Flickr account context): bulk Download / Upload via selected `flickr_photo_ids`, same BulkActionBar pattern as Contacts.
 - Contacts and Photos bulk selection supports Gmail-style **select all matching filters** (server resolves IDs from current search/starred or `owner_nsid`; no thousands of IDs from the browser).

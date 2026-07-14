@@ -6,6 +6,7 @@ namespace Modules\Crawler\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Modules\Crawler\Enums\CrawlRunStatus;
 use Modules\Crawler\Support\XFlickrConfig;
 
@@ -17,6 +18,12 @@ use Modules\Crawler\Support\XFlickrConfig;
  * @property int|null $spider_run_id
  * @property int|null $spider_frontier_item_id
  * @property CrawlRunStatus $status
+ * @property int $contacts_discovered
+ * @property int $photos_discovered
+ * @property int $api_calls
+ * @property Carbon|null $started_at
+ * @property Carbon|null $completed_at
+ * @property string|null $failed_reason
  */
 final class CrawlRun extends Model
 {

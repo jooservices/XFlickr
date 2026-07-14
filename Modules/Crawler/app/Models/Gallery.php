@@ -8,6 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Modules\Crawler\Support\XFlickrConfig;
 
+/**
+ * @property int $id
+ * @property string $flickr_gallery_id
+ * @property string $owner_nsid
+ * @property string|null $title
+ * @property string|null $description
+ * @property int $photo_count
+ * @property array<string, mixed>|null $raw_payload
+ */
 final class Gallery extends Model
 {
     protected $fillable = [

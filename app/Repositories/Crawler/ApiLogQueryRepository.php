@@ -27,17 +27,20 @@ final class ApiLogQueryRepository
     {
         $hourBucket = $this->hourBucketExpression();
 
-        return ApiLog::query()
+        /** @var Collection<int, object{hour_start: mixed, requests: mixed}> $rows */
+        $rows = ApiLog::query()
             ->selectRaw("{$hourBucket} as hour_start, COUNT(*) as requests")
             ->where('connection_key', $connectionKey)
             ->where('created_at', '>=', $since)
             ->groupBy('hour_start')
             ->orderBy('hour_start')
-            ->get()
-            ->map(static fn (object $row): object => (object) [
-                'hour_start' => (string) $row->hour_start,
-                'requests' => (int) $row->requests,
-            ]);
+            ->toBase()
+            ->get();
+
+        return $rows->map(static fn (object $row): object => (object) [
+            'hour_start' => (string) $row->hour_start,
+            'requests' => (int) $row->requests,
+        ]);
     }
 
     private function hourBucketExpression(): string

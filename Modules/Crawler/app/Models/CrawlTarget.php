@@ -6,6 +6,7 @@ namespace Modules\Crawler\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Modules\Crawler\Enums\CrawlStatus;
 use Modules\Crawler\Enums\TaskType;
 use Modules\Crawler\Support\XFlickrConfig;
@@ -20,6 +21,11 @@ use Modules\Crawler\Support\XFlickrConfig;
  * @property CrawlStatus $status
  * @property int $priority
  * @property int $retry_count
+ * @property int|null $last_result_count
+ * @property string|null $failed_reason
+ * @property Carbon|null $locked_until
+ * @property Carbon|null $last_crawled_at
+ * @property Carbon|null $next_run_at
  * @property CrawlRun|null $crawlRun
  */
 final class CrawlTarget extends Model

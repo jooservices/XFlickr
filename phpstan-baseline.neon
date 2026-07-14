@@ -1,6 +1,30 @@
 parameters:
 	ignoreErrors:
 		-
+			message: '#^Method Modules\\Contacts\\Services\\ContactListQueryService\:\:paginateForConnection\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: Modules/Contacts/app/Services/ContactListQueryService.php
+
+		-
+			message: '#^Method Modules\\Contacts\\Services\\ContactListQueryService\:\:suggest\(\) should return Illuminate\\Support\\Collection\<int, array\{nsid\: string, username\: string\|null, realname\: string\|null\}\> but returns Illuminate\\Support\\Collection\<int, array\{nsid\: string, username\: string\|null, realname\: string\|null\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: Modules/Contacts/app/Services/ContactListQueryService.php
+
+		-
+			message: '#^Match arm comparison between ''downloads_count'' and ''downloads_count'' is always true\.$#'
+			identifier: match.alwaysTrue
+			count: 1
+			path: Modules/Contacts/app/Services/ContactListSorter.php
+
+		-
+			message: '#^Parameter \#3 \$countQuery of method Modules\\Contacts\\Services\\ContactListSorter\:\:orderBySubqueryCount\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<Modules\\Transfer\\Models\\StoredFile\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: Modules/Contacts/app/Services/ContactListSorter.php
+
+		-
 			message: '#^Method Modules\\Flickr\\Events\\FlickrAccountConnected\:\:aggregateId\(\) never returns null so it can be removed from the return type\.$#'
 			identifier: return.unusedType
 			count: 1
@@ -11,6 +35,30 @@ parameters:
 			identifier: return.unusedType
 			count: 1
 			path: Modules/Flickr/app/Events/FlickrAccountDisconnected.php
+
+		-
+			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<Modules\\Crawler\\Models\\CrawlRun\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: Modules/Flickr/app/Services/CrawlStatusQueryService.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: Modules/Flickr/app/Services/FlickrAppProfileService.php
+
+		-
+			message: '#^Method Modules\\Flickr\\Services\\FlickrAppProfileService\:\:listPublic\(\) should return Illuminate\\Support\\Collection\<int, array\{profile\: string, label\: string\|null, api_key_hint\: string, callback_url\: string\|null, accounts_count\: int\}\> but returns Illuminate\\Support\\Collection\<int, array\{profile\: string, label\: string\|null, api_key_hint\: string, callback_url\: string, accounts_count\: int\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: Modules/Flickr/app/Services/FlickrAppProfileService.php
+
+		-
+			message: '#^Method Modules\\Settings\\Repositories\\ConfigEntryRepository\:\:listOrdered\(\) should return Illuminate\\Support\\Collection\<int, JOOservices\\LaravelConfig\\Models\\Config\> but returns Illuminate\\Database\\Eloquent\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\>\.$#'
+			identifier: return.type
+			count: 1
+			path: Modules/Settings/app/Repositories/ConfigEntryRepository.php
 
 		-
 			message: '#^Method Modules\\Storage\\Events\\StorageAccountConnected\:\:aggregateId\(\) never returns null so it can be removed from the return type\.$#'
@@ -37,12 +85,6 @@ parameters:
 			path: Modules/Storage/app/Models/StorageRemoteAlbum.php
 
 		-
-			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: Modules/Storage/app/Models/StorageRemoteItem.php
-
-		-
 			message: '#^Method Modules\\Storage\\Models\\StorageRemoteItem\:\:storageAccount\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
 			identifier: missingType.generics
 			count: 1
@@ -59,222 +101,6 @@ parameters:
 			identifier: missingType.generics
 			count: 1
 			path: Modules/Storage/app/Models/StorageUpload.php
-
-		-
-			message: '#^Method Modules\\Transfer\\Models\\StoredFile\:\:uploads\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
-			identifier: missingType.generics
-			count: 1
-			path: Modules/Transfer/app/Models/StoredFile.php
-
-		-
-			message: '#^Method Modules\\Transfer\\Models\\TransferBatch\:\:items\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
-			identifier: missingType.generics
-			count: 1
-			path: Modules/Transfer/app/Models/TransferBatch.php
-
-		-
-			message: '#^Method Modules\\Transfer\\Models\\TransferBatch\:\:storageAccount\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
-			identifier: missingType.generics
-			count: 1
-			path: Modules/Transfer/app/Models/TransferBatch.php
-
-		-
-			message: '#^Method Modules\\Transfer\\Models\\TransferItem\:\:batch\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
-			identifier: missingType.generics
-			count: 1
-			path: Modules/Transfer/app/Models/TransferItem.php
-
-		-
-			message: '#^Method Modules\\Settings\\Repositories\\ConfigEntryRepository\:\:listOrdered\(\) should return Illuminate\\Support\\Collection\<int, JOOservices\\LaravelConfig\\Models\\Config\> but returns Illuminate\\Database\\Eloquent\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\>\.$#'
-			identifier: return.type
-			count: 1
-			path: Modules/Settings/app/Repositories/ConfigEntryRepository.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\ApiLog\:\:\$hour_start\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Repositories/Crawler/ApiLogQueryRepository.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\ApiLog\:\:\$requests\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Repositories/Crawler/ApiLogQueryRepository.php
-
-		-
-			message: '#^Method App\\Repositories\\Crawler\\ApiLogQueryRepository\:\:hourlyCountsForConnection\(\) should return Illuminate\\Support\\Collection\<int, object\{hour_start\: string, requests\: int\}\> but returns Illuminate\\Support\\Collection\<int, object\{hour_start\: string, requests\: int\}&stdClass\>\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Repositories/Crawler/ApiLogQueryRepository.php
-
-		-
-			message: '#^Method App\\Repositories\\Crawler\\ApiLogQueryRepository\:\:paginateForConnection\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Repositories/Crawler/ApiLogQueryRepository.php
-
-		-
-			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:favoriteCountSubquery\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Repositories/Crawler/CatalogQueryRepository.php
-
-		-
-			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:galleryCountSubquery\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Repositories/Crawler/CatalogQueryRepository.php
-
-		-
-			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:paginateFavorites\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Repositories/Crawler/CatalogQueryRepository.php
-
-		-
-			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:paginateGalleries\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Repositories/Crawler/CatalogQueryRepository.php
-
-		-
-			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:paginatePhotos\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Repositories/Crawler/CatalogQueryRepository.php
-
-		-
-			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:paginatePhotosets\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Repositories/Crawler/CatalogQueryRepository.php
-
-		-
-			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:photosetCountSubquery\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Repositories/Crawler/CatalogQueryRepository.php
-
-		-
-			message: '#^PHPDoc tag @param references unknown parameter\: \$ownerNsids$#'
-			identifier: parameter.notFound
-			count: 1
-			path: app/Repositories/Crawler/CatalogQueryRepository.php
-
-		-
-			message: '#^PHPDoc tag @return with type array\<string, int\> is incompatible with native type int\.$#'
-			identifier: return.phpDocType
-			count: 1
-			path: app/Repositories/Crawler/CatalogQueryRepository.php
-
-		-
-			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<Modules\\Crawler\\Models\\Favorite\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Repositories/Crawler/CatalogQueryRepository.php
-
-		-
-			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<Modules\\Crawler\\Models\\Gallery\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Repositories/Crawler/CatalogQueryRepository.php
-
-		-
-			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<Modules\\Crawler\\Models\\Photo\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Repositories/Crawler/CatalogQueryRepository.php
-
-		-
-			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<Modules\\Crawler\\Models\\Photoset\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Repositories/Crawler/CatalogQueryRepository.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$nsid\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Repositories/Crawler/ContactQueryRepository.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$realname\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Repositories/Crawler/ContactQueryRepository.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$username\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Repositories/Crawler/ContactQueryRepository.php
-
-		-
-			message: '#^Method App\\Repositories\\Crawler\\ContactQueryRepository\:\:suggestForConnection\(\) should return Illuminate\\Support\\Collection\<int, array\{nsid\: string, username\: string\|null, realname\: string\|null\}\> but returns Illuminate\\Support\\Collection\<int, array\{nsid\: mixed, username\: mixed, realname\: mixed\}\>\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Repositories/Crawler/ContactQueryRepository.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Modules\\Crawler\\Models\\Contact\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Repositories/Crawler/ContactQueryRepository.php
-
-		-
-			message: '#^Return type of call to method Illuminate\\Database\\Eloquent\\Collection\<int,Modules\\Crawler\\Models\\Contact\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: method.unresolvableReturnType
-			count: 1
-			path: app/Repositories/Crawler/ContactQueryRepository.php
-
-		-
-			message: '#^Return type of call to method Illuminate\\Support\\Collection\<int,array\<string, mixed\>\>\:\:values\(\) contains unresolvable type\.$#'
-			identifier: method.unresolvableReturnType
-			count: 1
-			path: app/Repositories/Crawler/ContactQueryRepository.php
-
-		-
-			message: '#^Method App\\Repositories\\Crawler\\CrawlRunQueryRepository\:\:listForContacts\(\) has parameter \$statuses with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/Crawler/CrawlRunQueryRepository.php
-
-		-
-			message: '#^Method App\\Repositories\\Crawler\\CrawlRunQueryRepository\:\:paginateQuery\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Repositories/Crawler/CrawlRunQueryRepository.php
-
-		-
-			message: '#^Method App\\Repositories\\Crawler\\CrawlRunQueryRepository\:\:paginateQuery\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Repositories/Crawler/CrawlRunQueryRepository.php
-
-		-
-			message: '#^Method App\\Repositories\\Crawler\\CrawlTargetQueryRepository\:\:groupedByRunIds\(\) should return Illuminate\\Support\\Collection\<int, Illuminate\\Support\\Collection\<int, Modules\\Crawler\\Models\\CrawlTarget\>\> but returns Illuminate\\Database\\Eloquent\\Collection\<\(int\|string\), Illuminate\\Database\\Eloquent\\Collection\<int, Modules\\Crawler\\Models\\CrawlTarget\>\>\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Repositories/Crawler/CrawlTargetQueryRepository.php
-
-		-
-			message: '#^Method App\\Repositories\\Crawler\\PhotoQueryRepository\:\:ownerCountSubquery\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Repositories/Crawler/PhotoQueryRepository.php
-
-		-
-			message: '#^Method App\\Repositories\\Crawler\\PhotoQueryRepository\:\:photosetAndGalleryMemberships\(\) return type with generic class Illuminate\\Support\\Collection does not specify its types\: TKey, TValue$#'
-			identifier: missingType.generics
-			count: 2
-			path: app/Repositories/Crawler/PhotoQueryRepository.php
-
-		-
-			message: '#^Method App\\Repositories\\Crawler\\PhotoQueryRepository\:\:updateRawPayload\(\) has parameter \$rawPayload with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/Crawler/PhotoQueryRepository.php
 
 		-
 			message: '#^Method Modules\\Storage\\Repositories\\StorageAccountRepository\:\:findById\(\) should return Modules\\Storage\\Models\\StorageAccount\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
@@ -373,266 +199,6 @@ parameters:
 			path: Modules/Storage/app/Repositories/StorageUploadRepository.php
 
 		-
-			message: '#^Method Modules\\Transfer\\Repositories\\StoredFileRepository\:\:completedOriginalCountSubquery\(\) should return Illuminate\\Database\\Eloquent\\Builder\<Modules\\Transfer\\Models\\StoredFile\> but returns Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\.$#'
-			identifier: return.type
-			count: 1
-			path: Modules/Transfer/app/Repositories/StoredFileRepository.php
-
-
-		-
-			message: '#^Method Modules\\Transfer\\Repositories\\StoredFileRepository\:\:originalsForOwners\(\) should return Illuminate\\Support\\Collection\<int, Modules\\Transfer\\Models\\StoredFile\> but returns Illuminate\\Database\\Eloquent\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\>\.$#'
-			identifier: return.type
-			count: 1
-			path: Modules/Transfer/app/Repositories/StoredFileRepository.php
-
-		-
-			message: '#^Method Modules\\Transfer\\Repositories\\TransferBatchRepository\:\:createDownloadBatch\(\) should return Modules\\Transfer\\Models\\TransferBatch but returns Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: return.type
-			count: 1
-			path: Modules/Transfer/app/Repositories/TransferBatchRepository.php
-
-		-
-			message: '#^Method Modules\\Transfer\\Repositories\\TransferBatchRepository\:\:createUploadBatch\(\) should return Modules\\Transfer\\Models\\TransferBatch but returns Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: return.type
-			count: 1
-			path: Modules/Transfer/app/Repositories/TransferBatchRepository.php
-
-		-
-			message: '#^Method Modules\\Transfer\\Repositories\\TransferBatchRepository\:\:findById\(\) should return Modules\\Transfer\\Models\\TransferBatch\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
-			identifier: return.type
-			count: 1
-			path: Modules/Transfer/app/Repositories/TransferBatchRepository.php
-
-		-
-			message: '#^Method Modules\\Transfer\\Repositories\\TransferBatchRepository\:\:lockById\(\) should return Modules\\Transfer\\Models\\TransferBatch\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
-			identifier: return.type
-			count: 1
-			path: Modules/Transfer/app/Repositories/TransferBatchRepository.php
-
-		-
-			message: '#^Method Modules\\Transfer\\Repositories\\TransferBatchRepository\:\:queryForConnection\(\) should return Illuminate\\Database\\Eloquent\\Builder\<Modules\\Transfer\\Models\\TransferBatch\> but returns Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\.$#'
-			identifier: return.type
-			count: 1
-			path: Modules/Transfer/app/Repositories/TransferBatchRepository.php
-
-		-
-			message: '#^Method Modules\\Transfer\\Repositories\\TransferBatchRepository\:\:runningDownloadsForSubjects\(\) should return Illuminate\\Support\\Collection\<int, Modules\\Transfer\\Models\\TransferBatch\> but returns Illuminate\\Database\\Eloquent\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\>\.$#'
-			identifier: return.type
-			count: 1
-			path: Modules/Transfer/app/Repositories/TransferBatchRepository.php
-
-		-
-			message: '#^Method Modules\\Transfer\\Repositories\\TransferItemRepository\:\:createPending\(\) should return Modules\\Transfer\\Models\\TransferItem but returns Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: return.type
-			count: 1
-			path: Modules/Transfer/app/Repositories/TransferItemRepository.php
-
-		-
-			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<Modules\\Crawler\\Models\\CrawlRun\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: Modules/Flickr/app/Services/CrawlStatusQueryService.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\CrawlRun\:\:\$api_calls\.$#'
-			identifier: property.notFound
-			count: 1
-			path: Modules/Operations/app/Services/DashboardService.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\CrawlRun\:\:\$completed_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: Modules/Operations/app/Services/DashboardService.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\CrawlRun\:\:\$contacts_discovered\.$#'
-			identifier: property.notFound
-			count: 1
-			path: Modules/Operations/app/Services/DashboardService.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\CrawlRun\:\:\$failed_reason\.$#'
-			identifier: property.notFound
-			count: 1
-			path: Modules/Operations/app/Services/DashboardService.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\CrawlRun\:\:\$photos_discovered\.$#'
-			identifier: property.notFound
-			count: 1
-			path: Modules/Operations/app/Services/DashboardService.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\CrawlRun\:\:\$started_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: Modules/Operations/app/Services/DashboardService.php
-
-		-
-			message: '#^Parameter \#1 \$array of function array_reduce contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: Modules/Operations/app/Services/DashboardService.php
-
-		-
-			message: '#^Parameter \#2 \$callback of function array_reduce contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: Modules/Operations/app/Services/DashboardService.php
-
-		-
-			message: '#^Parameter \#3 \$callback of static method Illuminate\\Cache\\Repository\:\:remember\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: Modules/Operations/app/Services/DashboardService.php
-
-		-
-			message: '#^Return type of call to static method Illuminate\\Cache\\Repository\:\:remember\(\) contains unresolvable type\.$#'
-			identifier: staticMethod.unresolvableReturnType
-			count: 1
-			path: Modules/Operations/app/Services/DashboardService.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\CrawlRun\:\:\$photos_discovered\.$#'
-			identifier: property.notFound
-			count: 1
-			path: Modules/Contacts/app/Services/ContactCatalogDetailStatsService.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\CrawlTarget\:\:\$last_result_count\.$#'
-			identifier: property.notFound
-			count: 1
-			path: Modules/Contacts/app/Services/ContactCrawlStateService.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$nsid\.$#'
-			identifier: property.notFound
-			count: 6
-			path: Modules/Contacts/app/Services/ContactListPresenter.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$realname\.$#'
-			identifier: property.notFound
-			count: 1
-			path: Modules/Contacts/app/Services/ContactListPresenter.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$username\.$#'
-			identifier: property.notFound
-			count: 1
-			path: Modules/Contacts/app/Services/ContactListPresenter.php
-
-		-
-			message: '#^Method Modules\\Contacts\\Services\\ContactListQueryService\:\:paginateForConnection\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
-			identifier: missingType.generics
-			count: 1
-			path: Modules/Contacts/app/Services/ContactListQueryService.php
-
-		-
-			message: '#^Method Modules\\Contacts\\Services\\ContactListQueryService\:\:suggest\(\) should return Illuminate\\Support\\Collection\<int, array\{nsid\: string, username\: string\|null, realname\: string\|null\}\> but returns Illuminate\\Support\\Collection\<int, array\{nsid\: string, username\: string\|null, realname\: string\|null\}\>\.$#'
-			identifier: return.type
-			count: 1
-			path: Modules/Contacts/app/Services/ContactListQueryService.php
-
-		-
-			message: '#^Match arm comparison between ''downloads_count'' and ''downloads_count'' is always true\.$#'
-			identifier: match.alwaysTrue
-			count: 1
-			path: Modules/Contacts/app/Services/ContactListSorter.php
-
-		-
-			message: '#^Parameter \#3 \$countQuery of method Modules\\Contacts\\Services\\ContactListSorter\:\:orderBySubqueryCount\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<Modules\\Transfer\\Models\\StoredFile\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: Modules/Contacts/app/Services/ContactListSorter.php
-
-		-
-			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
-			identifier: larastan.noEnvCallsOutsideOfConfig
-			count: 1
-			path: Modules/Flickr/app/Services/FlickrAppProfileService.php
-
-		-
-			message: '#^Method Modules\\Flickr\\Services\\FlickrAppProfileService\:\:listPublic\(\) should return Illuminate\\Support\\Collection\<int, array\{profile\: string, label\: string\|null, api_key_hint\: string, callback_url\: string\|null, accounts_count\: int\}\> but returns Illuminate\\Support\\Collection\<int, array\{profile\: string, label\: string\|null, api_key_hint\: string, callback_url\: string, accounts_count\: int\}\>\.$#'
-			identifier: return.type
-			count: 1
-			path: Modules/Flickr/app/Services/FlickrAppProfileService.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Photo\:\:\$flickr_photo_id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: Modules/Flickr/app/Services/FlickrPhotoSizeResolver.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Photo\:\:\$raw_payload\.$#'
-			identifier: property.notFound
-			count: 2
-			path: Modules/Flickr/app/Services/FlickrPhotoSizeResolver.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Photo\:\:\$raw_payload\.$#'
-			identifier: property.notFound
-			count: 2
-			path: Modules/Transfer/app/Services/PhotoDownloadExecutionService.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Photo\:\:\$flickr_photo_id\.$#'
-			identifier: property.notFound
-			count: 3
-			path: Modules/Transfer/app/Services/PhotoDownloadService.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Photo\:\:\$owner_nsid\.$#'
-			identifier: property.notFound
-			count: 4
-			path: Modules/Transfer/app/Services/PhotoDownloadService.php
-
-		-
-			message: '#^Parameter \#1 \$array of function array_values contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: Modules/Transfer/app/Services/PhotoDownloadService.php
-
-		-
-			message: '#^Parameter \#1 \$array of function uasort contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: Modules/Transfer/app/Services/PhotoDownloadService.php
-
-		-
-			message: '#^Parameter \#2 \$callback of function uasort contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: Modules/Transfer/app/Services/PhotoDownloadService.php
-
-		-
-			message: '#^Return type of call to function array_values contains unresolvable type\.$#'
-			identifier: function.unresolvableReturnType
-			count: 1
-			path: Modules/Transfer/app/Services/PhotoDownloadService.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Photo\:\:\$flickr_photo_id\.$#'
-			identifier: property.notFound
-			count: 3
-			path: Modules/Transfer/app/Services/PhotoUploadService.php
-
-		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Photo\:\:\$owner_nsid\.$#'
-			identifier: property.notFound
-			count: 4
-			path: Modules/Transfer/app/Services/PhotoUploadService.php
-
-
-		-
-			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: Modules/Storage/app/Services/GooglePhotos/ConnectionVerifier.php
-
-		-
 			message: '#^Method Modules\\Storage\\Services\\OAuth\\MicrosoftProvider\:\:mapUserToObject\(\) has parameter \$user with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -645,80 +211,14 @@ parameters:
 			path: Modules/Storage/app/Services/OAuth/MicrosoftProvider.php
 
 		-
-			message: '#^Offset ''client_id'' does not exist on array\{\}\|string\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: Modules/Storage/app/Services/StorageAccountService.php
-
-		-
-			message: '#^Offset ''client_secret'' does not exist on array\{\}\|string\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: Modules/Storage/app/Services/StorageAccountService.php
-
-		-
-			message: '#^Offset ''refresh_token'' does not exist on array\{\}\|string\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: Modules/Storage/app/Services/StorageAccountService.php
-
-		-
 			message: '#^Method Modules\\Storage\\Services\\StorageAppProfileService\:\:listPublic\(\) should return Illuminate\\Support\\Collection\<int, array\{provider\: string, label\: string, client_id_hint\: string, redirect\: string\|null, accounts_count\: int\}\> but returns Illuminate\\Support\\Collection\<int, array\{provider\: string, label\: string, client_id_hint\: string, redirect\: string, accounts_count\: int\}\>\.$#'
 			identifier: return.type
 			count: 1
 			path: Modules/Storage/app/Services/StorageAppProfileService.php
 
 		-
-			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: Modules/Storage/app/Services/StorageBrowseLocalService.php
-
-		-
-			message: '#^Call to function is_string\(\) with \*NEVER\* will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: Modules/Storage/app/Services/StorageBrowseSyncService.php
-
-		-
-			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: Modules/Storage/app/Services/StorageBrowseSyncService.php
-
-		-
-			message: '#^Empty array passed to foreach\.$#'
-			identifier: foreach.emptyArray
-			count: 1
-			path: Modules/Storage/app/Services/StorageBrowseSyncService.php
-
-		-
-			message: '#^Property Modules\\Storage\\Models\\StorageRemoteSyncState\:\:\$last_synced_at \(string\|null\) does not accept Illuminate\\Support\\Carbon\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: Modules/Storage/app/Services/StorageBrowseSyncService.php
-
-		-
-			message: '#^Property Modules\\Storage\\Models\\StorageRemoteSyncState\:\:\$reconcile_seen_remote_ids \(string\|null\) does not accept list\<string\>\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: Modules/Storage/app/Services/StorageBrowseSyncService.php
-
-		-
-			message: '#^Strict comparison using \!\=\= between array\{\} and array\{\} will always evaluate to false\.$#'
-			identifier: notIdentical.alwaysFalse
-			count: 1
-			path: Modules/Storage/app/Services/StorageBrowseSyncService.php
-
-		-
 			message: '#^Strict comparison using \!\=\= between mixed and null will always evaluate to true\.$#'
 			identifier: notIdentical.alwaysTrue
-			count: 1
-			path: Modules/Storage/app/Services/StorageBrowseSyncService.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between \*NEVER\* and '''' will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
 			count: 1
 			path: Modules/Storage/app/Services/StorageBrowseSyncService.php
 
@@ -771,6 +271,84 @@ parameters:
 			path: Modules/Storage/app/Services/StorageSettingsService.php
 
 		-
+			message: '#^Method Modules\\Transfer\\Models\\StoredFile\:\:uploads\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: Modules/Transfer/app/Models/StoredFile.php
+
+		-
+			message: '#^Method Modules\\Transfer\\Models\\TransferBatch\:\:items\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: Modules/Transfer/app/Models/TransferBatch.php
+
+		-
+			message: '#^Method Modules\\Transfer\\Models\\TransferBatch\:\:storageAccount\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: Modules/Transfer/app/Models/TransferBatch.php
+
+		-
+			message: '#^Method Modules\\Transfer\\Models\\TransferItem\:\:batch\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: Modules/Transfer/app/Models/TransferItem.php
+
+		-
+			message: '#^Method Modules\\Transfer\\Repositories\\StoredFileRepository\:\:completedOriginalCountSubquery\(\) should return Illuminate\\Database\\Eloquent\\Builder\<Modules\\Transfer\\Models\\StoredFile\> but returns Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\.$#'
+			identifier: return.type
+			count: 1
+			path: Modules/Transfer/app/Repositories/StoredFileRepository.php
+
+		-
+			message: '#^Method Modules\\Transfer\\Repositories\\StoredFileRepository\:\:originalsForOwners\(\) should return Illuminate\\Support\\Collection\<int, Modules\\Transfer\\Models\\StoredFile\> but returns Illuminate\\Database\\Eloquent\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\>\.$#'
+			identifier: return.type
+			count: 1
+			path: Modules/Transfer/app/Repositories/StoredFileRepository.php
+
+		-
+			message: '#^Method Modules\\Transfer\\Repositories\\TransferBatchRepository\:\:createDownloadBatch\(\) should return Modules\\Transfer\\Models\\TransferBatch but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: Modules/Transfer/app/Repositories/TransferBatchRepository.php
+
+		-
+			message: '#^Method Modules\\Transfer\\Repositories\\TransferBatchRepository\:\:createUploadBatch\(\) should return Modules\\Transfer\\Models\\TransferBatch but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: Modules/Transfer/app/Repositories/TransferBatchRepository.php
+
+		-
+			message: '#^Method Modules\\Transfer\\Repositories\\TransferBatchRepository\:\:findById\(\) should return Modules\\Transfer\\Models\\TransferBatch\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: Modules/Transfer/app/Repositories/TransferBatchRepository.php
+
+		-
+			message: '#^Method Modules\\Transfer\\Repositories\\TransferBatchRepository\:\:lockById\(\) should return Modules\\Transfer\\Models\\TransferBatch\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: Modules/Transfer/app/Repositories/TransferBatchRepository.php
+
+		-
+			message: '#^Method Modules\\Transfer\\Repositories\\TransferBatchRepository\:\:queryForConnection\(\) should return Illuminate\\Database\\Eloquent\\Builder\<Modules\\Transfer\\Models\\TransferBatch\> but returns Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\.$#'
+			identifier: return.type
+			count: 1
+			path: Modules/Transfer/app/Repositories/TransferBatchRepository.php
+
+		-
+			message: '#^Method Modules\\Transfer\\Repositories\\TransferBatchRepository\:\:runningDownloadsForSubjects\(\) should return Illuminate\\Support\\Collection\<int, Modules\\Transfer\\Models\\TransferBatch\> but returns Illuminate\\Database\\Eloquent\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\>\.$#'
+			identifier: return.type
+			count: 1
+			path: Modules/Transfer/app/Repositories/TransferBatchRepository.php
+
+		-
+			message: '#^Method Modules\\Transfer\\Repositories\\TransferItemRepository\:\:createPending\(\) should return Modules\\Transfer\\Models\\TransferItem but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: Modules/Transfer/app/Repositories/TransferItemRepository.php
+
+		-
 			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: non\-empty\-array, Closure\(Modules\\Transfer\\Models\\TransferBatch\)\: non\-empty\-array given\.$#'
 			identifier: argument.type
 			count: 1
@@ -783,55 +361,139 @@ parameters:
 			path: Modules/Transfer/app/Services/TransferProgressQueryService.php
 
 		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Gallery\:\:\$raw_payload\.$#'
-			identifier: property.notFound
+			message: '#^Method App\\Repositories\\Crawler\\ApiLogQueryRepository\:\:hourlyCountsForConnection\(\) should return Illuminate\\Support\\Collection\<int, object\{hour_start\: string, requests\: int\}\> but returns Illuminate\\Support\\Collection\<int, object\{hour_start\: string, requests\: int\}&stdClass\>\.$#'
+			identifier: return.type
 			count: 1
-			path: Modules/Catalog/app/Support/CollectionCatalogPresenter.php
+			path: app/Repositories/Crawler/ApiLogQueryRepository.php
 
 		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Photoset\:\:\$raw_payload\.$#'
-			identifier: property.notFound
+			message: '#^Method App\\Repositories\\Crawler\\ApiLogQueryRepository\:\:paginateForConnection\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
 			count: 1
-			path: Modules/Catalog/app/Support/CollectionCatalogPresenter.php
+			path: app/Repositories/Crawler/ApiLogQueryRepository.php
 
 		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$family\.$#'
-			identifier: property.notFound
+			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:favoriteCountSubquery\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
 			count: 1
-			path: Modules/Flickr/app/Support/ContactPresenter.php
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
 
 		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$friend\.$#'
-			identifier: property.notFound
+			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:galleryCountSubquery\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
 			count: 1
-			path: Modules/Flickr/app/Support/ContactPresenter.php
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
 
 		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$nsid\.$#'
-			identifier: property.notFound
+			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:paginateFavorites\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
 			count: 1
-			path: Modules/Flickr/app/Support/ContactPresenter.php
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
 
 		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$raw_payload\.$#'
-			identifier: property.notFound
+			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:paginateGalleries\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
 			count: 1
-			path: Modules/Flickr/app/Support/ContactPresenter.php
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
 
 		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$realname\.$#'
-			identifier: property.notFound
+			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:paginatePhotos\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
 			count: 1
-			path: Modules/Flickr/app/Support/ContactPresenter.php
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
 
 		-
-			message: '#^Access to an undefined property Modules\\Crawler\\Models\\Contact\:\:\$username\.$#'
-			identifier: property.notFound
+			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:paginatePhotosets\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
 			count: 1
-			path: Modules/Flickr/app/Support/ContactPresenter.php
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
 
 		-
-			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
-			identifier: method.nonObject
+			message: '#^Method App\\Repositories\\Crawler\\CatalogQueryRepository\:\:photosetCountSubquery\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
 			count: 1
-			path: Modules/Storage/app/Support/StorageAccountPresenter.php
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$ownerNsids$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
+
+		-
+			message: '#^PHPDoc tag @return with type array\<string, int\> is incompatible with native type int\.$#'
+			identifier: return.phpDocType
+			count: 1
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
+
+		-
+			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<Modules\\Crawler\\Models\\Favorite\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
+
+		-
+			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<Modules\\Crawler\\Models\\Gallery\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
+
+		-
+			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<Modules\\Crawler\\Models\\Photo\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
+
+		-
+			message: '#^Parameter \#1 \$query of method App\\Support\\Query\\QuerySorter\:\:apply\(\) expects Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Builder\<Modules\\Crawler\\Models\\Photoset\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Repositories/Crawler/CatalogQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\ContactQueryRepository\:\:suggestForConnection\(\) should return Illuminate\\Support\\Collection\<int, array\{nsid\: string, username\: string\|null, realname\: string\|null\}\> but returns Illuminate\\Support\\Collection\<int, array\{nsid\: string, username\: string\|null, realname\: string\|null\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/Crawler/ContactQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\CrawlRunQueryRepository\:\:listForContacts\(\) has parameter \$statuses with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/Crawler/CrawlRunQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\CrawlRunQueryRepository\:\:paginateQuery\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/Crawler/CrawlRunQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\CrawlRunQueryRepository\:\:paginateQuery\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/Crawler/CrawlRunQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\CrawlTargetQueryRepository\:\:groupedByRunIds\(\) should return Illuminate\\Support\\Collection\<int, Illuminate\\Support\\Collection\<int, Modules\\Crawler\\Models\\CrawlTarget\>\> but returns Illuminate\\Database\\Eloquent\\Collection\<\(int\|string\), Illuminate\\Database\\Eloquent\\Collection\<int, Modules\\Crawler\\Models\\CrawlTarget\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/Crawler/CrawlTargetQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\PhotoQueryRepository\:\:ownerCountSubquery\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/Crawler/PhotoQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\PhotoQueryRepository\:\:photosetAndGalleryMemberships\(\) return type with generic class Illuminate\\Support\\Collection does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 2
+			path: app/Repositories/Crawler/PhotoQueryRepository.php
+
+		-
+			message: '#^Method App\\Repositories\\Crawler\\PhotoQueryRepository\:\:updateRawPayload\(\) has parameter \$rawPayload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/Crawler/PhotoQueryRepository.php

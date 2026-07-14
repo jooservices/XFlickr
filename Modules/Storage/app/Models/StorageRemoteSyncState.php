@@ -7,8 +7,22 @@ namespace Modules\Storage\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Modules\Storage\Database\Factories\StorageRemoteSyncStateFactory;
 
+/**
+ * @property int $id
+ * @property int $storage_account_id
+ * @property string|null $parent_remote_id
+ * @property string|null $album_page_token
+ * @property string|null $item_page_token
+ * @property bool $albums_complete
+ * @property bool $items_complete
+ * @property bool $reconciling
+ * @property array<string, mixed>|null $reconcile_snapshot
+ * @property list<string>|null $reconcile_seen_remote_ids
+ * @property Carbon|null $last_synced_at
+ */
 final class StorageRemoteSyncState extends Model
 {
     /** @use HasFactory<StorageRemoteSyncStateFactory> */

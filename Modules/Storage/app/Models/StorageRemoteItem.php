@@ -7,8 +7,22 @@ namespace Modules\Storage\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Modules\Storage\Database\Factories\StorageRemoteItemFactory;
 
+/**
+ * @property int $id
+ * @property int $storage_account_id
+ * @property string|null $parent_remote_id
+ * @property string $remote_id
+ * @property string $name
+ * @property string|null $mime_type
+ * @property string|null $thumbnail_url
+ * @property int|null $size
+ * @property Carbon|null $modified_at
+ * @property string|null $web_url
+ * @property Carbon|null $synced_at
+ */
 final class StorageRemoteItem extends Model
 {
     /** @use HasFactory<StorageRemoteItemFactory> */
