@@ -46,6 +46,18 @@ Enforced by `Tests\Unit\Architecture\ModuleDependencyDirectionTest` (`ALLOWED` +
 
 Edge cleanups (A4): `DownloadCandidateDto` → Flickr; `OAuthAppConfigDto` → `App\Dto`; `ConcurrentRunGuard`; download/upload queue controllers → Contacts. Residual known violation: `Storage→Transfer` (model relation).
 
+## Module service facades (A6)
+
+Peer modules must not import focused services from Flickr, Storage, or Contacts. Use the single facade per module:
+
+| Module | Facade | Peer import path |
+|--------|--------|------------------|
+| Flickr | `FlickrAccountsService` | `Modules\Flickr\Services\FlickrAccountsService` |
+| Storage | `StorageService` | `Modules\Storage\Services\StorageService` |
+| Contacts | `ContactsService` | `Modules\Contacts\Services\ContactsService` |
+
+Dto, Enums, Events, Contracts, Exceptions, Support, and Models remain direct imports. Internal controllers/services within each module may still use focused services. Enforced by `Tests\Unit\Architecture\ModuleFacadeImportTest`.
+
 ## Bridge: connection_key
 
 Connected Flickr accounts bridge to the crawler via `connection_key` (typically the account NSID). Public IDs and presenters live under `Modules/Flickr/Support`.

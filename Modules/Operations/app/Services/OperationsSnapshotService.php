@@ -6,9 +6,7 @@ namespace Modules\Operations\Services;
 
 use App\Repositories\Crawler\CrawlRunQueryRepository;
 use App\Repositories\Crawler\CrawlTargetQueryRepository;
-use Modules\Flickr\Services\CrawlStatusQueryService;
-use Modules\Flickr\Services\FlickrOAuthService;
-use Modules\Flickr\Services\RateLimit\Presenter;
+use Modules\Flickr\Services\FlickrAccountsService;
 use Modules\Flickr\Support\ConnectionPresenter;
 use Modules\Transfer\Services\TransferCountsQueryService;
 use Modules\Transfer\Services\TransferProgressQueryService;
@@ -20,13 +18,11 @@ final class OperationsSnapshotService
     private const int TRANSFER_BATCHES_PER_CONNECTION = 20;
 
     public function __construct(
-        private readonly FlickrOAuthService $oauth,
-        private readonly CrawlStatusQueryService $crawlStatus,
+        private readonly FlickrAccountsService $flickr,
         private readonly TransferProgressQueryService $transferProgress,
         private readonly TransferCountsQueryService $transferCounts,
         private readonly CrawlRunQueryRepository $crawlRuns,
         private readonly CrawlTargetQueryRepository $crawlTargets,
-        private readonly Presenter $rateLimit,
         private readonly DatabaseUsageService $databases,
         private readonly ServicesDependencyProbeService $dependencies,
     ) {}
@@ -48,7 +44,7 @@ final class OperationsSnapshotService
      */
     public function snapshot(): array
     {
-        $connections = $this->oauth->listConnections();
+        $connections = $this->flickr->listConnections();
         $connectionKeys = $connections->map(fn ($connection) => $connection->connection_key)->values()->all();
         $since = now()->subDay();
 
@@ -62,7 +58,7 @@ final class OperationsSnapshotService
 
         foreach ($connections as $connection) {
             $key = (string) $connection->connection_key;
-            $rateLimit = $this->rateLimit->present($key);
+            $rateLimit = $this->flickr->rateLimitPresent($key);
             $pending = $pendingByConnection[$key] ?? 0;
 
             if ((int) ($rateLimit['cooldown_seconds_remaining'] ?? 0) > 0) {
@@ -78,7 +74,7 @@ final class OperationsSnapshotService
                 'rate_limit' => $rateLimit,
             ];
 
-            $runs = $this->crawlStatus->runs(
+            $runs = $this->flickr->crawlStatusRuns(
                 $connection,
                 'id',
                 'desc',

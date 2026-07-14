@@ -10,7 +10,7 @@ use Modules\Crawler\Events\ContactsCrawlCompleted;
 use Modules\Crawler\Models\Connection;
 use Modules\Crawler\Support\XFlickrConfig;
 use Modules\Flickr\Exceptions\GlobalCrawlPauseException;
-use Modules\Flickr\Services\FlickrCrawlService;
+use Modules\Flickr\Services\FlickrAccountsService;
 use Modules\Spider\Contracts\ConcurrentRunGuard;
 use Modules\Spider\Enums\SpiderFrontierStatus;
 use Modules\Spider\Enums\SpiderRunStatus;
@@ -27,7 +27,7 @@ final class SpiderPlannerService
         private readonly SpiderRunRepository $runs,
         private readonly SpiderFrontierRepository $frontier,
         private readonly ConcurrentRunGuard $fullPassGuard,
-        private readonly FlickrCrawlService $crawls,
+        private readonly FlickrAccountsService $crawls,
         private readonly SpiderRuntimeConfig $spiderConfig,
         private readonly FrontierExpansion $frontierExpansion,
     ) {}

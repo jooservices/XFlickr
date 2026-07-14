@@ -8,18 +8,18 @@ use App\Support\Observability\AdminActionLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\ValidationException;
 use Modules\Crawler\Exceptions\FlickrAppNotConfiguredException;
-use Modules\Flickr\Services\FlickrAppProfileService;
+use Modules\Flickr\Services\FlickrAccountsService;
 use Modules\Settings\Http\Requests\DestroyFlickrAppProfileRequest;
 use Modules\Settings\Http\Requests\StoreFlickrAppProfileRequest;
 
 final class FlickrAppProfileController
 {
-    public function store(StoreFlickrAppProfileRequest $request, FlickrAppProfileService $profiles, AdminActionLogger $audit): RedirectResponse
+    public function store(StoreFlickrAppProfileRequest $request, FlickrAccountsService $profiles, AdminActionLogger $audit): RedirectResponse
     {
         $validated = $request->validated();
 
         try {
-            $profiles->save($validated);
+            $profiles->saveAppProfile($validated);
         } catch (FlickrAppNotConfiguredException $exception) {
             throw ValidationException::withMessages([
                 'profile' => $exception->getMessage(),
@@ -35,10 +35,10 @@ final class FlickrAppProfileController
             ->with('success', 'Flickr app credentials saved.');
     }
 
-    public function destroy(DestroyFlickrAppProfileRequest $request, FlickrAppProfileService $profiles, AdminActionLogger $audit): RedirectResponse
+    public function destroy(DestroyFlickrAppProfileRequest $request, FlickrAccountsService $profiles, AdminActionLogger $audit): RedirectResponse
     {
         try {
-            $profile = $profiles->delete($request->profile());
+            $profile = $profiles->deleteAppProfile($request->profile());
         } catch (ValidationException $exception) {
             $message = collect($exception->errors())->flatten()->first();
 

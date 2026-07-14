@@ -8,12 +8,12 @@ use Modules\Crawler\Enums\CrawlRunStatus;
 use Modules\Crawler\Enums\CrawlType;
 use Modules\Crawler\Models\Connection;
 use Modules\Crawler\Models\CrawlRun;
-use Modules\Flickr\Services\FlickrCrawlService;
+use Modules\Flickr\Services\FlickrAccountsService;
 
 final class ContactGraphExpandService
 {
     public function __construct(
-        private readonly FlickrCrawlService $crawls,
+        private readonly FlickrAccountsService $crawls,
     ) {}
 
     /**

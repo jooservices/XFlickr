@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Modules\Contacts\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
-use Modules\Flickr\Services\FlickrOAuthService;
+use Modules\Flickr\Services\FlickrAccountsService;
 
 final class ContactsController
 {
-    public function index(FlickrOAuthService $oauth): RedirectResponse
+    public function index(FlickrAccountsService $oauth): RedirectResponse
     {
         $connection = $oauth->activeConnection();
         if ($connection === null) {

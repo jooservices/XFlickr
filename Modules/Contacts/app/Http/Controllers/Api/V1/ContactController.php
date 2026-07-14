@@ -17,7 +17,7 @@ use Modules\Contacts\Services\ContactListQueryService;
 use Modules\Crawler\Models\Connection;
 use Modules\Flickr\Exceptions\FlickrTokenInvalidException;
 use Modules\Flickr\Exceptions\GlobalCrawlPauseException;
-use Modules\Flickr\Services\FlickrCrawlService;
+use Modules\Flickr\Services\FlickrAccountsService;
 
 final class ContactController extends BaseApiController
 {
@@ -58,7 +58,7 @@ final class ContactController extends BaseApiController
         CrawlFlickrContactRequest $request,
         Connection $connection,
         string $contactNsid,
-        FlickrCrawlService $crawlService,
+        FlickrAccountsService $crawlService,
     ): JsonResponse {
         try {
             $crawlService->crawlMany($connection, $request->crawlTypes(), $contactNsid);

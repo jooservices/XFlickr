@@ -10,8 +10,7 @@ use App\Repositories\Crawler\CrawlRunQueryRepository;
 use App\Repositories\Crawler\CrawlTargetQueryRepository;
 use App\Repositories\Crawler\PhotoQueryRepository;
 use Illuminate\Support\Facades\Cache;
-use Modules\Flickr\Services\FlickrOAuthService;
-use Modules\Flickr\Services\RateLimit\Presenter;
+use Modules\Flickr\Services\FlickrAccountsService;
 use Modules\Flickr\Support\ConnectionPresenter;
 use Modules\Transfer\Services\TransferCountsQueryService;
 
@@ -24,8 +23,7 @@ final class DashboardService
         private readonly CrawlTargetQueryRepository $crawlTargets,
         private readonly PhotoQueryRepository $photos,
         private readonly TransferCountsQueryService $transferCounts,
-        private readonly FlickrOAuthService $oauth,
-        private readonly Presenter $rateLimit,
+        private readonly FlickrAccountsService $flickr,
         private readonly DatabaseUsageService $databases,
     ) {}
 
@@ -35,7 +33,7 @@ final class DashboardService
     public function snapshot(): array
     {
         return Cache::remember('xflickr:dashboard:snapshot', 15, function (): array {
-            $connections = $this->oauth->listConnections();
+            $connections = $this->flickr->listConnections();
             $connectionKeys = $connections->map(fn ($connection) => $connection->connection_key)->values()->all();
 
             $since = now()->subDay();
@@ -70,7 +68,7 @@ final class DashboardService
 
                 $perAccount[] = [
                     'account' => ConnectionPresenter::toArray($connection),
-                    'rate_limit' => $this->rateLimit->present($key),
+                    'rate_limit' => $this->flickr->rateLimitPresent($key),
                     'runs' => $runStatusByConnection[$key] ?? ['running' => 0, 'completed' => 0, 'failed' => 0],
                     'pending_targets' => $pendingTargetsByConnection[$key] ?? 0,
                     'contacts_db' => $contactsByConnection[$key] ?? 0,

@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Modules\Crawler\Models\Photo as CrawlerPhoto;
-use Modules\Flickr\Services\FlickrPhotoSizeResolver;
+use Modules\Flickr\Services\FlickrAccountsService;
 use Modules\Flickr\Support\FlickrPhotoUrlHelper;
 use Modules\Transfer\Enums\PhotoTransferExecutionOutcome;
 use Modules\Transfer\Enums\StoredFileStatus;
@@ -23,7 +23,7 @@ use RuntimeException;
 final class PhotoDownloadExecutionService
 {
     public function __construct(
-        private readonly FlickrPhotoSizeResolver $resolver,
+        private readonly FlickrAccountsService $flickr,
         private readonly TransferBatchReconciler $batchReconciler,
         private readonly ConnectionQueryRepository $connections,
         private readonly PhotoQueryRepository $photos,
@@ -69,7 +69,7 @@ final class PhotoDownloadExecutionService
             $this->storedFiles->markDownloading($flickrPhotoId);
             $this->updateItemStatus($batchId, $flickrPhotoId, TransferItemStatus::Processing);
 
-            $download = $this->resolver->resolve($flickrPhotoId, $connection);
+            $download = $this->flickr->resolvePhotoSize($flickrPhotoId, $connection);
             $finalPath = $this->finalPathFor($flickrPhotoId, $ownerNsid, $photo, $download->url);
             $partPath = "{$finalPath}.part";
 

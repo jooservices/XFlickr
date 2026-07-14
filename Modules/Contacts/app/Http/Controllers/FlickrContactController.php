@@ -17,7 +17,7 @@ use Modules\Contacts\Services\ContactListSorter;
 use Modules\Crawler\Models\Connection;
 use Modules\Flickr\Exceptions\FlickrTokenInvalidException;
 use Modules\Flickr\Exceptions\GlobalCrawlPauseException;
-use Modules\Flickr\Services\FlickrCrawlService;
+use Modules\Flickr\Services\FlickrAccountsService;
 use Modules\Flickr\Support\ConnectionPresenter;
 
 final class FlickrContactController
@@ -72,7 +72,7 @@ final class FlickrContactController
     public function crawlBulk(
         CrawlFlickrContactBulkRequest $request,
         Connection $connection,
-        FlickrCrawlService $crawlService,
+        FlickrAccountsService $crawlService,
         ContactListQueryService $contactList,
     ): RedirectResponse {
         $contactNsids = $request->wantsSelectAll()
@@ -102,7 +102,7 @@ final class FlickrContactController
         return back()->with('success', "Contact crawl started for {$count} contact(s).");
     }
 
-    public function crawl(CrawlFlickrContactRequest $request, Connection $connection, string $contactNsid, FlickrCrawlService $crawlService): RedirectResponse
+    public function crawl(CrawlFlickrContactRequest $request, Connection $connection, string $contactNsid, FlickrAccountsService $crawlService): RedirectResponse
     {
         try {
             $crawlService->crawlMany($connection, $request->crawlTypes(), $contactNsid);

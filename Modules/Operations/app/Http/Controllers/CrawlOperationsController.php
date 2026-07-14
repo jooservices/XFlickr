@@ -7,12 +7,12 @@ namespace Modules\Operations\Http\Controllers;
 use Illuminate\Routing\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Flickr\Services\FlickrOAuthService;
+use Modules\Flickr\Services\FlickrAccountsService;
 
 final class CrawlOperationsController extends Controller
 {
     public function __construct(
-        private readonly FlickrOAuthService $oauth,
+        private readonly FlickrAccountsService $oauth,
     ) {}
 
     public function index(): Response

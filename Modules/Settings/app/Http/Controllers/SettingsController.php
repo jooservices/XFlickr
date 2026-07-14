@@ -7,18 +7,18 @@ namespace Modules\Settings\Http\Controllers;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Flickr\Services\FlickrOAuthService;
+use Modules\Flickr\Services\FlickrAccountsService;
 use Modules\Settings\Http\Requests\ShowSettingsRequest;
 use Modules\Settings\Services\RuntimeConfigAdminService;
-use Modules\Storage\Services\StorageSettingsService;
+use Modules\Storage\Services\StorageService;
 
 final class SettingsController
 {
     public function index(
         ShowSettingsRequest $request,
-        FlickrOAuthService $flickrOAuth,
+        FlickrAccountsService $flickrOAuth,
         RuntimeConfigAdminService $runtimeConfig,
-        StorageSettingsService $storageSettings,
+        StorageService $storageSettings,
     ): Response|RedirectResponse {
         $tab = $request->tab();
 

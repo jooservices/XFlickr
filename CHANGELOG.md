@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- A6 module facades: peer modules import only `FlickrAccountsService`, `StorageService`, and `ContactsService` from Flickr/Storage/Contacts `Services\` (architecture test `ModuleFacadeImportTest`). Focused services remain for internal module use.
 - Storage/Transfer refactor (A1–A5): removed per-provider `Drivers/` classes (browse/delete services implement contracts directly); moved `StorageBrowseResult`, `StorageStreamResult`, and `TransferQueueResult` into module `Dto` namespaces; grouped provider services under `GooglePhotos/`, `GoogleDrive/`, `OneDrive/`, `R2/`, `Tokens/` and Flickr rate-limit under `RateLimit/`; folded `CrawlOperationsService` into `CrawlOperationsController` and `StorageR2ConnectionVerifier` into `R2\BrowseService::verifyConnection`.
 - Third-party I/O logging via `App\Support\ThirdPartyApiLogger` (StorageApiLogger wraps it). Google Photos `mediaItems:batchCreate` logs `upload_token_present` only; Flickr OAuth / token probe / crawl pause+invalid paths log fingerprints (≤12 hex) never raw secrets (`SECURITY.md`).
 - Password reset logging omits the reset URL/token (email only); `SECURITY.md` documents hashed-at-rest tokens and flash/CLI delivery.
@@ -19,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Module service facades (A6): `FlickrAccountsService`, `StorageService`, `ContactsService` — cross-module entry points for Flickr accounts/crawl/health, storage settings/upload, and contact list queries.
 - Module DAG allowlist test (`ModuleDependencyDirectionTest`: `ALLOWED` + `KNOWN_VIOLATIONS`) for audit A4; target matrix documented in `package-boundaries.md`.
 - Maintenance backlog **N-16**: planned Flickr client layering (`jooservices/flickr` → Crawler `FlickrClientFactory` → peers); see `docs/05-maintenance/flickr-client-factory-layering.md`.
 - Sticky app status footer (copyright + live Flickr API quota + Storage quota meters). Storage quota via `GET /api/v1/storage/quota` (OneDrive / Google Drive when available; Google Photos / R2 marked n/a).

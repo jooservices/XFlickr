@@ -8,13 +8,13 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Catalog\Services\CatalogQueryService;
 use Modules\Crawler\Models\Connection;
-use Modules\Flickr\Services\FlickrOAuthService;
+use Modules\Flickr\Services\FlickrAccountsService;
 use Modules\Flickr\Support\ConnectionPresenter;
 
 final class CatalogController
 {
     public function __construct(
-        private readonly FlickrOAuthService $oauth,
+        private readonly FlickrAccountsService $oauth,
         private readonly CatalogQueryService $catalog,
     ) {}
 

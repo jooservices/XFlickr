@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Modules\Flickr\Support\FlickrPhotoUrlHelper;
 use Modules\Storage\Enums\StorageUploadStatus;
 use Modules\Storage\Repositories\StorageUploadRepository;
-use Modules\Storage\Services\StorageUploadService;
+use Modules\Storage\Services\StorageService;
 use Modules\Transfer\Enums\PhotoTransferExecutionOutcome;
 use Modules\Transfer\Enums\StoredFileStatus;
 use Modules\Transfer\Enums\TransferItemStatus;
@@ -19,7 +19,7 @@ use Modules\Transfer\Repositories\TransferItemRepository;
 final class PhotoUploadExecutionService
 {
     public function __construct(
-        private readonly StorageUploadService $uploadService,
+        private readonly StorageService $storage,
         private readonly TransferBatchReconciler $batchReconciler,
         private readonly StoredFileRepository $storedFiles,
         private readonly StorageUploadRepository $storageUploads,
@@ -58,7 +58,7 @@ final class PhotoUploadExecutionService
 
             $fileOwnerNsid = $storedFile->owner_nsid;
             $extension = FlickrPhotoUrlHelper::resolveExtension((string) $localPath);
-            $remoteMetadata = $this->uploadService->uploadStream(
+            $remoteMetadata = $this->storage->uploadStream(
                 $storageAccountId,
                 Storage::path($localPath),
                 'Flickr/'.$fileOwnerNsid.'/Photos/'.FlickrPhotoUrlHelper::originalNameFor($storedFile->flickr_photo_id, $extension),
