@@ -95,3 +95,10 @@ deptrac:
     # Leaf: engine may not depend on Modules\* / App Http layers (PHPUnit also enforces).
     # Same-layer deps inside Modules\Crawler\app are allowed.
     Crawler: []
+
+  # Module DAG (A4) is enforced by Tests\Unit\Architecture\ModuleDependencyDirectionTest
+  # (ALLOWED + KNOWN_VIOLATIONS). Do not duplicate peer-module layers here — a class would
+  # match both Service and ModuleFlickr collectors and drown the ruleset in noise.
+  # Target allowlist: Auth→[]; Crawler→[]; Flickr→[Crawler]; Spider→[Flickr,Crawler];
+  # Storage→[Crawler]; Transfer→[Flickr,Storage,Crawler]; Contacts→[Flickr,Spider,Transfer,Crawler];
+  # Catalog→[Flickr,Transfer,Crawler]; Settings→[Flickr,Storage,Crawler]; Operations→[*].

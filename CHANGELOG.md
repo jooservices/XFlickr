@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Module DAG allowlist test (`ModuleDependencyDirectionTest`: `ALLOWED` + `KNOWN_VIOLATIONS`) for audit A4; target matrix documented in `package-boundaries.md`.
 - Maintenance backlog **N-16**: planned Flickr client layering (`jooservices/flickr` → Crawler `FlickrClientFactory` → peers); see `docs/05-maintenance/flickr-client-factory-layering.md`.
 - Sticky app status footer (copyright + live Flickr API quota + Storage quota meters). Storage quota via `GET /api/v1/storage/quota` (OneDrive / Google Drive when available; Google Photos / R2 marked n/a).
 - Operations console panels (**Overview** / **Crawl** / **Transfers**): activity metrics, session activity chart, MySQL/Redis/MongoDB dependency probes, databases panel with live 24h chart, per-account quota/pending, richer fetch-run detail, and Open Horizon link. Spider start/stop moved to Flickr account Expand actions.

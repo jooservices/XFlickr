@@ -27,6 +27,25 @@ Per-module **scope / purpose / features:** [Modules catalog](modules.md).
 
 Target: `jooservices/flickr` (SDK) → **Crawler** `FlickrClientFactory` (authenticated true/false) → domain modules via Crawler / Flickr product services. Do **not** put ClientFactory in the Flickr module (would break the Crawler leaf). Tracked as [N-16](../05-maintenance/BACKLOG.md); detail: [flickr-client-factory-layering.md](../05-maintenance/flickr-client-factory-layering.md).
 
+## Module DAG (A4)
+
+Enforced by `Tests\Unit\Architecture\ModuleDependencyDirectionTest` (`ALLOWED` + shrinking `KNOWN_VIOLATIONS`).
+
+| Module | May import |
+|--------|------------|
+| Auth | — |
+| Crawler | — (leaf) |
+| Flickr | Crawler |
+| Spider | Flickr, Crawler |
+| Storage | Crawler |
+| Transfer | Flickr, Storage, Crawler |
+| Contacts | Flickr, Spider, Transfer, Crawler |
+| Catalog | Flickr, Transfer, Crawler |
+| Settings | Flickr, Storage, Crawler |
+| Operations | all modules (aggregator; peers must not import Operations) |
+
+Edge cleanups in progress: `DownloadCandidateDto`, `OAuthAppConfigDto`, `ConcurrentRunGuard`, queue controllers → Contacts (see audit 260713 A4).
+
 ## Bridge: connection_key
 
 Connected Flickr accounts bridge to the crawler via `connection_key` (typically the account NSID). Public IDs and presenters live under `Modules/Flickr/Support`.
