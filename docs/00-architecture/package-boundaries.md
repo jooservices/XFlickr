@@ -44,7 +44,7 @@ Enforced by `Tests\Unit\Architecture\ModuleDependencyDirectionTest` (`ALLOWED` +
 | Settings | Flickr, Storage, Crawler |
 | Operations | all modules (aggregator; peers must not import Operations) |
 
-Edge cleanups (A4): `DownloadCandidateDto` → Flickr; `OAuthAppConfigDto` → `App\Dto`; `ConcurrentRunGuard`; download/upload queue controllers → Contacts. Residual known violation: `Storage→Transfer` (model relation).
+Edge cleanups (A4): `DownloadCandidateDto` → Flickr; `OAuthAppConfigDto` → `App\Dto`; `ConcurrentRunGuard`; download/upload queue controllers → Contacts; `StorageUpload` keeps `stored_file_id` without an Eloquent relation into Transfer (`StoredFile::uploads()` owns the reverse edge).
 
 ## Module service facades (A6)
 

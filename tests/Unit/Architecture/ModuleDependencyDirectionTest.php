@@ -25,8 +25,8 @@ use Tests\TestCase;
  *   Settings → [Flickr, Storage, Crawler]
  *   Operations → [*]
  *
- * KNOWN_VIOLATIONS shrink as edge PRs land (DownloadCandidateDto, OAuthAppConfigDto,
- * ConcurrentRunGuard, queue controllers → Contacts).
+ * KNOWN_VIOLATIONS must stay empty after A4 cleanup (dto moves, ConcurrentRunGuard,
+ * queue controllers → Contacts, StorageUpload FK without Transfer model import).
  */
 final class ModuleDependencyDirectionTest extends TestCase
 {
@@ -51,9 +51,8 @@ final class ModuleDependencyDirectionTest extends TestCase
      *
      * @var list<string>
      */
-    private const KNOWN_VIOLATIONS = [
-        'Storage->Transfer', // model relation; clear later or allowlist intentionally
-    ];
+    /** @var list<string> */
+    private const KNOWN_VIOLATIONS = [];
 
     #[Test]
     public function peer_module_imports_respect_allowlist_or_known_violations(): void
