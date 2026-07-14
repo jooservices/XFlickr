@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Modules\Transfer\Dto;
+namespace Modules\Flickr\Dto;
 
 use JOOservices\Dto\Core\Data;
 

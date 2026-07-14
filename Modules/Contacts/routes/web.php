@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Route;
 use Modules\Contacts\Http\Controllers\ContactFullPassController;
 use Modules\Contacts\Http\Controllers\ContactsController;
 use Modules\Contacts\Http\Controllers\FlickrContactController;
+use Modules\Contacts\Http\Controllers\PhotoDownloadController;
+use Modules\Contacts\Http\Controllers\PhotoUploadController;
 
 Route::middleware('auth')->group(function (): void {
     Route::get('/contacts', [ContactsController::class, 'index'])->name('contacts.index');
@@ -17,4 +19,7 @@ Route::middleware('auth')->group(function (): void {
 
     Route::post('/flickr/accounts/{connection}/full-pass/start', [ContactFullPassController::class, 'start'])->name('flickr.full-pass.start');
     Route::post('/flickr/accounts/{connection}/full-pass/stop', [ContactFullPassController::class, 'stop'])->name('flickr.full-pass.stop');
+
+    Route::post('/flickr/accounts/{connection}/download', [PhotoDownloadController::class, 'store'])->name('flickr.accounts.download');
+    Route::post('/flickr/accounts/{connection}/upload', [PhotoUploadController::class, 'store'])->name('flickr.accounts.upload');
 });

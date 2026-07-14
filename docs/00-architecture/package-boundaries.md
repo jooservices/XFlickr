@@ -44,7 +44,7 @@ Enforced by `Tests\Unit\Architecture\ModuleDependencyDirectionTest` (`ALLOWED` +
 | Settings | Flickr, Storage, Crawler |
 | Operations | all modules (aggregator; peers must not import Operations) |
 
-Edge cleanups in progress: `DownloadCandidateDto`, `OAuthAppConfigDto`, `ConcurrentRunGuard`, queue controllers → Contacts (see audit 260713 A4).
+Edge cleanups (A4): `DownloadCandidateDto` → Flickr; `OAuthAppConfigDto` → `App\Dto`; `ConcurrentRunGuard`; download/upload queue controllers → Contacts. Residual known violation: `Storage→Transfer` (model relation).
 
 ## Bridge: connection_key
 

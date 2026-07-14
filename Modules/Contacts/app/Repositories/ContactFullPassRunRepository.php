@@ -9,9 +9,10 @@ use Jooservices\LaravelRepository\Repositories\EloquentRepository;
 use Jooservices\LaravelRepository\Traits\HasCrud;
 use Jooservices\LaravelRepository\Traits\HasFilter;
 use Modules\Contacts\Models\ContactFullPassRun;
+use Modules\Spider\Contracts\ConcurrentRunGuard;
 use Modules\Spider\Enums\SpiderRunStatus;
 
-final class ContactFullPassRunRepository extends EloquentRepository
+final class ContactFullPassRunRepository extends EloquentRepository implements ConcurrentRunGuard
 {
     use HasCrud;
     use HasFilter;
@@ -19,6 +20,11 @@ final class ContactFullPassRunRepository extends EloquentRepository
     public function __construct(ContactFullPassRun $model)
     {
         parent::__construct($model);
+    }
+
+    public function hasActiveRun(string $connectionKey): bool
+    {
+        return $this->findActiveForConnection($connectionKey) !== null;
     }
 
     public function findActiveForConnection(string $connectionKey): ?ContactFullPassRun

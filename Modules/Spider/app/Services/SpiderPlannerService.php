@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Modules\Spider\Services;
 
 use Illuminate\Support\Facades\DB;
-use Modules\Contacts\Repositories\ContactFullPassRunRepository;
 use Modules\Crawler\Enums\CrawlType;
 use Modules\Crawler\Events\ContactsCrawlCompleted;
 use Modules\Crawler\Models\Connection;
 use Modules\Crawler\Support\XFlickrConfig;
 use Modules\Flickr\Exceptions\GlobalCrawlPauseException;
 use Modules\Flickr\Services\FlickrCrawlService;
+use Modules\Spider\Contracts\ConcurrentRunGuard;
 use Modules\Spider\Enums\SpiderFrontierStatus;
 use Modules\Spider\Enums\SpiderRunStatus;
 use Modules\Spider\Models\SpiderFrontierItem;
@@ -26,7 +26,7 @@ final class SpiderPlannerService
     public function __construct(
         private readonly SpiderRunRepository $runs,
         private readonly SpiderFrontierRepository $frontier,
-        private readonly ContactFullPassRunRepository $fullPassRuns,
+        private readonly ConcurrentRunGuard $fullPassGuard,
         private readonly FlickrCrawlService $crawls,
         private readonly SpiderRuntimeConfig $spiderConfig,
         private readonly FrontierExpansion $frontierExpansion,
@@ -58,7 +58,7 @@ final class SpiderPlannerService
             throw GlobalCrawlPauseException::active();
         }
 
-        if ($this->fullPassRuns->findActiveForConnection($connection->connection_key) !== null) {
+        if ($this->fullPassGuard->hasActiveRun($connection->connection_key)) {
             throw new RuntimeException('A full contact pass is already active for this account. Stop it before starting spider mode.');
         }
 

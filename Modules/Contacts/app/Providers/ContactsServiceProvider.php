@@ -4,10 +4,19 @@ namespace Modules\Contacts\Providers;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Modules\Contacts\Console\Commands\ExpandContactFullPassCommand;
+use Modules\Contacts\Repositories\ContactFullPassRunRepository;
+use Modules\Spider\Contracts\ConcurrentRunGuard;
 use Nwidart\Modules\Support\ModuleServiceProvider;
 
 class ContactsServiceProvider extends ModuleServiceProvider
 {
+    public function register(): void
+    {
+        parent::register();
+
+        $this->app->bind(ConcurrentRunGuard::class, ContactFullPassRunRepository::class);
+    }
+
     /**
      * The name of the module.
      */

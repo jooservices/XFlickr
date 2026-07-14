@@ -52,11 +52,7 @@ final class ModuleDependencyDirectionTest extends TestCase
      * @var list<string>
      */
     private const KNOWN_VIOLATIONS = [
-        'Flickr->Transfer', // A4 PR1: DownloadCandidateDto → Modules/Flickr/Dto
-        'Storage->Settings', // A4 PR2: OAuthAppConfigDto → app/Dto
-        'Spider->Contacts', // A4 PR3: ConcurrentRunGuard
-        'Transfer->Contacts', // A4 PR4: queue controllers → Contacts
-        'Storage->Transfer', // model relation; not in A4 edge PRs — clear later or allowlist
+        'Storage->Transfer', // model relation; clear later or allowlist intentionally
     ];
 
     #[Test]

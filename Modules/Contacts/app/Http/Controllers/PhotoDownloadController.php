@@ -2,23 +2,23 @@
 
 declare(strict_types=1);
 
-namespace Modules\Transfer\Http\Controllers;
+namespace Modules\Contacts\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
+use Modules\Contacts\Http\Requests\QueuePhotoDownloadRequest;
 use Modules\Contacts\Services\ContactListQueryService;
 use Modules\Crawler\Models\Connection;
-use Modules\Transfer\Http\Requests\QueuePhotoUploadRequest;
-use Modules\Transfer\Services\PhotoUploadService;
+use Modules\Transfer\Services\PhotoDownloadService;
 use Modules\Transfer\Services\TransferQueueResult;
 
-final class PhotoUploadController
+final class PhotoDownloadController
 {
     public function __construct(
-        private readonly PhotoUploadService $photoUploadService,
+        private readonly PhotoDownloadService $photoDownloadService,
         private readonly ContactListQueryService $contactList,
     ) {}
 
-    public function store(QueuePhotoUploadRequest $request, Connection $connection): RedirectResponse
+    public function store(QueuePhotoDownloadRequest $request, Connection $connection): RedirectResponse
     {
         if ($request->wantsSelectAll()) {
             $result = $this->queueSelectAll($request, $connection);
@@ -26,9 +26,8 @@ final class PhotoUploadController
             return back()->with($result->flashKey, $result->message);
         }
 
-        $result = $this->photoUploadService->queueFromInput(
+        $result = $this->photoDownloadService->queueFromInput(
             $connection,
-            $request->storageAccountId(),
             $request->singlePhotoId(),
             $request->singleContactNsid(),
             $request->contactNsids(),
@@ -38,14 +37,13 @@ final class PhotoUploadController
         return back()->with($result->flashKey, $result->message);
     }
 
-    private function queueSelectAll(QueuePhotoUploadRequest $request, Connection $connection): TransferQueueResult
+    private function queueSelectAll(QueuePhotoDownloadRequest $request, Connection $connection): TransferQueueResult
     {
         $ownerNsid = $request->bulkOwnerNsid();
 
         if ($ownerNsid !== null) {
-            return $this->photoUploadService->queueFromInput(
+            return $this->photoDownloadService->queueFromInput(
                 $connection,
-                storageAccountId: $request->storageAccountId(),
                 contactNsid: $ownerNsid,
             );
         }
@@ -60,9 +58,8 @@ final class PhotoUploadController
             return TransferQueueResult::error('No contacts matched the current filters.');
         }
 
-        return $this->photoUploadService->queueFromInput(
+        return $this->photoDownloadService->queueFromInput(
             $connection,
-            storageAccountId: $request->storageAccountId(),
             contactNsids: $contactNsids,
         );
     }

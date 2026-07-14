@@ -7,6 +7,8 @@ namespace Tests\Unit\Http\Requests;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Validator;
+use Modules\Contacts\Http\Requests\QueuePhotoDownloadRequest;
+use Modules\Contacts\Http\Requests\QueuePhotoUploadRequest;
 use Modules\Flickr\Http\Requests\BeginFlickrOAuthRequest;
 use Modules\Flickr\Http\Requests\CrawlFlickrAccountRequest;
 use Modules\Settings\Http\Requests\RuntimeConfigPathRequest;
@@ -15,8 +17,6 @@ use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Http\Requests\BeginStorageOAuthRequest;
 use Modules\Storage\Http\Requests\ReauthorizeStorageRequest;
 use Modules\Storage\Http\Requests\StorageOAuthCallbackRequest;
-use Modules\Transfer\Http\Requests\QueuePhotoDownloadRequest;
-use Modules\Transfer\Http\Requests\QueuePhotoUploadRequest;
 use Tests\TestCase;
 
 final class FormRequestValidationTest extends TestCase

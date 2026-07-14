@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Modules\Transfer\Tests\Feature\Controllers;
+namespace Modules\Contacts\Tests\Feature\Controllers;
 
 use Illuminate\Support\Facades\Bus;
 use Modules\Crawler\Models\Photo;

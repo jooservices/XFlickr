@@ -122,13 +122,13 @@ Each module owns its `routes/web.php`, `routes/api.php` (`/api/v1/*`), controlle
 
 ## Contacts
 
-**Scope:** Contact directory UX on top of crawler contact tables — list/detail, annotations, contact graph, expand preview, and contact full-pass planning. Does not own generic catalog photo grids (Catalog) or spider frontier (Spider).
+**Scope:** Contact directory UX on top of crawler contact tables — list/detail, annotations, contact graph, expand preview, contact full-pass planning, and **queue orchestration** for download/upload (`POST …/download|upload`). Does not own generic catalog photo grids (Catalog), spider frontier (Spider), or transfer execution/jobs (Transfer).
 
-**Purpose:** Help operators explore who is connected to an account, annotate contacts, expand the graph, and run a structured full-pass crawl over contacts.
+**Purpose:** Help operators explore who is connected to an account, annotate contacts, expand the graph, run a structured full-pass crawl over contacts, and enqueue transfers for selected contacts/photos.
 
 **Features:**
 
-- Web: global contacts index; per-account contact list/show; bulk/single contact crawl; full-pass start/stop
+- Web: global contacts index; per-account contact list/show; bulk/single contact crawl; full-pass start/stop; `flickr.accounts.download` / `flickr.accounts.upload`
 - API: contacts progress/suggest, contact-graph (+ delta/expansions), annotations, expand-previews, per-contact crawl-runs
 - Services: list/detail/graph/expand/full-pass planner, annotation, catalog/download counts, crawl state
 - CLI: `xflickr:contacts:full-pass-expand`
@@ -175,13 +175,13 @@ Each module owns its `routes/web.php`, `routes/api.php` (`/api/v1/*`), controlle
 
 ## Transfer
 
-**Scope:** Photo download to local disk and upload to connected storage — batching, progress, retries, and `stored_files` tracking. Provider HTTP/drivers live in Storage; Transfer orchestrates transfer jobs and bookkeeping.
+**Scope:** Photo download to local disk and upload to connected storage — batching, progress, retries, and `stored_files` tracking. Provider HTTP/drivers live in Storage; Transfer owns transfer **execution** jobs and bookkeeping. Queue HTTP endpoints live in Contacts.
 
 **Purpose:** Move Flickr originals onto the server and/or cloud destinations with deduplication and observable progress.
 
 **Features:**
 
-- Web: enqueue download / upload for a connection
+- Web: (queue endpoints owned by Contacts) — keep URIs `flickr.accounts.download` / `upload`
 - API: stored-file show; transfer list/show; item retry
 - Services: download/upload (+ execution), progress/counts, retry, stored-file stream
 - Jobs: fan-out batch, download (and related) — call Services only

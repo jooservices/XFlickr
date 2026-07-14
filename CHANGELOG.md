@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- A4 DAG edges: `DownloadCandidateDto` → `Modules/Flickr/Dto`; `OAuthAppConfigDto` → `App\Dto`; Spider uses `ConcurrentRunGuard` (Contacts binds) instead of importing Contacts repositories; download/upload queue controllers + FormRequests moved Transfer → Contacts (URIs unchanged).
 - Crawler connection and crawl-run persistence go through repositories (`ConnectionRepository`, `CrawlRunRepository`, `CrawlTargetRepository`, `ApiLogRepository`, plus catalog repos). Crawler Services/Commands/Jobs must not call Eloquent directly (`CrawlerLayeringTest`). Docs/skills/`AGENTS.md` enforce Service → Repository → Model; Prefer model scopes in repositories.
 - Absorbed `jooservices/xflickr-crawler` into in-repo **`Modules/Crawler`**. Engine PSR-4 is `Modules\Crawler\*` (aligned with other modules; was `JOOservices\XFlickrCrawler\*`). Removed the Packagist dependency and Docker bind-mounts of `../XFlickrCrawler`. Host `config/xflickr-crawler.php` remains the override; module config is defaults-only — do not delete the host file as a duplicate.
 - Test coverage: set PCOV `pcov.directory=/var/www/html` so module code under `Modules/` is counted (previously only `app/` was covered).

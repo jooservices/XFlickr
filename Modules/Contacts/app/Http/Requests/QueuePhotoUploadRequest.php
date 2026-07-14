@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Modules\Transfer\Http\Requests;
+namespace Modules\Contacts\Http\Requests;
 
 use App\Http\Requests\Concerns\ResolvesBulkSelectAll;
 use App\Http\Requests\Request;
 
-final class QueuePhotoDownloadRequest extends Request
+final class QueuePhotoUploadRequest extends Request
 {
     use ResolvesBulkSelectAll;
 
@@ -35,6 +35,7 @@ final class QueuePhotoDownloadRequest extends Request
     {
         return [
             ...$this->bulkSelectAllRules(),
+            'storage_account_id' => ['sometimes', 'nullable', 'integer', 'min:1'],
             'flickr_photo_id' => ['sometimes', 'nullable', 'string'],
             'flickr_photo_ids' => ['sometimes', 'nullable', 'array'],
             'flickr_photo_ids.*' => ['string'],
@@ -42,6 +43,13 @@ final class QueuePhotoDownloadRequest extends Request
             'contact_nsids' => ['sometimes', 'nullable', 'array'],
             'contact_nsids.*' => ['string'],
         ];
+    }
+
+    public function storageAccountId(): ?int
+    {
+        $storageAccountId = $this->validated('storage_account_id');
+
+        return is_numeric($storageAccountId) && (int) $storageAccountId > 0 ? (int) $storageAccountId : null;
     }
 
     public function singlePhotoId(): ?string
@@ -64,6 +72,13 @@ final class QueuePhotoDownloadRequest extends Request
         )));
     }
 
+    public function singleContactNsid(): ?string
+    {
+        $contactNsid = $this->input('contact_nsid');
+
+        return is_string($contactNsid) && $contactNsid !== '' ? $contactNsid : null;
+    }
+
     /**
      * @return list<string>
      */
@@ -75,12 +90,5 @@ final class QueuePhotoDownloadRequest extends Request
             is_array($contactNsids) ? $contactNsids : [],
             static fn (mixed $nsid): bool => is_string($nsid) && $nsid !== '',
         ));
-    }
-
-    public function singleContactNsid(): ?string
-    {
-        $contactNsid = $this->input('contact_nsid');
-
-        return is_string($contactNsid) && $contactNsid !== '' ? $contactNsid : null;
     }
 }

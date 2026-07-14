@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Modules\Settings\Dto;
+namespace App\Dto;
 
 use JOOservices\Dto\Core\Data;
 

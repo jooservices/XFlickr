@@ -8,8 +8,8 @@ use App\Repositories\Crawler\PhotoQueryRepository;
 use Modules\Crawler\Models\Connection;
 use Modules\Crawler\Models\Photo;
 use Modules\Crawler\Services\FlickrClientFactory;
+use Modules\Flickr\Dto\DownloadCandidateDto;
 use Modules\Flickr\Support\FlickrPhotoUrlHelper;
-use Modules\Transfer\Dto\DownloadCandidateDto;
 use RuntimeException;
 
 final class FlickrPhotoSizeResolver
