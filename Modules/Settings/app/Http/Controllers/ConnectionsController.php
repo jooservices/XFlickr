@@ -8,6 +8,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Flickr\Services\FlickrAccountsService;
 use Modules\Settings\Http\Requests\ShowConnectionsRequest;
+use Modules\Settings\Services\OnboardingStatusService;
 use Modules\Storage\Services\StorageService;
 
 final class ConnectionsController
@@ -16,6 +17,7 @@ final class ConnectionsController
         ShowConnectionsRequest $request,
         FlickrAccountsService $flickrOAuth,
         StorageService $storageSettings,
+        OnboardingStatusService $onboarding,
     ): Response {
         return Inertia::render('Connections/Index', [
             'provider' => $request->provider(),
@@ -26,6 +28,7 @@ final class ConnectionsController
             'storage_apps' => $storageSettings->apps(),
             'storage_redirects' => $storageSettings->redirects(),
             'storage_drivers' => $storageSettings->drivers(),
+            'has_completed_crawl' => $onboarding->hasCompletedCrawl(),
         ]);
     }
 }

@@ -30,7 +30,8 @@ final class ConnectionsControllerTest extends TestCase
             ->has('storage_accounts')
             ->has('storage_apps')
             ->where('flickr_accounts.0.public_id', $connection->public_id)
-            ->where('flickr_accounts.0.nsid', $connection->connection_key));
+            ->where('flickr_accounts.0.nsid', $connection->connection_key)
+            ->where('has_completed_crawl', false));
     }
 
     public function test_connections_storage_provider_renders(): void

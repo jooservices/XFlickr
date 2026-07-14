@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - FS-1 app-shell command palette (⌘K / Ctrl+K): jump to nav/storage/settings destinations and contact suggestions for the selected Flickr account; header “Jump to” trigger on `sm+`.
 - FS-2 Contacts **Import from URL**: paste a Flickr people/photostream/photo page URL → `flickr.urls.lookupUser` / `photos.getInfo` resolve NSID, link via `FlickrCatalogService`, optional crawl, redirect to contact show.
+- FS-7 first-run onboarding checklist: progress steps (connect Flickr → first crawl → optional storage) with checkmarks; auto-hides after Flickr + first crawl; shown on Dashboard, Connections, and Settings.
 - FS-5 catalog photo lightbox keyboard navigation: `PhotoDetailModal` supports prev/next over the loaded page list (←/→ or J/K), `D` to queue download (same `/download` route as `CrawlActionBar`), footer nav buttons, and shortcut hints; wired on Catalog Photos, Photoset show, and Favorites.
 - FS-6 proactive Flickr token-health banner in `AppLayout`: probes connected accounts from the rate-limit snapshot, warns when `token_valid === false`, links to Connections, and supports per-account session dismiss.
 - N-08 crawler connection `token_payload` encrypted at rest (`encrypted` cast, re-encrypt migration, `ConnectionTokenEncryptionTest`); documented in `SECURITY.md`.

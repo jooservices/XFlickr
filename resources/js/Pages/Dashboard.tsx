@@ -6,11 +6,14 @@ import Card from '@/Components/Card';
 import DatabaseUsagePanel from '@/Components/DatabaseUsagePanel';
 import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/layout/page-shell';
 import RateLimitMeter from '@/Components/RateLimitMeter';
+import OnboardingWizard from '@/Components/Settings/OnboardingWizard';
 import MetricCard from '@/Components/ui/MetricCard';
 import { usePolledResource } from '@/hooks/usePolledResource';
+import { useStorageQuota } from '@/hooks/useStorageQuota';
 import AppLayout from '@/Layouts/AppLayout';
 import { flickrAccountPath } from '@/lib/flickrAccount';
 import { resolveDefaultFlickrQuotaNsid } from '@/lib/flickrQuotaAccount';
+import { dashboardHasCompletedCrawl } from '@/lib/onboardingProgress';
 import type { DashboardSnapshot, FlickrAccount, PageProps } from '@/types';
 
 interface Props extends PageProps {
@@ -62,6 +65,9 @@ export default function Dashboard() {
     const databaseUnreachable = Boolean(snapshot.alerts.database_unreachable);
     const mysqlConnectionsHigh = Boolean(snapshot.alerts.mysql_connections_high);
     const accountList = useMemo(() => rows.map((row) => row.account), [rows]);
+    const { snapshot: storageQuotaSnapshot } = useStorageQuota();
+    const hasStorageAccounts = (storageQuotaSnapshot?.accounts?.length ?? 0) > 0;
+    const hasCompletedCrawl = useMemo(() => dashboardHasCompletedCrawl(rows), [rows]);
 
     const [selectedNsid, setSelectedNsid] = useState<string | null>(() =>
         resolveDefaultFlickrQuotaNsid(accountList),
@@ -121,7 +127,12 @@ export default function Dashboard() {
                 />
 
                 <PageShellCanvas className="space-y-6" variant="plain">
-                <div className="space-y-4">
+                    <OnboardingWizard
+                        hasFlickrAccounts={accountList.length > 0}
+                        hasStorageAccounts={hasStorageAccounts}
+                        hasCompletedCrawl={hasCompletedCrawl}
+                    />
+                    <div className="space-y-4">
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         <MetricCard label="Accounts" value={formatNumber(global.accounts)} tone="slate" />
                         <MetricCard

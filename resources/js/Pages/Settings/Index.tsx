@@ -16,6 +16,7 @@ interface Props extends PageProps {
     runtime_config_available: boolean;
     has_flickr_accounts: boolean;
     has_storage_accounts: boolean;
+    has_completed_crawl: boolean;
 }
 
 export default function SettingsIndex({
@@ -23,6 +24,7 @@ export default function SettingsIndex({
     runtime_config_available,
     has_flickr_accounts,
     has_storage_accounts,
+    has_completed_crawl,
 }: Props) {
     const [openCreate, setOpenCreate] = useState<(() => void) | null>(null);
 
@@ -58,6 +60,7 @@ export default function SettingsIndex({
                     <OnboardingWizard
                         hasFlickrAccounts={has_flickr_accounts}
                         hasStorageAccounts={has_storage_accounts}
+                        hasCompletedCrawl={has_completed_crawl}
                     />
 
                     <GeneralConfigPanel

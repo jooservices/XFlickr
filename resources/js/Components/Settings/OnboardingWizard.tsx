@@ -1,19 +1,30 @@
-import { X } from 'lucide-react';
-import { useState } from 'react';
+import { Check, Circle, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 import Button from '@/Components/Button';
 import { connectionsPath } from '@/lib/connections';
+import {
+    buildOnboardingSteps,
+    shouldShowOnboarding,
+    type OnboardingFlags,
+} from '@/lib/onboardingProgress';
 import { dismissSettingsOnboarding, isSettingsOnboardingDismissed } from '@/lib/settingsOnboarding';
 
-interface OnboardingWizardProps {
-    hasFlickrAccounts: boolean;
-    hasStorageAccounts: boolean;
-}
-
-export default function OnboardingWizard({ hasFlickrAccounts, hasStorageAccounts }: OnboardingWizardProps) {
+export default function OnboardingWizard({
+    hasFlickrAccounts,
+    hasStorageAccounts,
+    hasCompletedCrawl = false,
+}: OnboardingFlags) {
     const [dismissed, setDismissed] = useState(isSettingsOnboardingDismissed);
 
-    if (dismissed || (hasFlickrAccounts && hasStorageAccounts)) {
+    const flags = useMemo(
+        () => ({ hasFlickrAccounts, hasStorageAccounts, hasCompletedCrawl }),
+        [hasFlickrAccounts, hasStorageAccounts, hasCompletedCrawl],
+    );
+
+    const steps = useMemo(() => buildOnboardingSteps(flags), [flags]);
+
+    if (!shouldShowOnboarding(flags, dismissed)) {
         return null;
     }
 
@@ -23,7 +34,10 @@ export default function OnboardingWizard({ hasFlickrAccounts, hasStorageAccounts
     };
 
     return (
-        <div className="relative rounded-lg border border-cyan-200 bg-cyan-50 p-5 dark:border-cyan-900 dark:bg-cyan-950/40">
+        <div
+            className="relative rounded-lg border border-cyan-200 bg-cyan-50 p-5 dark:border-cyan-900 dark:bg-cyan-950/40"
+            data-testid="onboarding-wizard"
+        >
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                     <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Getting started</h2>
@@ -44,24 +58,28 @@ export default function OnboardingWizard({ hasFlickrAccounts, hasStorageAccounts
                 </Button>
             </div>
             <ol className="mt-4 space-y-3 text-sm text-slate-700 dark:text-slate-200">
-                <li className="flex items-start gap-2">
-                    <span className="font-mono text-xs text-cyan-700 dark:text-cyan-300">1</span>
-                    <span>
-                        {hasFlickrAccounts ? 'Flickr connected.' : 'Add Flickr API credentials and connect an account.'}
-                    </span>
-                </li>
-                <li className="flex items-start gap-2">
-                    <span className="font-mono text-xs text-cyan-700 dark:text-cyan-300">2</span>
-                    <span>From Contacts or Catalog, trigger a manual crawl for the contacts you want to archive.</span>
-                </li>
-                <li className="flex items-start gap-2">
-                    <span className="font-mono text-xs text-cyan-700 dark:text-cyan-300">3</span>
-                    <span>
-                        {hasStorageAccounts
-                            ? 'Storage connected — queue uploads from Contacts or Catalog.'
-                            : 'Optional: connect Google Photos, Drive, OneDrive, or R2 under Connections → Storage.'}
-                    </span>
-                </li>
+                {steps.map((step, index) => (
+                    <li key={step.id} className="flex items-start gap-2">
+                        {step.done ? (
+                            <Check
+                                className="mt-0.5 size-4 shrink-0 text-cyan-700 dark:text-cyan-300"
+                                aria-hidden
+                            />
+                        ) : (
+                            <Circle
+                                className="mt-0.5 size-4 shrink-0 text-slate-400"
+                                aria-hidden
+                            />
+                        )}
+                        <span>
+                            <span className="sr-only">Step {index + 1}. </span>
+                            {step.label}
+                            {step.optional && !step.done ? (
+                                <span className="ml-1 text-xs text-slate-500">(optional)</span>
+                            ) : null}
+                        </span>
+                    </li>
+                ))}
             </ol>
             {!hasFlickrAccounts ? (
                 <div className="mt-4">
@@ -73,17 +91,32 @@ export default function OnboardingWizard({ hasFlickrAccounts, hasStorageAccounts
                         Connect Flickr
                     </Button>
                 </div>
-            ) : !hasStorageAccounts ? (
+            ) : !hasCompletedCrawl ? (
                 <div className="mt-4 flex flex-wrap gap-2">
-                    <Button type="button" variant="secondary" onClick={() => window.location.assign('/contacts')}>
+                    <Button type="button" variant="primary" onClick={() => window.location.assign('/contacts')}>
                         Open Contacts
                     </Button>
+                    {!hasStorageAccounts ? (
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => window.location.assign(connectionsPath({ provider: 'storage' }))}
+                        >
+                            Connect Storage
+                        </Button>
+                    ) : null}
+                </div>
+            ) : !hasStorageAccounts ? (
+                <div className="mt-4 flex flex-wrap gap-2">
                     <Button
                         type="button"
                         variant="primary"
                         onClick={() => window.location.assign(connectionsPath({ provider: 'storage' }))}
                     >
                         Connect Storage
+                    </Button>
+                    <Button type="button" variant="secondary" onClick={() => window.location.assign('/contacts')}>
+                        Open Contacts
                     </Button>
                 </div>
             ) : (

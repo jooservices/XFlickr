@@ -31,6 +31,7 @@ interface Props extends PageProps {
     storage_apps: StorageAppSummary[];
     storage_redirects: Record<string, string>;
     storage_drivers: StorageDriver[];
+    has_completed_crawl: boolean;
 }
 
 const providers = [
@@ -47,6 +48,7 @@ export default function ConnectionsIndex({
     storage_apps,
     storage_redirects,
     storage_drivers,
+    has_completed_crawl,
 }: Props) {
     const [openAddRequest, setOpenAddRequest] = useState(0);
 
@@ -138,6 +140,7 @@ export default function ConnectionsIndex({
                     <OnboardingWizard
                         hasFlickrAccounts={flickr_accounts.length > 0}
                         hasStorageAccounts={storage_accounts.length > 0}
+                        hasCompletedCrawl={has_completed_crawl}
                     />
 
                     {provider === 'flickr' ? (
