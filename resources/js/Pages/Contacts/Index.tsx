@@ -17,9 +17,9 @@ import CrawlTypeMenu, {
 import DataTable from '@/Components/DataTable';
 import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
 import ContactGraphShell from '@/Components/macros/ContactGraphShell';
+import { usePolledResource } from '@/hooks/usePolledResource';
 import { useTableSelection } from '@/hooks/useTableSelection';
 import AppLayout from '@/Layouts/AppLayout';
-import { apiGet } from '@/lib/apiClient';
 import { accountLabel, flickrAccountPageCrumbs } from '@/lib/breadcrumbs';
 import { catalogOwnerUrl } from '@/lib/catalog';
 import { CONTACT_CATALOG_COLUMNS } from '@/lib/contactCatalog';
@@ -142,36 +142,29 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
         [contacts],
     );
 
+    const shouldPollProgress = hasActiveOperations && contactNsids !== '';
+    const { data: progressData } = usePolledResource<{ data: { contacts: ContactListItem[] } }>(
+        shouldPollProgress ? flickrApiAccountPath(account.public_id, '/contacts/progress') : null,
+        {
+            intervalMs: 3000,
+            enabled: shouldPollProgress,
+            params: { nsids: contactNsids },
+        },
+    );
+
     useEffect(() => {
-        if (!hasActiveOperations || contactNsids === '') {
+        const updates = progressData?.data.contacts;
+
+        if (!updates) {
             return;
         }
 
-        const controller = new AbortController();
+        setContacts((current) => {
+            const byNsid = new Map(updates.map((contact) => [contact.nsid, contact]));
 
-        const poll = () => {
-            void apiGet<{ data: { contacts: ContactListItem[] } }>(
-                flickrApiAccountPath(account.public_id, '/contacts/progress'),
-                { params: { nsids: contactNsids }, signal: controller.signal },
-            )
-                .then((data) => {
-                    setContacts((current) => {
-                        const updates = new Map(data.data.contacts.map((contact) => [contact.nsid, contact]));
-
-                        return current.map((contact) => updates.get(contact.nsid) ?? contact);
-                    });
-                })
-                .catch(() => undefined);
-        };
-
-        poll();
-        const interval = setInterval(poll, 3000);
-
-        return () => {
-            controller.abort();
-            clearInterval(interval);
-        };
-    }, [hasActiveOperations, contactNsids, account.public_id]);
+            return current.map((contact) => byNsid.get(contact.nsid) ?? contact);
+        });
+    }, [progressData]);
 
     const postBulk = useCallback(
         (

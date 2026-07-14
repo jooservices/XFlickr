@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- F1 polling standardization: hooks/Pages use `usePolledResource` (Dashboard snapshot, Contacts progress, Flickr API usage, per-account crawl summaries); `useOperationsStream` keeps JSON polling (not SSE) and accumulates activity history; ESLint forbids raw `setInterval` under `resources/js/hooks/**` and `Pages/**` (allowlist: `usePolledResource`, `useCountdown`).
 - A6 module facades: peer modules import only `FlickrAccountsService`, `StorageService`, and `ContactsService` from Flickr/Storage/Contacts `Services\` (architecture test `ModuleFacadeImportTest`). Focused services remain for internal module use.
 - A8 host-test placement: module-owned leftovers migrated from `tests/` into `Modules/*/tests/`; host keeps architecture, crawler query repos, shared Support, and cross-cutting glue only (`ModuleOwnedHostTestPlacementTest`).
 - Storage/Transfer refactor (A1–A5): removed per-provider `Drivers/` classes (browse/delete services implement contracts directly); moved `StorageBrowseResult`, `StorageStreamResult`, and `TransferQueueResult` into module `Dto` namespaces; grouped provider services under `GooglePhotos/`, `GoogleDrive/`, `OneDrive/`, `R2/`, `Tokens/` and Flickr rate-limit under `RateLimit/`; folded `CrawlOperationsService` into `CrawlOperationsController` and `StorageR2ConnectionVerifier` into `R2\BrowseService::verifyConnection`.

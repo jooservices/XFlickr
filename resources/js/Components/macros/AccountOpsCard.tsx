@@ -5,12 +5,13 @@ import FlickrAccountCardFooter from '@/Components/Flickr/FlickrAccountCardFooter
 import CrawlActionBar from '@/Components/macros/CrawlActionBar';
 import ExpandActionBar from '@/Components/macros/ExpandActionBar';
 import ProviderCard from '@/Components/ProviderCard';
+import { useFlickrCrawlSummary } from '@/hooks/useFlickrCrawlSummary';
 import { useFlickrTokenHealth } from '@/hooks/useFlickrTokenHealth';
 import { cn } from '@/lib/cn';
 import { crawlSubjectForAccount } from '@/lib/crawlSubject';
 import { flickrAccountPath } from '@/lib/flickrAccount';
 import { shortPublicId } from '@/lib/publicId';
-import type { CrawlSummary, FlickrAccountSummary } from '@/types';
+import type { FlickrAccountSummary } from '@/types';
 
 const NAV_LINKS = [
     { label: 'Contacts', suffix: '/contacts' },
@@ -21,7 +22,6 @@ const NAV_LINKS = [
 
 interface AccountOpsCardProps {
     account: FlickrAccountSummary;
-    summary: CrawlSummary | null;
     onReconnect?: () => void;
 }
 
@@ -51,9 +51,10 @@ function accountStatusBadge(account: FlickrAccountSummary, tokenValid: boolean |
     );
 }
 
-export default function AccountOpsCard({ account, summary, onReconnect }: AccountOpsCardProps) {
+export default function AccountOpsCard({ account, onReconnect }: AccountOpsCardProps) {
     const displayName = account.username ?? account.nsid;
     const tokenValid = useFlickrTokenHealth(account);
+    const summary = useFlickrCrawlSummary(account.public_id, account.is_connected !== false);
 
     return (
         <ProviderCard

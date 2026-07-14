@@ -9,7 +9,6 @@ import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } fr
 import AccountOpsCard from '@/Components/macros/AccountOpsCard';
 import OnboardingWizard from '@/Components/Settings/OnboardingWizard';
 import StorageCredentialsPanel from '@/Components/Settings/StorageCredentialsPanel';
-import { useFlickrCrawlSummaries } from '@/hooks/useFlickrCrawlSummaries';
 import AppLayout from '@/Layouts/AppLayout';
 import { connectionsRootCrumb } from '@/lib/breadcrumbs';
 import { connectionsPath, type ConnectionsProvider } from '@/lib/connections';
@@ -49,7 +48,6 @@ export default function ConnectionsIndex({
     storage_redirects,
     storage_drivers,
 }: Props) {
-    const summaries = useFlickrCrawlSummaries(flickr_accounts);
     const [openAddRequest, setOpenAddRequest] = useState(0);
 
     const setProvider = (next: ConnectionsProvider) => {
@@ -182,7 +180,6 @@ export default function ConnectionsIndex({
                                             <AccountOpsCard
                                                 key={account.public_id}
                                                 account={account}
-                                                summary={summaries[account.nsid] ?? null}
                                                 onReconnect={() => reconnectFlickrAccount(account)}
                                             />
                                         ))}

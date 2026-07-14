@@ -26,7 +26,8 @@ Keep frontend pages consistent with XCrawlerII-aligned AppShell / PageShell patt
 - Use crawl/expand macros (`CrawlActionBar`, `ExpandActionBar`) for action groups
 - Use JOO / local `DataTable` for sortable tables; `MetricCard` for stats
 - Use `ProviderCard` for settings connection cards
-- Poll with `usePolledResource` against `/api/v1/*`
+- Poll with `usePolledResource` against `/api/v1/*` (ESLint bans raw `setInterval` in hooks/Pages; UI countdowns use `useCountdown`)
+- `useOperationsStream`: JSON polling only — no SSE (single-threaded PHP); accumulates `activityHistory` across polls
 - **API wait affordances** — always show a wait indicator scoped to what is blocked:
   - `PageLoading` / `BusyRegion` with `empty` — primary canvas content not ready yet
   - `BusyRegion` overlay / `DataTable` `busy` — panel/table refetch while content exists

@@ -7,8 +7,8 @@ import DatabaseUsagePanel from '@/Components/DatabaseUsagePanel';
 import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/layout/page-shell';
 import RateLimitMeter from '@/Components/RateLimitMeter';
 import MetricCard from '@/Components/ui/MetricCard';
+import { usePolledResource } from '@/hooks/usePolledResource';
 import AppLayout from '@/Layouts/AppLayout';
-import { apiGet } from '@/lib/apiClient';
 import { flickrAccountPath } from '@/lib/flickrAccount';
 import { resolveDefaultFlickrQuotaNsid } from '@/lib/flickrQuotaAccount';
 import type { DashboardSnapshot, FlickrAccount, PageProps } from '@/types';
@@ -50,29 +50,10 @@ const emptyDatabases: DashboardSnapshot['databases'] = {
 
 export default function Dashboard() {
     const { snapshot: initialSnapshot } = usePage<Props>().props;
-    const [snapshot, setSnapshot] = useState(initialSnapshot);
-
-    useEffect(() => {
-        setSnapshot(initialSnapshot);
-    }, [initialSnapshot]);
-
-    useEffect(() => {
-        const controller = new AbortController();
-
-        const poll = () => {
-            void apiGet<{ data: DashboardSnapshot }>('/api/v1/dashboard/snapshot', { signal: controller.signal })
-                .then((json) => setSnapshot(json.data))
-                .catch(() => undefined);
-        };
-
-        poll();
-        const interval = setInterval(poll, 15000);
-
-        return () => {
-            controller.abort();
-            clearInterval(interval);
-        };
-    }, []);
+    const { data } = usePolledResource<{ data: DashboardSnapshot }>('/api/v1/dashboard/snapshot', {
+        intervalMs: 15_000,
+    });
+    const snapshot = data?.data ?? initialSnapshot;
 
     const rows = snapshot.accounts;
     const global = snapshot.global;

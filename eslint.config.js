@@ -53,4 +53,24 @@ export default tseslint.config(
             ],
         },
     },
+    {
+        files: ['resources/js/hooks/**/*.{ts,tsx}', 'resources/js/Pages/**/*.{ts,tsx}'],
+        rules: {
+            'no-restricted-syntax': [
+                'error',
+                {
+                    selector:
+                        "CallExpression[callee.name='setInterval'], CallExpression[callee.property.name='setInterval']",
+                    message:
+                        'Use usePolledResource for API polling in hooks/Pages. UI timers belong in useCountdown; setInterval is only allowed in usePolledResource.ts and useCountdown.ts.',
+                },
+            ],
+        },
+    },
+    {
+        files: ['resources/js/hooks/usePolledResource.ts', 'resources/js/hooks/useCountdown.ts'],
+        rules: {
+            'no-restricted-syntax': 'off',
+        },
+    },
 );

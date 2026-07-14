@@ -32,7 +32,8 @@ resources/js/
 - Use `DataTable` for sortable tabular data.
 - Use `Card` / `ProviderCard` / `MetricCard` for panels and stats.
 - API calls: `apiGet`/`apiPost`/`apiPatch`/`apiDelete` against `/api/v1/*`.
-- Poll live surfaces with `usePolledResource`.
+- Poll live surfaces with `usePolledResource` (not raw `setInterval` in hooks/Pages — ESLint enforced).
+- `useOperationsStream` is the documented exception: JSON polling only (no SSE on single-worker PHP) and folds snapshots into `activityHistory`.
 
 See skill: `react-inertia-frontend` and rule `.cursor/rules/ui-buttons.mdc`.
 

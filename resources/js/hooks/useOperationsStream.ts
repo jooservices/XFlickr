@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { apiGet } from '@/lib/apiClient';
+import { usePolledResource } from '@/hooks/usePolledResource';
 import type {
     CrawlRun,
     DatabaseUsageSnapshot,
@@ -82,6 +82,13 @@ function appendActivityPoint(
     return [...previous, point].slice(-ACTIVITY_HISTORY_MAX);
 }
 
+/**
+ * Operations sidebar + console live data.
+ *
+ * Uses JSON polling (via usePolledResource), not Server-Sent Events: long-lived SSE on
+ * single-threaded `php artisan serve` blocked the whole app. This hook stays separate from
+ * plain usePolledResource call sites because it folds each snapshot into activityHistory.
+ */
 export function useOperationsStream() {
     const [overview, setOverview] = useState<OperationsOverviewTotals>(EMPTY_OVERVIEW);
     const [dependencies, setDependencies] =
@@ -93,6 +100,10 @@ export function useOperationsStream() {
     const [uploadBatches, setUploadBatches] = useState<TransferBatch[]>([]);
     const [activityHistory, setActivityHistory] = useState<OperationsActivityPoint[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const { data } = usePolledResource<{ data: OperationsSnapshotPayload }>('/api/v1/operations/snapshot', {
+        intervalMs: POLL_INTERVAL_MS,
+    });
 
     const apply = useCallback((snapshot: OperationsSnapshotPayload) => {
         const next = applySnapshot(snapshot);
@@ -108,33 +119,12 @@ export function useOperationsStream() {
     }, []);
 
     useEffect(() => {
-        let closed = false;
-        let pollTimer: ReturnType<typeof setInterval> | null = null;
+        if (!data?.data) {
+            return;
+        }
 
-        const loadSnapshot = async () => {
-            try {
-                const snapshot = await apiGet<{ data: OperationsSnapshotPayload }>('/api/v1/operations/snapshot');
-                if (!closed) {
-                    apply(snapshot.data);
-                }
-            } catch {
-                // Ignore transient polling errors.
-            }
-        };
-
-        void loadSnapshot();
-        pollTimer = setInterval(() => {
-            void loadSnapshot();
-        }, POLL_INTERVAL_MS);
-
-        return () => {
-            closed = true;
-
-            if (pollTimer !== null) {
-                clearInterval(pollTimer);
-            }
-        };
-    }, [apply]);
+        apply(data.data);
+    }, [apply, data]);
 
     return {
         overview,
