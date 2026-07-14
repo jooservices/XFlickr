@@ -151,6 +151,9 @@ final class FlickrOAuthService
         return FlickrService::connections()->active();
     }
 
+    /**
+     * Pre-connection OAuth: no stored connection yet — approved direct FlickrFactory use.
+     */
     private function clientForProfile(string $profile): Flickr
     {
         return FlickrFactory::make(

@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace Modules\Flickr\Console\Commands;
 
 use Illuminate\Console\Command;
-use JOOservices\Flickr\Config\FlickrConfig;
 use JOOservices\Flickr\DTO\Common\RequestOptionsData;
 use JOOservices\Flickr\Flickr;
-use JOOservices\Flickr\FlickrFactory;
 use Modules\Crawler\Models\Connection;
 use Modules\Crawler\Services\FlickrClientFactory;
 use Modules\Crawler\Support\FlickrCrawlQueryParams;
@@ -51,10 +49,7 @@ final class FlickrApiAuditCommand extends Command
         $this->line("Profile: {$connection->app_profile} · API key: {$apiKeyHint}");
 
         $client = $clients->forConnection($connection->connection_key);
-        $anonymousClient = FlickrFactory::make(FlickrConfig::from([
-            'apiKey' => $credentials->apiKey,
-            'apiSecret' => $credentials->apiSecret,
-        ]), transport: $clients->transport());
+        $anonymousClient = $clients->anonymousClient($credentials);
 
         $this->probe($client, 'flickr.test.login', []);
         $this->probe($client, 'flickr.contacts.getList', ['page' => 1, 'per_page' => 5]);

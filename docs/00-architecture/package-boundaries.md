@@ -23,9 +23,9 @@ Per-module **scope / purpose / features:** [Modules catalog](modules.md).
 | Connection Flickr REST clients | **Crawler** module | `FlickrClientFactory` (+ force-auth); peers must not invent clients |
 | Shared crawler reads | Host `app/` | `app/Repositories/Crawler/*` (follow-up: move into Crawler) |
 
-## Planned: Flickr client layering
+## Flickr client layering (N-16)
 
-Target: `jooservices/flickr` (SDK) → **Crawler** `FlickrClientFactory` (authenticated true/false) → domain modules via Crawler / Flickr product services. Do **not** put ClientFactory in the Flickr module (would break the Crawler leaf). Tracked as [N-16](../05-maintenance/BACKLOG.md); detail: [flickr-client-factory-layering.md](../05-maintenance/flickr-client-factory-layering.md).
+Implemented: `jooservices/flickr` (SDK) → **Crawler** `FlickrClientFactory` (`authenticated` true/false, `anonymousClient`) → domain modules via Crawler / Flickr product services. Do **not** put ClientFactory in the Flickr module (would break the Crawler leaf). Detail: [flickr-client-factory-layering.md](../05-maintenance/flickr-client-factory-layering.md); guard: `FlickrClientFactoryLayeringTest`.
 
 ## Module DAG (A4)
 
