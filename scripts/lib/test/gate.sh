@@ -90,7 +90,7 @@ test_run_frontend_vitest() {
     local root
     root="$(xf_script_root)"
     cd "$root"
-    npm run test
+    npm run test:coverage
 }
 
 test_gate_test() {
