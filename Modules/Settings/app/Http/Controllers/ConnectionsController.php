@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Settings\Http\Controllers;
 
+use Illuminate\Routing\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Flickr\Services\FlickrAccountsService;
@@ -11,7 +12,7 @@ use Modules\Settings\Http\Requests\ShowConnectionsRequest;
 use Modules\Settings\Services\OnboardingStatusService;
 use Modules\Storage\Services\StorageService;
 
-final class ConnectionsController
+final class ConnectionsController extends Controller
 {
     public function index(
         ShowConnectionsRequest $request,

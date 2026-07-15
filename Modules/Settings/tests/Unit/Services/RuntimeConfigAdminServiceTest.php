@@ -9,7 +9,6 @@ use Illuminate\Validation\ValidationException;
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
 use JOOservices\LaravelConfig\Models\Config as ConfigModel;
 use Modules\Settings\Services\RuntimeConfigAdminService;
-use ReflectionMethod;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
@@ -185,16 +184,6 @@ final class RuntimeConfigAdminServiceTest extends TestCase
             'type' => 'string',
             'value' => 'x',
         ]);
-    }
-
-    public function test_split_path_rejects_invalid_configuration_path(): void
-    {
-        $method = new ReflectionMethod(RuntimeConfigAdminService::class, 'splitPath');
-        $method->setAccessible(true);
-
-        $this->expectException(ValidationException::class);
-
-        $method->invoke($this->service, 'invalid');
     }
 
     public function test_upsert_casts_numeric_types(): void

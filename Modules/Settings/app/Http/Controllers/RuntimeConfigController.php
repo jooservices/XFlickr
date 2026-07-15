@@ -6,13 +6,14 @@ namespace Modules\Settings\Http\Controllers;
 
 use App\Support\Observability\AdminActionLogger;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Controller;
 use Modules\Settings\Http\Requests\RuntimeConfigPathRequest;
 use Modules\Settings\Http\Requests\StoreRuntimeConfigRequest;
 use Modules\Settings\Http\Requests\ToggleGlobalCrawlPauseRequest;
 use Modules\Settings\Http\Requests\UpdateSpiderModeRequest;
 use Modules\Settings\Services\RuntimeConfigAdminService;
 
-final class RuntimeConfigController
+final class RuntimeConfigController extends Controller
 {
     public function store(StoreRuntimeConfigRequest $request, RuntimeConfigAdminService $configAdmin, AdminActionLogger $audit): RedirectResponse
     {

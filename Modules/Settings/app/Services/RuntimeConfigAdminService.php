@@ -9,14 +9,11 @@ use App\Support\HorizonRuntimeConfig;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Validation\ValidationException;
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
-use JOOservices\LaravelConfig\Models\Config as ConfigModel;
-use Modules\Settings\Repositories\ConfigEntryRepository;
 
 final class RuntimeConfigAdminService
 {
     public function __construct(
         private readonly CuratedConfigCatalog $catalog,
-        private readonly ConfigEntryRepository $configEntries,
         private readonly HorizonRuntimeConfig $horizonConfig,
     ) {}
 
@@ -28,7 +25,7 @@ final class RuntimeConfigAdminService
         $curated = collect($this->catalog->definitions())
             ->map(function (array $definition): array {
                 $path = $definition['path'];
-                $stored = $this->runtimeAvailable() && RuntimeConfig::has($path);
+                $stored = $this->isAvailable() && RuntimeConfig::has($path);
 
                 return [
                     ...$definition,
@@ -58,7 +55,7 @@ final class RuntimeConfigAdminService
      */
     public function upsert(array $data): void
     {
-        if (! $this->runtimeAvailable()) {
+        if (! $this->isAvailable()) {
             throw ValidationException::withMessages([
                 'path' => 'Runtime config store is not available.',
             ]);
@@ -124,7 +121,7 @@ final class RuntimeConfigAdminService
 
     public function delete(string $path): void
     {
-        if (! $this->runtimeAvailable()) {
+        if (! $this->isAvailable()) {
             throw ValidationException::withMessages([
                 'path' => 'Runtime config store is not available.',
             ]);
@@ -142,9 +139,7 @@ final class RuntimeConfigAdminService
             return;
         }
 
-        [$group, $key] = $this->splitPath($path);
-        $this->configEntries->deleteByGroupAndKey($group, $key);
-        RuntimeConfig::refresh();
+        RuntimeConfig::forget($path);
     }
 
     public function resetToDefault(string $path): void
@@ -164,13 +159,11 @@ final class RuntimeConfigAdminService
 
     private function deleteStored(string $path): void
     {
-        if (! $this->runtimeAvailable() || ! RuntimeConfig::has($path)) {
+        if (! $this->isAvailable() || ! RuntimeConfig::has($path)) {
             return;
         }
 
-        [$group, $key] = $this->splitPath($path);
-        $this->configEntries->deleteByGroupAndKey($group, $key);
-        RuntimeConfig::refresh();
+        RuntimeConfig::forget($path);
     }
 
     /**
@@ -178,17 +171,17 @@ final class RuntimeConfigAdminService
      */
     private function customRecords(): array
     {
-        if (! $this->runtimeAvailable()) {
+        if (! $this->isAvailable()) {
             return [];
         }
 
         $corePaths = $this->catalog->corePaths();
         $reservedPrefixes = ['xflickr_app.', 'storage_app.'];
 
-        return $this->configEntries->listOrdered()
-            ->map(function (ConfigModel $config) use ($corePaths, $reservedPrefixes): ?array {
-                $group = (string) $config->getAttribute('group');
-                $key = (string) $config->getAttribute('key');
+        return RuntimeConfig::listOrdered()
+            ->map(function (array $config) use ($corePaths, $reservedPrefixes): ?array {
+                $group = $config['group'];
+                $key = $config['key'];
                 $path = "{$group}.{$key}";
 
                 if (in_array($path, $corePaths, true)) {
@@ -204,7 +197,7 @@ final class RuntimeConfigAdminService
                 return [
                     'id' => $path,
                     'path' => $path,
-                    'type' => (string) $config->getAttribute('type'),
+                    'type' => $config['type'],
                     'value' => RuntimeConfig::get($path),
                     'is_core' => false,
                 ];
@@ -216,14 +209,14 @@ final class RuntimeConfigAdminService
 
     private function effectiveValue(string $path, mixed $default): mixed
     {
-        if (! $this->runtimeAvailable() || ! RuntimeConfig::has($path)) {
+        if (! $this->isAvailable() || ! RuntimeConfig::has($path)) {
             return $default;
         }
 
         return RuntimeConfig::get($path);
     }
 
-    private function runtimeAvailable(): bool
+    public function isAvailable(): bool
     {
         return app()->bound('config-store');
     }
@@ -241,21 +234,6 @@ final class RuntimeConfigAdminService
                 'path' => 'Credential configuration must be managed on Flickr or Storages settings.',
             ]);
         }
-    }
-
-    /**
-     * @return array{0: string, 1: string}
-     */
-    private function splitPath(string $path): array
-    {
-        $parts = explode('.', $path, 2);
-        if (count($parts) !== 2) {
-            throw ValidationException::withMessages([
-                'path' => 'Invalid configuration path.',
-            ]);
-        }
-
-        return [$parts[0], $parts[1]];
     }
 
     private function castValue(string $type, mixed $value): mixed

@@ -6,10 +6,11 @@ namespace Modules\Settings\Http\Controllers;
 
 use App\Support\Observability\AdminActionLogger;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Controller;
 use Modules\Settings\Http\Requests\StoreStorageAppProfileRequest;
 use Modules\Storage\Services\StorageService;
 
-final class StorageAppProfileController
+final class StorageAppProfileController extends Controller
 {
     public function store(StoreStorageAppProfileRequest $request, StorageService $profiles, AdminActionLogger $audit): RedirectResponse
     {

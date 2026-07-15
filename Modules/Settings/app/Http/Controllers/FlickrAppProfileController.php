@@ -6,13 +6,14 @@ namespace Modules\Settings\Http\Controllers;
 
 use App\Support\Observability\AdminActionLogger;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Controller;
 use Illuminate\Validation\ValidationException;
 use Modules\Crawler\Exceptions\FlickrAppNotConfiguredException;
 use Modules\Flickr\Services\FlickrAccountsService;
 use Modules\Settings\Http\Requests\DestroyFlickrAppProfileRequest;
 use Modules\Settings\Http\Requests\StoreFlickrAppProfileRequest;
 
-final class FlickrAppProfileController
+final class FlickrAppProfileController extends Controller
 {
     public function store(StoreFlickrAppProfileRequest $request, FlickrAccountsService $profiles, AdminActionLogger $audit): RedirectResponse
     {
