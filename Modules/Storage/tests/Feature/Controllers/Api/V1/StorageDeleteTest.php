@@ -10,7 +10,7 @@ use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Models\StorageRemoteItem;
 use Modules\Storage\Models\StorageUpload;
-use Modules\Transfer\Models\StoredFile;
+use Modules\Storage\Models\StoredFile;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
@@ -125,8 +125,8 @@ final class StorageDeleteTest extends TestCase
 
         $storedFile = StoredFile::query()->create([
             'uuid' => (string) Str::uuid(),
-            'flickr_photo_id' => 'photo-1',
-            'owner_nsid' => 'nsid-1',
+            'source_id' => 'photo-1',
+            'source_owner' => 'nsid-1',
             'original_name' => 'photo.jpg',
             'status' => 'completed',
         ]);
@@ -199,8 +199,8 @@ final class StorageDeleteTest extends TestCase
 
         $storedFile = StoredFile::query()->create([
             'uuid' => (string) Str::uuid(),
-            'flickr_photo_id' => 'photo-2',
-            'owner_nsid' => 'nsid-2',
+            'source_id' => 'photo-2',
+            'source_owner' => 'nsid-2',
             'original_name' => 'photo.jpg',
             'status' => 'completed',
         ]);

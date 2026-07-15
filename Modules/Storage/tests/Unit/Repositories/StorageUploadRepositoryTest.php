@@ -7,8 +7,8 @@ namespace Modules\Storage\Tests\Unit\Repositories;
 use Modules\Storage\Enums\StorageUploadStatus;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Models\StorageUpload;
+use Modules\Storage\Models\StoredFile;
 use Modules\Storage\Repositories\StorageUploadRepository;
-use Modules\Transfer\Models\StoredFile;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 

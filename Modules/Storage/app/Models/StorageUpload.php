@@ -11,8 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Storage\Database\Factories\StorageUploadFactory;
 
 /**
- * Remote storage upload row. Holds `stored_file_id` as an integer FK only (no Eloquent
- * relation into Transfer) so the module DAG stays one-way; use StoredFile::uploads().
+ * Remote storage upload row. Links to StoredFile (now in Storage module).
  */
 final class StorageUpload extends Model
 {
@@ -40,6 +39,14 @@ final class StorageUpload extends Model
         return [
             'uploaded_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @return BelongsTo<StoredFile, $this>
+     */
+    public function storedFile(): BelongsTo
+    {
+        return $this->belongsTo(StoredFile::class, 'stored_file_id');
     }
 
     /**

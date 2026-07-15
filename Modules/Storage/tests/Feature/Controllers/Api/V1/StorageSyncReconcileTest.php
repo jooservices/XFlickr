@@ -11,7 +11,7 @@ use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Models\StorageRemoteItem;
 use Modules\Storage\Models\StorageUpload;
-use Modules\Transfer\Models\StoredFile;
+use Modules\Storage\Models\StoredFile;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 
@@ -45,8 +45,8 @@ final class StorageSyncReconcileTest extends TestCase
 
         $storedFile = StoredFile::query()->create([
             'uuid' => (string) Str::uuid(),
-            'flickr_photo_id' => 'photo-removed',
-            'owner_nsid' => 'nsid-1',
+            'source_id' => 'photo-removed',
+            'source_owner' => 'nsid-1',
             'original_name' => 'removed.jpg',
             'status' => 'completed',
         ]);

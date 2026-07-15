@@ -7,7 +7,7 @@ namespace Modules\Storage\Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Models\StorageUpload;
-use Modules\Transfer\Models\StoredFile;
+use Modules\Storage\Models\StoredFile;
 
 /** @extends Factory<StorageUpload> */
 class StorageUploadFactory extends Factory

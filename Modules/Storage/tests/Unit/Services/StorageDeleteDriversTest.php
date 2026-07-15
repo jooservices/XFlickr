@@ -9,13 +9,13 @@ use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Models\StorageRemoteItem;
 use Modules\Storage\Models\StorageUpload;
+use Modules\Storage\Models\StoredFile;
 use Modules\Storage\Services\GoogleDrive\DeleteService as GoogleDriveDeleteService;
 use Modules\Storage\Services\R2\DeleteService as R2DeleteService;
 use Modules\Storage\Services\StorageDeleteService;
 use Modules\Storage\Services\StorageDriverRegistry;
 use Modules\Storage\Support\StorageR2Config;
 use Modules\Storage\Tests\TestCase;
-use Modules\Transfer\Models\StoredFile;
 
 final class StorageDeleteDriversTest extends TestCase
 {
