@@ -13,15 +13,17 @@ XFlickr uses three separate Docker Compose files. **Never mix them.**
 - `app` — Laravel (port `APP_HOST_PORT`, default 8082)
 - `horizon` — queue worker
 - `scheduler` — Laravel scheduler
+- `reverb` — Laravel Reverb WebSockets (Operations live console; host port `REVERB_HOST_PORT`, default 8083)
 - `frontend` — Node + Vite HMR (port `FRONTEND_HOST_PORT`, default 5174)
 - `mysql`, `redis`, `mongodb`
 
 ## Production stack services
 
-- `nginx` — reverse proxy (port `HTTP_PORT`, default 80)
+- `nginx` — reverse proxy (port `HTTP_PORT`, default 80); WebSocket Upgrade `/app` → reverb
 - `app` — Laravel (`artisan serve`, built assets)
 - `horizon` — queue worker (scalable via `HORIZON_REPLICAS`)
 - `scheduler` — Laravel scheduler
+- `reverb` — Laravel Reverb WebSockets
 
 ## Bootstrap (operator)
 
@@ -60,3 +62,4 @@ bash scripts/test.sh gate:test
 
 - [Production deploy](production-deploy.md)
 - [Deploy overview](deploy.md)
+- [Reverb / WebSockets](reverb.md)

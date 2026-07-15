@@ -36,7 +36,15 @@ final class TransferBatch extends Model
         'total_count',
         'completed_count',
         'failed_count',
+        'delete_local_after_upload',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'delete_local_after_upload' => 'boolean',
+        ];
+    }
 
     /**
      * @return BelongsTo<StorageAccount, $this>

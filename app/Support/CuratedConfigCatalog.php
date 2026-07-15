@@ -244,6 +244,17 @@ final class CuratedConfigCatalog
                 tier: 'operational',
                 sort: 10,
             ),
+            $this->define(
+                path: 'xflickr_transfer.delete_local_after_upload',
+                label: 'Delete local files after upload',
+                description: 'When enabled, local cached photo files are removed after successful upload to storage. Bulk upload actions can override this default per operation.',
+                type: 'bool',
+                default: false,
+                groupLabel: 'Transfer / Uploads',
+                section: 'transfers',
+                tier: 'operational',
+                sort: 20,
+            ),
         ];
     }
 

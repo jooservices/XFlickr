@@ -22,6 +22,7 @@ const coverageInclude = [
     'resources/js/lib/spiderImpact.ts',
     'resources/js/lib/tableSort.ts',
     'resources/js/lib/toast.ts',
+    'resources/js/lib/operationsStreamPatches.ts',
     'resources/js/hooks/useCountdown.ts',
     'resources/js/hooks/useFlashToast.ts',
     'resources/js/hooks/useInvalidFlickrTokenAccounts.ts',

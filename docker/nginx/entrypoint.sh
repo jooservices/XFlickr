@@ -10,11 +10,27 @@ upstream xflickr_app {
     server app:8000;
 }
 
+upstream xflickr_reverb {
+    server reverb:8080;
+}
+
 server {
     listen ${HTTP_PORT};
     server_name _;
 
     client_max_body_size 100M;
+
+    location /app {
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_pass http://xflickr_reverb;
+        proxy_read_timeout 60s;
+    }
 
     location / {
         proxy_pass http://xflickr_app;
@@ -39,6 +55,18 @@ server {
     ssl_certificate_key /etc/nginx/ssl/key.pem;
 
     client_max_body_size 100M;
+
+    location /app {
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_pass http://xflickr_reverb;
+        proxy_read_timeout 60s;
+    }
 
     location / {
         proxy_pass http://xflickr_app;

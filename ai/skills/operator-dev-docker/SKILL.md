@@ -51,8 +51,10 @@ bash scripts/dev.sh down            # stop; volumes kept
 docker exec xflickr-dev-horizon-1 php artisan horizon:terminate
 bash scripts/dev.sh restart-frontend    # UI / Vite only
 bash scripts/dev.sh refresh-frontend    # npm ci in frontend container + restart Vite
-bash scripts/dev.sh reload              # build assets + restart app/horizon/scheduler
+bash scripts/dev.sh reload              # build assets + restart app/horizon/scheduler/reverb
 ```
+
+After compose changes that add **Reverb** (`docker-compose.dev.yml` service `reverb`), run `bash scripts/dev.sh up` so the WebSocket process starts. See [`docs/03-operations/reverb.md`](../../docs/03-operations/reverb.md).
 
 ### Destructive (operator explicit opt-in only)
 

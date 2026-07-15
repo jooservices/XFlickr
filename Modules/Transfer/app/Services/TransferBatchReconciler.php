@@ -7,6 +7,7 @@ namespace Modules\Transfer\Services;
 use Illuminate\Support\Facades\DB;
 use Modules\Transfer\Enums\TransferBatchStatus;
 use Modules\Transfer\Enums\TransferItemStatus;
+use Modules\Transfer\Events\TransferBatchReconciled;
 use Modules\Transfer\Models\TransferBatch;
 use Modules\Transfer\Repositories\TransferBatchRepository;
 use Modules\Transfer\Repositories\TransferItemRepository;
@@ -26,7 +27,10 @@ final class TransferBatchReconciler
 
         $batchId = $batch instanceof TransferBatch ? $batch->id : $batch;
 
-        DB::transaction(function () use ($batchId): void {
+        /** @var array<string, mixed>|null $reconciled */
+        $reconciled = null;
+
+        DB::transaction(function () use ($batchId, &$reconciled): void {
             $batch = $this->batches->lockById($batchId);
 
             if ($batch === null) {
@@ -49,7 +53,45 @@ final class TransferBatchReconciler
             }
 
             $this->batches->updateCounts($batch, $completed, $failed, $status);
+
+            $reconciled = [
+                'batchId' => $batch->id,
+                'type' => (string) $batch->type,
+                'connectionKey' => (string) $batch->connection_key,
+                'subjectNsid' => $batch->subject_nsid !== null ? (string) $batch->subject_nsid : null,
+                'status' => $status->value,
+                'totalCount' => (int) $batch->total_count,
+                'completedCount' => $completed,
+                'failedCount' => $failed,
+                'sampleError' => $this->sampleError($batch->id),
+                'groupType' => $batch->group_type !== null ? (string) $batch->group_type : null,
+                'groupId' => $batch->group_id !== null ? (string) $batch->group_id : null,
+                'groupLabel' => $batch->group_label !== null ? (string) $batch->group_label : null,
+                'storageAccountId' => $batch->storage_account_id !== null ? (int) $batch->storage_account_id : null,
+                'updatedAt' => now()->toISOString(),
+            ];
         });
+
+        if ($reconciled === null) {
+            return;
+        }
+
+        event(new TransferBatchReconciled(
+            batchId: $reconciled['batchId'],
+            type: $reconciled['type'],
+            connectionKey: $reconciled['connectionKey'],
+            subjectNsid: $reconciled['subjectNsid'],
+            status: $reconciled['status'],
+            totalCount: $reconciled['totalCount'],
+            completedCount: $reconciled['completedCount'],
+            failedCount: $reconciled['failedCount'],
+            sampleError: $reconciled['sampleError'],
+            groupType: $reconciled['groupType'],
+            groupId: $reconciled['groupId'],
+            groupLabel: $reconciled['groupLabel'],
+            storageAccountId: $reconciled['storageAccountId'],
+            updatedAt: $reconciled['updatedAt'],
+        ));
     }
 
     public function sampleError(int $batchId): ?string

@@ -28,6 +28,7 @@ final class FanOutTransferBatchJob implements ShouldQueue
         private readonly string $connectionKey,
         private readonly ?string $ownerNsid = null,
         private readonly ?int $storageAccountId = null,
+        private readonly ?bool $deleteLocalAfterUpload = null,
     ) {
         $this->onQueue(
             $this->transferType === TransferType::Upload ? 'xflickr-uploads' : 'xflickr-downloads',
@@ -86,6 +87,7 @@ final class FanOutTransferBatchJob implements ShouldQueue
             $connection,
             $storageAccount,
             $ownerNsid !== $connection->connection_key ? $ownerNsid : null,
+            $this->deleteLocalAfterUpload,
         );
     }
 }

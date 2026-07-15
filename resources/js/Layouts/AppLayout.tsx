@@ -27,7 +27,7 @@ import { SpiderModeButton } from '@/Components/Layout/SpiderModeButton';
 import UserAccountMenu from '@/Components/Layout/UserAccountMenu';
 import { useFlashToast } from '@/hooks/useFlashToast';
 import { useFlickrRateLimit } from '@/hooks/useFlickrRateLimit';
-import { useOperationsStream } from '@/hooks/useOperationsStream';
+import { OperationsStreamProvider, useOperationsStream } from '@/hooks/useOperationsStream';
 import { useStorageQuota } from '@/hooks/useStorageQuota';
 import { cn } from '@/lib/cn';
 import { connectionsPath } from '@/lib/connections';
@@ -217,6 +217,14 @@ function ShellNavLink({
 }
 
 export default function AppLayout({ children }: PropsWithChildren) {
+    return (
+        <OperationsStreamProvider>
+            <AppLayoutShell>{children}</AppLayoutShell>
+        </OperationsStreamProvider>
+    );
+}
+
+function AppLayoutShell({ children }: PropsWithChildren) {
     const { props, url } = usePage<PageProps>();
     const { app, auth, flash } = props;
     const globalPause = app.global_pause ?? false;
@@ -301,9 +309,6 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         </AppShell.Brand>
 
                         <AppShell.HeaderMain>
-                            <div className="mr-2 flex items-center">
-                                <CommandPaletteTrigger onClick={() => setCommandPaletteOpen(true)} />
-                            </div>
                             <AppShell.HeaderNav>
                                 {topNav.map((item) => {
                                     const active =
@@ -330,6 +335,10 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 })}
                             </AppShell.HeaderNav>
 
+                            <AppShell.HeaderCenter>
+                                <CommandPaletteTrigger onClick={() => setCommandPaletteOpen(true)} />
+                            </AppShell.HeaderCenter>
+
                             <AppShell.HeaderActions>
                                 <GlobalCrawlPauseButton paused={globalPause} />
                                 <SpiderModeButton spider={spider} />
@@ -337,6 +346,9 @@ export default function AppLayout({ children }: PropsWithChildren) {
                             </AppShell.HeaderActions>
                         </AppShell.HeaderMain>
                     </AppShell.HeaderRow>
+                    <AppShell.HeaderMobile>
+                        <CommandPaletteTrigger onClick={() => setCommandPaletteOpen(true)} />
+                    </AppShell.HeaderMobile>
                 </AppShell.Header>
             </div>
 

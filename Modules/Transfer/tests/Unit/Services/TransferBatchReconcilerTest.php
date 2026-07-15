@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Modules\Transfer\Tests\Unit\Services;
 
+use Illuminate\Support\Facades\Event;
 use Modules\Transfer\Enums\TransferBatchStatus;
+use Modules\Transfer\Events\TransferBatchReconciled;
 use Modules\Transfer\Models\TransferBatch;
 use Modules\Transfer\Models\TransferItem;
 use Modules\Transfer\Services\TransferBatchReconciler;
@@ -85,6 +87,38 @@ final class TransferBatchReconcilerTest extends TestCase
         $this->assertSame(TransferBatchStatus::Failed->value, $batch->status);
         $this->assertSame(0, $batch->completed_count);
         $this->assertSame(2, $batch->failed_count);
+    }
+
+    public function test_it_dispatches_transfer_batch_reconciled_after_commit(): void
+    {
+        Event::fake([
+            TransferBatchReconciled::class,
+        ]);
+
+        $connection = $this->createFlickrConnection();
+
+        $batch = TransferBatch::query()->create([
+            'type' => 'download',
+            'connection_key' => $connection->connection_key,
+            'subject_nsid' => 'friend@N01',
+            'status' => TransferBatchStatus::Running->value,
+            'total_count' => 1,
+        ]);
+
+        TransferItem::query()->create([
+            'transfer_batch_id' => $batch->id,
+            'flickr_photo_id' => 'photo-1',
+            'status' => 'completed',
+        ]);
+
+        app(TransferBatchReconciler::class)->reconcile($batch);
+
+        Event::assertDispatched(
+            TransferBatchReconciled::class,
+            fn (TransferBatchReconciled $event): bool => $event->batchId === $batch->id
+                && $event->completedCount === 1
+                && $event->status === TransferBatchStatus::Completed->value,
+        );
     }
 
     public function test_it_reconciles_stale_counts_atomically(): void

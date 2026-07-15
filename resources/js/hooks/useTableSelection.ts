@@ -8,6 +8,8 @@ export interface DataTableSelectionProps<T> {
     selectedKeys: Set<string>;
     onToggle: (key: string) => void;
     onTogglePage: () => void;
+    /** Replace selection (exits matching scope). Used by JOO DataTable. */
+    onChange: (keys: Set<string>) => void;
     selectionState: TableSelectionState;
     isRowSelectable?: (row: T) => boolean;
     rowLabel?: (row: T) => string;
@@ -158,6 +160,11 @@ export function useTableSelection<T>({
         setScope('keys');
     }, []);
 
+    const replaceKeys = useCallback((keys: Set<string>) => {
+        setScope('keys');
+        setSelectedKeys(new Set(keys));
+    }, []);
+
     const selectedRows = useMemo(
         () => rows.filter((row) => isSelected(rowKey(row))),
         [rows, rowKey, isSelected],
@@ -168,6 +175,7 @@ export function useTableSelection<T>({
             selectedKeys,
             onToggle: toggle,
             onTogglePage: togglePage,
+            onChange: replaceKeys,
             selectionState,
             isRowSelectable,
             rowLabel: rowKey,
@@ -181,6 +189,7 @@ export function useTableSelection<T>({
             selectedKeys,
             toggle,
             togglePage,
+            replaceKeys,
             selectionState,
             isRowSelectable,
             rowKey,

@@ -42,6 +42,7 @@ final class QueuePhotoUploadRequest extends Request
             'contact_nsid' => ['sometimes', 'nullable', 'string'],
             'contact_nsids' => ['sometimes', 'nullable', 'array'],
             'contact_nsids.*' => ['string'],
+            'delete_local_after_upload' => ['sometimes', 'nullable', 'boolean'],
         ];
     }
 
@@ -90,5 +91,14 @@ final class QueuePhotoUploadRequest extends Request
             is_array($contactNsids) ? $contactNsids : [],
             static fn (mixed $nsid): bool => is_string($nsid) && $nsid !== '',
         ));
+    }
+
+    public function deleteLocalAfterUpload(): ?bool
+    {
+        if (! $this->has('delete_local_after_upload')) {
+            return null;
+        }
+
+        return filter_var($this->input('delete_local_after_upload'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
     }
 }

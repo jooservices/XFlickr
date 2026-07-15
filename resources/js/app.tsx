@@ -1,14 +1,18 @@
 import '../css/app.css';
 import '@jooservices/react-layout/styles.css';
 import '@jooservices/react-content/styles.css';
+import '@jooservices/react-action-buttons/styles.css';
+import '@jooservices/react-card/styles.css';
+import '@jooservices/react-modal/styles.css';
+import '@jooservices/react-toast/styles.css';
 import '@jooservices/react-table/styles.css';
 import '@jooservices/react-config/styles.css';
+import '@jooservices/react-ui/styles.css';
 
 import { createInertiaApp } from '@inertiajs/react';
+import { Toaster } from '@jooservices/react-toast';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
-
-import Toaster from '@/Components/ui/Toaster';
 
 const appName = 'XFlickr';
 
@@ -24,7 +28,7 @@ createInertiaApp({
         createRoot(el).render(
             <>
                 <App {...props} />
-                <Toaster />
+                <Toaster position="top-right" />
             </>,
         );
     },

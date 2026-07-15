@@ -1,8 +1,10 @@
+import ApiUsageChart from '@/Components/Flickr/ApiUsageChart';
 import DatabaseUsagePanel from '@/Components/Operations/DatabaseUsagePanel';
 import OperationsActivityChart from '@/Components/Operations/OperationsActivityChart';
 import MetricCard from '@/Components/ui/MetricCard';
 import type {
     DatabaseUsageSnapshot,
+    FlickrAccount,
     OperationsAccountRow,
     OperationsActivityPoint,
     OperationsOverviewTotals,
@@ -17,9 +19,11 @@ type Dependencies = {
 
 interface OperationsOverviewPanelProps {
     overview: OperationsOverviewTotals;
+    queues: Record<string, number | null>;
     dependencies: Dependencies;
     databases: DatabaseUsageSnapshot | null;
     accounts: OperationsAccountRow[];
+    flickrAccounts: FlickrAccount[];
     activityHistory: OperationsActivityPoint[];
 }
 
@@ -29,17 +33,40 @@ function probeHint(probe: ServiceDependencyProbe): string {
         .join(' · ') || 'Dependency probe';
 }
 
+function isPaused(overview: OperationsOverviewTotals): boolean {
+    return overview.global_pause === true || overview.global_pause === 1 || overview.global_pause === '1';
+}
+
 export default function OperationsOverviewPanel({
     overview,
+    queues,
     dependencies,
     databases,
     accounts,
+    flickrAccounts,
     activityHistory,
 }: OperationsOverviewPanelProps) {
     const transfersActive = overview.downloads_active + overview.uploads_active;
+    const queueEntries = Object.entries(queues);
 
     return (
         <div className="space-y-6">
+            {(isPaused(overview) || overview.accounts_in_cooldown > 0) && (
+                <div className="flex flex-wrap gap-2 text-xs">
+                    {isPaused(overview) ? (
+                        <span className="rounded-md border border-rose-200 bg-rose-50 px-2 py-1 font-medium text-rose-900">
+                            Global pause on
+                        </span>
+                    ) : null}
+                    {overview.accounts_in_cooldown > 0 ? (
+                        <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1 font-medium text-amber-950">
+                            {overview.accounts_in_cooldown} account
+                            {overview.accounts_in_cooldown === 1 ? '' : 's'} in cooldown
+                        </span>
+                    ) : null}
+                </div>
+            )}
+
             <div className="space-y-2">
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Activity</p>
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -76,7 +103,31 @@ export default function OperationsOverviewPanel({
                 </div>
             </div>
 
+            {queueEntries.length > 0 ? (
+                <div className="space-y-2">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Queues</p>
+                    <div className="grid gap-4 sm:grid-cols-3">
+                        {queueEntries.map(([name, depth]) => (
+                            <MetricCard
+                                key={name}
+                                label={name}
+                                value={depth === null ? '—' : depth}
+                                hint="Pending Horizon jobs"
+                                tone={depth !== null && depth > 0 ? 'cyan' : 'slate'}
+                            />
+                        ))}
+                    </div>
+                </div>
+            ) : null}
+
             <OperationsActivityChart history={activityHistory} />
+
+            {flickrAccounts.length > 0 ? (
+                <div className="space-y-2">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">API usage</p>
+                    <ApiUsageChart accounts={flickrAccounts} />
+                </div>
+            ) : null}
 
             <div className="space-y-2">
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Services</p>
@@ -130,6 +181,7 @@ export default function OperationsOverviewPanel({
                                         <p className="text-xs text-slate-500">
                                             pending {row.pending_targets}
                                             {cooldown > 0 ? ` · cooldown ${Math.ceil(cooldown / 60)}m` : ''}
+                                            {row.rate_limit.global_pause ? ' · pause' : ''}
                                         </p>
                                     </div>
                                     <div className="min-w-40 text-right">

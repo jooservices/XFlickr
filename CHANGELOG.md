@@ -6,13 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Frontend adopts **JOOservices React `v1.0.0`** for all nine shared packages (`react-layout`, `react-content`, `react-table`, `react-config`, `react-action-buttons`, `react-card`, `react-modal`, `react-toast`, `react-ui`) via packed `packages/*-1.0.0.tgz` (npm does not resolve git `#path:` subdirs). Local `DataTable` / `Modal` / `Toaster` / `Button` / `Card` / `MetricCard` / toast store wrap or re-export JOO; AppShell top search (“Jump to”) is centered via `AppShell.HeaderCenter`. Settings config uses `ConfigPanel` ref `openCreate()` for Identity CTAs.
+- FE UI/UX polish: cyan link tokens; shared SegmentedControl (Contacts table/graph, Catalog Photos table/grid); Contact Show identity-first layout with clickable catalog stats, recent photo strip, and collapsed technical fields; sticky bulk selection bar; Contacts “Show catalog counts” column toggle; EmptyState copy on Contacts and catalog lists; MetricCard/CatalogStatCard alignment; cyan operation progress cells.
+
 ### Fixed
 
 - Contacts table catalog column sort keys now send `photos_count` / `favorites_count` / etc. (matching `ContactListSorter`) instead of crawl-type keys like `photos`, which fell back to username order. Vitest contract locks Contacts + Catalog remote sort keys against backend allowlists.
-
-### Changed
-
-- FE UI/UX polish: cyan link tokens; shared SegmentedControl (Contacts table/graph, Catalog Photos table/grid); Contact Show identity-first layout with clickable catalog stats, recent photo strip, and collapsed technical fields; sticky bulk selection bar; Contacts “Show catalog counts” column toggle; EmptyState copy on Contacts and catalog lists; MetricCard/CatalogStatCard alignment; cyan operation progress cells.
 - Contact graph snapshot no longer loads the full subject-contact edge table into PHP (scopes edges to visible directs) and ranks directs via a photo-count SQL top-N instead of four full catalog count maps — fixes OOM / “Unable to load contact graph” on large accounts.
 - Contact graph memory: avoid loading all direct NSIDs; join-rank by photos; hard-cap show-all (500) and second-degree edges (5/subject, 250 total); hydrate contact summaries without `raw_payload`.
 - Audit 260714_4 test suite: closed PHP residual zero/low-coverage files + clover no-zero-file gate check; dedicated unit tests for nine previously indirect-only services; Storage module `TestCase` with fixtures/`bindInMemoryDisk`/`bindGoogleClient` (demock own-class Google token + flysystem doubles; Flickr token-health controller uses FakeFlickrTransport); Vitest `@vitest/coverage-v8` allowlist ≥90% on pure `lib/`+`hooks/` (gate runs `npm run test:coverage`).
@@ -22,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Operations **WebSocket live console** (Laravel Reverb): snapshot bootstrap + throttled `ops.batch.updated` / `ops.overview.changed` on private channel `operations`; Tier-1 widgets — queue depths, target breakdown, spider frontier (read-only), API usage chart, global pause badge; poll fallback when the socket is unavailable. Dev/prod Compose `reverb` service; nginx Upgrade `/app` in prod.
 - Catalog Photos **Downloaded** column live status: Queued → Downloading… → View/Failed. Queuing a download creates `stored_files` as `pending` immediately; `GET /api/v1/flickr/catalog/photos/progress?ids=` polls visible live rows (Contacts-style) without a full table reload.
 - FS-1 app-shell command palette (⌘K / Ctrl+K): jump to nav/storage/settings destinations and contact suggestions for the selected Flickr account; header “Jump to” trigger on `sm+`.
 - FS-2 Contacts **Import from URL**: paste a Flickr people/photostream/photo page URL → `flickr.urls.lookupUser` / `photos.getInfo` resolve NSID, link via `FlickrCatalogService`, optional crawl, redirect to contact show. REST shape: `POST …/contacts` with `source: url` (not `/contacts/import`).

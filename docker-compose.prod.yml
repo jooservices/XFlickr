@@ -36,6 +36,16 @@ x-php-environment: &php-environment
   EVENTS_EVENT_LOG_ENABLED: "true"
   ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@local}
   ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+  BROADCAST_CONNECTION: ${BROADCAST_CONNECTION:-reverb}
+  REVERB_APP_ID: ${REVERB_APP_ID}
+  REVERB_APP_KEY: ${REVERB_APP_KEY}
+  REVERB_APP_SECRET: ${REVERB_APP_SECRET}
+  # PHP → reverb container. Browser uses nginx /app Upgrade proxy (same-origin).
+  REVERB_HOST: reverb
+  REVERB_PORT: "8080"
+  REVERB_SCHEME: http
+  REVERB_SERVER_HOST: 0.0.0.0
+  REVERB_SERVER_PORT: 8080
 
 x-php-base: &php-base
   <<: *php-build
@@ -80,6 +90,19 @@ services:
       app:
         condition: service_started
 
+  reverb:
+    <<: *php-base
+    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    depends_on:
+      app:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit((int)!@fsockopen('127.0.0.1', 8080));"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
   nginx:
     image: nginx:1.27-alpine
     restart: unless-stopped
@@ -96,4 +119,6 @@ services:
     entrypoint: ["/bin/sh", "/docker-entrypoint.d/99-xflickr.sh"]
     depends_on:
       app:
+        condition: service_started
+      reverb:
         condition: service_started

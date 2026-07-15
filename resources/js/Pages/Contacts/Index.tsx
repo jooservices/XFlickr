@@ -16,6 +16,7 @@ import CrawlTypeMenu, {
     bulkUploadActionIcon,
 } from '@/Components/Flickr/CrawlTypeMenu';
 import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/Layout/page-shell';
+import UploadConfirmModal, { type UploadConfirmPayload } from '@/Components/Transfer/UploadConfirmModal';
 import type { BulkAction } from '@/Components/ui/BulkActionBar';
 import Button from '@/Components/ui/Button';
 import Checkbox from '@/Components/ui/Checkbox';
@@ -98,6 +99,11 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
     const [draft, setDraft] = useState(filters.search);
     const [contacts, setContacts] = useState(initialContacts);
     const [importOpen, setImportOpen] = useState(false);
+    const [uploadConfirm, setUploadConfirm] = useState<{
+        selectedKeys: string[];
+        isMatching: boolean;
+        count: number;
+    } | null>(null);
     const [showCatalogCounts, setShowCatalogCounts] = useState(readShowCatalogCounts);
     const viewMode: ContactViewMode = filters.view === 'graph' ? 'graph' : 'table';
     const starredOnly = filters.starred_only ?? false;
@@ -211,6 +217,7 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
                 select_all?: boolean;
                 search?: string;
                 starred_only?: boolean;
+                delete_local_after_upload?: boolean;
             },
         ) => {
             router.post(url, data, {
@@ -266,11 +273,15 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
                 label: 'Upload',
                 icon: bulkUploadActionIcon(),
                 onAction: ({ selectedKeys, isMatching }) => {
-                    postBulk(flickrAccountPath(account.public_id, '/upload'), bulkPayload(selectedKeys, isMatching));
+                    setUploadConfirm({
+                        selectedKeys,
+                        isMatching,
+                        count: isMatching ? (selection.matchingTotal ?? selectedKeys.length) : selectedKeys.length,
+                    });
                 },
             },
         ],
-        [account.public_id, bulkPayload, postBulk],
+        [account.public_id, bulkPayload, postBulk, selection.matchingTotal],
     );
 
     const goToPage = (page: number) => {
@@ -371,6 +382,22 @@ export default function ContactsIndex({ account, contacts: initialContacts, meta
                     open={importOpen}
                     onClose={() => setImportOpen(false)}
                 />
+
+                {uploadConfirm ? (
+                    <UploadConfirmModal
+                        open
+                        onClose={() => setUploadConfirm(null)}
+                        onConfirm={(payload: UploadConfirmPayload) => {
+                            postBulk(flickrAccountPath(account.public_id, '/upload'), {
+                                ...bulkPayload(uploadConfirm.selectedKeys, uploadConfirm.isMatching),
+                                delete_local_after_upload: payload.deleteLocalAfterUpload,
+                            });
+                            setUploadConfirm(null);
+                        }}
+                        selectedCount={uploadConfirm.count}
+                        isMatching={uploadConfirm.isMatching}
+                    />
+                ) : null}
 
                 <PageShellCanvas className="space-y-6" variant="plain">
                 <DataTable

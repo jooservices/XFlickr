@@ -2,7 +2,6 @@ import { router } from '@inertiajs/react';
 import { Search } from 'lucide-react';
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
-import Button from '@/Components/ui/Button';
 import LoadingIndicator from '@/Components/ui/LoadingIndicator';
 import Modal from '@/Components/ui/Modal';
 import SearchField from '@/Components/ui/SearchField';
@@ -147,7 +146,7 @@ export default function CommandPalette({ open, onOpenChange, accountPublicId }: 
 
     return (
         <Modal open={open} onClose={close} size="lg" titleId={titleId} zIndexClassName="z-[120]">
-            <Modal.Header title="Jump to…" showClose />
+            <Modal.Header title="Jump to…" />
             <div className="border-b border-slate-200 px-4 py-3" onKeyDown={onListKeyDown}>
                 <SearchField
                     ref={inputRef}
@@ -221,22 +220,29 @@ export default function CommandPalette({ open, onOpenChange, accountPublicId }: 
     );
 }
 
-export function CommandPaletteTrigger({ onClick }: { onClick: () => void }) {
+export function CommandPaletteTrigger({
+    onClick,
+    className,
+}: {
+    onClick: () => void;
+    className?: string;
+}) {
     return (
-        <Button
+        <button
             type="button"
-            variant="secondary"
-            size="sm"
             onClick={onClick}
-            className="hidden items-center gap-2 sm:inline-flex"
+            className={cn(
+                'joo-layout-search w-full max-w-md justify-start text-left',
+                className,
+            )}
             aria-label="Open command palette"
             title="Jump to (⌘K)"
         >
-            <Search className="size-3.5" aria-hidden />
-            <span className="text-slate-500">Jump to</span>
-            <kbd className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-[10px] text-slate-500">
+            <Search className="joo-layout-search-icon" aria-hidden />
+            <span className="joo-layout-search-input truncate text-slate-500">Jump to…</span>
+            <kbd className="ml-auto hidden rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-[10px] text-slate-500 sm:inline">
                 ⌘K
             </kbd>
-        </Button>
+        </button>
     );
 }

@@ -15,6 +15,9 @@ final class OperationsSnapshotResource extends JsonResource
     /**
      * @return array{
      *     overview: array<string, mixed>,
+     *     queues: array<string, mixed>,
+     *     target_breakdown: list<mixed>,
+     *     spider: list<mixed>,
      *     dependencies: array<string, mixed>,
      *     databases: array<string, mixed>,
      *     accounts: list<mixed>,
@@ -30,6 +33,9 @@ final class OperationsSnapshotResource extends JsonResource
 
         return [
             'overview' => is_array($snapshot['overview'] ?? null) ? $snapshot['overview'] : [],
+            'queues' => is_array($snapshot['queues'] ?? null) ? $snapshot['queues'] : [],
+            'target_breakdown' => array_values(is_array($snapshot['target_breakdown'] ?? null) ? $snapshot['target_breakdown'] : []),
+            'spider' => array_values(is_array($snapshot['spider'] ?? null) ? $snapshot['spider'] : []),
             'dependencies' => is_array($snapshot['dependencies'] ?? null) ? $snapshot['dependencies'] : [],
             'databases' => is_array($snapshot['databases'] ?? null) ? $snapshot['databases'] : [],
             'accounts' => array_values(is_array($snapshot['accounts'] ?? null) ? $snapshot['accounts'] : []),

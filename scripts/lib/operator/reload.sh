@@ -18,8 +18,8 @@ dev_reload_stack() {
     xf_dev_compose exec -T app php artisan config:clear --no-interaction
     xf_dev_compose exec -T app php artisan view:clear --no-interaction
 
-    echo "==> Restarting app, Horizon, and scheduler"
-    xf_dev_compose restart app horizon scheduler
+    echo "==> Restarting app, Horizon, scheduler, and Reverb"
+    xf_dev_compose restart app horizon scheduler reverb
 
     local port
     port="$(xf_app_port)"
@@ -27,4 +27,5 @@ dev_reload_stack() {
     echo "Reloaded. No database migrations were run."
     echo "  App:     http://localhost:${port}"
     echo "  Horizon: http://localhost:${port}/horizon"
+    echo "  Reverb:  ws://localhost:${REVERB_HOST_PORT:-8083}"
 }

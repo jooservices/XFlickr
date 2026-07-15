@@ -21,10 +21,10 @@ deploy_finalize_restart_docker_services() {
 
     if [[ "$context" == "install" ]]; then
         echo "==> Starting production stack (horizon replicas: ${replicas})"
-        xf_prod_compose up -d --build --scale "horizon=${replicas}" app horizon scheduler nginx
+        xf_prod_compose up -d --build --scale "horizon=${replicas}" app horizon scheduler reverb nginx
     else
         echo "==> Restarting containers (rolling — data volumes preserved)"
-        xf_prod_compose up -d --build --scale "horizon=${replicas}" app horizon scheduler nginx
+        xf_prod_compose up -d --build --scale "horizon=${replicas}" app horizon scheduler reverb nginx
     fi
 
     xf_prod_compose ps

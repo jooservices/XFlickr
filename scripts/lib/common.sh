@@ -79,6 +79,7 @@ xf_print_urls() {
     echo "  App:      http://localhost:${app_port}"
     echo "  Login:    http://localhost:${app_port}/login"
     echo "  Horizon:  http://localhost:${app_port}/horizon"
+    echo "  Reverb:   ws://localhost:${REVERB_HOST_PORT:-8083} (Operations WebSocket)"
     echo "  Settings: http://localhost:${app_port}/settings"
     echo "  Vite HMR: http://localhost:${frontend_port}"
     echo

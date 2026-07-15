@@ -26,9 +26,20 @@ interface Props extends PageProps {
 }
 
 export default function CrawlOperations() {
+    return (
+        <AppLayout>
+            <OperationsPageBody />
+        </AppLayout>
+    );
+}
+
+function OperationsPageBody() {
     const { accounts } = usePage<Props>().props;
     const {
         overview,
+        queues,
+        targetBreakdown,
+        spider,
         dependencies,
         databases,
         accounts: opsAccounts,
@@ -37,6 +48,7 @@ export default function CrawlOperations() {
         uploadBatches,
         activityHistory,
         loading,
+        transport,
     } = useCrawlOperations();
     const [panel, setPanel] = useState<OperationsPanel>(() => readOperationsPanelFromLocation());
 
@@ -45,15 +57,22 @@ export default function CrawlOperations() {
         writeOperationsPanelToLocation(next);
     };
 
+    const transportHint =
+        transport === 'websocket'
+            ? 'Live updates via WebSocket'
+            : transport === 'connecting'
+              ? 'Connecting to live updates…'
+              : 'Live updates via polling (WebSocket unavailable)';
+
     return (
-        <AppLayout>
+        <>
             <Head title="Operations" />
 
             <PageShell data-testid="operations-page">
                 <PageShellIdentity
                     breadcrumbs={[{ label: 'Operations' }]}
                     title="Operations"
-                    subtitle="Process console for crawls, transfers, and platform health. Live updates via polling."
+                    subtitle={`Process console for crawls, transfers, and platform health. ${transportHint}.`}
                     actions={
                         <a
                             href="/horizon"
@@ -92,9 +111,11 @@ export default function CrawlOperations() {
                     {panel === 'overview' ? (
                         <OperationsOverviewPanel
                             overview={overview}
+                            queues={queues}
                             dependencies={dependencies}
                             databases={databases}
                             accounts={opsAccounts}
+                            flickrAccounts={accounts}
                             activityHistory={activityHistory}
                         />
                     ) : null}
@@ -104,6 +125,8 @@ export default function CrawlOperations() {
                             fetchRuns={fetchRuns}
                             accounts={accounts}
                             opsAccounts={opsAccounts}
+                            targetBreakdown={targetBreakdown}
+                            spider={spider}
                             loading={loading}
                         />
                     ) : null}
@@ -124,6 +147,6 @@ export default function CrawlOperations() {
                     ) : null}
                 </PageShellCanvas>
             </PageShell>
-        </AppLayout>
+        </>
     );
 }

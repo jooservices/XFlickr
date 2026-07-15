@@ -93,4 +93,47 @@ final class CrawlTargetQueryRepository
             ->completed()
             ->sum('last_result_count');
     }
+
+    /**
+     * Status × task_type counts for running crawl runs only.
+     *
+     * @param  list<string>  $connectionKeys
+     * @return list<array{connection_key: string, crawl_run_id: int, status: string, task_type: string, count: int}>
+     */
+    public function statusTaskTypeCountsForRunningRuns(array $connectionKeys): array
+    {
+        if ($connectionKeys === []) {
+            return [];
+        }
+
+        $runsTable = (new CrawlRun)->getTable();
+        $targetsTable = (new CrawlTarget)->getTable();
+
+        $rows = CrawlTarget::query()
+            ->join($runsTable, "{$targetsTable}.xflickr_crawl_run_id", '=', "{$runsTable}.id")
+            ->whereIn("{$runsTable}.connection_key", $connectionKeys)
+            ->where("{$runsTable}.status", 'running')
+            ->selectRaw("{$runsTable}.connection_key as connection_key, {$targetsTable}.xflickr_crawl_run_id as crawl_run_id, {$targetsTable}.status as status, {$targetsTable}.task_type as task_type, count(*) as aggregate")
+            ->groupBy(
+                "{$runsTable}.connection_key",
+                "{$targetsTable}.xflickr_crawl_run_id",
+                "{$targetsTable}.status",
+                "{$targetsTable}.task_type",
+            )
+            ->toBase()
+            ->get();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $out[] = [
+                'connection_key' => (string) $row->connection_key,
+                'crawl_run_id' => (int) $row->crawl_run_id,
+                'status' => (string) $row->status,
+                'task_type' => (string) $row->task_type,
+                'count' => (int) $row->aggregate,
+            ];
+        }
+
+        return $out;
+    }
 }

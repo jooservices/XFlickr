@@ -2,11 +2,12 @@ import { router } from '@inertiajs/react';
 import {
     ConfigPanel,
     type ConfigEntry,
+    type ConfigPanelHandle,
     type ConfigRecord,
     type ConfigValueType,
 } from '@jooservices/react-config';
-import { Activity, DatabaseZap, Globe2, LayoutTemplate, Network } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { Activity, ArrowUpDown, DatabaseZap, Globe2, LayoutTemplate, Network } from 'lucide-react';
+import { forwardRef, useMemo, useState } from 'react';
 
 import type { CuratedConfigEntry, CustomConfigEntry } from '@/types';
 
@@ -14,7 +15,6 @@ interface GeneralConfigPanelProps {
     curated: CuratedConfigEntry[];
     custom: CustomConfigEntry[];
     runtimeConfigAvailable: boolean;
-    onOpenCreateReady?: (openCreate: (() => void) | null) => void;
 }
 
 const SETTINGS_TABS = [
@@ -35,6 +35,12 @@ const SETTINGS_TABS = [
         label: 'Discovery',
         icon: Network,
         filter: (entry: ConfigEntry) => entry.meta?.section === 'discovery',
+    },
+    {
+        id: 'transfers',
+        label: 'Transfers',
+        icon: ArrowUpDown,
+        filter: (entry: ConfigEntry) => entry.meta?.section === 'transfers',
     },
     {
         id: 'application',
@@ -108,115 +114,89 @@ function inertiaMutation(
     });
 }
 
-function OpenCreateBridge({
-    openCreate,
-    onReady,
-}: {
-    openCreate: () => void;
-    onReady?: (openCreate: (() => void) | null) => void;
-}) {
-    useEffect(() => {
-        onReady?.(openCreate);
+const GeneralConfigPanel = forwardRef<ConfigPanelHandle, GeneralConfigPanelProps>(
+    function GeneralConfigPanel({ curated, custom, runtimeConfigAvailable }, ref) {
+        const [tab, setTab] = useState('operations');
+        const [query, setQuery] = useState('');
+        const [showExpert, setShowExpert] = useState(false);
+        const [showTechnicalKeys, setShowTechnicalKeys] = useState(false);
+        const [errors, setErrors] = useState<Record<string, string>>({});
+        const [processing, setProcessing] = useState(false);
 
-        return () => onReady?.(null);
-    }, [openCreate, onReady]);
+        const entries = useMemo(() => curated.map(toConfigEntry), [curated]);
+        const rawEntries = useMemo(() => custom.map(toConfigRecord), [custom]);
+        const corePaths = useMemo(() => new Set(curated.map((entry) => entry.path)), [curated]);
 
-    return null;
-}
-
-export default function GeneralConfigPanel({
-    curated,
-    custom,
-    runtimeConfigAvailable,
-    onOpenCreateReady,
-}: GeneralConfigPanelProps) {
-    const [tab, setTab] = useState('operations');
-    const [query, setQuery] = useState('');
-    const [showExpert, setShowExpert] = useState(false);
-    const [showTechnicalKeys, setShowTechnicalKeys] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [processing, setProcessing] = useState(false);
-
-    const entries = useMemo(() => curated.map(toConfigEntry), [curated]);
-    const rawEntries = useMemo(() => custom.map(toConfigRecord), [custom]);
-    const corePaths = useMemo(() => new Set(curated.map((entry) => entry.path)), [curated]);
-
-    useEffect(() => {
         if (!runtimeConfigAvailable) {
-            onOpenCreateReady?.(null);
+            return (
+                <p className="text-sm text-slate-600">
+                    Runtime config store is not available. Start MongoDB and ensure laravel-config is configured.
+                </p>
+            );
         }
-    }, [runtimeConfigAvailable, onOpenCreateReady]);
 
-    if (!runtimeConfigAvailable) {
         return (
-            <p className="text-sm text-slate-600">
-                Runtime config store is not available. Start MongoDB and ensure laravel-config is configured.
-            </p>
-        );
-    }
+            <ConfigPanel
+                ref={ref}
+                // Hide ConfigPanel's empty action row — New lives in PageShellIdentity actions.
+                className="[&>div:first-child]:hidden"
+                tabs={SETTINGS_TABS}
+                generalTab={false}
+                entries={entries}
+                rawEntries={rawEntries}
+                valueTypes={['string', 'int', 'float', 'bool', 'array', 'json', 'null']}
+                tab={tab}
+                onTabChange={setTab}
+                query={query}
+                onQueryChange={setQuery}
+                showExpert={showExpert}
+                onShowExpertChange={setShowExpert}
+                showTechnicalKeys={showTechnicalKeys}
+                onShowTechnicalKeysChange={setShowTechnicalKeys}
+                processing={processing}
+                errors={errors}
+                searchPlaceholder="Search settings by name, description, or key"
+                onSave={async ({ path, type, value }) => {
+                    setProcessing(true);
+                    setErrors({});
 
-    return (
-        <ConfigPanel
-            // Hide ConfigPanel's empty action row — New lives in PageShellIdentity actions.
-            className="[&>div:first-child]:hidden"
-            tabs={SETTINGS_TABS}
-            generalTab={false}
-            features={{ create: false }}
-            entries={entries}
-            rawEntries={rawEntries}
-            valueTypes={['string', 'int', 'float', 'bool', 'array', 'json', 'null']}
-            tab={tab}
-            onTabChange={setTab}
-            query={query}
-            onQueryChange={setQuery}
-            showExpert={showExpert}
-            onShowExpertChange={setShowExpert}
-            showTechnicalKeys={showTechnicalKeys}
-            onShowTechnicalKeysChange={setShowTechnicalKeys}
-            processing={processing}
-            errors={errors}
-            searchPlaceholder="Search settings by name, description, or key"
-            headerActions={({ openCreate }) => (
-                <OpenCreateBridge openCreate={openCreate} onReady={onOpenCreateReady} />
-            )}
-            onSave={async ({ path, type, value }) => {
-                setProcessing(true);
-                setErrors({});
-
-                try {
-                    await inertiaMutation('post', '/settings/config', {
-                        path,
-                        type: type as ConfigValueType,
-                        value: serializeValue(value),
-                    });
-                } catch (error) {
-                    setErrors({
-                        value: error instanceof Error ? error.message : 'Failed to save configuration.',
-                    });
-                    throw error;
-                } finally {
-                    setProcessing(false);
-                }
-            }}
-            onDelete={async (path) => {
-                setProcessing(true);
-                setErrors({});
-
-                try {
-                    if (corePaths.has(path)) {
-                        await inertiaMutation('post', `/settings/config/${encodeURIComponent(path)}/reset`);
-                    } else {
-                        await inertiaMutation('delete', `/settings/config/${encodeURIComponent(path)}`);
+                    try {
+                        await inertiaMutation('post', '/settings/config', {
+                            path,
+                            type: type as ConfigValueType,
+                            value: serializeValue(value),
+                        });
+                    } catch (error) {
+                        setErrors({
+                            value: error instanceof Error ? error.message : 'Failed to save configuration.',
+                        });
+                        throw error;
+                    } finally {
+                        setProcessing(false);
                     }
-                } catch (error) {
-                    setErrors({
-                        value: error instanceof Error ? error.message : 'Failed to remove configuration.',
-                    });
-                    throw error;
-                } finally {
-                    setProcessing(false);
-                }
-            }}
-        />
-    );
-}
+                }}
+                onDelete={async (path) => {
+                    setProcessing(true);
+                    setErrors({});
+
+                    try {
+                        if (corePaths.has(path)) {
+                            await inertiaMutation('post', `/settings/config/${encodeURIComponent(path)}/reset`);
+                        } else {
+                            await inertiaMutation('delete', `/settings/config/${encodeURIComponent(path)}`);
+                        }
+                    } catch (error) {
+                        setErrors({
+                            value: error instanceof Error ? error.message : 'Failed to remove configuration.',
+                        });
+                        throw error;
+                    } finally {
+                        setProcessing(false);
+                    }
+                }}
+            />
+        );
+    },
+);
+
+export default GeneralConfigPanel;

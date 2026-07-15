@@ -7,6 +7,7 @@ namespace Modules\Transfer\Tests\Unit\Services;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Models\StorageUpload;
 use Modules\Transfer\Enums\PhotoTransferExecutionOutcome;
@@ -344,5 +345,224 @@ final class PhotoUploadExecutionServiceTest extends TestCase
         } catch (\Exception $exception) {
             $this->assertStringContainsString('Local cached file missing', $exception->getMessage());
         }
+    }
+
+    public function test_it_deletes_local_file_when_batch_flag_enabled(): void
+    {
+        Storage::fake('local');
+        $localPath = 'flickr/friend@N01/photos/photo-del_abc123.png';
+        Storage::disk('local')->put($localPath, 'png-bytes');
+
+        Http::fake([
+            'photoslibrary.googleapis.com/v1/uploads' => Http::response('upload-token-del', 200),
+            'photoslibrary.googleapis.com/v1/mediaItems:batchCreate' => Http::response([
+                'newMediaItemResults' => [[
+                    'mediaItem' => [
+                        'id' => 'media-item-del',
+                        'filename' => 'photo-del_original.png',
+                    ],
+                ]],
+            ], 200),
+        ]);
+
+        $connection = $this->createFlickrConnection();
+
+        $storageAccount = StorageAccount::query()->create([
+            'provider' => 'google_photos',
+            'label' => 'Photos',
+            'credentials' => [
+                'access_token' => 'token',
+                'refresh_token' => 'refresh',
+                'client_id' => 'client',
+                'client_secret' => 'secret',
+                'expires_at' => now()->addHour()->toIso8601String(),
+            ],
+            'connected_at' => now(),
+        ]);
+
+        StoredFile::query()->create([
+            'flickr_photo_id' => 'photo-del',
+            'owner_nsid' => 'friend@N01',
+            'variant' => 'original',
+            'status' => 'completed',
+            'local_path' => $localPath,
+            'original_name' => 'photo-del_original.png',
+        ]);
+
+        $batch = TransferBatch::query()->create([
+            'type' => 'upload',
+            'connection_key' => $connection->connection_key,
+            'storage_account_id' => $storageAccount->id,
+            'subject_nsid' => 'friend@N01',
+            'status' => 'running',
+            'total_count' => 1,
+            'delete_local_after_upload' => true,
+        ]);
+
+        TransferItem::query()->create([
+            'transfer_batch_id' => $batch->id,
+            'flickr_photo_id' => 'photo-del',
+            'status' => 'pending',
+        ]);
+
+        $outcome = app(PhotoUploadExecutionService::class)->execute(
+            'photo-del',
+            $storageAccount->id,
+            $batch->id,
+            'friend@N01',
+        );
+
+        $this->assertSame(PhotoTransferExecutionOutcome::Completed, $outcome);
+        Storage::disk('local')->assertMissing($localPath);
+        $this->assertNull(StoredFile::query()->where('flickr_photo_id', 'photo-del')->first()->local_path);
+    }
+
+    public function test_it_preserves_local_file_when_batch_flag_disabled(): void
+    {
+        Storage::fake('local');
+        $localPath = 'flickr/friend@N01/photos/photo-keep_abc123.png';
+        Storage::disk('local')->put($localPath, 'png-bytes');
+
+        Http::fake([
+            'photoslibrary.googleapis.com/v1/uploads' => Http::response('upload-token-keep', 200),
+            'photoslibrary.googleapis.com/v1/mediaItems:batchCreate' => Http::response([
+                'newMediaItemResults' => [[
+                    'mediaItem' => [
+                        'id' => 'media-item-keep',
+                        'filename' => 'photo-keep_original.png',
+                    ],
+                ]],
+            ], 200),
+        ]);
+
+        $connection = $this->createFlickrConnection();
+
+        $storageAccount = StorageAccount::query()->create([
+            'provider' => 'google_photos',
+            'label' => 'Photos',
+            'credentials' => [
+                'access_token' => 'token',
+                'refresh_token' => 'refresh',
+                'client_id' => 'client',
+                'client_secret' => 'secret',
+                'expires_at' => now()->addHour()->toIso8601String(),
+            ],
+            'connected_at' => now(),
+        ]);
+
+        StoredFile::query()->create([
+            'flickr_photo_id' => 'photo-keep',
+            'owner_nsid' => 'friend@N01',
+            'variant' => 'original',
+            'status' => 'completed',
+            'local_path' => $localPath,
+            'original_name' => 'photo-keep_original.png',
+        ]);
+
+        $batch = TransferBatch::query()->create([
+            'type' => 'upload',
+            'connection_key' => $connection->connection_key,
+            'storage_account_id' => $storageAccount->id,
+            'subject_nsid' => 'friend@N01',
+            'status' => 'running',
+            'total_count' => 1,
+            'delete_local_after_upload' => false,
+        ]);
+
+        TransferItem::query()->create([
+            'transfer_batch_id' => $batch->id,
+            'flickr_photo_id' => 'photo-keep',
+            'status' => 'pending',
+        ]);
+
+        $outcome = app(PhotoUploadExecutionService::class)->execute(
+            'photo-keep',
+            $storageAccount->id,
+            $batch->id,
+            'friend@N01',
+        );
+
+        $this->assertSame(PhotoTransferExecutionOutcome::Completed, $outcome);
+        Storage::disk('local')->assertExists($localPath);
+        $this->assertNotNull(StoredFile::query()->where('flickr_photo_id', 'photo-keep')->first()->local_path);
+    }
+
+    public function test_it_falls_back_to_global_setting_when_batch_flag_null(): void
+    {
+        if (! app()->bound('config-store')) {
+            $this->markTestSkipped('Runtime config store is not available.');
+        }
+
+        RuntimeConfig::set('xflickr_transfer.delete_local_after_upload', true, 'bool');
+        RuntimeConfig::refresh();
+
+        Storage::fake('local');
+        $localPath = 'flickr/friend@N01/photos/photo-global_abc123.png';
+        Storage::disk('local')->put($localPath, 'png-bytes');
+
+        Http::fake([
+            'photoslibrary.googleapis.com/v1/uploads' => Http::response('upload-token-global', 200),
+            'photoslibrary.googleapis.com/v1/mediaItems:batchCreate' => Http::response([
+                'newMediaItemResults' => [[
+                    'mediaItem' => [
+                        'id' => 'media-item-global',
+                        'filename' => 'photo-global_original.png',
+                    ],
+                ]],
+            ], 200),
+        ]);
+
+        $connection = $this->createFlickrConnection();
+
+        $storageAccount = StorageAccount::query()->create([
+            'provider' => 'google_photos',
+            'label' => 'Photos',
+            'credentials' => [
+                'access_token' => 'token',
+                'refresh_token' => 'refresh',
+                'client_id' => 'client',
+                'client_secret' => 'secret',
+                'expires_at' => now()->addHour()->toIso8601String(),
+            ],
+            'connected_at' => now(),
+        ]);
+
+        StoredFile::query()->create([
+            'flickr_photo_id' => 'photo-global',
+            'owner_nsid' => 'friend@N01',
+            'variant' => 'original',
+            'status' => 'completed',
+            'local_path' => $localPath,
+            'original_name' => 'photo-global_original.png',
+        ]);
+
+        $batch = TransferBatch::query()->create([
+            'type' => 'upload',
+            'connection_key' => $connection->connection_key,
+            'storage_account_id' => $storageAccount->id,
+            'subject_nsid' => 'friend@N01',
+            'status' => 'running',
+            'total_count' => 1,
+        ]);
+
+        TransferItem::query()->create([
+            'transfer_batch_id' => $batch->id,
+            'flickr_photo_id' => 'photo-global',
+            'status' => 'pending',
+        ]);
+
+        $outcome = app(PhotoUploadExecutionService::class)->execute(
+            'photo-global',
+            $storageAccount->id,
+            $batch->id,
+            'friend@N01',
+        );
+
+        $this->assertSame(PhotoTransferExecutionOutcome::Completed, $outcome);
+        Storage::disk('local')->assertMissing($localPath);
+        $this->assertNull(StoredFile::query()->where('flickr_photo_id', 'photo-global')->first()->local_path);
+
+        RuntimeConfig::forget('xflickr_transfer.delete_local_after_upload');
+        RuntimeConfig::refresh();
     }
 }

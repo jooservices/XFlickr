@@ -3,3 +3,27 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../views/**/*.blade.php';
 @source '../js/**/*.{js,tsx}';
+
+/* JOO package theme tokens — light slate/cyan aligned with demo */
+:root {
+    color-scheme: light;
+    --joo-layout-sidebar-width: 14rem;
+    --joo-layout-topbar-height: 3.5rem;
+    --joo-layout-bottom-rail-height: var(--joo-layout-topbar-height);
+    --joo-background: 0 0% 100%;
+    --joo-foreground: 222.2 47.4% 11.2%;
+    --joo-border: 214.3 31.8% 91.4%;
+    --joo-muted: 210 40% 96.1%;
+    --joo-muted-foreground: 215.4 16.3% 46.9%;
+    --joo-card: 0 0% 100%;
+    --joo-accent: 210 40% 96.1%;
+    --joo-primary: 188 78% 32%;
+    --joo-primary-foreground: 210 40% 98%;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: hsl(var(--joo-muted) / 0.35);
+    color: hsl(var(--joo-foreground));
+}

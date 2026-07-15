@@ -13,8 +13,11 @@ use Modules\Storage\Services\StorageService;
 use Modules\Transfer\Enums\PhotoTransferExecutionOutcome;
 use Modules\Transfer\Enums\StoredFileStatus;
 use Modules\Transfer\Enums\TransferItemStatus;
+use Modules\Transfer\Models\StoredFile;
 use Modules\Transfer\Repositories\StoredFileRepository;
+use Modules\Transfer\Repositories\TransferBatchRepository;
 use Modules\Transfer\Repositories\TransferItemRepository;
+use Modules\Transfer\Support\TransferRuntimeConfig;
 
 final class PhotoUploadExecutionService
 {
@@ -24,6 +27,8 @@ final class PhotoUploadExecutionService
         private readonly StoredFileRepository $storedFiles,
         private readonly StorageUploadRepository $storageUploads,
         private readonly TransferItemRepository $items,
+        private readonly TransferBatchRepository $batches,
+        private readonly TransferRuntimeConfig $transferConfig,
     ) {}
 
     public function execute(
@@ -67,6 +72,7 @@ final class PhotoUploadExecutionService
             $this->storageUploads->markCompletedForAccount($storedFile->id, $storageAccountId, $remoteMetadata);
 
             $this->markItemCompleted($batchId, $flickrPhotoId);
+            $this->deleteLocalFileIfRequested($batchId, $storedFile);
             $this->batchReconciler->reconcile($batchId);
 
             return PhotoTransferExecutionOutcome::Completed;
@@ -114,5 +120,35 @@ final class PhotoUploadExecutionService
         }
 
         $this->items->updateStatus($batchId, $flickrPhotoId, $status, $error);
+    }
+
+    private function deleteLocalFileIfRequested(?int $batchId, StoredFile $storedFile): void
+    {
+        if (! $this->shouldDeleteLocal($batchId)) {
+            return;
+        }
+
+        $localPath = $storedFile->local_path;
+        if ($localPath === null || $localPath === '') {
+            return;
+        }
+
+        if (Storage::exists($localPath)) {
+            Storage::delete($localPath);
+        }
+
+        $this->storedFiles->clearLocalPath($storedFile);
+    }
+
+    private function shouldDeleteLocal(?int $batchId): bool
+    {
+        if ($batchId !== null) {
+            $batch = $this->batches->findById($batchId);
+            if ($batch !== null && $batch->delete_local_after_upload !== null) {
+                return $batch->delete_local_after_upload;
+            }
+        }
+
+        return $this->transferConfig->shouldDeleteLocalAfterUpload();
     }
 }

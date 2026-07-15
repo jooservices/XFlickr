@@ -1,3 +1,4 @@
+import { ActionBar as JooActionBar } from '@jooservices/react-action-buttons';
 import { ChevronDown } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -145,5 +146,5 @@ export interface ActionBarProps {
 }
 
 export default function ActionBar({ children, className }: ActionBarProps) {
-    return <div className={cn('flex flex-wrap items-center gap-2', className)}>{children}</div>;
+    return <JooActionBar className={className}>{children}</JooActionBar>;
 }

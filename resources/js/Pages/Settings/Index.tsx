@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
+import type { ConfigPanelHandle } from '@jooservices/react-config';
 import { Plus } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useRef } from 'react';
 
 import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/Layout/page-shell';
 import GeneralConfigPanel from '@/Components/Settings/GeneralConfigPanel';
@@ -26,11 +27,7 @@ export default function SettingsIndex({
     has_storage_accounts,
     has_completed_crawl,
 }: Props) {
-    const [openCreate, setOpenCreate] = useState<(() => void) | null>(null);
-
-    const handleOpenCreateReady = useCallback((next: (() => void) | null) => {
-        setOpenCreate(() => next);
-    }, []);
+    const configPanelRef = useRef<ConfigPanelHandle>(null);
 
     return (
         <AppLayout>
@@ -46,10 +43,9 @@ export default function SettingsIndex({
                             <Button
                                 type="button"
                                 variant="primary"
-                                onClick={() => openCreate?.()}
-                                disabled={openCreate === null}
+                                icon={<Plus className="h-4 w-4" />}
+                                onClick={() => configPanelRef.current?.openCreate()}
                             >
-                                <Plus className="h-4 w-4" />
                                 New
                             </Button>
                         ) : undefined
@@ -64,10 +60,10 @@ export default function SettingsIndex({
                     />
 
                     <GeneralConfigPanel
+                        ref={configPanelRef}
                         curated={runtime_config.curated}
                         custom={runtime_config.custom}
                         runtimeConfigAvailable={runtime_config_available}
-                        onOpenCreateReady={handleOpenCreateReady}
                     />
                 </PageShellCanvas>
             </PageShell>

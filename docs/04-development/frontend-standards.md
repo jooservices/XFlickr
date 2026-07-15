@@ -26,17 +26,16 @@ resources/js/
 
 ## Layout
 
-- **Master:** `Layouts/AppLayout` (JOO `AppShell` from `@jooservices/react-layout`).
+- **Master:** `Layouts/AppLayout` (JOO `AppShell` from `@jooservices/react-layout`). Centered top search via `AppShell.HeaderCenter` (command palette).
 - **Content:** `PageShell*` from `@/Components/layout/page-shell` (`@jooservices/react-content`).
-- Shared: JOO `DataTable`, local cards/stats (`MetricCard`), `Toaster`.
+- Shared chrome from JOO v1.0.0 packages: `DataTable`, `Modal`, `Toaster`, action-buttons, `BaseCard`/`StatCard`, `ConfigPanel`. Keep domain macros (crawl bars, graph, ProviderCard, forms, BusyRegion).
 
 ## Component conventions
 
-- Use shared `Button` and `ActionButton` — not raw `<button>` for actions.
+- Prefer JOO packages via thin `Components/ui` wrappers — not raw `<button>` / reinvented tables.
 - Use `CrawlActionBar` for crawl/download/upload action groups.
-- Prefer `PageShell` + `PageShellIdentity` / `PageShellCanvas` on authenticated pages (do not add new `PageHeading` usage).
-- Use `DataTable` for sortable tabular data.
-- Use `Card` / `ProviderCard` / `MetricCard` for panels and stats.
+- Prefer `PageShell` + `PageShellIdentity` / `PageShellCanvas` on authenticated pages (do not add new `PageHeading` usage). Primary CTAs only in Identity actions.
+- Use `DataTable` for sortable tabular data; `Card` / `ProviderCard` / `MetricCard` for panels and stats.
 - API calls: `apiGet`/`apiPost`/`apiPatch`/`apiDelete` against `/api/v1/*`.
 - Poll live surfaces with `usePolledResource` (not raw `setInterval` in hooks/Pages — ESLint enforced).
 - `useOperationsStream` is the documented exception: JSON polling only (no SSE on single-worker PHP) and folds snapshots into `activityHistory`.
@@ -52,7 +51,7 @@ See skill: `react-inertia-frontend` and rule `.cursor/rules/ui-buttons.mdc`.
 ## Styling
 
 - Tailwind utility classes; use `cn()` for conditional classes.
-- Color palette: slate neutrals, cyan accents for links/active states.
+- Theme tokens: `--joo-*` in `resources/css/app.css` (demo-aligned slate / cyan primary).
 
 ## TypeScript
 

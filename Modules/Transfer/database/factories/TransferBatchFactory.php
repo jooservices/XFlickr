@@ -29,6 +29,7 @@ class TransferBatchFactory extends Factory
             'total_count' => 0,
             'completed_count' => 0,
             'failed_count' => 0,
+            'delete_local_after_upload' => null,
         ];
     }
 }

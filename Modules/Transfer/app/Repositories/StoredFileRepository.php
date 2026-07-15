@@ -211,6 +211,11 @@ final class StoredFileRepository extends EloquentRepository
             ]);
     }
 
+    public function clearLocalPath(StoredFile $storedFile): void
+    {
+        $storedFile->update(['local_path' => null]);
+    }
+
     public function markFailed(string $flickrPhotoId, string $errorMessage): void
     {
         $this->newQuery()

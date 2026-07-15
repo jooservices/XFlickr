@@ -33,6 +33,7 @@ final class PhotoUploadController
             $request->singleContactNsid(),
             $request->contactNsids(),
             $request->flickrPhotoIds(),
+            $request->deleteLocalAfterUpload(),
         );
 
         return back()->with($result->flashKey, $result->message);
@@ -41,12 +42,14 @@ final class PhotoUploadController
     private function queueSelectAll(QueuePhotoUploadRequest $request, Connection $connection): TransferQueueResult
     {
         $ownerNsid = $request->bulkOwnerNsid();
+        $deleteLocal = $request->deleteLocalAfterUpload();
 
         if ($ownerNsid !== null) {
             return $this->photoUploadService->queueFromInput(
                 $connection,
                 storageAccountId: $request->storageAccountId(),
                 contactNsid: $ownerNsid,
+                deleteLocalAfterUpload: $deleteLocal,
             );
         }
 
@@ -64,6 +67,7 @@ final class PhotoUploadController
             $connection,
             storageAccountId: $request->storageAccountId(),
             contactNsids: $contactNsids,
+            deleteLocalAfterUpload: $deleteLocal,
         );
     }
 }

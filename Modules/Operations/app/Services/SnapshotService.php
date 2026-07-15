@@ -12,6 +12,7 @@ use App\Repositories\Crawler\PhotoQueryRepository;
 use Illuminate\Support\Facades\Cache;
 use Modules\Flickr\Services\FlickrAccountsService;
 use Modules\Flickr\Support\ConnectionPresenter;
+use Modules\Spider\Services\SpiderPlannerService;
 use Modules\Transfer\Services\TransferQueryService;
 
 final class SnapshotService
@@ -30,6 +31,8 @@ final class SnapshotService
         private readonly FlickrAccountsService $flickr,
         private readonly DatabaseUsageService $databases,
         private readonly ServicesDependencyProbeService $dependencies,
+        private readonly QueueDepthService $queues,
+        private readonly SpiderPlannerService $spider,
     ) {}
 
     /**
@@ -135,8 +138,51 @@ final class SnapshotService
     }
 
     /**
+     * Lightweight overview + queue depths for WebSocket patches.
+     *
+     * @return array{overview: array<string, int>, queues: array<string, int|null>}
+     */
+    public function overviewAndQueues(): array
+    {
+        $connections = $this->flickr->listConnections();
+        $connectionKeys = $connections->map(fn ($connection) => $connection->connection_key)->values()->all();
+        $since = now()->subDay();
+        $accountsInCooldown = 0;
+        $globalPause = false;
+
+        foreach ($connections as $connection) {
+            $rateLimit = $this->flickr->rateLimitPresent((string) $connection->connection_key);
+            if ((int) ($rateLimit['cooldown_seconds_remaining'] ?? 0) > 0) {
+                $accountsInCooldown++;
+            }
+            if (($rateLimit['global_pause'] ?? false) === true) {
+                $globalPause = true;
+            }
+        }
+
+        $crawl = $this->crawlCounts($connectionKeys);
+        $transfer = $this->transferCounts($since);
+
+        return [
+            'overview' => [
+                'runs_running' => $crawl['runs_running'],
+                'pending_targets' => $crawl['pending_targets'],
+                'downloads_active' => $transfer['downloads_active'],
+                'uploads_active' => $transfer['uploads_active'],
+                'failed_transfers_24h' => $transfer['failed_transfers_24h'],
+                'accounts_in_cooldown' => $accountsInCooldown,
+                'global_pause' => $globalPause ? 1 : 0,
+            ],
+            'queues' => $this->queues->depths(),
+        ];
+    }
+
+    /**
      * @return array{
      *     overview: array<string, int>,
+     *     queues: array<string, int|null>,
+     *     target_breakdown: list<array<string, mixed>>,
+     *     spider: list<array<string, mixed>>,
      *     dependencies: array<string, array{ok: bool, latency_ms: int|null, detail: string|null}>,
      *     databases: array{
      *         mysql: array<string, mixed>,
@@ -161,7 +207,9 @@ final class SnapshotService
         $downloadBatches = [];
         $uploadBatches = [];
         $accountRows = [];
+        $spiderRows = [];
         $accountsInCooldown = 0;
+        $globalPause = false;
 
         foreach ($connections as $connection) {
             $key = (string) $connection->connection_key;
@@ -172,6 +220,10 @@ final class SnapshotService
                 $accountsInCooldown++;
             }
 
+            if (($rateLimit['global_pause'] ?? false) === true) {
+                $globalPause = true;
+            }
+
             $account = ConnectionPresenter::toArray($connection);
             $accountRows[] = [
                 'connection_key' => $key,
@@ -179,6 +231,13 @@ final class SnapshotService
                 'label' => $account['fullname'] ?: ($account['username'] ?: $key),
                 'pending_targets' => $pending,
                 'rate_limit' => $rateLimit,
+            ];
+
+            $spiderRows[] = [
+                'connection_key' => $key,
+                'public_id' => $account['public_id'],
+                'label' => $account['fullname'] ?: ($account['username'] ?: $key),
+                'status' => $this->spider->statusForConnection($key),
             ];
 
             $runs = $this->flickr->crawlStatusRuns(
@@ -233,7 +292,11 @@ final class SnapshotService
                 'uploads_active' => $transfer['uploads_active'],
                 'failed_transfers_24h' => $transfer['failed_transfers_24h'],
                 'accounts_in_cooldown' => $accountsInCooldown,
+                'global_pause' => $globalPause ? 1 : 0,
             ],
+            'queues' => $this->queues->depths(),
+            'target_breakdown' => $this->crawlTargets->statusTaskTypeCountsForRunningRuns($connectionKeys),
+            'spider' => $spiderRows,
             'dependencies' => $this->dependencies->probeAll(),
             'databases' => $this->databaseUsage(),
             'accounts' => $accountRows,

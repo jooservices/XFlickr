@@ -10,25 +10,24 @@ Canonical skill: [`ai/skills/react-inertia-frontend/SKILL.md`](../../ai/skills/r
 
 ## Buttons
 
-- Use [`Button`](resources/js/Components/Button.tsx) or [`ActionButton`](resources/js/Components/ActionButton.tsx) for interactive controls.
+- Prefer `@jooservices/react-action-buttons` via thin wrappers [`Button`](resources/js/Components/ui/Button.tsx) / [`ActionBar`](resources/js/Components/ui/ActionBar.tsx).
 - Do **not** add raw `rounded-md bg-*` button classes in pages or feature components.
-- Semantic variants live in [`buttonVariants.ts`](resources/js/lib/buttonVariants.ts):
-  - `primary` — main form submit / confirm
-  - `primaryDark` — strong CTA (filters, modal confirm)
-  - `secondary` — neutral outline
-  - `connect` — OAuth / connect
-  - `destructive` — disconnect / delete
-  - `warning` — reauthorize
-  - `ghost` — icon-only / close
-  - `link` — inline text action
+- Legacy XFlickr variant names map onto JOO classes in [`buttonVariants.ts`](resources/js/lib/buttonVariants.ts):
+  - `primary` → JOO `primary`
+  - `primaryDark` → JOO `dark`
+  - `secondary` → JOO `secondary`
+  - `connect` → JOO `info`
+  - `destructive` → JOO `danger`
+  - `warning` → JOO `warning`
+  - `ghost` / `link` → JOO `ghost`
 
 ## Crawl actions
 
-- Use [`CrawlActionBar`](resources/js/Components/CrawlActionBar.tsx) everywhere crawl, download, or upload is triggered.
-- Do **not** import [`CrawlDropdown`](resources/js/Components/CrawlDropdown.tsx) from pages — it is internal to `CrawlActionBar`.
+- Use [`CrawlActionBar`](resources/js/Components/Flickr/CrawlActionBar.tsx) everywhere crawl, download, or upload is triggered.
+- Do **not** import crawl dropdown internals from pages — they belong inside `CrawlActionBar`.
 - Scopes: `account` (Flickr accounts table) or `contact` (contacts list rows, contact detail).
 
 ## Cards
 
-- Use [`Card`](resources/js/Components/Card.tsx) for all card layouts.
-- Flickr/Storage settings use [`ProviderCard`](resources/js/Components/ProviderCard.tsx) preset — not a separate layout.
+- Use [`Card`](resources/js/Components/ui/Card.tsx) (`BaseCard`) / [`MetricCard`](resources/js/Components/ui/MetricCard.tsx) (`StatCard`) for panels and stats.
+- Flickr/Storage settings use [`ProviderCard`](resources/js/Components/ui/ProviderCard.tsx) — domain-only (not in JOO packages).

@@ -30,7 +30,11 @@ final class OperationsSnapshotControllerTest extends TestCase
                     'uploads_active',
                     'failed_transfers_24h',
                     'accounts_in_cooldown',
+                    'global_pause',
                 ],
+                'queues',
+                'target_breakdown',
+                'spider',
                 'dependencies' => [
                     'mysql',
                     'redis',

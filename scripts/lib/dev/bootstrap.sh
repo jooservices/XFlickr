@@ -21,7 +21,7 @@ xf_dev_ensure_env() {
 }
 
 xf_dev_core_services() {
-    echo mysql redis mongodb app horizon scheduler frontend
+    echo mysql redis mongodb app horizon scheduler reverb frontend
 }
 
 xf_dev_start_stack() {

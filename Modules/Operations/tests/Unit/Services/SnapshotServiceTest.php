@@ -58,6 +58,9 @@ final class SnapshotServiceTest extends TestCase
         $this->assertSame(
             [
                 'overview',
+                'queues',
+                'target_breakdown',
+                'spider',
                 'dependencies',
                 'databases',
                 'accounts',
@@ -74,6 +77,10 @@ final class SnapshotServiceTest extends TestCase
         $this->assertArrayHasKey('uploads_active', $snapshot['overview']);
         $this->assertArrayHasKey('failed_transfers_24h', $snapshot['overview']);
         $this->assertArrayHasKey('accounts_in_cooldown', $snapshot['overview']);
+        $this->assertArrayHasKey('global_pause', $snapshot['overview']);
+        $this->assertArrayHasKey('xflickr', $snapshot['queues']);
+        $this->assertIsArray($snapshot['target_breakdown']);
+        $this->assertIsArray($snapshot['spider']);
 
         $this->assertArrayHasKey('mysql', $snapshot['dependencies']);
         $this->assertArrayHasKey('redis', $snapshot['dependencies']);

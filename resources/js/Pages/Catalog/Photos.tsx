@@ -11,6 +11,7 @@ import CrawlActionBar from '@/Components/Flickr/CrawlActionBar';
 import { bulkDownloadActionIcon, bulkUploadActionIcon } from '@/Components/Flickr/CrawlTypeMenu';
 import FlickrPhotoIdLinks from '@/Components/Flickr/PhotoIdLinks';
 import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/Layout/page-shell';
+import UploadConfirmModal, { type UploadConfirmPayload } from '@/Components/Transfer/UploadConfirmModal';
 import type { BulkAction } from '@/Components/ui/BulkActionBar';
 import BusyRegion from '@/Components/ui/BusyRegion';
 import DataTable from '@/Components/ui/DataTable';
@@ -38,6 +39,11 @@ function isPhotoSelectable(photo: Photo): boolean {
 export default function CatalogPhotos({ account }: Props) {
     const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
     const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+    const [uploadConfirm, setUploadConfirm] = useState<{
+        selectedKeys: string[];
+        isMatching: boolean;
+        count: number;
+    } | null>(null);
     const {
         data: photos,
         meta,
@@ -90,6 +96,7 @@ export default function CatalogPhotos({ account }: Props) {
                 flickr_photo_ids?: string[];
                 select_all?: boolean;
                 owner_nsid?: string;
+                delete_local_after_upload?: boolean;
             },
             onQueued?: () => void,
         ) => {
@@ -131,16 +138,15 @@ export default function CatalogPhotos({ account }: Props) {
                 label: 'Upload',
                 icon: bulkUploadActionIcon(),
                 onAction: ({ selectedKeys, isMatching }) => {
-                    postBulk(
-                        flickrAccountPath(accountPublicId, '/upload'),
-                        isMatching
-                            ? { select_all: true, owner_nsid: ownerFilter }
-                            : { flickr_photo_ids: selectedKeys },
-                    );
+                    setUploadConfirm({
+                        selectedKeys,
+                        isMatching,
+                        count: isMatching ? (selection.matchingTotal ?? selectedKeys.length) : selectedKeys.length,
+                    });
                 },
             },
         ];
-    }, [account?.public_id, markPhotosPending, ownerFilter, postBulk]);
+    }, [account?.public_id, markPhotosPending, ownerFilter, postBulk, selection.matchingTotal]);
 
     const switchViewMode = useCallback(
         (mode: 'table' | 'grid') => {
@@ -317,6 +323,25 @@ export default function CatalogPhotos({ account }: Props) {
                 onClose={() => setSelectedPhoto(null)}
                 onDownloadQueued={(flickrPhotoId) => markPhotosPending([flickrPhotoId])}
             />
+
+            {uploadConfirm && account?.public_id ? (
+                <UploadConfirmModal
+                    open
+                    onClose={() => setUploadConfirm(null)}
+                    onConfirm={(payload: UploadConfirmPayload) => {
+                        const accountPublicId = account.public_id;
+                        postBulk(
+                            flickrAccountPath(accountPublicId, '/upload'),
+                            uploadConfirm.isMatching
+                                ? { select_all: true, owner_nsid: ownerFilter, delete_local_after_upload: payload.deleteLocalAfterUpload }
+                                : { flickr_photo_ids: uploadConfirm.selectedKeys, delete_local_after_upload: payload.deleteLocalAfterUpload },
+                        );
+                        setUploadConfirm(null);
+                    }}
+                    selectedCount={uploadConfirm.count}
+                    isMatching={uploadConfirm.isMatching}
+                />
+            ) : null}
         </AppLayout>
     );
 }

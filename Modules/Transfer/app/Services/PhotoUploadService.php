@@ -54,6 +54,7 @@ final class PhotoUploadService
         ?string $contactNsid = null,
         array $contactNsids = [],
         array $flickrPhotoIds = [],
+        ?bool $deleteLocalAfterUpload = null,
     ): TransferQueueResult {
         $storageAccount = $this->resolveStorageAccount($storageAccountId);
 
@@ -62,7 +63,7 @@ final class PhotoUploadService
         }
 
         if ($flickrPhotoIds !== []) {
-            $queued = $this->queuePhotoUploads($connection, $storageAccount, $flickrPhotoIds);
+            $queued = $this->queuePhotoUploads($connection, $storageAccount, $flickrPhotoIds, $deleteLocalAfterUpload);
             $selectedCount = count($flickrPhotoIds);
 
             return TransferQueueResult::success(
@@ -76,7 +77,7 @@ final class PhotoUploadService
         }
 
         if ($flickrPhotoId !== null && $flickrPhotoId !== '') {
-            $queued = $this->queuePhotoUpload($connection, $storageAccount, $flickrPhotoId);
+            $queued = $this->queuePhotoUpload($connection, $storageAccount, $flickrPhotoId, $deleteLocalAfterUpload);
 
             return TransferQueueResult::success(
                 $queued === 0 ? 'No upload queued for this photo.' : 'Photo upload queued.',
@@ -88,7 +89,7 @@ final class PhotoUploadService
             $queued = 0;
 
             foreach ($contactNsids as $selectedContactNsid) {
-                $queued += $this->queueUploads($connection, $storageAccount, $selectedContactNsid);
+                $queued += $this->queueUploads($connection, $storageAccount, $selectedContactNsid, $deleteLocalAfterUpload);
             }
 
             $contactCount = count($contactNsids);
@@ -101,7 +102,7 @@ final class PhotoUploadService
             );
         }
 
-        $queued = $this->queueUploads($connection, $storageAccount, $contactNsid);
+        $queued = $this->queueUploads($connection, $storageAccount, $contactNsid, $deleteLocalAfterUpload);
 
         return TransferQueueResult::success(
             $queued === 0
@@ -116,8 +117,12 @@ final class PhotoUploadService
     /**
      * @return int Number of fan-out jobs queued
      */
-    public function queueUploads(Connection $connection, StorageAccount $storageAccount, ?string $ownerNsid = null): int
-    {
+    public function queueUploads(
+        Connection $connection,
+        StorageAccount $storageAccount,
+        ?string $ownerNsid = null,
+        ?bool $deleteLocalAfterUpload = null,
+    ): int {
         $ownerNsid = ($ownerNsid !== null && $ownerNsid !== '')
             ? $ownerNsid
             : $connection->connection_key;
@@ -131,6 +136,7 @@ final class PhotoUploadService
             connectionKey: $connection->connection_key,
             ownerNsid: $ownerNsid,
             storageAccountId: $storageAccount->id,
+            deleteLocalAfterUpload: $deleteLocalAfterUpload,
         );
 
         return 1;
@@ -139,15 +145,19 @@ final class PhotoUploadService
     /**
      * @return int Number of photos queued (0 or 1)
      */
-    public function queuePhotoUpload(Connection $connection, StorageAccount $storageAccount, string $flickrPhotoId): int
-    {
+    public function queuePhotoUpload(
+        Connection $connection,
+        StorageAccount $storageAccount,
+        string $flickrPhotoId,
+        ?bool $deleteLocalAfterUpload = null,
+    ): int {
         $photo = $this->photos->findByFlickrPhotoId($flickrPhotoId, ['id', 'flickr_photo_id', 'owner_nsid']);
 
         if ($photo === null) {
             return 0;
         }
 
-        return $this->queuePendingPhotos($connection, collect([$photo]), $storageAccount, $photo->owner_nsid);
+        return $this->queuePendingPhotos($connection, collect([$photo]), $storageAccount, $photo->owner_nsid, $deleteLocalAfterUpload);
     }
 
     /**
@@ -158,6 +168,7 @@ final class PhotoUploadService
         Connection $connection,
         StorageAccount $storageAccount,
         array $flickrPhotoIds,
+        ?bool $deleteLocalAfterUpload = null,
     ): int {
         $photos = $this->photos->listByFlickrPhotoIds($flickrPhotoIds, ['id', 'flickr_photo_id', 'owner_nsid']);
 
@@ -173,6 +184,7 @@ final class PhotoUploadService
                 $ownerPhotos,
                 $storageAccount,
                 (string) $ownerNsid,
+                $deleteLocalAfterUpload,
             );
         }
 
@@ -182,8 +194,12 @@ final class PhotoUploadService
     /**
      * @return int Number of photos queued
      */
-    public function fanOutUploads(Connection $connection, StorageAccount $storageAccount, ?string $subjectNsid = null): int
-    {
+    public function fanOutUploads(
+        Connection $connection,
+        StorageAccount $storageAccount,
+        ?string $subjectNsid = null,
+        ?bool $deleteLocalAfterUpload = null,
+    ): int {
         $ownerNsid = ($subjectNsid !== null && $subjectNsid !== '')
             ? $subjectNsid
             : $connection->connection_key;
@@ -197,6 +213,7 @@ final class PhotoUploadService
                 $connection,
                 $storageAccount,
                 $subjectNsid,
+                $deleteLocalAfterUpload,
                 &$queuedCount,
             ): void {
                 $photoIds = $chunk->pluck('flickr_photo_id')->all();
@@ -237,6 +254,7 @@ final class PhotoUploadService
                         $storageAccount,
                         $readyForUpload,
                         $subjectNsid,
+                        $deleteLocalAfterUpload,
                     );
                 }
             },
@@ -254,6 +272,7 @@ final class PhotoUploadService
         Collection $photos,
         StorageAccount $storageAccount,
         ?string $subjectNsid = null,
+        ?bool $deleteLocalAfterUpload = null,
     ): int {
         /** @var Collection<int, Photo> $needsDownload */
         $needsDownload = collect();
@@ -290,7 +309,7 @@ final class PhotoUploadService
             return 0;
         }
 
-        return $this->dispatchUploadBatch($connection, $storageAccount, $readyForUpload, $subjectNsid);
+        return $this->dispatchUploadBatch($connection, $storageAccount, $readyForUpload, $subjectNsid, $deleteLocalAfterUpload);
     }
 
     /**
@@ -301,12 +320,14 @@ final class PhotoUploadService
         StorageAccount $storageAccount,
         Collection $readyForUpload,
         ?string $subjectNsid,
+        ?bool $deleteLocalAfterUpload = null,
     ): int {
         $batch = $this->batches->createUploadBatch(
             $connection,
             $storageAccount->id,
             $readyForUpload->count(),
             $subjectNsid,
+            $deleteLocalAfterUpload,
         );
 
         $this->items->createPendingBulk(

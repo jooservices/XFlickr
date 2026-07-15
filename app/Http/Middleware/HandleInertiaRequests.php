@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Modules\Crawler\Support\XFlickrConfig;
 use Modules\Spider\Support\SpiderRuntimeConfig;
+use Modules\Transfer\Support\TransferRuntimeConfig;
 
 final class HandleInertiaRequests extends Middleware
 {
@@ -24,6 +25,7 @@ final class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $spider = app(SpiderRuntimeConfig::class);
+        $transfer = app(TransferRuntimeConfig::class);
 
         return [
             ...parent::share($request),
@@ -43,6 +45,7 @@ final class HandleInertiaRequests extends Middleware
                     'max_new_contacts_per_run' => $spider->maxNewContactsPerRun(),
                     'max_contacts_total' => $spider->maxContactsTotal(),
                 ],
+                'delete_local_after_upload' => $transfer->shouldDeleteLocalAfterUpload(),
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

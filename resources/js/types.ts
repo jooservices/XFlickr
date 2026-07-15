@@ -426,6 +426,7 @@ export interface OperationsOverviewTotals {
     uploads_active: number;
     failed_transfers_24h: number;
     accounts_in_cooldown: number;
+    global_pause?: boolean | number | string;
 }
 
 export interface OperationsAccountRow {
@@ -434,6 +435,35 @@ export interface OperationsAccountRow {
     label: string;
     pending_targets: number;
     rate_limit: RateLimitState;
+}
+
+export interface OperationsTargetBreakdownRow {
+    connection_key: string;
+    crawl_run_id: number;
+    status: string;
+    task_type: string;
+    count: number;
+}
+
+export interface OperationsSpiderRow {
+    connection_key: string;
+    public_id: string;
+    label: string;
+    status: {
+        enabled: boolean;
+        active: boolean;
+        run: {
+            id: number;
+            status: string;
+            max_depth: number;
+            contacts_discovered: number;
+            contacts_crawled: number;
+            depth_histogram: Record<string, number> | number[];
+            pending: number;
+            queued: number;
+            crawled: number;
+        } | null;
+    };
 }
 
 export interface OperationsActivityPoint {
@@ -445,6 +475,9 @@ export interface OperationsActivityPoint {
 
 export interface OperationsSnapshotPayload {
     overview: OperationsOverviewTotals;
+    queues: Record<string, number | null>;
+    target_breakdown: OperationsTargetBreakdownRow[];
+    spider: OperationsSpiderRow[];
     dependencies: {
         mysql: ServiceDependencyProbe;
         redis: ServiceDependencyProbe;
@@ -555,6 +588,7 @@ export interface PageProps {
         name: string;
         global_pause?: boolean;
         spider?: SpiderSharedConfig;
+        delete_local_after_upload?: boolean;
     };
     flash: {
         success: string | null;

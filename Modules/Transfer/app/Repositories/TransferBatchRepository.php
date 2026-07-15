@@ -52,6 +52,7 @@ final class TransferBatchRepository extends EloquentRepository
         int $storageAccountId,
         int $totalCount,
         ?string $subjectNsid = null,
+        ?bool $deleteLocalAfterUpload = null,
     ): TransferBatch {
         return $this->newQuery()->create([
             'type' => 'upload',
@@ -60,6 +61,7 @@ final class TransferBatchRepository extends EloquentRepository
             'storage_account_id' => $storageAccountId,
             'status' => TransferBatchStatus::Running->value,
             'total_count' => $totalCount,
+            'delete_local_after_upload' => $deleteLocalAfterUpload,
         ]);
     }
 
