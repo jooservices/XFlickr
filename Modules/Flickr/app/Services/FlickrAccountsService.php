@@ -12,6 +12,7 @@ use Modules\Flickr\Dto\DownloadCandidateDto;
 use Modules\Flickr\Dto\FlickrAppProfileDto;
 use Modules\Flickr\Dto\FlickrTokenHealthResult;
 use Modules\Flickr\Services\RateLimit\Presenter;
+use Modules\Storage\Dto\TransferQueueResult;
 
 final class FlickrAccountsService
 {
@@ -25,6 +26,7 @@ final class FlickrAccountsService
         private readonly FlickrPhotoSizeResolver $photoSizes,
         private readonly FlickrUrlResolverService $urlResolver,
         private readonly ConnectionPublicIdService $publicIds,
+        private readonly FlickrTransferService $transfers,
     ) {}
 
     /**
@@ -174,5 +176,57 @@ final class FlickrAccountsService
     public function ensurePublicId(Connection $connection): string
     {
         return $this->publicIds->ensure($connection);
+    }
+
+    // ── Transfer orchestration ──────────────────────────────
+
+    /**
+     * @param  list<string>  $contactNsids
+     * @param  list<string>  $flickrPhotoIds
+     */
+    public function queueDownloads(
+        Connection $connection,
+        ?string $flickrPhotoId = null,
+        ?string $contactNsid = null,
+        array $contactNsids = [],
+        array $flickrPhotoIds = [],
+    ): TransferQueueResult {
+        return $this->transfers->queueDownloadsFromInput(
+            $connection,
+            $flickrPhotoId,
+            $contactNsid,
+            $contactNsids,
+            $flickrPhotoIds,
+        );
+    }
+
+    /**
+     * @param  list<string>  $contactNsids
+     * @param  list<string>  $flickrPhotoIds
+     */
+    public function queueUploads(
+        Connection $connection,
+        ?int $storageAccountId = null,
+        ?string $flickrPhotoId = null,
+        ?string $contactNsid = null,
+        array $contactNsids = [],
+        array $flickrPhotoIds = [],
+        ?bool $deleteLocalAfterUpload = null,
+    ): TransferQueueResult {
+        $resolvedId = $this->transfers->resolveStorageAccountId($storageAccountId);
+
+        if ($resolvedId === null) {
+            return TransferQueueResult::error('No storage account configured.');
+        }
+
+        return $this->transfers->queueUploadsFromInput(
+            $connection,
+            $resolvedId,
+            $flickrPhotoId,
+            $contactNsid,
+            $contactNsids,
+            $flickrPhotoIds,
+            $deleteLocalAfterUpload,
+        );
     }
 }

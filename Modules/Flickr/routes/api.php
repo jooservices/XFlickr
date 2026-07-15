@@ -8,6 +8,7 @@ use Modules\Flickr\Http\Controllers\Api\V1\FlickrAccountController;
 use Modules\Flickr\Http\Controllers\Api\V1\FlickrRateLimitController;
 use Modules\Flickr\Http\Controllers\Api\V1\FlickrRateLimitUsageController;
 use Modules\Flickr\Http\Controllers\Api\V1\FlickrTokenHealthController;
+use Modules\Flickr\Http\Controllers\Api\V1\TransferProgressController;
 
 Route::prefix('v1')->group(function (): void {
     Route::get('/flickr/rate-limit', [FlickrRateLimitController::class, 'index']);
@@ -20,5 +21,8 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/crawl/runs', [CrawlStatusController::class, 'runs']);
         Route::get('/crawl/logs', [CrawlStatusController::class, 'logs']);
         Route::get('/token-health', [FlickrTokenHealthController::class, 'show']);
+        Route::get('/transfers', [TransferProgressController::class, 'index']);
+        Route::get('/transfers/{batch}', [TransferProgressController::class, 'show']);
+        Route::post('/transfers/{batch}/items/{flickrPhotoId}/retries', [TransferProgressController::class, 'retryItem']);
     });
 });

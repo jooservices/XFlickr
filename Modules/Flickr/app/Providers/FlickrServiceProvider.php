@@ -5,10 +5,19 @@ namespace Modules\Flickr\Providers;
 use Illuminate\Console\Scheduling\Schedule;
 use Modules\Flickr\Console\Commands\DoctorCommand;
 use Modules\Flickr\Console\Commands\FlickrApiAuditCommand;
+use Modules\Flickr\Services\FlickrSourceUrlResolver;
+use Modules\Storage\Contracts\SourceUrlResolver;
 use Nwidart\Modules\Support\ModuleServiceProvider;
 
 class FlickrServiceProvider extends ModuleServiceProvider
 {
+    public function register(): void
+    {
+        parent::register();
+
+        $this->app->bind(SourceUrlResolver::class, FlickrSourceUrlResolver::class);
+    }
+
     /**
      * The name of the module.
      */
