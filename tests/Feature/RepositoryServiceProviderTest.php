@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Providers\RepositoryServiceProvider;
-use Modules\Transfer\Repositories\StoredFileRepository;
+use Modules\Storage\Repositories\StoredFileRepository;
 use Tests\TestCase;
 
 final class RepositoryServiceProviderTest extends TestCase

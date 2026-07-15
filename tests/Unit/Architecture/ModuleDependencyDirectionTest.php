@@ -16,12 +16,11 @@ use Tests\TestCase;
  * Target:
  *   Auth → []
  *   Crawler → []
- *   Flickr → [Crawler]
+ *   Flickr → [Crawler, Storage]
  *   Spider → [Flickr, Crawler]
  *   Storage → [Crawler]
- *   Transfer → [Flickr, Storage, Crawler]
- *   Contacts → [Flickr, Spider, Transfer, Crawler]
- *   Catalog → [Flickr, Transfer, Crawler]
+ *   Contacts → [Flickr, Spider, Storage, Crawler]
+ *   Catalog → [Flickr, Storage, Crawler]
  *   Settings → [Flickr, Storage, Crawler]
  *   Operations → [*]
  *
@@ -36,12 +35,11 @@ final class ModuleDependencyDirectionTest extends TestCase
     private const ALLOWED = [
         'Auth' => [],
         'Crawler' => [],
-        'Flickr' => ['Crawler'],
+        'Flickr' => ['Crawler', 'Storage'],
         'Spider' => ['Flickr', 'Crawler'],
         'Storage' => ['Crawler'],
-        'Transfer' => ['Flickr', 'Storage', 'Crawler'],
-        'Contacts' => ['Flickr', 'Spider', 'Transfer', 'Crawler'],
-        'Catalog' => ['Flickr', 'Transfer', 'Crawler'],
+        'Contacts' => ['Flickr', 'Spider', 'Storage', 'Crawler'],
+        'Catalog' => ['Flickr', 'Storage', 'Crawler'],
         'Settings' => ['Flickr', 'Storage', 'Crawler'],
         'Operations' => ['*'],
     ];

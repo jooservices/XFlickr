@@ -12,8 +12,8 @@ use Modules\Crawler\Models\Gallery;
 use Modules\Crawler\Models\Photo;
 use Modules\Crawler\Models\Photoset;
 use Modules\Crawler\Support\XFlickrConfig;
-use Modules\Transfer\Enums\StoredFileStatus;
-use Modules\Transfer\Models\StoredFile;
+use Modules\Storage\Enums\StoredFileStatus;
+use Modules\Storage\Models\StoredFile;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\FlickrNsid;
 use Tests\TestCase;
@@ -53,8 +53,8 @@ final class CatalogPresentersTest extends TestCase
 
         $stored = StoredFile::query()->create([
             'uuid' => fake()->uuid(),
-            'flickr_photo_id' => $photo->flickr_photo_id,
-            'owner_nsid' => $ownerNsid,
+            'source_id' => $photo->flickr_photo_id,
+            'source_owner' => $ownerNsid,
             'variant' => 'original',
             'status' => StoredFileStatus::Completed->value,
             'original_name' => $photo->flickr_photo_id.'_original.jpg',
@@ -79,8 +79,8 @@ final class CatalogPresentersTest extends TestCase
         $missingId = (string) fake()->unique()->numerify('#########');
 
         StoredFile::query()->create([
-            'flickr_photo_id' => $photo->flickr_photo_id,
-            'owner_nsid' => $ownerNsid,
+            'source_id' => $photo->flickr_photo_id,
+            'source_owner' => $ownerNsid,
             'variant' => 'original',
             'status' => StoredFileStatus::Pending->value,
             'original_name' => $photo->flickr_photo_id.'_original',

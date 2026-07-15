@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Modules\Operations\Listeners;
 
 use Modules\Operations\Services\OperationsBroadcastService;
-use Modules\Transfer\Events\TransferBatchReconciled;
+use Modules\Storage\Events\TransferBatchReconciled;
 
 final class BroadcastOperationsBatchUpdated
 {

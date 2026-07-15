@@ -20,10 +20,10 @@ use Modules\Crawler\Support\XFlickrConfig;
 use Modules\Storage\Database\Factories\StorageAccountFactory;
 use Modules\Storage\Database\Factories\StorageRemoteAlbumFactory;
 use Modules\Storage\Database\Factories\StorageRemoteItemFactory;
-use Modules\Transfer\Database\Factories\TransferBatchFactory;
-use Modules\Transfer\Database\Factories\TransferItemFactory;
-use Modules\Transfer\Enums\TransferBatchStatus;
-use Modules\Transfer\Models\TransferBatch;
+use Modules\Storage\Database\Factories\TransferBatchFactory;
+use Modules\Storage\Database\Factories\TransferItemFactory;
+use Modules\Storage\Enums\TransferBatchStatus;
+use Modules\Storage\Models\TransferBatch;
 
 /**
  * Factory-based demo dataset for local dev and Playwright smoke tests.
@@ -201,7 +201,7 @@ final class DemoDatasetSeeder extends Seeder
         foreach ($completedPhotos as $photo) {
             TransferItemFactory::new()->create([
                 'transfer_batch_id' => $completedBatch->id,
-                'flickr_photo_id' => $photo->flickr_photo_id,
+                'source_id' => $photo->flickr_photo_id,
                 'status' => 'completed',
             ]);
         }
@@ -221,7 +221,7 @@ final class DemoDatasetSeeder extends Seeder
         foreach ($failedPhotos as $photo) {
             TransferItemFactory::new()->create([
                 'transfer_batch_id' => $failedBatch->id,
-                'flickr_photo_id' => $photo->flickr_photo_id,
+                'source_id' => $photo->flickr_photo_id,
                 'status' => 'failed',
                 'error_message' => fake()->sentence(),
             ]);

@@ -41,9 +41,6 @@
         <testsuite name="Storage">
             <directory>Modules/Storage/tests</directory>
         </testsuite>
-        <testsuite name="Transfer">
-            <directory>Modules/Transfer/tests</directory>
-        </testsuite>
     </testsuites>
     <source>
         <include>
@@ -57,7 +54,6 @@
             <directory>Modules/Settings/app</directory>
             <directory>Modules/Spider/app</directory>
             <directory>Modules/Storage/app</directory>
-            <directory>Modules/Transfer/app</directory>
         </include>
         <exclude>
             <directory>Modules/*/app/Providers</directory>

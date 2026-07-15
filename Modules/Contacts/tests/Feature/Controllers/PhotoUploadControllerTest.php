@@ -6,9 +6,9 @@ namespace Modules\Contacts\Tests\Feature\Controllers;
 
 use Illuminate\Support\Facades\Bus;
 use Modules\Crawler\Models\Photo;
+use Modules\Storage\Jobs\UploadFileJob;
 use Modules\Storage\Models\StorageAccount;
-use Modules\Transfer\Jobs\UploadPhotoJob;
-use Modules\Transfer\Models\StoredFile;
+use Modules\Storage\Models\StoredFile;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;
@@ -20,7 +20,7 @@ final class PhotoUploadControllerTest extends TestCase
 
     public function test_store_queues_upload_for_single_photo(): void
     {
-        Bus::fake([UploadPhotoJob::class]);
+        Bus::fake([UploadFileJob::class]);
 
         $connection = $this->createFlickrConnection();
         $storageAccount = $this->createStorageAccount();
@@ -31,8 +31,9 @@ final class PhotoUploadControllerTest extends TestCase
             'title' => 'Upload me',
         ]);
         StoredFile::query()->create([
-            'flickr_photo_id' => 'upload-photo-1',
-            'owner_nsid' => 'friend@N01',
+            'source_type' => 'flickr_photo',
+            'source_id' => 'upload-photo-1',
+            'source_owner' => 'friend@N01',
             'variant' => 'original',
             'status' => 'completed',
             'original_name' => 'upload-photo-1_original.jpg',
@@ -47,12 +48,12 @@ final class PhotoUploadControllerTest extends TestCase
 
         $response->assertRedirect();
         $response->assertSessionHas('success');
-        Bus::assertDispatched(UploadPhotoJob::class);
+        Bus::assertDispatched(UploadFileJob::class);
     }
 
     public function test_store_returns_error_when_select_all_matches_no_contacts(): void
     {
-        Bus::fake([UploadPhotoJob::class]);
+        Bus::fake([UploadFileJob::class]);
 
         $connection = $this->createFlickrConnection();
         $storageAccount = $this->createStorageAccount();

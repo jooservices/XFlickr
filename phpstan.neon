@@ -15,7 +15,6 @@ parameters:
         - Modules/Contacts
         - Modules/Catalog
         - Modules/Spider
-        - Modules/Transfer
     excludePaths:
         - Modules/*/resources/*
         - Modules/*/database/*

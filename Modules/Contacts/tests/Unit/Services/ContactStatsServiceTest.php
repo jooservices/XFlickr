@@ -17,8 +17,8 @@ use Modules\Crawler\Models\Favorite;
 use Modules\Crawler\Models\Gallery;
 use Modules\Crawler\Models\Photo;
 use Modules\Crawler\Models\Photoset;
-use Modules\Transfer\Models\StoredFile;
-use Modules\Transfer\Models\TransferBatch;
+use Modules\Storage\Models\StoredFile;
+use Modules\Storage\Models\TransferBatch;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\Support\FlickrNsid;
@@ -210,8 +210,8 @@ final class ContactStatsServiceTest extends TestCase
         $ownerNsid = FlickrNsid::fake();
 
         StoredFile::query()->create([
-            'flickr_photo_id' => 'photo-1',
-            'owner_nsid' => $ownerNsid,
+            'source_id' => 'photo-1',
+            'source_owner' => $ownerNsid,
             'variant' => 'original',
             'status' => 'completed',
             'local_path' => 'flickr/'.$ownerNsid.'/photos/photo-1_secret.jpg',
@@ -219,8 +219,8 @@ final class ContactStatsServiceTest extends TestCase
         ]);
 
         StoredFile::query()->create([
-            'flickr_photo_id' => 'photo-2',
-            'owner_nsid' => $ownerNsid,
+            'source_id' => 'photo-2',
+            'source_owner' => $ownerNsid,
             'variant' => 'original',
             'status' => 'completed',
             'local_path' => 'flickr/'.$ownerNsid.'/photos/photo-2_secret.jpg',
@@ -228,8 +228,8 @@ final class ContactStatsServiceTest extends TestCase
         ]);
 
         StoredFile::query()->create([
-            'flickr_photo_id' => 'photo-3',
-            'owner_nsid' => $ownerNsid,
+            'source_id' => 'photo-3',
+            'source_owner' => $ownerNsid,
             'variant' => 'original',
             'status' => 'failed',
             'original_name' => 'photo-3.jpg',

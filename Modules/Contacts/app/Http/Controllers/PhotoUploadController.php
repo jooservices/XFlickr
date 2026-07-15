@@ -8,13 +8,13 @@ use Illuminate\Http\RedirectResponse;
 use Modules\Contacts\Http\Requests\QueuePhotoUploadRequest;
 use Modules\Contacts\Services\ContactListQueryService;
 use Modules\Crawler\Models\Connection;
-use Modules\Transfer\Dto\TransferQueueResult;
-use Modules\Transfer\Services\PhotoUploadService;
+use Modules\Flickr\Services\FlickrAccountsService;
+use Modules\Storage\Dto\TransferQueueResult;
 
 final class PhotoUploadController
 {
     public function __construct(
-        private readonly PhotoUploadService $photoUploadService,
+        private readonly FlickrAccountsService $flickr,
         private readonly ContactListQueryService $contactList,
     ) {}
 
@@ -26,7 +26,7 @@ final class PhotoUploadController
             return back()->with($result->flashKey, $result->message);
         }
 
-        $result = $this->photoUploadService->queueFromInput(
+        $result = $this->flickr->queueUploads(
             $connection,
             $request->storageAccountId(),
             $request->singlePhotoId(),
@@ -45,7 +45,7 @@ final class PhotoUploadController
         $deleteLocal = $request->deleteLocalAfterUpload();
 
         if ($ownerNsid !== null) {
-            return $this->photoUploadService->queueFromInput(
+            return $this->flickr->queueUploads(
                 $connection,
                 storageAccountId: $request->storageAccountId(),
                 contactNsid: $ownerNsid,
@@ -63,7 +63,7 @@ final class PhotoUploadController
             return TransferQueueResult::error('No contacts matched the current filters.');
         }
 
-        return $this->photoUploadService->queueFromInput(
+        return $this->flickr->queueUploads(
             $connection,
             storageAccountId: $request->storageAccountId(),
             contactNsids: $contactNsids,

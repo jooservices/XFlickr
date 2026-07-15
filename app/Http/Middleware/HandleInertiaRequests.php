@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Modules\Crawler\Support\XFlickrConfig;
 use Modules\Spider\Support\SpiderRuntimeConfig;
-use Modules\Transfer\Support\TransferRuntimeConfig;
+use Modules\Storage\Support\TransferRuntimeConfig;
 
 final class HandleInertiaRequests extends Middleware
 {

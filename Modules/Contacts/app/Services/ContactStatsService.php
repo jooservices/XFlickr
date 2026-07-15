@@ -11,9 +11,9 @@ use App\Repositories\Crawler\PhotoQueryRepository;
 use Modules\Crawler\Enums\CrawlType;
 use Modules\Crawler\Enums\TaskType;
 use Modules\Crawler\Models\Connection;
-use Modules\Transfer\Enums\StoredFileStatus;
-use Modules\Transfer\Repositories\StoredFileRepository;
-use Modules\Transfer\Repositories\TransferBatchRepository;
+use Modules\Storage\Enums\StoredFileStatus;
+use Modules\Storage\Repositories\StoredFileRepository;
+use Modules\Storage\Repositories\TransferBatchRepository;
 
 final class ContactStatsService
 {
@@ -174,7 +174,7 @@ final class ContactStatsService
 
         $storedFileList = $this->storedFiles->originalsForOwners($contactNsids);
 
-        foreach ($storedFileList->groupBy('owner_nsid') as $ownerNsid => $files) {
+        foreach ($storedFileList->groupBy('source_owner') as $ownerNsid => $files) {
             if (! isset($counts[$ownerNsid])) {
                 continue;
             }

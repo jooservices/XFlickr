@@ -18,13 +18,13 @@ use Tests\TestCase;
 final class ModuleFacadeImportTest extends TestCase
 {
     /**
-     * Facade class name, or null when no peer Services import is allowed.
+     * Facade class name(s), or null when no peer Services import is allowed.
      *
-     * @var array<string, string|null>
+     * @var array<string, string|list<string>|null>
      */
     private const FACADE_BY_TARGET = [
-        'Flickr' => 'FlickrAccountsService',
-        'Storage' => 'StorageService',
+        'Flickr' => ['FlickrAccountsService', 'FlickrTransferService'],
+        'Storage' => ['StorageService', 'StorageTransferService'],
         'Contacts' => null,
     ];
 
@@ -71,11 +71,13 @@ final class ModuleFacadeImportTest extends TestCase
 
                 foreach ($matches[1] as $imported) {
                     $service = trim($imported);
-                    if ($allowedFacade !== null && $service === $allowedFacade) {
+                    if ($this->isAllowedFacade($allowedFacade, $service)) {
                         continue;
                     }
 
-                    $allowed = $allowedFacade ?? '(none — Contacts has no peer facade)';
+                    $allowed = $allowedFacade === null
+                        ? '(none — Contacts has no peer facade)'
+                        : (is_array($allowedFacade) ? implode(', ', $allowedFacade) : $allowedFacade);
                     $violations[] = "{$rel} imports Modules\\{$target}\\Services\\{$service} (allowed: {$allowed})";
                 }
             }
@@ -84,6 +86,22 @@ final class ModuleFacadeImportTest extends TestCase
         sort($violations);
 
         return $violations;
+    }
+
+    /**
+     * @param  string|list<string>|null  $allowed
+     */
+    private function isAllowedFacade(string|array|null $allowed, string $service): bool
+    {
+        if ($allowed === null) {
+            return false;
+        }
+
+        if (is_string($allowed)) {
+            return $service === $allowed;
+        }
+
+        return in_array($service, $allowed, true);
     }
 
     /**

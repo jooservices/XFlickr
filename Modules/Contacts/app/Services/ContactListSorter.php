@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Crawler\Models\Connection;
 use Modules\Crawler\Models\Contact;
-use Modules\Transfer\Repositories\StoredFileRepository;
+use Modules\Storage\Repositories\StoredFileRepository;
 
 final class ContactListSorter
 {

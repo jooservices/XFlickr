@@ -12,7 +12,7 @@ use Modules\Crawler\Models\Contact;
 use Modules\Crawler\Models\Favorite;
 use Modules\Crawler\Models\Gallery;
 use Modules\Crawler\Models\Photoset;
-use Modules\Transfer\Database\Factories\StoredFileFactory;
+use Modules\Storage\Database\Factories\StoredFileFactory;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\Support\FlickrNsid;
@@ -82,7 +82,7 @@ final class ContactListSorterTest extends TestCase
             'discovered_at' => now(),
         ]);
         StoredFileFactory::new()->count(2)->create([
-            'owner_nsid' => $heavy->nsid,
+            'source_owner' => $heavy->nsid,
             'variant' => 'original',
             'status' => 'completed',
         ]);

@@ -19,7 +19,6 @@ use Modules\Auth\Repositories\UserRepository;
 use Modules\Contacts\Repositories\ContactAnnotationRepository;
 use Modules\Contacts\Repositories\ContactFullPassFrontierRepository;
 use Modules\Contacts\Repositories\ContactFullPassRunRepository;
-use Modules\Settings\Repositories\ConfigEntryRepository;
 use Modules\Spider\Repositories\SpiderFrontierRepository;
 use Modules\Spider\Repositories\SpiderRunRepository;
 use Modules\Storage\Repositories\StorageAccountRepository;
@@ -27,9 +26,9 @@ use Modules\Storage\Repositories\StorageRemoteAlbumRepository;
 use Modules\Storage\Repositories\StorageRemoteItemRepository;
 use Modules\Storage\Repositories\StorageRemoteSyncStateRepository;
 use Modules\Storage\Repositories\StorageUploadRepository;
-use Modules\Transfer\Repositories\StoredFileRepository;
-use Modules\Transfer\Repositories\TransferBatchRepository;
-use Modules\Transfer\Repositories\TransferItemRepository;
+use Modules\Storage\Repositories\StoredFileRepository;
+use Modules\Storage\Repositories\TransferBatchRepository;
+use Modules\Storage\Repositories\TransferItemRepository;
 
 final class RepositoryServiceProvider extends ServiceProvider
 {
@@ -46,7 +45,6 @@ final class RepositoryServiceProvider extends ServiceProvider
             StorageRemoteAlbumRepository::class,
             StorageRemoteItemRepository::class,
             StorageRemoteSyncStateRepository::class,
-            ConfigEntryRepository::class,
             ContactAnnotationRepository::class,
             SpiderRunRepository::class,
             SpiderFrontierRepository::class,

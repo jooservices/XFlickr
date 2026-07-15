@@ -133,7 +133,7 @@ return [
     */
 
     'silenced' => [
-        // Modules\Transfer\Jobs\ExampleJob::class,
+        //
     ],
 
     'silenced_tags' => [

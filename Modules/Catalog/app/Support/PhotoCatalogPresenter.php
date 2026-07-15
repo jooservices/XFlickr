@@ -7,9 +7,9 @@ namespace Modules\Catalog\Support;
 use Illuminate\Support\Facades\DB;
 use Modules\Crawler\Models\Photo;
 use Modules\Crawler\Support\XFlickrConfig;
-use Modules\Transfer\Enums\StoredFileStatus;
-use Modules\Transfer\Models\StoredFile;
-use Modules\Transfer\Repositories\StoredFileRepository;
+use Modules\Storage\Enums\StoredFileStatus;
+use Modules\Storage\Models\StoredFile;
+use Modules\Storage\Repositories\StoredFileRepository;
 
 final class PhotoCatalogPresenter
 {
@@ -43,7 +43,7 @@ final class PhotoCatalogPresenter
             XFlickrConfig::table('galleries'),
             'flickr_gallery_id',
         );
-        $storedByFlickrPhotoId = $this->storedFiles->originalsByFlickrPhotoIds(
+        $storedByFlickrPhotoId = $this->storedFiles->originalsBySourceIds(
             $items->pluck('flickr_photo_id')->all(),
         );
 
@@ -82,7 +82,7 @@ final class PhotoCatalogPresenter
             return [];
         }
 
-        $storedByFlickrPhotoId = $this->storedFiles->originalsByFlickrPhotoIds($ids);
+        $storedByFlickrPhotoId = $this->storedFiles->originalsBySourceIds($ids);
 
         return array_map(
             function (string $flickrPhotoId) use ($storedByFlickrPhotoId): array {

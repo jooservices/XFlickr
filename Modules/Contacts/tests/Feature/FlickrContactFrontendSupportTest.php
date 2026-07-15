@@ -19,11 +19,11 @@ use Modules\Crawler\Models\Gallery;
 use Modules\Crawler\Models\Photo;
 use Modules\Crawler\Models\Photoset;
 use Modules\Crawler\Support\XFlickrConfig;
+use Modules\Flickr\Jobs\FanOutTransferJob;
+use Modules\Storage\Jobs\DownloadFileJob;
+use Modules\Storage\Jobs\UploadFileJob;
 use Modules\Storage\Models\StorageAccount;
-use Modules\Transfer\Jobs\DownloadPhotoJob;
-use Modules\Transfer\Jobs\FanOutTransferBatchJob;
-use Modules\Transfer\Jobs\UploadPhotoJob;
-use Modules\Transfer\Models\StoredFile;
+use Modules\Storage\Models\StoredFile;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\Support\FlickrNsid;
@@ -250,8 +250,8 @@ final class FlickrContactFrontendSupportTest extends TestCase
         ]);
 
         $stored = StoredFile::query()->forceCreate([
-            'flickr_photo_id' => 'p-downloaded',
-            'owner_nsid' => '111@N01',
+            'source_id' => 'p-downloaded',
+            'source_owner' => '111@N01',
             'variant' => 'original',
             'status' => 'completed',
             'local_path' => 'flickr/111@N01/photos/p-downloaded_abc.jpg',
@@ -464,7 +464,7 @@ final class FlickrContactFrontendSupportTest extends TestCase
 
     public function test_contacts_bulk_upload_accepts_multiple_contact_nsids(): void
     {
-        Bus::fake([DownloadPhotoJob::class, UploadPhotoJob::class]);
+        Bus::fake([DownloadFileJob::class, UploadFileJob::class]);
 
         $connection = $this->createFlickrConnection();
 
@@ -494,8 +494,9 @@ final class FlickrContactFrontendSupportTest extends TestCase
             ]);
 
             StoredFile::query()->forceCreate([
-                'flickr_photo_id' => 'p-'.$nsid,
-                'owner_nsid' => $nsid,
+                'source_type' => 'flickr_photo',
+                'source_id' => 'p-'.$nsid,
+                'source_owner' => $nsid,
                 'variant' => 'original',
                 'status' => 'completed',
                 'local_path' => 'flickr/'.$nsid.'/photos/p-'.$nsid.'_abc.jpg',
@@ -508,12 +509,12 @@ final class FlickrContactFrontendSupportTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $response->assertSessionHas('success', '2 photo(s) queued for upload across 2 contact(s).');
+        $response->assertSessionHas('success', '2 photo(s) queued for upload.');
     }
 
     public function test_contacts_bulk_download_select_all_queues_matching_contacts(): void
     {
-        Bus::fake([DownloadPhotoJob::class, FanOutTransferBatchJob::class]);
+        Bus::fake([DownloadFileJob::class, FanOutTransferJob::class]);
 
         $connection = $this->createFlickrConnection();
         $matchNsid = FlickrNsid::fake();
@@ -543,12 +544,12 @@ final class FlickrContactFrontendSupportTest extends TestCase
 
         $response->assertRedirect();
         $response->assertSessionHas('success', '1 contact download batch(es) queued.');
-        Bus::assertDispatched(FanOutTransferBatchJob::class, 1);
+        Bus::assertDispatched(FanOutTransferJob::class, 1);
     }
 
     public function test_photos_bulk_download_select_all_requires_owner_nsid_or_contact_filters(): void
     {
-        Bus::fake([DownloadPhotoJob::class, FanOutTransferBatchJob::class]);
+        Bus::fake([DownloadFileJob::class, FanOutTransferJob::class]);
 
         $connection = $this->createFlickrConnection();
         $ownerNsid = FlickrNsid::fake();
@@ -566,7 +567,7 @@ final class FlickrContactFrontendSupportTest extends TestCase
 
         $response->assertRedirect();
         $response->assertSessionHas('success', '1 download batch(es) queued.');
-        Bus::assertDispatched(FanOutTransferBatchJob::class, 1);
+        Bus::assertDispatched(FanOutTransferJob::class, 1);
     }
 
     public function test_contact_list_sorter_allowlist(): void
