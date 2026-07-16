@@ -18,9 +18,9 @@ Configure and operate Horizon queues for crawls, downloads, and uploads.
 
 | Queue | Jobs | Concurrency |
 |---|---|---|
-| default | Crawl fan-out, batch dispatchers | Higher |
-| downloads | `DownloadPhotoJob` | Moderate |
-| uploads | `UploadPhotoJob` | **1** (serial cloud uploads) |
+| `default` / `xflickr` | Application work and crawl fetchers | Higher |
+| `xflickr-downloads` | `FanOutTransferJob`, `DownloadFileJob` | Moderate |
+| `xflickr-uploads` | `FanOutTransferJob`, `UploadFileJob` | **1** (serial cloud uploads) |
 
 ## Rules
 
@@ -28,6 +28,7 @@ Configure and operate Horizon queues for crawls, downloads, and uploads.
 - Failed jobs: inspect Horizon UI and `storage/logs/laravel.log`.
 - Docker dev stack runs Horizon as `horizon` service.
 - Global crawl pause in Settings blocks dispatch — respect in new code.
+- Drain download/upload queues before deploying a queued job namespace change; Redis payloads store FQCNs.
 
 ## Scheduler
 

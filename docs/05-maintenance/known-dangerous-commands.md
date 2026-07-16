@@ -68,6 +68,10 @@ Operator sequence:
 3. Deploy the rename.
 4. Resume dispatchers.
 
-Do not rename queued classes mid-flight on a busy queue. Historical note: Crawler absorption renamed `JOOservices\XFlickrCrawler\*` → `Modules\Crawler\*` — in-flight jobs at cutover would have failed without a drain. The 8-to-1 `Fetch*PageJob` → `FetchCrawlPageJob` consolidation (audit C5) is the same class of change and requires the same drain-before-deploy sequence.
+Do not rename queued classes mid-flight on a busy queue. Historical examples that require this drain-before-deploy sequence:
+
+- Crawler absorption: `JOOservices\XFlickrCrawler\*` → `Modules\Crawler\*`.
+- Crawl job consolidation: `Fetch*PageJob` → `FetchCrawlPageJob`.
+- Storage/Transfer cleanup: `Modules\Storage\Jobs\*` → `Modules\Transfer\Jobs\*` for fan-out, download, and upload jobs.
 
 Full details: [Docker safety](docker-safety.md) and [`AGENTS.md`](../../AGENTS.md).

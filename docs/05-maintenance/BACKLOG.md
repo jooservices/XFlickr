@@ -16,7 +16,7 @@ _None — spider unblocked by crawler 1.3.0._
 |----|------|-------------|----------|
 | N-08 | Flickr `token_payload` plaintext (now `Modules/Crawler` connections) | Unreleased | `Connection` model `token_payload` => `encrypted` cast; migration `2026_07_06_000100_encrypt_xflickr_connection_token_payload`; `ConnectionTokenEncryptionTest`; `SECURITY.md` |
 | N-13 | README badges missing | Unreleased | CI + Release badges in `README.md` |
-| N-15 | Hardcoded download HTTP timeout (120s) | Unreleased | Curated `xflickr_download.timeout_seconds` in Settings; `DownloadRuntimeConfig` + `PhotoDownloadExecutionService` |
+| N-15 | Hardcoded download HTTP timeout (120s) | Unreleased | Curated `xflickr_download.timeout_seconds` in Settings; `TransferRuntimeConfig` + `FileDownloadService` |
 | N-16 | Flickr client layering: SDK → Crawler `FlickrClientFactory` (auth true/false) → peers via Crawler/Flickr (not ad hoc `FlickrFactory`) | Unreleased | `FlickrClientFactory` (`authenticated` flag, `anonymousClient`), `FlickrClientFactoryLayeringTest` |
 | N-01 | Default admin credential / rotation | v1.2.0 | `ADMIN_PASSWORD`, `xflickr:auth:reset-password`, Auth `AdminUserSeeder` first-create only (optional / explicit class) |
 | N-02 | Unused `jooservices/dto` | v1.2.0 | `DownloadCandidateDto`, `OAuthAppConfigDto` wired at call sites |

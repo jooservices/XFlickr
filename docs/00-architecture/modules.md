@@ -183,9 +183,9 @@ Each module owns its `routes/web.php`, `routes/api.php` (`/api/v1/*`), controlle
 
 - Web: (queue endpoints owned by Contacts) — keep URIs `flickr.accounts.download` / `upload`
 - API: stored-file show; transfer list/show; item retry
-- Services: download/upload (+ execution), progress/counts, retry, stored-file stream
-- Jobs: fan-out batch, download (and related) — call Services only
-- Models: `TransferBatch`, `TransferItem`, `StoredFile`
+- Services: `PhotoTransferService` (queue orchestration), `TransferBatchService` (batch/query facade), `StoredFileService` (read facade), execution services, reconciliation, retry, and stored-file streaming
+- Jobs: `FanOutTransferJob`, `DownloadFileJob`, and `UploadFileJob` — jobs delegate workflow behavior to services
+- Models: `TransferBatch`, `TransferItem`, `StoredFile`, and `StorageUpload`
 
 **Related skill:** [`transfer-pipeline-safety`](../../ai/skills/transfer-pipeline-safety/SKILL.md)
 
@@ -193,7 +193,7 @@ Each module owns its `routes/web.php`, `routes/api.php` (`/api/v1/*`), controlle
 
 ## Storage
 
-**Scope:** Cloud storage **user** accounts and provider drivers — OAuth (Google / Microsoft), R2 connect, browse, sync, download, delete, upload helpers used by Transfer.
+**Scope:** Cloud storage **user** accounts and provider adapters — OAuth (Google / Microsoft), R2 connect, browse, sync, stream, delete, upload, quota, and connection verification. Transfer consumes this provider-I/O boundary but Storage owns no batches, jobs, or local-file workflow.
 
 **Purpose:** Connect backup destinations and manage remote files/albums for Google Photos, Google Drive, OneDrive, and Cloudflare R2.
 
@@ -201,9 +201,10 @@ Each module owns its `routes/web.php`, `routes/api.php` (`/api/v1/*`), controlle
 
 - Web: OAuth connect/callback/reauthorize/disconnect/set-default; R2 connect; browse pages per provider
 - API: accounts list; browse/sync/delete/download; Google Photos thumbnail; storage quota snapshot (`GET /api/v1/storage/quota`)
-- Services: OAuth + token refresh, browse/sync/delete/upload per driver, account scope/settings, quota query (cached)
-- CLI: `xflickr:storage:verify-google-photos`
-- Models: `StorageAccount`, remote albums/items/sync state, uploads
+- Services: `StorageService` facade (upload/stream/delete/account resolution), `StorageAdapterFactory` (fresh account-bound adapter), connection verification, OAuth + token refresh, browse/sync, account scope/settings, and cached quota query
+- Adapters: one per provider (`GooglePhotosAdapter`, `GoogleDriveAdapter`, `OneDriveAdapter`, `R2Adapter`); Flysystem providers share `AbstractFlysystemAdapter`
+- CLI: `xflickr:storage:verify-connections` (all providers; `--account=` / `--provider=` filters)
+- Models: `StorageAccount`, remote albums/items, and sync state
 - Live Storage quota (OneDrive / Google Drive when the provider exposes it) appears in the sticky app status footer
 
 **User guide:** [Storage browse](../02-user-guide/storage-browse.md) · **Skill:** [`storage-driver-safety`](../../ai/skills/storage-driver-safety/SKILL.md)
@@ -226,5 +227,6 @@ Root `routes/web.php` and `routes/api.php` are stubs — modules register routes
 
 - **Crawler module** owns crawl fetchers and `xflickr_*` crawl/catalog tables — peer modules call `FlickrService` / shared crawler repos; do not reimplement fetchers.
 - **Operations** aggregates; it must not be imported by Flickr/Transfer/Spider for core flows.
-- **Transfer** depends on **Storage** drivers for uploads; **Storage** does not own transfer batches.
+- **Transfer** depends on the **StorageService** provider-I/O facade; **Storage** never imports Transfer.
+- Storage publishes `StorageRemoteItemsRemoved`; Transfer listens and removes matching upload bookkeeping. This one-way event bridge preserves remote-delete consistency without a dependency cycle.
 - **Contacts** full-pass and **Spider** frontier share expansion patterns (`FrontierExpansion`) but remain separate products (manual full-pass vs opt-in spider).

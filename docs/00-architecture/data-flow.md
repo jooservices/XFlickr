@@ -27,30 +27,34 @@ flowchart LR
 ```mermaid
 flowchart LR
   User[User clicks Download] --> DLController[PhotoDownloadController]
-  DLController --> DLService[PhotoDownloadService]
+  DLController --> DLService[PhotoTransferService]
   DLService --> Batch[TransferBatch]
-  Batch --> DLJob[DownloadPhotoJob]
-  DLJob --> Disk[(Local disk)]
-  DLJob --> StoredFiles[(stored_files)]
+  Batch --> DLJob[DownloadFileJob]
+  DLJob --> DLExec[FileDownloadService]
+  DLExec --> Disk[(Local disk)]
+  DLExec --> StoredFiles[(stored_files)]
 ```
 
-- Deduplication: skip photos already in `stored_files` with `local_downloaded_at`.
-- `FlickrPhotoSizeResolver` resolves direct download URLs from Flickr.
+- Deduplication: skip completed original rows in `stored_files` by `source_id`.
+- Flickr-owned `FlickrPhotoSourceService` resolves direct download URLs.
 
 ## Upload pipeline
 
 ```mermaid
 flowchart LR
   User[User clicks Upload] --> ULController[PhotoUploadController]
-  ULController --> ULService[PhotoUploadService]
-  ULService --> ULJob[UploadPhotoJob]
-  ULJob --> EnsureLocal[Download if needed]
-  ULJob --> Cloud[Storage driver]
-  ULJob --> Uploads[(storage_uploads)]
+  ULController --> ULService[PhotoTransferService]
+  ULService --> EnsureLocal{Completed local file?}
+  EnsureLocal -->|no| QueueDownload[Queue download; re-trigger upload]
+  EnsureLocal -->|yes| ULJob[UploadFileJob]
+  ULJob --> ULExec[FileUploadExecutionService]
+  ULExec --> Storage[StorageService → account-bound adapter]
+  Storage --> Cloud[Remote provider]
+  ULExec --> Uploads[(storage_uploads)]
 ```
 
 - Upload queue runs with limited concurrency (Horizon supervisor).
-- Deduplication per `(flickr_photo_id, storage_account_id)`.
+- Completed `(stored_file_id, storage_account_id)` uploads are idempotent.
 
 ## Settings and credentials
 

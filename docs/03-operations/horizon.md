@@ -11,9 +11,9 @@ XFlickr uses Laravel Horizon to process queued jobs.
 
 | Queue area | Jobs |
 |---|---|
-| Default | Crawl dispatch, fan-out jobs |
-| Downloads | `DownloadPhotoJob` |
-| Uploads | `UploadPhotoJob` (limited concurrency) |
+| Default | Crawl dispatch |
+| Downloads (`xflickr-downloads`) | `FanOutTransferJob`, `DownloadFileJob` |
+| Uploads (`xflickr-uploads`) | `FanOutTransferJob`, `UploadFileJob` (limited concurrency) |
 
 Upload jobs use a dedicated supervisor with `maxProcesses: 1` to avoid concurrent cloud API calls.
 

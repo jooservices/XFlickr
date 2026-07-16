@@ -18,7 +18,7 @@ Safe handling of storage providers and credentials.
 | OneDrive | OAuth 2.0 | `StorageDriver::OneDrive` |
 | Cloudflare R2 | API keys (S3) | `StorageDriver::R2` |
 
-Source: `app/Enums/StorageDriver.php`
+Source: `Modules/Storage/app/Enums/StorageDriver.php`
 
 ## Rules
 
@@ -26,14 +26,22 @@ Source: `app/Enums/StorageDriver.php`
 - Connected account tokens in MySQL `storage_accounts.credentials` (encrypted).
 - R2: no OAuth — configure endpoint, bucket, keys in Settings.
 - Google Photos scope: app-created data only — browse/upload limited to app uploads.
-- Delete operations: use `StorageDeleteService` — provider-specific rules apply.
+- Delete operations: use `StorageService::delete()` — provider-specific rules apply.
+- Never add a provider transport/transfer service between `StorageService` and an adapter.
+- Adapters are account-bound, created fresh by `StorageAdapterFactory`, and never cached in Horizon workers.
+- Provider SDK/Flysystem failures must leave the Storage boundary as `StorageOperationException` without secrets or raw provider response bodies.
 
 ## Key services
 
 - `StorageAccountService` — connect/disconnect accounts
-- `StorageUploadService` — Flysystem upload
-- `StorageBrowseService` / `StorageBrowseSyncService` — remote browse (registry → provider `*\BrowseService` / `*\DeleteService`)
-- Provider deletes: `GooglePhotos\DeleteService`, `GoogleDrive\DeleteService`, `OneDrive\DeleteService`, `R2\DeleteService` (cache sync in `StorageDeleteService`)
+- `StorageService` — peer facade for `upload()` / `openStreamForAccount()` / `delete()` / `resolveAccountId()`; resolves a fresh adapter and synchronizes local remote-item cache
+- `StorageAdapterFactory` — exhaustive `StorageDriver` match that constructs one account-bound adapter per call
+- `AbstractFlysystemAdapter` — shared Drive/OneDrive/R2 upload, stream, list, and delete algorithms
+- `GooglePhotosAdapter` — direct Google Photos API behavior where Flysystem is not applicable
+- `StorageBrowseService` / `StorageBrowseSyncService` — remote browse and atomic local-cache synchronization
+- Connection health: `ConnectionVerificationService` calls the optional `StorageVerifiable` capability (CLI `xflickr:storage:verify-connections`)
+
+Transfer batches, jobs, stored files, and upload bookkeeping live in `Modules/Transfer`. Storage publishes `StorageRemoteItemsRemoved`; the Transfer listener owns cleanup of `storage_uploads` records.
 
 ## Related skills
 

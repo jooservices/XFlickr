@@ -28,13 +28,13 @@ flowchart TB
 
   subgraph local [4. Local backup]
     L1[User clicks Download]
-    L2[DownloadPhotoJob → local disk]
+    L2[DownloadFileJob → local disk]
     L3[stored_files tracking]
   end
 
   subgraph cloud [5. Cloud backup]
     U1[User clicks Upload]
-    U2[UploadPhotoJob → storage driver]
+    U2[UploadFileJob → StorageService]
     U3[storage_uploads tracking]
     B1[Storage browse / sync / delete]
   end
@@ -200,11 +200,11 @@ flowchart TB
   User[User clicks Download]
   Ctrl[PhotoDownloadController]
   Req[QueuePhotoDownloadRequest]
-  Svc[PhotoDownloadService]
+  Svc[PhotoTransferService]
   Batch[(transfer_batches + transfer_items)]
-  Job[DownloadPhotoJob]
-  Exec[PhotoDownloadExecutionService]
-  Resolver[FlickrPhotoSizeResolver]
+  Job[DownloadFileJob]
+  Exec[FileDownloadService]
+  Resolver[FlickrPhotoSourceService]
   Flickr[Flickr API — getSizes if needed]
   Disk[(Local disk)]
   SF[(stored_files)]
@@ -215,7 +215,7 @@ flowchart TB
   Exec --> SF
 ```
 
-**Dedup:** skip when `stored_files.local_downloaded_at` is set for the `flickr_photo_id`.
+**Dedup:** skip when the original `stored_files` row for `source_id` is completed.
 
 **Queue:** `xflickr-downloads` (dedicated Horizon supervisor).
 
@@ -228,25 +228,26 @@ flowchart TB
   User[User clicks Upload]
   Ctrl[PhotoUploadController]
   Req[QueuePhotoUploadRequest]
-  Svc[PhotoUploadService]
-  Batch[(transfer_batches)]
-  Job[UploadPhotoJob]
-  Exec[PhotoUploadExecutionService]
+  Svc[PhotoTransferService]
+  Batch[(transfer_batches + transfer_items)]
+  Job[UploadFileJob]
+  Exec[FileUploadExecutionService]
   Local{Local file ready?}
-  DL[DownloadPhotoJob — ensure local]
-  Lock[Cache lock per storage_account_id]
-  Driver[Flysystem storage driver]
+  DL[Queue download; re-trigger upload]
+  Lock[WithoutOverlapping per storage_account_id]
+  Storage[StorageService]
+  Driver[Account-bound provider adapter]
   Cloud[(Google Photos / Drive / OneDrive / R2)]
   SU[(storage_uploads)]
 
   User --> Ctrl --> Req --> Svc --> Batch --> Job --> Exec
   Exec --> Local
   Local -->|no| DL
-  Local -->|yes| Lock --> Driver --> Cloud
+  Local -->|yes| Lock --> Storage --> Driver --> Cloud
   Exec --> SU
 ```
 
-**Dedup:** skip when `storage_uploads` exists for `(flickr_photo_id, storage_account_id)`.
+**Dedup:** a completed `(stored_file_id, storage_account_id)` upload is idempotent success.
 
 **Concurrency:** `xflickr-uploads` supervisor runs with limited `maxProcesses` to avoid hammering cloud APIs.
 
@@ -262,15 +263,16 @@ flowchart TB
   API[Api/StorageBrowseController]
   Browse[StorageBrowseService]
   Sync[StorageBrowseSyncService]
-  Reg[StorageDriverRegistry]
-  Drv[Provider browse driver]
+  Facade[StorageService]
+  Factory[StorageAdapterFactory]
+  Drv[Account-bound provider adapter]
   Prov[(Remote provider API)]
   Local[(MySQL remote item tables)]
 
-  UI -->|GET browse| API --> Browse --> Reg --> Drv --> Prov
-  UI -->|POST sync| API --> Sync --> Drv --> Prov
+  UI -->|GET browse| API --> Browse --> Factory --> Drv --> Prov
+  UI -->|POST sync| API --> Sync --> Browse
+  UI -->|GET download / POST delete| API --> Facade --> Factory
   Sync --> Local
-  UI -->|GET download / POST delete| API
 ```
 
 | Provider | Browse scope |
@@ -371,8 +373,8 @@ flowchart TB
 | Queue | Typical jobs | Notes |
 |---|---|---|
 | `xflickr` | Crawler fetcher jobs | Drained by `xflickr:dispatch` |
-| `xflickr-downloads` | `DownloadPhotoJob` | Longer timeout (180s) |
-| `xflickr-uploads` | `UploadPhotoJob` | Limited concurrency; lock per storage account |
+| `xflickr-downloads` | `FanOutTransferJob`, `DownloadFileJob` | Dedicated download supervisor |
+| `xflickr-uploads` | `FanOutTransferJob`, `UploadFileJob` | Limited concurrency; overlap lock per storage account |
 
 Dashboard: `/horizon`. See [Horizon](../03-operations/horizon.md).
 

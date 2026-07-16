@@ -80,6 +80,20 @@ Safe updates:
 - Verify before success message
 - Never `migrate:fresh`, `db:wipe`, or `down --volumes`
 
+### Transfer namespace cutover
+
+The Storage/Transfer boundary release moves serialized jobs from `Modules\Storage\Jobs\*` to
+`Modules\Transfer\Jobs\*`. For the first deployment containing that change:
+
+1. Stop users and automation from queuing new downloads or uploads.
+2. In Horizon, wait until `xflickr-downloads` and `xflickr-uploads` both have zero pending and running jobs.
+3. Review failed jobs before deploying; retry or discard them according to their actual outcome.
+4. Run the normal deploy/update command only after the queues are empty.
+5. Verify Horizon restarted with the release, then resume transfer queueing.
+
+Do not deploy this namespace move over in-flight jobs. Redis payloads contain their PHP class names,
+and the new release intentionally provides no legacy Storage job aliases.
+
 ## Post-deploy verification
 
 | Check | Docker | Host |

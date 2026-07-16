@@ -15,7 +15,7 @@ Per-module **scope / purpose / features:** [Modules catalog](modules.md).
 | Catalog UI / API | **Catalog** module | `Modules/Catalog` |
 | Contacts / graph / full-pass | **Contacts** module | `Modules/Contacts` |
 | Spider frontier | **Spider** module | `Modules/Spider` |
-| Local download tracking | **Transfer** module | `Modules/Transfer` (`stored_files`, `DownloadPhotoJob`) |
+| Local download tracking | **Transfer** module | `Modules/Transfer` (`stored_files`, `DownloadFileJob`) |
 | Cloud upload tracking | **Transfer** + **Storage** | `Modules/Transfer` + `Modules/Storage` |
 | Storage browse/sync / provider HTTP | **Storage** module | `Modules/Storage` |
 | Operations dashboard | **Operations** module | `Modules/Operations` |
@@ -35,16 +35,16 @@ Enforced by `Tests\Unit\Architecture\ModuleDependencyDirectionTest` (`ALLOWED` +
 |--------|------------|
 | Auth | — |
 | Crawler | — (leaf) |
-| Flickr | Crawler |
+| Flickr | Crawler, Storage |
 | Spider | Flickr, Crawler |
 | Storage | Crawler |
 | Transfer | Flickr, Storage, Crawler |
-| Contacts | Flickr, Spider, Transfer, Crawler |
-| Catalog | Flickr, Transfer, Crawler |
+| Contacts | Flickr, Spider, Storage, Transfer, Crawler |
+| Catalog | Flickr, Storage, Transfer, Crawler |
 | Settings | Flickr, Storage, Crawler |
 | Operations | all modules (aggregator; peers must not import Operations) |
 
-Edge cleanups (A4): `DownloadCandidateDto` → Flickr; `OAuthAppConfigDto` → `App\Dto`; `ConcurrentRunGuard`; download/upload queue controllers → Contacts; `StorageUpload` keeps `stored_file_id` without an Eloquent relation into Transfer (`StoredFile::uploads()` owns the reverse edge).
+Edge cleanups (A4): `DownloadCandidateDto` → Flickr; `OAuthAppConfigDto` → `App\Dto`; `ConcurrentRunGuard`; download/upload queue controllers → Contacts. Transfer owns `StorageUpload` and its forward relation to `StorageAccount`; Storage has no reverse Transfer model or service dependency. Remote deletion publishes a Storage event handled by Transfer.
 
 ## Module service facades (A6)
 
@@ -52,8 +52,9 @@ Peer modules must not import focused services from Flickr, Storage, or Contacts.
 
 | Module | Facade | Peer import path |
 |--------|--------|------------------|
-| Flickr | `FlickrAccountsService` | `Modules\Flickr\Services\FlickrAccountsService` |
+| Flickr | `FlickrAccountsService`, `FlickrPhotoSourceService` | `Modules\Flickr\Services\*` (declared classes only) |
 | Storage | `StorageService` | `Modules\Storage\Services\StorageService` |
+| Transfer | `PhotoTransferService`, `StoredFileService`, `TransferBatchService` | `Modules\Transfer\Services\*` (declared classes only) |
 | Contacts | *(none)* | Peer modules must not import `Modules\Contacts\Services\*`. Contacts UI/API lives in the Contacts module; recreate a facade only when a cross-module consumer appears. |
 
 Dto, Enums, Events, Contracts, Exceptions, Support, and Models remain direct imports. Internal controllers/services within each module may still use focused services. Enforced by `Tests\Unit\Architecture\ModuleFacadeImportTest`.

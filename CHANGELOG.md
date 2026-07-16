@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Storage provider architecture: `StorageService` now delegates directly to fresh account-bound adapters created by `StorageAdapterFactory`. Google Drive, OneDrive, and R2 share `AbstractFlysystemAdapter`; Google Photos keeps direct API behavior. Removed transport/transfer services, registries, adapter caching, capability-specific provider service trees, and generated module scaffold. Uploads use `StorageUploadRequest`; streaming and verification are explicit optional capabilities; unsupported streaming returns `422`, missing remote objects return `404`, and provider failures cross the boundary as sanitized `StorageOperationException` instances.
+- Restored lean `Modules/Transfer` ownership for stored files, upload bookkeeping, batches/items, progress/retry APIs, and fan-out/download/upload jobs. Public routes remain unchanged. Storage and Flickr never depend on Transfer; Storage remote deletions publish an event handled by Transfer. Deployments must drain `xflickr-downloads` and `xflickr-uploads` before the job namespace cutover.
+- `xflickr:storage:verify-connections` replaces `xflickr:storage:verify-google-photos`: one command verifies every connected storage account (Google Photos, Google Drive, OneDrive, Cloudflare R2) with `--account=` / `--provider=` filters. `ConnectionVerificationService` invokes the `StorageVerifiable` adapter capability and renders typed pass/warn/fail checks without performing network I/O in constructors.
+
 - Frontend adopts **JOOservices React `v1.0.0`** for all nine shared packages (`react-layout`, `react-content`, `react-table`, `react-config`, `react-action-buttons`, `react-card`, `react-modal`, `react-toast`, `react-ui`) via packed `packages/*-1.0.0.tgz` (npm does not resolve git `#path:` subdirs). Local `DataTable` / `Modal` / `Toaster` / `Button` / `Card` / `MetricCard` / toast store wrap or re-export JOO; AppShell top search (“Jump to”) is centered via `AppShell.HeaderCenter`. Settings config uses `ConfigPanel` ref `openCreate()` for Identity CTAs.
 - FE UI/UX polish: cyan link tokens; shared SegmentedControl (Contacts table/graph, Catalog Photos table/grid); Contact Show identity-first layout with clickable catalog stats, recent photo strip, and collapsed technical fields; sticky bulk selection bar; Contacts “Show catalog counts” column toggle; EmptyState copy on Contacts and catalog lists; MetricCard/CatalogStatCard alignment; cyan operation progress cells.
 
@@ -32,7 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - FS-6 proactive Flickr token-health banner in `AppLayout`: probes connected accounts from the rate-limit snapshot, warns when `token_valid === false`, links to Connections, and supports per-account session dismiss.
 - N-08 crawler connection `token_payload` encrypted at rest (`encrypted` cast, re-encrypt migration, `ConnectionTokenEncryptionTest`); documented in `SECURITY.md`.
 - N-13 README CI and Release badges.
-- N-15 curated download HTTP timeout: Settings → General **Transfer / Downloads** knob `xflickr_download.timeout_seconds` via `DownloadRuntimeConfig` (30–900 s clamp); `PhotoDownloadExecutionService` reads runtime value instead of raw `config()`.
+- N-15 curated download HTTP timeout: Settings → General **Transfer / Downloads** knob `xflickr_download.timeout_seconds` via `TransferRuntimeConfig` (30–900 s clamp); `FileDownloadService` reads runtime value instead of raw `config()`.
 - N-16 Flickr client factory layering: `FlickrClientFactory` gains explicit `authenticated` flag (default true) and `anonymousClient()`; architecture guard `FlickrClientFactoryLayeringTest` restricts `FlickrFactory::make` to Crawler factory + Flickr OAuth.
 - FS-11 demo dataset seeder (`Database\Seeders\DemoDatasetSeeder`): one Flickr connection, ~30 contacts, ~100 photos across two photosets and one gallery, completed/failed download batches, and a Google Photos account with local browse cache. Operator path: `bash scripts/dev.sh seed --demo` (instructions: `bash scripts/test.sh e2e:prep`).
 - T2 Playwright smoke specs: `tests/e2e/contacts.spec.ts`, `catalog.spec.ts`, `transfers.spec.ts`, `storage.spec.ts` with shared `tests/e2e/helpers/auth.ts`; sparse `data-testid` hooks on Contacts, Catalog Photos, Operations transfers, and Storage browse pages. `PLAYWRIGHT_BASE_URL` env override in `playwright.config.ts`.
@@ -58,7 +62,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Module service facades (A6): `FlickrAccountsService`, `StorageService`, `ContactsService` — cross-module entry points for Flickr accounts/crawl/health, storage settings/upload, and contact list queries.
 - A8 host-test migration: module-owned leftovers moved into `Modules/*/tests/` (`FlickrPhotoUrlHelper`, `FlickrTokenHealth`, `StorageR2Config`, `FlickrAccountConnected` event, `XFlickrCrawlConfig`, `FlickrContactFrontendSupport`, `SpiderRuntimeConfig`, `ContactGraphRuntimeConfig`); architecture guard `ModuleOwnedHostTestPlacementTest`.
 - A10 `ContactListQueryService::baseQuery()` shared starred/search builder for `paginateForConnection` and `listNsidsForConnection`; unit tests for starred+search and empty-starred cases.
-- T1 money-path unit backfill: `PhotoDownloadExecutionService` missing-connection edge, `TransferBatchReconciler` all-success and null-batch edges, `FlickrCrawlService::crawlMany` global-pause edge.
+- T1 money-path unit backfill: `FileDownloadService` missing-connection edge, `TransferBatchReconciler` all-success and null-batch edges, `FlickrCrawlService::crawlMany` global-pause edge.
 - T1 waves 2–3 unit backfill: `ContactFullPassRunRepository` `ConcurrentRunGuard` contract (`hasActiveRun`, container binding); `ContactCatalogCountsService` and `ContactCrawlStateService` filter/owner matrices; Flickr `RateLimit\QueryService` / `UsageQueryService` empty and unhappy paths; `StorageQuotaQueryService` OneDrive token failure and empty-account snapshot.
 - Module DAG allowlist test (`ModuleDependencyDirectionTest`: `ALLOWED` + `KNOWN_VIOLATIONS`) for audit A4; target matrix documented in `package-boundaries.md`.
 - Maintenance backlog **N-16**: planned Flickr client layering (`jooservices/flickr` → Crawler `FlickrClientFactory` → peers); see `docs/05-maintenance/flickr-client-factory-layering.md`.
@@ -107,17 +111,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Frontend domain macros under `Components/macros/` (`ContactGraphShell`, crawl/expand bars, `AccountOpsCard`, `PhotoGridMacro`, `TransferBatchPanel`); unused `PageHeading` removed.
 - Shared `FrontierExpansion` collaborator used by spider and full-pass planners.
 - `StorageApiLogger` covers browse, thumbnail, and Google Photos connection-verifier HTTP calls (in addition to upload/delete/token refresh).
-- Added Vitest coverage for `usePolledResource`, Playwright guest-shell smokes, and `FanOutTransferBatchJob` warning-path Feature tests.
+- Added Vitest coverage for `usePolledResource`, Playwright guest-shell smokes, and `FanOutTransferJob` warning-path Feature tests.
 
 ### Fixed
 
 - Crawl start (account/contact/API/graph expand) returns a flash or 422 when global crawl pause is active instead of a 500 from the crawler package; spider/full-pass `expandRun` no-ops while paused.
 - Sidebar **Live** activity shows only in-flight (`running`) fetch/download/upload jobs; finished snapshot rows stay on Operations.
 - `FlickrCrawlService::crawl()` reuses `crawlWithoutHealthCheck()` (DRY).
-- `PhotoDownloadService::queuePendingPhotos()` batches completed-original lookups (no N+1).
+- `PhotoTransferService` batches completed-original lookups (no N+1).
 - Contact graph visibility membership uses O(1) set lookups.
 - Expand preview reads `saved_contacts_count` from full-pass planner (no Controller→Repository shortcut); deptrac Controllers may not depend on Repositories.
-- `FanOutTransferBatchJob` logs warnings on missing connection/storage instead of silent returns.
+- `FanOutTransferJob` logs warnings on missing connection/storage instead of silent returns.
 - Google Photos upload streams file body instead of loading the whole file into memory.
 - Contact photostream crawl could return zero photos when `safe_search=1` filtered the stream or when `people.getPhotos` was not OAuth-signed; crawler now omits visibility filters by default and signs subject-scoped API calls.
 - Centralized crawl query builder (`FlickrCrawlQueryParams`) for all photo/photoset/gallery/favorites list jobs; `safe_search` and `privacy_filter` default to off (0).
@@ -211,7 +215,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `AdminUserSeeder` creates admin only on first run — no password overwrite on container restart.
 - Operations SSE stream ends after 60s (EventSource reconnects); dev `app` service sets `PHP_CLI_SERVER_WORKERS=4`.
 - Pre-commit hook runs lint only (`gate:lint`); full gate remains on pre-push and CI.
-- `UploadPhotoJob` uses `WithoutOverlapping` per storage account; defers via `retryUntil` without a fixed tries cap.
+- `UploadFileJob` uses `WithoutOverlapping` per storage account; defers via `retryUntil` without a fixed tries cap.
 - `DownloadCandidateDto` and `OAuthAppConfigDto` wired at resolver and OAuth call sites.
 - AI agents must use `bash scripts/test.sh` only — never `scripts/dev.sh` or `docker exec xflickr-dev-*`.
 - Feature tests use `Tests\Concerns\SafeRefreshDatabase` instead of raw `RefreshDatabase`.
