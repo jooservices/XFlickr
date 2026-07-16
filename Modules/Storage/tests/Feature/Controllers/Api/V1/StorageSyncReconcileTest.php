@@ -10,8 +10,8 @@ use Illuminate\Support\Str;
 use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Models\StorageRemoteItem;
-use Modules\Storage\Models\StorageUpload;
-use Modules\Storage\Models\StoredFile;
+use Modules\Transfer\Models\StorageUpload;
+use Modules\Transfer\Models\StoredFile;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 

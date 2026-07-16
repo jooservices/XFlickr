@@ -8,7 +8,7 @@ use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Models\StorageRemoteAlbum;
 use Modules\Storage\Models\StorageRemoteItem;
 use Modules\Storage\Models\StorageRemoteSyncState;
-use Modules\Storage\Models\StorageUpload;
+use Modules\Transfer\Models\StorageUpload;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 

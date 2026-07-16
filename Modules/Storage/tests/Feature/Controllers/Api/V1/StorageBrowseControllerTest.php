@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Modules\Storage\Tests\Feature\Controllers\Api\V1;
 
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Http;
-use Modules\Storage\Contracts\StorageDownloadStreamer;
-use Modules\Storage\Dto\StorageStreamResult;
+use Mockery;
 use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Models\StorageRemoteItem;
 use Modules\Storage\Services\StorageAccountScopeService;
+use Modules\Storage\Services\StorageFlysystemFactory;
 use RuntimeException;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
@@ -413,13 +414,11 @@ final class StorageBrowseControllerTest extends TestCase
     {
         $account = StorageAccount::factory()->r2()->create();
 
-        $this->app->instance(StorageDownloadStreamer::class, new class implements StorageDownloadStreamer
-        {
-            public function openStreamForAccount(StorageAccount $account, string $remotePath): ?StorageStreamResult
-            {
-                throw new RuntimeException('stream failed');
-            }
-        });
+        $disk = Mockery::mock(Filesystem::class);
+        $disk->shouldReceive('exists')->once()->andThrow(new RuntimeException('stream failed'));
+        $factory = Mockery::mock(StorageFlysystemFactory::class);
+        $factory->shouldReceive('diskForAccount')->once()->andReturn($disk);
+        $this->app->instance(StorageFlysystemFactory::class, $factory);
 
         $response = $this->getJson("/api/v1/storage/r2/files/download?account_id={$account->id}&path=photo.jpg");
 

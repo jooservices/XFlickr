@@ -6,7 +6,6 @@ namespace Modules\Storage\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Modules\Storage\Database\Factories\StorageAccountFactory;
 
@@ -43,13 +42,5 @@ final class StorageAccount extends Model
             'is_default' => 'boolean',
             'connected_at' => 'datetime',
         ];
-    }
-
-    /**
-     * @return HasMany<StorageUpload, $this>
-     */
-    public function uploads(): HasMany
-    {
-        return $this->hasMany(StorageUpload::class, 'storage_account_id');
     }
 }

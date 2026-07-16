@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\Storage\Services;
 
 use Modules\Storage\Dto\StorageBrowseResult;
+use Modules\Storage\Dto\StorageListOptions;
 use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Repositories\StorageAccountRepository;
 use Modules\Storage\Support\StorageAccountPresenter;
@@ -13,7 +14,7 @@ use RuntimeException;
 final class StorageBrowseService
 {
     public function __construct(
-        private readonly StorageDriverRegistry $drivers,
+        private readonly StorageAdapterFactory $factory,
         private readonly StorageAccountRepository $accounts,
     ) {}
 
@@ -43,14 +44,15 @@ final class StorageBrowseService
             throw new RuntimeException('Storage account not found for this provider.');
         }
 
-        return $this->drivers->browseDriver($driver)->browse(
-            $account,
-            $perPage,
-            $albumPageToken,
-            $itemPageToken,
-            $containerId,
-            $includeAlbums,
-            $includeItems,
-        );
+        $adapter = $this->factory->make($account);
+
+        return $adapter->list(new StorageListOptions(
+            perPage: $perPage,
+            albumPageToken: $albumPageToken,
+            itemPageToken: $itemPageToken,
+            containerId: $containerId,
+            includeAlbums: $includeAlbums,
+            includeItems: $includeItems,
+        ));
     }
 }

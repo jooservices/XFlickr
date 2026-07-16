@@ -8,7 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use JOOservices\LaravelController\Http\Controllers\BaseApiController;
-use Modules\Storage\Contracts\StorageDownloadStreamer;
+use Modules\Storage\Dto\StorageDeleteOptions;
 use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Http\Requests\Api\Storage\BrowseStorageRequest;
 use Modules\Storage\Http\Requests\Api\Storage\DeleteStorageItemsRequest;
@@ -27,7 +27,7 @@ use Modules\Storage\Services\StorageAccountScopeService;
 use Modules\Storage\Services\StorageBrowseLocalService;
 use Modules\Storage\Services\StorageBrowseService;
 use Modules\Storage\Services\StorageBrowseSyncService;
-use Modules\Storage\Services\StorageDeleteService;
+use Modules\Storage\Services\StorageService;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
@@ -123,7 +123,7 @@ final class StorageBrowseController extends BaseApiController
     public function delete(
         DeleteStorageItemsRequest $request,
         string $provider,
-        StorageDeleteService $delete,
+        StorageService $storage,
         StorageAccountScopeService $scopes,
     ): JsonResponse {
         try {
@@ -139,11 +139,10 @@ final class StorageBrowseController extends BaseApiController
         }
 
         try {
-            $result = $delete->deleteMany(
+            $result = $storage->delete(
                 $account,
-                $driver,
                 $request->itemIds(),
-                $request->containerId(),
+                new StorageDeleteOptions(containerId: $request->containerId()),
             );
         } catch (InvalidArgumentException $e) {
             return $this->unprocessable($e->getMessage());
@@ -169,7 +168,7 @@ final class StorageBrowseController extends BaseApiController
         DownloadStorageFileRequest $request,
         string $provider,
         StorageAccountScopeService $scopes,
-        StorageDownloadStreamer $downloads,
+        StorageService $storage,
     ): StreamedResponse|JsonResponse {
         try {
             $driver = StorageDriver::fromRouteSlug($provider);
@@ -186,7 +185,7 @@ final class StorageBrowseController extends BaseApiController
         $remotePath = $request->path();
 
         try {
-            $stream = $downloads->openStreamForAccount($account, $remotePath);
+            $stream = $storage->openStreamForAccount($account, $remotePath);
             if ($stream === null) {
                 return $this->notFound('Remote file not found.');
             }

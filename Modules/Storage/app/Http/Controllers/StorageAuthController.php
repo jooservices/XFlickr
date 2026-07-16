@@ -13,8 +13,8 @@ use Modules\Storage\Http\Requests\ReauthorizeStorageRequest;
 use Modules\Storage\Http\Requests\StorageAccountIdRequest;
 use Modules\Storage\Http\Requests\StorageOAuthCallbackRequest;
 use Modules\Storage\Models\StorageAccount;
-use Modules\Storage\Services\R2\BrowseService;
 use Modules\Storage\Services\StorageAccountService;
+use Modules\Storage\Services\StorageFlysystemFactory;
 use Modules\Storage\Services\StorageOAuthService;
 use Throwable;
 
@@ -116,13 +116,13 @@ final class StorageAuthController
         return redirect()->route('connections.index', ['provider' => 'storage'])->with('success', 'Default storage account updated.');
     }
 
-    public function connectR2(ConnectR2Request $request, StorageAccountService $accounts, BrowseService $r2Browse): RedirectResponse
+    public function connectR2(ConnectR2Request $request, StorageAccountService $accounts, StorageFlysystemFactory $flysystem): RedirectResponse
     {
         $validated = $request->validated();
         $credentials = $request->credentials();
 
         try {
-            $r2Browse->verifyConnection($credentials);
+            $flysystem->verifyR2Credentials($credentials);
         } catch (Throwable $exception) {
             Log::warning('Cloudflare R2 connection verification failed.', ['exception' => $exception]);
 

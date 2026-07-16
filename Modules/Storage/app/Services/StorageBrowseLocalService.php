@@ -11,7 +11,6 @@ use Modules\Storage\Models\StorageRemoteItem;
 use Modules\Storage\Repositories\StorageRemoteAlbumRepository;
 use Modules\Storage\Repositories\StorageRemoteItemRepository;
 use Modules\Storage\Repositories\StorageRemoteSyncStateRepository;
-use Modules\Storage\Repositories\StorageUploadRepository;
 
 final class StorageBrowseLocalService
 {
@@ -19,7 +18,6 @@ final class StorageBrowseLocalService
         private readonly StorageRemoteAlbumRepository $albums,
         private readonly StorageRemoteItemRepository $items,
         private readonly StorageRemoteSyncStateRepository $syncStates,
-        private readonly StorageUploadRepository $uploads,
     ) {}
 
     public function browse(
@@ -72,14 +70,6 @@ final class StorageBrowseLocalService
             $remoteIds,
             $parentRemoteId !== null && $parentRemoteId !== '' ? $parentRemoteId : null,
         );
-    }
-
-    /**
-     * @param  list<string>  $remoteIds
-     */
-    public function purgeUploadRecords(StorageAccount $account, array $remoteIds): void
-    {
-        $this->uploads->deleteByRemoteReferences($account->id, $remoteIds);
     }
 
     /**

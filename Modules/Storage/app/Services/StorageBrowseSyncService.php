@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Modules\Storage\Services;
 
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use Modules\Storage\Dto\StorageBrowseResult;
 use Modules\Storage\Enums\StorageDriver;
+use Modules\Storage\Events\StorageRemoteItemsRemoved;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Models\StorageRemoteSyncState;
 use Modules\Storage\Repositories\StorageRemoteAlbumRepository;
@@ -138,7 +138,7 @@ final class StorageBrowseSyncService
         string $parentRemoteId,
         StorageBrowseResult $result,
     ): array {
-        return DB::transaction(function () use ($account, $containerId, $parentRemoteId, $result): array {
+        return $this->syncStates->transaction(function () use ($account, $containerId, $parentRemoteId, $result): array {
             $state = $this->syncStates->lockForParent($account->id, $parentRemoteId);
 
             if ($state === null || ($state->albums_complete && $state->items_complete)) {
@@ -316,20 +316,15 @@ final class StorageBrowseSyncService
         $snapshot = is_array($state->reconcile_snapshot) ? $state->reconcile_snapshot : [];
         $seen = is_array($state->reconcile_seen_remote_ids) ? $state->reconcile_seen_remote_ids : [];
         $seenLookup = array_fill_keys($seen, true);
-
-        $removed = [];
-        foreach ($snapshot as $remoteId) {
-            if (! is_string($remoteId) || $remoteId === '') {
-                continue;
-            }
-
-            if (! isset($seenLookup[$remoteId])) {
-                $removed[] = $remoteId;
-            }
-        }
+        $removed = array_values(array_filter(
+            $snapshot,
+            static fn (mixed $remoteId): bool => is_string($remoteId)
+                && $remoteId !== ''
+                && ! isset($seenLookup[$remoteId]),
+        ));
 
         if ($removed !== []) {
-            $this->browseLocal->purgeUploadRecords($account, $removed);
+            event(new StorageRemoteItemsRemoved($account->id, $removed));
         }
 
         $this->syncStates->clearReconcileState($account->id, $parentRemoteId);

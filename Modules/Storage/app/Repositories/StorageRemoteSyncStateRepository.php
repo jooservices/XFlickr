@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\Storage\Repositories;
 
+use Closure;
+use Illuminate\Support\Facades\DB;
 use Jooservices\LaravelRepository\Repositories\EloquentRepository;
 use Jooservices\LaravelRepository\Traits\HasCrud;
 use Jooservices\LaravelRepository\Traits\HasFilter;
@@ -82,5 +84,16 @@ final class StorageRemoteSyncStateRepository extends EloquentRepository
                 'reconcile_snapshot' => null,
                 'reconcile_seen_remote_ids' => null,
             ]);
+    }
+
+    /**
+     * @template TResult
+     *
+     * @param  Closure(): TResult  $callback
+     * @return TResult
+     */
+    public function transaction(Closure $callback): mixed
+    {
+        return DB::transaction($callback);
     }
 }

@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Modules\Storage\Tests\Feature\Controllers;
 
-use Modules\Storage\Contracts\StorageDownloadStreamer;
-use Modules\Storage\Dto\StorageStreamResult;
 use Modules\Storage\Enums\StorageDriver;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Services\StorageAccountScopeService;
+use Modules\Storage\Support\StorageR2Config;
 use Modules\Storage\Tests\TestCase;
 
 final class StorageR2Test extends TestCase
@@ -111,23 +110,9 @@ final class StorageR2Test extends TestCase
     public function test_r2_download_streams_existing_file(): void
     {
         $account = $this->r2Account(['prefix' => 'archive']);
-        $stream = fopen('php://temp', 'rb+');
-        $this->assertIsResource($stream);
-        fwrite($stream, 'file-bytes');
-        rewind($stream);
-
-        $this->app->instance(StorageDownloadStreamer::class, new class($stream) implements StorageDownloadStreamer
-        {
-            /**
-             * @param  resource  $stream
-             */
-            public function __construct(private mixed $stream) {}
-
-            public function openStreamForAccount(StorageAccount $account, string $remotePath): ?StorageStreamResult
-            {
-                return new StorageStreamResult($this->stream, 'image.txt', 'text/plain');
-            }
-        });
+        ['disk' => $disk] = $this->bindInMemoryDisk();
+        $key = StorageR2Config::from($account->credentials ?? [])->objectKey('photos/image.txt');
+        $disk->put($key, 'file-bytes');
 
         $response = $this->get('/api/v1/storage/r2/files/download?account_id='.$account->id.'&path=photos/image.txt');
 
@@ -139,25 +124,12 @@ final class StorageR2Test extends TestCase
     public function test_download_filename_cannot_inject_response_headers(): void
     {
         $account = $this->r2Account();
-        $stream = fopen('php://temp', 'rb+');
-        $this->assertIsResource($stream);
-        fwrite($stream, 'file-bytes');
-        rewind($stream);
+        ['disk' => $disk] = $this->bindInMemoryDisk();
+        $remotePath = 'photos/file".txt';
+        $key = StorageR2Config::from($account->credentials ?? [])->objectKey($remotePath);
+        $disk->put($key, 'file-bytes');
 
-        $this->app->instance(StorageDownloadStreamer::class, new class($stream) implements StorageDownloadStreamer
-        {
-            /**
-             * @param  resource  $stream
-             */
-            public function __construct(private mixed $stream) {}
-
-            public function openStreamForAccount(StorageAccount $account, string $remotePath): ?StorageStreamResult
-            {
-                return new StorageStreamResult($this->stream, "file\"\r\nX-Injected-Header: value.txt", 'text/plain');
-            }
-        });
-
-        $response = $this->get('/api/v1/storage/r2/files/download?account_id='.$account->id.'&path=photos/image.txt');
+        $response = $this->get('/api/v1/storage/r2/files/download?account_id='.$account->id.'&path='.urlencode($remotePath));
 
         $response->assertOk();
         $response->assertHeaderMissing('X-Injected-Header');
@@ -168,13 +140,7 @@ final class StorageR2Test extends TestCase
     public function test_r2_download_returns_not_found_for_missing_file(): void
     {
         $account = $this->r2Account(['prefix' => 'archive']);
-        $this->app->instance(StorageDownloadStreamer::class, new class implements StorageDownloadStreamer
-        {
-            public function openStreamForAccount(StorageAccount $account, string $remotePath): ?StorageStreamResult
-            {
-                return null;
-            }
-        });
+        $this->bindInMemoryDisk();
 
         $response = $this->getJson('/api/v1/storage/r2/files/download?account_id='.$account->id.'&path=missing.jpg');
 
@@ -182,21 +148,14 @@ final class StorageR2Test extends TestCase
         $response->assertJson(['message' => 'Remote file not found.']);
     }
 
-    public function test_download_returns_unsupported_for_non_r2_provider(): void
+    public function test_download_returns_unprocessable_for_non_streamable_provider(): void
     {
-        $account = StorageAccount::query()->create([
-            'provider' => StorageDriver::GoogleDrive->value,
-            'label' => 'Drive',
-            'credentials' => [
-                'granted_scopes' => StorageDriver::GoogleDrive->defaultScopes(),
-            ],
-            'connected_at' => now(),
-        ]);
+        $account = StorageAccount::factory()->googlePhotos()->create();
 
-        $response = $this->getJson('/api/v1/storage/google-drive/files/download?account_id='.$account->id.'&path=file.jpg');
+        $response = $this->getJson('/api/v1/storage/google-photos/files/download?account_id='.$account->id.'&path=file.jpg');
 
         $response->assertStatus(422);
-        $response->assertJson(['message' => 'Download is not supported for this provider yet.']);
+        $response->assertJson(['message' => 'Storage provider [google_photos] does not support [stream].']);
     }
 
     public function test_settings_page_includes_r2_connection_meta(): void

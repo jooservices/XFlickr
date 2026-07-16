@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Storage\Providers;
 
-use Modules\Storage\Console\Commands\VerifyGooglePhotosConnectionCommand;
+use Modules\Storage\Console\Commands\VerifyConnectionsCommand;
 use Nwidart\Modules\Support\ModuleServiceProvider;
 
 class StorageServiceProvider extends ModuleServiceProvider
@@ -15,12 +15,11 @@ class StorageServiceProvider extends ModuleServiceProvider
 
     /** @var string[] */
     protected array $commands = [
-        VerifyGooglePhotosConnectionCommand::class,
+        VerifyConnectionsCommand::class,
     ];
 
     /** @var string[] */
     protected array $providers = [
-        EventServiceProvider::class,
         RouteServiceProvider::class,
     ];
 }
