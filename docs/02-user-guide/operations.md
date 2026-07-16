@@ -35,6 +35,7 @@ Query tabs: `?panel=overview` (default) · `crawl` · `transfers`.
 
 - Crawl seems stuck — check Overview cooldown / pending / queues, then Crawl tab target breakdown
 - Download/upload progress — Transfers tab (or Horizon for worker detail)
+- Integrity scans are queued checks of the local Flickr cache against completed download records. Review the completed scan’s anomalies before resolving them; resolutions use the scan’s server-created entries and cannot accept arbitrary local paths.
 - Debugging failures — `failed_reason` on fetch runs and sample errors on batches
 
 ## Related

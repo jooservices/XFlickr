@@ -29,6 +29,7 @@ Keep download/upload pipelines safe, deduplicated, and consistent.
 | `FanOutTransferJob` | Chunk owner-wide selections without loading the full catalog in HTTP |
 | `TransferBatchReconciler` | Recompute batch progress through repository transactions |
 | `FlickrPhotoSourceService` | Flickr-owned source URL and remote-path boundary |
+| `IntegrityScanService` / `RunIntegrityScanJob` | Queued local-cache consistency scan and server-authorized anomaly resolution |
 
 ## Rules
 
@@ -38,6 +39,7 @@ Keep download/upload pipelines safe, deduplicated, and consistent.
 - Batch and item rows must commit before jobs are dispatched.
 - Transfer may call Flickr and Storage facades; Flickr and Storage must never import Transfer services or models.
 - Batch progress visible on Operations page and Dashboard.
+- Integrity scans are persisted and queued; browser actions use opaque anomaly IDs. Never accept a client filesystem path or arbitrary stored-file ID for repair.
 
 ## Related skills
 

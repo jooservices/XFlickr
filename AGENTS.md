@@ -90,7 +90,7 @@ JSON API is **RESTful under `/api/v1/*`** (no imperative URI verbs). Business do
 | **Contacts** | Contacts, annotations, contact-graph, full-pass; queue download/upload endpoints |
 | **Catalog** | Photos / photosets / galleries / favorites browse |
 | **Spider** | Opt-in spider runs / frontier |
-| **Transfer** | Download / upload execution, stored-files, transfer progress (queue orchestration in Contacts) |
+| **Transfer** | Download / upload execution, stored-files, transfer progress, retries, and queued integrity scans (queue orchestration in Contacts) |
 | **Storage** | Storage OAuth, browse, sync, delete |
 
 Full **scope / purpose / features** per module: [docs/00-architecture/modules.md](docs/00-architecture/modules.md). Agent routing skill: `class-purpose-and-module-map`.

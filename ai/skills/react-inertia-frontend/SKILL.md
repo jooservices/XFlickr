@@ -48,7 +48,10 @@ Keep frontend pages consistent with XCrawlerII-aligned AppShell / PageShell patt
 
 - Tailwind utilities; `cn()` for conditional classes
 - JOO packages ship `styles.css` + `--joo-*` tokens (see `resources/css/app.css`); do not invent a parallel design system
-
+- Semantic color: MetricCard tones and StatusBadge — see `.cursor/rules/ui-buttons.mdc` (neutral=`slate`, active=`cyan`, healthy=`emerald`, caution=`amber`, problem=`rose`; Delete=`destructive`, recovery actions=`secondary`)
+- Native `<select>`: always set explicit `text-slate-*` with `bg-white`; avoid unpaired `dark:bg-*` without `dark:text-*` (app is light-first via `color-scheme: light`)
+- Paginated tables: pass `meta` + `onPageChange` to `DataTable` — do not use the standalone `Pagination` footer for list tables
+- Bulk row actions: `useTableSelection` + DataTable `selection` / `bulkActions` / `onBulkClear` (see Contacts, Catalog Photos, Storage Browse)
 ## Before adding UI
 
 Check existing Components and domain folders first. Prefer composing PageShell + domain components over new page chrome.

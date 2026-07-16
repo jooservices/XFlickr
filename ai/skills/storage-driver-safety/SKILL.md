@@ -30,6 +30,7 @@ Source: `Modules/Storage/app/Enums/StorageDriver.php`
 - Never add a provider transport/transfer service between `StorageService` and an adapter.
 - Adapters are account-bound, created fresh by `StorageAdapterFactory`, and never cached in Horizon workers.
 - Provider SDK/Flysystem failures must leave the Storage boundary as `StorageOperationException` without secrets or raw provider response bodies.
+- Google Photos album lookup must honor pagination, provider title limits, and concurrency; do not treat a temporary cache entry as the only album identity control.
 
 ## Key services
 

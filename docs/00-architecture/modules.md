@@ -183,9 +183,10 @@ Each module owns its `routes/web.php`, `routes/api.php` (`/api/v1/*`), controlle
 
 - Web: (queue endpoints owned by Contacts) — keep URIs `flickr.accounts.download` / `upload`
 - API: stored-file show; transfer list/show; item retry
-- Services: `PhotoTransferService` (queue orchestration), `TransferBatchService` (batch/query facade), `StoredFileService` (read facade), execution services, reconciliation, retry, and stored-file streaming
-- Jobs: `FanOutTransferJob`, `DownloadFileJob`, and `UploadFileJob` — jobs delegate workflow behavior to services
-- Models: `TransferBatch`, `TransferItem`, `StoredFile`, and `StorageUpload`
+- Services: `PhotoTransferService` (queue orchestration), `TransferBatchService` (batch/query facade), `StoredFileService` (read facade), execution services, reconciliation, retry, stored-file streaming, and queued integrity-scan lifecycle
+- Jobs: `FanOutTransferJob`, `DownloadFileJob`, `UploadFileJob`, and `RunIntegrityScanJob` — jobs delegate workflow behavior to services
+- Models: `TransferBatch`, `TransferItem`, `StoredFile`, `StorageUpload`, `IntegrityScan`, and `IntegrityAnomaly`
+- Integrity API: persisted scan resources under `/api/v1/transfers/integrity-scans`; anomaly resolutions use server-created opaque IDs, never browser-supplied paths
 
 **Related skill:** [`transfer-pipeline-safety`](../../ai/skills/transfer-pipeline-safety/SKILL.md)
 
@@ -206,6 +207,7 @@ Each module owns its `routes/web.php`, `routes/api.php` (`/api/v1/*`), controlle
 - CLI: `xflickr:storage:verify-connections` (all providers; `--account=` / `--provider=` filters)
 - Models: `StorageAccount`, remote albums/items, and sync state
 - Live Storage quota (OneDrive / Google Drive when the provider exposes it) appears in the sticky app status footer
+- Google Photos album creation validates provider limits, traverses paginated album results, and serializes same-account/title creation
 
 **User guide:** [Storage browse](../02-user-guide/storage-browse.md) · **Skill:** [`storage-driver-safety`](../../ai/skills/storage-driver-safety/SKILL.md)
 
