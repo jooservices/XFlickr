@@ -12,8 +12,8 @@ use Modules\Crawler\Models\Gallery;
 use Modules\Crawler\Models\Photo;
 use Modules\Crawler\Models\Photoset;
 use Modules\Crawler\Support\XFlickrConfig;
-use Modules\Storage\Enums\StoredFileStatus;
-use Modules\Storage\Models\StoredFile;
+use Modules\Transfer\Enums\StoredFileStatus;
+use Modules\Transfer\Models\StoredFile;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\FlickrNsid;
 use Tests\TestCase;
@@ -60,7 +60,20 @@ final class CatalogPresentersTest extends TestCase
             'original_name' => $photo->flickr_photo_id.'_original.jpg',
         ]);
 
-        $presented = app(PhotoCatalogPresenter::class)->presentPage([$photo]);
+        $presented = app(PhotoCatalogPresenter::class)->presentPage(
+            [$photo],
+            [$photo->id => [[
+                'flickr_id' => $photoset->flickr_photoset_id,
+                'owner_nsid' => $photoset->owner_nsid,
+                'title' => $photoset->title,
+            ]]],
+            [$photo->id => [[
+                'flickr_id' => $gallery->flickr_gallery_id,
+                'owner_nsid' => $gallery->owner_nsid,
+                'title' => $gallery->title,
+            ]]],
+            collect([$stored])->keyBy('source_id'),
+        );
 
         $this->assertCount(1, $presented);
         $this->assertCount(1, $presented[0]['photosets']);
@@ -78,7 +91,7 @@ final class CatalogPresentersTest extends TestCase
         ]));
         $missingId = (string) fake()->unique()->numerify('#########');
 
-        StoredFile::query()->create([
+        $stored = StoredFile::query()->create([
             'source_id' => $photo->flickr_photo_id,
             'source_owner' => $ownerNsid,
             'variant' => 'original',
@@ -86,11 +99,10 @@ final class CatalogPresentersTest extends TestCase
             'original_name' => $photo->flickr_photo_id.'_original',
         ]);
 
-        $progress = app(PhotoCatalogPresenter::class)->presentDownloadProgress([
-            $photo->flickr_photo_id,
-            $missingId,
-            '',
-        ]);
+        $progress = app(PhotoCatalogPresenter::class)->presentDownloadProgress(
+            [$photo->flickr_photo_id, $missingId, ''],
+            collect([$stored])->keyBy('source_id'),
+        );
 
         $this->assertCount(2, $progress);
         $this->assertSame(StoredFileStatus::Pending->value, $progress[0]['download_status']);

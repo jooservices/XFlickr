@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Crawler\Models\Connection;
 use Modules\Crawler\Models\Contact;
-use Modules\Storage\Repositories\StoredFileRepository;
+use Modules\Transfer\Services\StoredFileService;
 
 final class ContactListSorter
 {
@@ -28,7 +28,7 @@ final class ContactListSorter
     public function __construct(
         private readonly PhotoQueryRepository $photos,
         private readonly CatalogQueryRepository $catalog,
-        private readonly StoredFileRepository $storedFiles,
+        private readonly StoredFileService $storedFiles,
     ) {}
 
     /**

@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Cache;
 use Modules\Flickr\Services\FlickrAccountsService;
 use Modules\Flickr\Support\ConnectionPresenter;
 use Modules\Spider\Services\SpiderPlannerService;
-use Modules\Storage\Services\StorageTransferService;
+use Modules\Transfer\Services\TransferBatchService;
 
 final class SnapshotService
 {
@@ -27,7 +27,7 @@ final class SnapshotService
         private readonly CrawlRunQueryRepository $crawlRuns,
         private readonly CrawlTargetQueryRepository $crawlTargets,
         private readonly PhotoQueryRepository $photos,
-        private readonly StorageTransferService $transfers,
+        private readonly TransferBatchService $transfers,
         private readonly FlickrAccountsService $flickr,
         private readonly DatabaseUsageService $databases,
         private readonly ServicesDependencyProbeService $dependencies,

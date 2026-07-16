@@ -12,7 +12,7 @@ use Modules\Crawler\Models\Contact;
 use Modules\Crawler\Models\Favorite;
 use Modules\Crawler\Models\Gallery;
 use Modules\Crawler\Models\Photoset;
-use Modules\Storage\Database\Factories\StoredFileFactory;
+use Modules\Transfer\Database\Factories\StoredFileFactory;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\Support\FlickrNsid;

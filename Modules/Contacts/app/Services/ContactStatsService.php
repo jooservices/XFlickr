@@ -11,9 +11,9 @@ use App\Repositories\Crawler\PhotoQueryRepository;
 use Modules\Crawler\Enums\CrawlType;
 use Modules\Crawler\Enums\TaskType;
 use Modules\Crawler\Models\Connection;
-use Modules\Storage\Enums\StoredFileStatus;
-use Modules\Storage\Repositories\StoredFileRepository;
-use Modules\Storage\Repositories\TransferBatchRepository;
+use Modules\Transfer\Enums\StoredFileStatus;
+use Modules\Transfer\Services\StoredFileService;
+use Modules\Transfer\Services\TransferBatchService;
 
 final class ContactStatsService
 {
@@ -22,8 +22,8 @@ final class ContactStatsService
         private readonly CatalogQueryRepository $catalog,
         private readonly CrawlRunQueryRepository $crawlRuns,
         private readonly CrawlTargetQueryRepository $crawlTargets,
-        private readonly StoredFileRepository $storedFiles,
-        private readonly TransferBatchRepository $batches,
+        private readonly StoredFileService $storedFiles,
+        private readonly TransferBatchService $batches,
     ) {}
 
     /**

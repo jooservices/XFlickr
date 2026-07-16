@@ -20,10 +20,10 @@ use Modules\Crawler\Support\XFlickrConfig;
 use Modules\Storage\Database\Factories\StorageAccountFactory;
 use Modules\Storage\Database\Factories\StorageRemoteAlbumFactory;
 use Modules\Storage\Database\Factories\StorageRemoteItemFactory;
-use Modules\Storage\Database\Factories\TransferBatchFactory;
-use Modules\Storage\Database\Factories\TransferItemFactory;
-use Modules\Storage\Enums\TransferBatchStatus;
-use Modules\Storage\Models\TransferBatch;
+use Modules\Transfer\Database\Factories\TransferBatchFactory;
+use Modules\Transfer\Database\Factories\TransferItemFactory;
+use Modules\Transfer\Enums\TransferBatchStatus;
+use Modules\Transfer\Models\TransferBatch;
 
 /**
  * Factory-based demo dataset for local dev and Playwright smoke tests.

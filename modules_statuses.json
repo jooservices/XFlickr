@@ -7,5 +7,6 @@
     "Storage": true,
     "Settings": true,
     "Operations": true,
-    "Crawler": true
+    "Crawler": true,
+    "Transfer": true
 }

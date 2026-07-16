@@ -14,8 +14,8 @@ use Modules\Crawler\Models\Photoset;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Storage\Models\StorageRemoteAlbum;
 use Modules\Storage\Models\StorageRemoteItem;
-use Modules\Storage\Models\TransferBatch;
-use Modules\Storage\Models\TransferItem;
+use Modules\Transfer\Models\TransferBatch;
+use Modules\Transfer\Models\TransferItem;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\TestCase;
 

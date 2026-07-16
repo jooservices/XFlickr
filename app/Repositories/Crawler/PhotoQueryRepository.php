@@ -273,6 +273,7 @@ final class PhotoQueryRepository
             ->get([
                 XFlickrConfig::table('photoset_photo').'.xflickr_photo_id as photo_id',
                 XFlickrConfig::table('photosets').'.flickr_photoset_id',
+                XFlickrConfig::table('photosets').'.owner_nsid',
                 XFlickrConfig::table('photosets').'.title',
             ]);
 
@@ -288,6 +289,7 @@ final class PhotoQueryRepository
             ->get([
                 XFlickrConfig::table('gallery_photo').'.xflickr_photo_id as photo_id',
                 XFlickrConfig::table('galleries').'.flickr_gallery_id',
+                XFlickrConfig::table('galleries').'.owner_nsid',
                 XFlickrConfig::table('galleries').'.title',
             ]);
 

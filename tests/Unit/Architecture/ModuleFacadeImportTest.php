@@ -11,9 +11,7 @@ use RegexIterator;
 use Tests\TestCase;
 
 /**
- * A6 module facades: peer modules may import only FlickrAccountsService and
- * StorageService from Flickr/Storage. Contacts has no cross-module facade —
- * peer imports of Modules\Contacts\Services\* are forbidden.
+ * Peer modules may import only the declared application facades from each domain.
  */
 final class ModuleFacadeImportTest extends TestCase
 {
@@ -23,8 +21,9 @@ final class ModuleFacadeImportTest extends TestCase
      * @var array<string, string|list<string>|null>
      */
     private const FACADE_BY_TARGET = [
-        'Flickr' => ['FlickrAccountsService', 'FlickrTransferService'],
-        'Storage' => ['StorageService', 'StorageTransferService'],
+        'Flickr' => ['FlickrAccountsService', 'FlickrPhotoSourceService'],
+        'Storage' => ['StorageService'],
+        'Transfer' => ['PhotoTransferService', 'StoredFileService', 'TransferBatchService'],
         'Contacts' => null,
     ];
 
@@ -36,7 +35,7 @@ final class ModuleFacadeImportTest extends TestCase
         $this->assertSame(
             [],
             $violations,
-            "Peer modules must import only module service facades from Flickr/Storage/Contacts:\n"
+            "Peer modules must import only declared module service facades:\n"
             .implode("\n", $violations),
         );
     }

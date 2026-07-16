@@ -6,9 +6,9 @@ namespace Modules\Contacts\Tests\Feature\Controllers;
 
 use Illuminate\Support\Facades\Bus;
 use Modules\Crawler\Models\Photo;
-use Modules\Storage\Jobs\UploadFileJob;
 use Modules\Storage\Models\StorageAccount;
-use Modules\Storage\Models\StoredFile;
+use Modules\Transfer\Jobs\UploadFileJob;
+use Modules\Transfer\Models\StoredFile;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;

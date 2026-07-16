@@ -25,10 +25,10 @@ use Modules\Storage\Repositories\StorageAccountRepository;
 use Modules\Storage\Repositories\StorageRemoteAlbumRepository;
 use Modules\Storage\Repositories\StorageRemoteItemRepository;
 use Modules\Storage\Repositories\StorageRemoteSyncStateRepository;
-use Modules\Storage\Repositories\StorageUploadRepository;
-use Modules\Storage\Repositories\StoredFileRepository;
-use Modules\Storage\Repositories\TransferBatchRepository;
-use Modules\Storage\Repositories\TransferItemRepository;
+use Modules\Transfer\Repositories\StorageUploadRepository;
+use Modules\Transfer\Repositories\StoredFileRepository;
+use Modules\Transfer\Repositories\TransferBatchRepository;
+use Modules\Transfer\Repositories\TransferItemRepository;
 
 final class RepositoryServiceProvider extends ServiceProvider
 {

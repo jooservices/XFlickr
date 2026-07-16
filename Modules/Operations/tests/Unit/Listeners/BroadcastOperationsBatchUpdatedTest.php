@@ -7,7 +7,7 @@ namespace Modules\Operations\Tests\Unit\Listeners;
 use Illuminate\Support\Facades\Event;
 use Modules\Operations\Events\OperationsBatchUpdated;
 use Modules\Operations\Listeners\BroadcastOperationsBatchUpdated;
-use Modules\Storage\Events\TransferBatchReconciled;
+use Modules\Transfer\Events\TransferBatchReconciled;
 use Tests\Concerns\SafeRefreshDatabase;
 use Tests\Support\CreatesFlickrConnection;
 use Tests\TestCase;

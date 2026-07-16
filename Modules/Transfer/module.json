@@ -1,0 +1,11 @@
+{
+    "name": "Transfer",
+    "alias": "transfer",
+    "description": "Download and upload workflow orchestration, stored files, batches, and progress.",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Transfer\\Providers\\TransferServiceProvider"
+    ],
+    "files": []
+}

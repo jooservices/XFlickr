@@ -5,18 +5,23 @@ declare(strict_types=1);
 namespace Modules\Catalog\Services;
 
 use App\Repositories\Crawler\CatalogQueryRepository;
+use App\Repositories\Crawler\PhotoQueryRepository;
 use App\Support\Query\QuerySorter;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Modules\Catalog\Support\CollectionCatalogPresenter;
 use Modules\Catalog\Support\PhotoCatalogPresenter;
+use Modules\Transfer\Services\StoredFileService;
 
 final class CatalogQueryService
 {
     public function __construct(
         private readonly CatalogQueryRepository $catalog,
+        private readonly PhotoQueryRepository $photos,
         private readonly QuerySorter $sorter,
         private readonly PhotoCatalogPresenter $photoPresenter,
         private readonly CollectionCatalogPresenter $collectionPresenter,
+        private readonly StoredFileService $storedFiles,
     ) {}
 
     /**
@@ -53,8 +58,16 @@ final class CatalogQueryService
             $page,
         );
 
+        $photos = collect($paginator->items());
+        $memberships = $this->photos->photosetAndGalleryMemberships($photos->pluck('id')->all());
+
         return [
-            'data' => $this->photoPresenter->presentPage($paginator->items()),
+            'data' => $this->photoPresenter->presentPage(
+                $photos,
+                $this->membershipMap($memberships['photoset_rows'], 'flickr_photoset_id'),
+                $this->membershipMap($memberships['gallery_rows'], 'flickr_gallery_id'),
+                $this->storedFiles->originalsBySourceIds($photos->pluck('flickr_photo_id')->all()),
+            ),
             'meta' => $this->meta($paginator, $sort, $direction, CatalogQueryRepository::PHOTO_SORTS),
         ];
     }
@@ -70,7 +83,15 @@ final class CatalogQueryService
      */
     public function photoDownloadProgress(array $flickrPhotoIds): array
     {
-        return $this->photoPresenter->presentDownloadProgress($flickrPhotoIds);
+        $ids = array_values(array_unique(array_filter(
+            $flickrPhotoIds,
+            static fn (mixed $id): bool => is_string($id) && $id !== '',
+        )));
+
+        return $this->photoPresenter->presentDownloadProgress(
+            $ids,
+            $this->storedFiles->originalsBySourceIds($ids),
+        );
     }
 
     /**
@@ -146,5 +167,26 @@ final class CatalogQueryService
             'sort' => $this->sorter->resolveSort($sort, $allowedSorts),
             'direction' => $this->sorter->resolveDirection($direction),
         ];
+    }
+
+    /**
+     * @param  Collection<int, mixed>  $rows
+     * @return array<int, list<array{flickr_id: string, owner_nsid: string, title: string|null}>>
+     */
+    private function membershipMap(Collection $rows, string $flickrIdColumn): array
+    {
+        $grouped = [];
+
+        foreach ($rows as $row) {
+            $photoId = (int) $row->photo_id;
+            $grouped[$photoId] ??= [];
+            $grouped[$photoId][] = [
+                'flickr_id' => (string) $row->{$flickrIdColumn},
+                'owner_nsid' => (string) $row->owner_nsid,
+                'title' => is_string($row->title) ? $row->title : null,
+            ];
+        }
+
+        return $grouped;
     }
 }

@@ -17,10 +17,11 @@ use Tests\TestCase;
  *   Auth → []
  *   Crawler → []
  *   Flickr → [Crawler, Storage]
+ *   Transfer → [Crawler, Flickr, Storage]
  *   Spider → [Flickr, Crawler]
  *   Storage → [Crawler]
- *   Contacts → [Flickr, Spider, Storage, Crawler]
- *   Catalog → [Flickr, Storage, Crawler]
+ *   Contacts → [Flickr, Spider, Storage, Transfer, Crawler]
+ *   Catalog → [Flickr, Storage, Transfer, Crawler]
  *   Settings → [Flickr, Storage, Crawler]
  *   Operations → [*]
  *
@@ -36,10 +37,11 @@ final class ModuleDependencyDirectionTest extends TestCase
         'Auth' => [],
         'Crawler' => [],
         'Flickr' => ['Crawler', 'Storage'],
+        'Transfer' => ['Crawler', 'Flickr', 'Storage'],
         'Spider' => ['Flickr', 'Crawler'],
         'Storage' => ['Crawler'],
-        'Contacts' => ['Flickr', 'Spider', 'Storage', 'Crawler'],
-        'Catalog' => ['Flickr', 'Storage', 'Crawler'],
+        'Contacts' => ['Flickr', 'Spider', 'Storage', 'Transfer', 'Crawler'],
+        'Catalog' => ['Flickr', 'Storage', 'Transfer', 'Crawler'],
         'Settings' => ['Flickr', 'Storage', 'Crawler'],
         'Operations' => ['*'],
     ];

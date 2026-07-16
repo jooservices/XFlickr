@@ -8,13 +8,13 @@ use Illuminate\Http\RedirectResponse;
 use Modules\Contacts\Http\Requests\QueuePhotoDownloadRequest;
 use Modules\Contacts\Services\ContactListQueryService;
 use Modules\Crawler\Models\Connection;
-use Modules\Flickr\Services\FlickrAccountsService;
-use Modules\Storage\Dto\TransferQueueResult;
+use Modules\Transfer\Dto\TransferQueueResult;
+use Modules\Transfer\Services\PhotoTransferService;
 
 final class PhotoDownloadController
 {
     public function __construct(
-        private readonly FlickrAccountsService $flickr,
+        private readonly PhotoTransferService $transfers,
         private readonly ContactListQueryService $contactList,
     ) {}
 
@@ -26,7 +26,7 @@ final class PhotoDownloadController
             return back()->with($result->flashKey, $result->message);
         }
 
-        $result = $this->flickr->queueDownloads(
+        $result = $this->transfers->queueDownloadsFromInput(
             $connection,
             $request->singlePhotoId(),
             $request->singleContactNsid(),
@@ -42,7 +42,7 @@ final class PhotoDownloadController
         $ownerNsid = $request->bulkOwnerNsid();
 
         if ($ownerNsid !== null) {
-            return $this->flickr->queueDownloads(
+            return $this->transfers->queueDownloadsFromInput(
                 $connection,
                 contactNsid: $ownerNsid,
             );
@@ -58,7 +58,7 @@ final class PhotoDownloadController
             return TransferQueueResult::error('No contacts matched the current filters.');
         }
 
-        return $this->flickr->queueDownloads(
+        return $this->transfers->queueDownloadsFromInput(
             $connection,
             contactNsids: $contactNsids,
         );

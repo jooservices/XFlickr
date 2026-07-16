@@ -9,15 +9,12 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Modules\Crawler\Models\Connection;
 use Modules\Flickr\Services\ConnectionPublicIdService;
-use Modules\Storage\Contracts\StorageDownloadStreamer;
-use Modules\Storage\Services\StorageDownloadService;
 
 final class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
         $this->app->singleton(ConnectionPublicIdService::class);
-        $this->app->bind(StorageDownloadStreamer::class, StorageDownloadService::class);
     }
 
     public function boot(): void

@@ -10,7 +10,7 @@ use Modules\Crawler\Events\CrawlPageFailed;
 use Modules\Crawler\Events\CrawlRunCompleted;
 use Modules\Operations\Listeners\BroadcastOperationsBatchUpdated;
 use Modules\Operations\Listeners\BroadcastOperationsOverviewFromDomain;
-use Modules\Storage\Events\TransferBatchReconciled;
+use Modules\Transfer\Events\TransferBatchReconciled;
 
 class EventServiceProvider extends ServiceProvider
 {

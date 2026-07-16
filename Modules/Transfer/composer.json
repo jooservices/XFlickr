@@ -1,0 +1,27 @@
+{
+    "name": "nwidart/transfer",
+    "description": "XFlickr transfer workflow module.",
+    "authors": [
+        {
+            "name": "Viet Vu",
+            "email": "jooservices@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Transfer\\": "app/",
+            "Modules\\Transfer\\Database\\Factories\\": "database/factories/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Transfer\\Tests\\": "tests/"
+        }
+    }
+}
