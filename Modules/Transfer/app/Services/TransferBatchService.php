@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\Transfer\Services;
 
+use App\Repositories\Crawler\PhotoQueryRepository;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Modules\Transfer\Dto\TransferQueueResult;
@@ -27,6 +29,7 @@ final class TransferBatchService
         private readonly TransferBatchRepository $batches,
         private readonly TransferItemRepository $items,
         private readonly TransferBatchReconciler $batchReconciler,
+        private readonly PhotoQueryRepository $photos,
     ) {}
 
     // ── Batch queue ─────────────────────────────────────────
@@ -187,7 +190,7 @@ final class TransferBatchService
     }
 
     /**
-     * @return array{batch: array<string, mixed>, items: mixed}|null
+     * @return array{batch: array<string, mixed>, items: list<array<string, mixed>>}|null
      */
     public function batchDetail(string $connectionKey, TransferBatch $batch): ?array
     {
@@ -195,6 +198,14 @@ final class TransferBatchService
         if ($batch === null) {
             return null;
         }
+
+        $items = $batch->items;
+        $photosByFlickrId = $this->photos
+            ->listByFlickrPhotoIds(
+                $items->pluck('source_id')->map(static fn (mixed $id): string => (string) $id)->all(),
+                ['id', 'flickr_photo_id', 'owner_nsid', 'title', 'secret', 'server', 'farm'],
+            )
+            ->keyBy('flickr_photo_id');
 
         return [
             'batch' => [
@@ -211,8 +222,85 @@ final class TransferBatchService
                 'group_label' => $batch->group_label,
                 'storage_account_id' => $batch->storage_account_id,
             ],
-            'items' => $batch->items,
+            'items' => $items->map(function ($item) use ($photosByFlickrId): array {
+                $sourceId = (string) $item->source_id;
+                $photo = $photosByFlickrId->get($sourceId);
+
+                return [
+                    'id' => $item->id,
+                    'transfer_batch_id' => $item->transfer_batch_id,
+                    'flickr_photo_id' => $sourceId,
+                    'status' => $item->status,
+                    'error_message' => $item->error_message,
+                    'created_at' => $item->created_at?->toIso8601String(),
+                    'updated_at' => $item->updated_at?->toIso8601String(),
+                    'photo' => $photo === null ? null : [
+                        'id' => $photo->id,
+                        'flickr_photo_id' => $photo->flickr_photo_id,
+                        'owner_nsid' => $photo->owner_nsid,
+                        'title' => $photo->title,
+                        'secret' => $photo->secret,
+                        'server' => $photo->server,
+                        'farm' => $photo->farm,
+                    ],
+                ];
+            })->values()->all(),
         ];
+    }
+
+    public function transferHistoryForConnectionPaginated(
+        string $connectionKey,
+        ?string $status,
+        ?string $type,
+        int $limit,
+    ): LengthAwarePaginator {
+        $paginator = $this->items->paginateForConnection($connectionKey, $status, $type, $limit);
+        $photosByFlickrId = $this->photos
+            ->listByFlickrPhotoIds(
+                $paginator->getCollection()->pluck('source_id')->map(static fn (mixed $id): string => (string) $id)->all(),
+                ['id', 'flickr_photo_id', 'owner_nsid', 'title', 'secret', 'server', 'farm'],
+            )
+            ->keyBy('flickr_photo_id');
+
+        return $paginator->through(function ($item) use ($photosByFlickrId): array {
+            $batch = $item->batch;
+            $sourceId = (string) $item->source_id;
+            $photo = $photosByFlickrId->get($sourceId);
+
+            return [
+                'id' => $item->id,
+                'flickr_photo_id' => $sourceId,
+                'status' => $item->status,
+                'error_message' => $item->error_message,
+                'created_at' => $item->created_at?->toIso8601String(),
+                'updated_at' => $item->updated_at?->toIso8601String(),
+                'photo' => $photo === null ? null : [
+                    'id' => $photo->id,
+                    'flickr_photo_id' => $photo->flickr_photo_id,
+                    'owner_nsid' => $photo->owner_nsid,
+                    'title' => $photo->title,
+                    'secret' => $photo->secret,
+                    'server' => $photo->server,
+                    'farm' => $photo->farm,
+                ],
+                'batch' => [
+                    'id' => $batch->id,
+                    'type' => $batch->type,
+                    'status' => $batch->status,
+                    'total_count' => $batch->total_count,
+                    'completed_count' => $batch->completed_count,
+                    'failed_count' => $batch->failed_count,
+                    'connection_key' => $batch->connection_key,
+                    'subject_nsid' => $batch->subject_nsid,
+                    'group_type' => $batch->group_type,
+                    'group_id' => $batch->group_id,
+                    'group_label' => $batch->group_label,
+                    'storage_account_id' => $batch->storage_account_id,
+                    'created_at' => $batch->created_at?->toIso8601String(),
+                    'updated_at' => $batch->updated_at?->toIso8601String(),
+                ],
+            ];
+        });
     }
 
     /**
@@ -264,9 +352,6 @@ final class TransferBatchService
             ]);
         }
 
-        $this->items->updateStatus($batch->id, $sourceId, TransferItemStatus::Pending);
-        $this->batchReconciler->reconcile($batch->id);
-
         $sourceOwner = $batch->subject_nsid !== null ? (string) $batch->subject_nsid : $connectionKey;
         $sourceType = 'flickr_photo';
 
@@ -286,6 +371,8 @@ final class TransferBatchService
         $type = TransferType::tryFrom((string) $batch->type);
 
         if ($type === TransferType::Download) {
+            $this->items->updateStatus($batch->id, $sourceId, TransferItemStatus::Pending);
+            $this->batchReconciler->reconcile($batch->id);
             DownloadFileJob::dispatch(
                 $sourceType,
                 $sourceId,
@@ -309,11 +396,63 @@ final class TransferBatchService
             ]);
         }
 
+        $this->items->updateStatus($batch->id, $sourceId, TransferItemStatus::Pending);
+        $this->batchReconciler->reconcile($batch->id);
+
         UploadFileJob::dispatch(
             $storedFile->id,
             (int) $batch->storage_account_id,
             $batch->id,
             (int) $batch->total_count,
         );
+    }
+
+    public function retryFailedItems(string $connectionKey, TransferBatch $batch): int
+    {
+        if ($batch->connection_key !== $connectionKey) {
+            abort(404);
+        }
+
+        $failedItems = $this->items->failedForBatch($batch->id);
+
+        $queued = 0;
+        foreach ($failedItems as $item) {
+            try {
+                $this->retryItem($connectionKey, $batch, $item->source_id);
+                $queued++;
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+        }
+
+        return $queued;
+    }
+
+    public function batchesForConnectionPaginated(
+        string $connectionKey,
+        ?string $status,
+        ?string $type,
+        bool $active,
+        string $sort,
+        string $direction,
+        int $limit,
+    ): LengthAwarePaginator {
+        $paginator = $this->batches->paginateForConnection(
+            $connectionKey,
+            $status,
+            $type,
+            $active,
+            $sort,
+            $direction,
+            $limit,
+            self::BATCH_SORTS,
+        );
+
+        return $paginator->through(fn (TransferBatch $batch): array => [
+            ...$batch->toArray(),
+            'sample_error' => $batch->failed_count > 0
+                ? $this->batchReconciler->sampleError($batch->id)
+                : null,
+        ]);
     }
 }

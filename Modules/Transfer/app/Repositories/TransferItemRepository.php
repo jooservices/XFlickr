@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\Transfer\Repositories;
 
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Jooservices\LaravelRepository\Repositories\EloquentRepository;
 use Jooservices\LaravelRepository\Traits\HasCrud;
@@ -143,6 +145,40 @@ final class TransferItemRepository extends EloquentRepository
             ->first();
 
         return $item instanceof TransferItem ? $item : null;
+    }
+
+    /**
+     * @return Collection<int, TransferItem>
+     */
+    public function failedForBatch(int $batchId): Collection
+    {
+        return $this->newQuery()
+            ->where('transfer_batch_id', $batchId)
+            ->failed()
+            ->get();
+    }
+
+    public function paginateForConnection(
+        string $connectionKey,
+        ?string $status,
+        ?string $type,
+        int $limit,
+    ): LengthAwarePaginator {
+        $query = $this->newQuery()
+            ->with('batch')
+            ->whereHas('batch', function (Builder $query) use ($connectionKey, $type): void {
+                $query->where('connection_key', $connectionKey);
+
+                if ($type !== null) {
+                    $query->where('type', $type);
+                }
+            });
+
+        if ($status !== null) {
+            $query->where('status', $status);
+        }
+
+        return $query->orderByDesc('id')->paginate($limit);
     }
 
     /**

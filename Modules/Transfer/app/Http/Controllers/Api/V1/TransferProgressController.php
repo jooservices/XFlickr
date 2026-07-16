@@ -10,6 +10,7 @@ use Modules\Crawler\Models\Connection;
 use Modules\Transfer\Http\Requests\Api\ListTransferBatchesRequest;
 use Modules\Transfer\Http\Resources\TransferBatchDetailResource;
 use Modules\Transfer\Http\Resources\TransferBatchResource;
+use Modules\Transfer\Http\Resources\TransferHistoryItemResource;
 use Modules\Transfer\Models\TransferBatch;
 use Modules\Transfer\Services\TransferBatchService;
 
@@ -32,7 +33,7 @@ final class TransferProgressController extends BaseApiController
 
     public function index(ListTransferBatchesRequest $request, Connection $connection): JsonResponse
     {
-        $payload = $this->transfers->batchesForConnection(
+        $paginator = $this->transfers->batchesForConnectionPaginated(
             $connection->connection_key,
             $request->status(),
             $request->type(),
@@ -42,9 +43,19 @@ final class TransferProgressController extends BaseApiController
             $request->limit(),
         );
 
-        $rows = $payload['data'] ?? [];
+        return $this->success(TransferBatchResource::collection($paginator));
+    }
 
-        return $this->success(TransferBatchResource::collection($rows));
+    public function itemIndex(ListTransferBatchesRequest $request, Connection $connection): JsonResponse
+    {
+        $paginator = $this->transfers->transferHistoryForConnectionPaginated(
+            $connection->connection_key,
+            $request->status(),
+            $request->type(),
+            $request->limit(),
+        );
+
+        return $this->success(TransferHistoryItemResource::collection($paginator));
     }
 
     public function retryItem(Connection $connection, TransferBatch $batch, string $flickrPhotoId): JsonResponse
@@ -52,5 +63,12 @@ final class TransferProgressController extends BaseApiController
         $this->transfers->retryItem($connection->connection_key, $batch, $flickrPhotoId);
 
         return $this->accepted([], 'Queued');
+    }
+
+    public function retryBatch(Connection $connection, TransferBatch $batch): JsonResponse
+    {
+        $count = $this->transfers->retryFailedItems($connection->connection_key, $batch);
+
+        return $this->accepted(['count' => $count], "Queued {$count} failed item(s) for retry.");
     }
 }

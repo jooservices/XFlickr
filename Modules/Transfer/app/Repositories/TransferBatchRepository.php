@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\Transfer\Repositories;
 
 use App\Support\Query\QuerySorter;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -272,5 +273,38 @@ final class TransferBatchRepository extends EloquentRepository
                 'updatedAt' => now()->toISOString(),
             ];
         });
+    }
+
+    public function paginateForConnection(
+        string $connectionKey,
+        ?string $status,
+        ?string $type,
+        bool $active,
+        string $sort,
+        string $direction,
+        int $limit,
+        array $allowedSorts,
+    ): LengthAwarePaginator {
+        $query = $this->newQuery()->forConnection($connectionKey);
+
+        if ($status !== null) {
+            $query->where('status', $status);
+        }
+
+        if ($type !== null) {
+            $query->where('type', $type);
+        }
+
+        if ($active) {
+            $query->where(function (Builder $builder): void {
+                $builder
+                    ->where('status', TransferBatchStatus::Running->value)
+                    ->orWhere('updated_at', '>=', now()->subHours(6));
+            });
+        }
+
+        return $this->sorter
+            ->apply($query, $sort, $direction, $allowedSorts)
+            ->paginate($limit);
     }
 }

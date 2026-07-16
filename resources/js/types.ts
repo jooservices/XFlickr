@@ -292,6 +292,18 @@ export interface TransferItem {
     error_message: string | null;
     created_at: string | null;
     updated_at: string | null;
+    photo: Photo | null;
+}
+
+export interface TransferHistoryItem {
+    id: number;
+    flickr_photo_id: string;
+    status: string;
+    error_message: string | null;
+    created_at: string | null;
+    updated_at: string | null;
+    photo: Photo | null;
+    batch: TransferBatch;
 }
 
 export interface RateLimitState {

@@ -8,4 +8,9 @@ describe('StatusBadge', () => {
         render(<StatusBadge status="running" />);
         expect(screen.getByText('running')).toBeTruthy();
     });
+
+    it('renders stuck status', () => {
+        render(<StatusBadge status="stuck" />);
+        expect(screen.getByText('stuck')).toBeTruthy();
+    });
 });

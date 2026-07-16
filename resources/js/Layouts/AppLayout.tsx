@@ -3,6 +3,7 @@ import { AppShell, useAppShell } from '@jooservices/react-layout';
 import {
     Activity,
     Camera,
+    ChevronDown,
     Cloud,
     HardDrive,
     Heart,
@@ -14,7 +15,7 @@ import {
     Settings,
     Users,
 } from 'lucide-react';
-import { type PropsWithChildren, type ReactNode, useMemo, useState } from 'react';
+import { type PropsWithChildren, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
 import TokenHealthBanner from '@/Components/Flickr/TokenHealthBanner';
 import { APP_SIDEBAR_FOOTER_RESET_CLASS } from '@/Components/layout/appBottomRail';
@@ -279,6 +280,39 @@ function AppLayoutShell({ children }: PropsWithChildren) {
 
     const path = url.split('?')[0] ?? '';
 
+    const [opsDropdownOpen, setOpsDropdownOpen] = useState(false);
+    const opsMenuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!opsDropdownOpen) {
+            return;
+        }
+
+        function onPointerDown(event: MouseEvent) {
+            if (!opsMenuRef.current?.contains(event.target as Node)) {
+                setOpsDropdownOpen(false);
+            }
+        }
+
+        function onKeyDown(event: KeyboardEvent) {
+            if (event.key === 'Escape') {
+                setOpsDropdownOpen(false);
+            }
+        }
+
+        document.addEventListener('mousedown', onPointerDown);
+        document.addEventListener('keydown', onKeyDown);
+
+        return () => {
+            document.removeEventListener('mousedown', onPointerDown);
+            document.removeEventListener('keydown', onKeyDown);
+        };
+    }, [opsDropdownOpen]);
+
+    useEffect(() => {
+        setOpsDropdownOpen(false);
+    }, [path]);
+
     return (
         <AppShell sidebarWidth="14rem">
             <CommandPalette
@@ -311,6 +345,64 @@ function AppLayoutShell({ children }: PropsWithChildren) {
                         <AppShell.HeaderMain>
                             <AppShell.HeaderNav>
                                 {topNav.map((item) => {
+                                    if (item.href === '/operations') {
+                                        const active = path.startsWith('/operations') || path.startsWith('/sync');
+                                        const Icon = item.icon;
+
+                                        return (
+                                            <div key={item.href} ref={opsMenuRef} className="relative flex items-stretch">
+                                                <Link
+                                                    href="/operations"
+                                                    className={cn(
+                                                        'flex items-center gap-2 rounded-l-md px-3 py-2 text-sm font-medium transition-colors duration-150',
+                                                        active
+                                                            ? 'bg-cyan-50 text-cyan-800'
+                                                            : 'text-slate-600 hover:bg-slate-100',
+                                                    )}
+                                                >
+                                                    <Icon className="h-4 w-4" />
+                                                    {item.label}
+                                                </Link>
+                                                <button
+                                                    type="button"
+                                                    className={cn(
+                                                        'flex items-center rounded-r-md border-l px-1.5 text-slate-600 transition-colors duration-150',
+                                                        active
+                                                            ? 'border-cyan-100/50 bg-cyan-50 text-cyan-800 hover:bg-cyan-100/70'
+                                                            : 'border-transparent hover:bg-slate-100',
+                                                    )}
+                                                    onClick={() => setOpsDropdownOpen((o) => !o)}
+                                                    aria-expanded={opsDropdownOpen}
+                                                    aria-haspopup="menu"
+                                                    aria-label="Operations sub-menu"
+                                                >
+                                                    <ChevronDown className={cn('h-3.5 w-3.5 text-slate-500 transition-transform duration-150', opsDropdownOpen ? 'rotate-180' : '')} />
+                                                </button>
+
+                                                {opsDropdownOpen ? (
+                                                    <div
+                                                        role="menu"
+                                                        className="absolute top-full left-0 z-40 mt-2 w-48 overflow-hidden rounded-md border border-slate-200 bg-white py-1 shadow-lg"
+                                                    >
+                                                        <Link
+                                                            href="/sync"
+                                                            role="menuitem"
+                                                            className={cn(
+                                                                'flex items-center gap-2 px-3 py-2 text-sm',
+                                                                path === '/sync'
+                                                                    ? 'bg-cyan-50 font-medium text-cyan-800'
+                                                                    : 'text-slate-700 hover:bg-slate-100',
+                                                            )}
+                                                            onClick={() => setOpsDropdownOpen(false)}
+                                                        >
+                                                            Sync
+                                                        </Link>
+                                                    </div>
+                                                ) : null}
+                                            </div>
+                                        );
+                                    }
+
                                     const active =
                                         'isActive' in item && item.isActive
                                             ? item.isActive(path)

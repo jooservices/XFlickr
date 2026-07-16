@@ -284,4 +284,38 @@ final class StoredFileRepository extends EloquentRepository
             ->selectRaw('source_owner as contact_nsid, count(*) as aggregate')
             ->groupBy('source_owner');
     }
+
+    /**
+     * @return Collection<int, StoredFile>
+     */
+    public function completedOriginals(): Collection
+    {
+        return $this->newQuery()
+            ->where('variant', 'original')
+            ->completed()
+            ->get();
+    }
+
+    public function markStatusAndPath(
+        int $id,
+        string $status,
+        ?string $path = null,
+        ?int $bytes = null,
+        ?string $sha256 = null,
+        ?string $error = null,
+    ): void {
+        $this->newQuery()->whereKey($id)->update([
+            'status' => $status,
+            'local_path' => $path,
+            'bytes' => $bytes,
+            'content_sha256' => $sha256,
+            'error_message' => $error,
+            'updated_at' => now(),
+        ]);
+    }
+
+    public function createStoredFile(array $attributes): StoredFile
+    {
+        return $this->newQuery()->create($attributes);
+    }
 }

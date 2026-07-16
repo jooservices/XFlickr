@@ -31,3 +31,17 @@ Canonical skill: [`ai/skills/react-inertia-frontend/SKILL.md`](../../ai/skills/r
 
 - Use [`Card`](resources/js/Components/ui/Card.tsx) (`BaseCard`) / [`MetricCard`](resources/js/Components/ui/MetricCard.tsx) (`StatCard`) for panels and stats.
 - Flickr/Storage settings use [`ProviderCard`](resources/js/Components/ui/ProviderCard.tsx) — domain-only (not in JOO packages).
+
+## Semantic color (MetricCard / StatusBadge)
+
+| Meaning | MetricCard `tone` | StatusBadge status | Button variant |
+|---------|-------------------|--------------------|----------------|
+| Neutral / idle | `slate` (default) | default slate | `secondary` / `ghost` |
+| Active / in progress | `cyan` | `running` (blue) | `primary` / `connect` |
+| Healthy / success | `emerald` | `completed` (emerald) | — |
+| Caution / attention | `amber` | `stuck`, `completed_with_errors` (amber) | `warning` |
+| Problem / failure | `rose` | `failed` (red) | `destructive` |
+
+Examples: Integrity “Mismatches Found” → `tone="rose"`; “In Sync” → `tone="emerald"`; Dashboard failed transfers → `rose`; pending/cooldown → `amber`.
+
+Destructive row/bulk actions (Delete, Disconnect) must use `variant="destructive"`, never `ghost`. Recovery actions (Re-download, Import, Retry) use `secondary` (or `primary` when they are the page’s main CTA).
