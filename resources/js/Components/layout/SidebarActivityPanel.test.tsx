@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import SidebarActivityPanel from '@/Components/Layout/SidebarActivityPanel';
+import SidebarActivityPanel from '@/Components/layout/SidebarActivityPanel';
 import type { CrawlRun, FlickrAccount, TransferBatch } from '@/types';
 
 const account: FlickrAccount = {

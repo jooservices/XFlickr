@@ -1,7 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { useMemo } from 'react';
 
-import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/Layout/page-shell';
+import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
 import StorageReauthorizeBanner from '@/Components/Storage/StorageReauthorizeBanner';
 import type { BulkAction } from '@/Components/ui/BulkActionBar';
 import DataTable from '@/Components/ui/DataTable';

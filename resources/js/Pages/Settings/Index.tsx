@@ -3,7 +3,7 @@ import type { ConfigPanelHandle } from '@jooservices/react-config';
 import { Plus } from 'lucide-react';
 import { useRef } from 'react';
 
-import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/Layout/page-shell';
+import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/layout/page-shell';
 import GeneralConfigPanel from '@/Components/Settings/GeneralConfigPanel';
 import OnboardingWizard from '@/Components/Settings/OnboardingWizard';
 import Button from '@/Components/ui/Button';

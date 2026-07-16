@@ -6,7 +6,7 @@ import PhotoDetailModal from '@/Components/Catalog/PhotoDetailModal';
 import ContactNsidLinks from '@/Components/Contacts/NsidLinks';
 import CrawlActionBar from '@/Components/Flickr/CrawlActionBar';
 import FlickrPhotoIdLinks from '@/Components/Flickr/PhotoIdLinks';
-import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/Layout/page-shell';
+import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
 import DataTable from '@/Components/ui/DataTable';
 import EmptyState from '@/Components/ui/EmptyState';
 import Thumbnail from '@/Components/ui/Thumbnail';

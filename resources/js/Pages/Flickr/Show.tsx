@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 
 import CrawlActionBar from '@/Components/Flickr/CrawlActionBar';
 import ExpandActionBar from '@/Components/Flickr/ExpandActionBar';
-import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/Layout/page-shell';
+import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/layout/page-shell';
 import Card from '@/Components/ui/Card';
 import AppLayout from '@/Layouts/AppLayout';
 import { accountLabel, flickrAccountPageCrumbs } from '@/lib/breadcrumbs';

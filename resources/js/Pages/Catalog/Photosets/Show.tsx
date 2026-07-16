@@ -6,7 +6,7 @@ import PhotoGrid from '@/Components/Catalog/PhotoGrid';
 import ContactNsidLinks from '@/Components/Contacts/NsidLinks';
 import CrawlActionBar from '@/Components/Flickr/CrawlActionBar';
 import FlickrPhotosetIdLinks from '@/Components/Flickr/PhotosetIdLinks';
-import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/Layout/page-shell';
+import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/layout/page-shell';
 import BusyRegion from '@/Components/ui/BusyRegion';
 import Card from '@/Components/ui/Card';
 import { useRemoteDataTable } from '@/hooks/useRemoteDataTable';

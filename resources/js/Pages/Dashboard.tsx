@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import ApiUsageChart from '@/Components/Flickr/ApiUsageChart';
 import RateLimitMeter from '@/Components/Flickr/RateLimitMeter';
-import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/Layout/page-shell';
+import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/layout/page-shell';
 import DatabaseUsagePanel from '@/Components/Operations/DatabaseUsagePanel';
 import OnboardingWizard from '@/Components/Settings/OnboardingWizard';
 import Card from '@/Components/ui/Card';

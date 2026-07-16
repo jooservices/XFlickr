@@ -10,7 +10,7 @@ import ContactNsidLinks from '@/Components/Contacts/NsidLinks';
 import CrawlActionBar from '@/Components/Flickr/CrawlActionBar';
 import { bulkDownloadActionIcon, bulkUploadActionIcon } from '@/Components/Flickr/CrawlTypeMenu';
 import FlickrPhotoIdLinks from '@/Components/Flickr/PhotoIdLinks';
-import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/Layout/page-shell';
+import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
 import UploadConfirmModal, { type UploadConfirmPayload } from '@/Components/Transfer/UploadConfirmModal';
 import type { BulkAction } from '@/Components/ui/BulkActionBar';
 import BusyRegion from '@/Components/ui/BusyRegion';

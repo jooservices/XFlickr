@@ -17,14 +17,14 @@ import {
 import { type PropsWithChildren, type ReactNode, useMemo, useState } from 'react';
 
 import TokenHealthBanner from '@/Components/Flickr/TokenHealthBanner';
-import { APP_SIDEBAR_FOOTER_RESET_CLASS } from '@/Components/Layout/appBottomRail';
-import AppSidebarFooter from '@/Components/Layout/AppSidebarFooter';
-import AppStatusFooter from '@/Components/Layout/AppStatusFooter';
-import CommandPalette, { CommandPaletteTrigger } from '@/Components/Layout/CommandPalette';
-import GlobalCrawlPauseButton from '@/Components/Layout/GlobalCrawlPauseButton';
-import SidebarActivityPanel from '@/Components/Layout/SidebarActivityPanel';
-import { SpiderModeButton } from '@/Components/Layout/SpiderModeButton';
-import UserAccountMenu from '@/Components/Layout/UserAccountMenu';
+import { APP_SIDEBAR_FOOTER_RESET_CLASS } from '@/Components/layout/appBottomRail';
+import AppSidebarFooter from '@/Components/layout/AppSidebarFooter';
+import AppStatusFooter from '@/Components/layout/AppStatusFooter';
+import CommandPalette, { CommandPaletteTrigger } from '@/Components/layout/CommandPalette';
+import GlobalCrawlPauseButton from '@/Components/layout/GlobalCrawlPauseButton';
+import SidebarActivityPanel from '@/Components/layout/SidebarActivityPanel';
+import { SpiderModeButton } from '@/Components/layout/SpiderModeButton';
+import UserAccountMenu from '@/Components/layout/UserAccountMenu';
 import { useFlashToast } from '@/hooks/useFlashToast';
 import { useFlickrRateLimit } from '@/hooks/useFlickrRateLimit';
 import { OperationsStreamProvider, useOperationsStream } from '@/hooks/useOperationsStream';

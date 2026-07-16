@@ -5,7 +5,7 @@ import CatalogStatCard from '@/Components/Catalog/StatCard';
 import ContactPhotoStrip from '@/Components/Contacts/ContactPhotoStrip';
 import ContactSwitcher from '@/Components/Contacts/Switcher';
 import CrawlActionBar from '@/Components/Flickr/CrawlActionBar';
-import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/Layout/page-shell';
+import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/layout/page-shell';
 import ActionBar from '@/Components/ui/ActionBar';
 import Card from '@/Components/ui/Card';
 import AppLayout from '@/Layouts/AppLayout';

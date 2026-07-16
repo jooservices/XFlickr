@@ -15,7 +15,7 @@ import CrawlTypeMenu, {
     bulkDownloadActionIcon,
     bulkUploadActionIcon,
 } from '@/Components/Flickr/CrawlTypeMenu';
-import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/Layout/page-shell';
+import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
 import UploadConfirmModal, { type UploadConfirmPayload } from '@/Components/Transfer/UploadConfirmModal';
 import type { BulkAction } from '@/Components/ui/BulkActionBar';
 import Button from '@/Components/ui/Button';

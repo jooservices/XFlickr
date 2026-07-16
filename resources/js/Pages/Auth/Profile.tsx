@@ -1,7 +1,7 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { FormEvent } from 'react';
 
-import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/Layout/page-shell';
+import { PageShell, PageShellCanvas, PageShellIdentity } from '@/Components/layout/page-shell';
 import Button from '@/Components/ui/Button';
 import Input from '@/Components/ui/Input';
 import AppLayout from '@/Layouts/AppLayout';

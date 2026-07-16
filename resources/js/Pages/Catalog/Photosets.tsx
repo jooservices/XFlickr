@@ -4,7 +4,7 @@ import CatalogOwnerNsidFilter from '@/Components/Catalog/OwnerNsidFilter';
 import ContactNsidLinks from '@/Components/Contacts/NsidLinks';
 import CrawlActionBar from '@/Components/Flickr/CrawlActionBar';
 import FlickrPhotosetIdLinks from '@/Components/Flickr/PhotosetIdLinks';
-import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/Layout/page-shell';
+import { PageShell, PageShellCanvas, PageShellControlBar, PageShellIdentity } from '@/Components/layout/page-shell';
 import DataTable from '@/Components/ui/DataTable';
 import EmptyState from '@/Components/ui/EmptyState';
 import Thumbnail from '@/Components/ui/Thumbnail';
