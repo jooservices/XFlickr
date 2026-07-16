@@ -18,6 +18,22 @@ paths = [
 ]
 
 [[allowlists]]
+description = "PHPUnit feature tests with fake API credentials"
+condition = "AND"
+paths = [
+  '''^tests/''',
+  '''^Modules/.*/tests/''',
+]
+regexes = [
+  '''test-api-key-12345''',
+  '''test-api-secret''',
+]
+stopwords = [
+  "test-api-key-12345",
+  "test-api-secret",
+]
+
+[[allowlists]]
 description = "Documentation examples"
 paths = [
   '''docs/''',
