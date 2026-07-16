@@ -34,9 +34,12 @@
         "league/flysystem-memory": "^3.0",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
+        "pdepend/pdepend": "3.x-dev@dev",
+        "phpmd/phpmd": "3.x-dev@dev",
         "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^13.0",
-        "qossmic/deptrac": "^2.0"
+        "qossmic/deptrac": "^2.0",
+        "squizlabs/php_codesniffer": "^4.0.1"
     },
     "autoload": {
         "psr-4": {
@@ -84,12 +87,16 @@
         ],
         "lint:pint": "vendor/bin/pint --test",
         "lint:pint:fix": "vendor/bin/pint",
+        "lint:phpcs": "vendor/bin/phpcs --standard=phpcs.xml",
         "lint:phpstan": "XDEBUG_MODE=off vendor/bin/phpstan analyse --configuration=phpstan.neon --memory-limit=512M",
         "lint:phpstan:baseline": "XDEBUG_MODE=off vendor/bin/phpstan analyse --configuration=phpstan.neon --memory-limit=512M --generate-baseline=phpstan-baseline.neon --allow-empty-baseline",
+        "lint:phpmd": "vendor/bin/phpmd analyze app Modules --format=text --ruleset=phpmd.xml --no-progress",
         "lint:deptrac": "vendor/bin/deptrac analyse --config-file=deptrac.yaml",
         "lint": [
             "@lint:pint",
+            "@lint:phpcs",
             "@lint:phpstan",
+            "@lint:phpmd",
             "@lint:deptrac"
         ],
         "post-autoload-dump": [

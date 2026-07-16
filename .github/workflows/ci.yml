@@ -49,8 +49,12 @@ jobs:
         tool:
           - name: Pint
             command: lint:pint
+          - name: PHPCS
+            command: lint:phpcs
           - name: PHPStan
             command: lint:phpstan
+          - name: PHPMD
+            command: lint:phpmd
           - name: Deptrac
             command: lint:deptrac
           - name: AI Instructions

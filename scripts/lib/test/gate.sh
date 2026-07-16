@@ -38,7 +38,9 @@ test_gate_lint() {
     test_gate_run_step "Host toolchain" test_prereqs_host_toolchain
     test_gate_run_step "Composer validate" composer validate --strict
     test_gate_run_step "Pint" composer lint:pint
+    test_gate_run_step "PHPCS" composer lint:phpcs
     test_gate_run_step "PHPStan" composer lint:phpstan
+    test_gate_run_step "PHPMD" composer lint:phpmd
     test_gate_run_step "Deptrac" composer lint:deptrac
     test_gate_run_step "AI instructions sync" composer instructions:verify
     test_gate_run_step "Frontend typecheck" npm run typecheck

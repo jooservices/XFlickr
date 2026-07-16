@@ -43,7 +43,10 @@ Artisan: `Command → Service → Repository → Model`. See [Application standa
 
 ## PHP style
 
-- Run Laravel Pint before committing: `vendor/bin/pint`
+- Laravel Pint is the formatting authority.
+- PHPCS performs non-duplicative PHP source checks after Pint.
+- PHPStan, PHPMD, and Deptrac enforce types, maintainability, and architecture.
+- Run all PHP quality checks through `bash scripts/test.sh gate:lint`.
 - `declare(strict_types=1);` on new PHP files
 - Prefer typed properties and return types
 

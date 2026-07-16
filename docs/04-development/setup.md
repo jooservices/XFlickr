@@ -17,7 +17,7 @@ See `bash scripts/dev.sh help` for `seed`, `quick`, `reload`, `refresh`, `down`,
 |---|---|
 | `bash scripts/test.sh gate` | Lint + PHPUnit + Vitest (before commit) |
 | `bash scripts/test.sh gate:ci` | CI parity (before push) |
-| `bash scripts/test.sh gate:lint` | Lint only |
+| `bash scripts/test.sh gate:lint` | Pint, PHPCS, PHPStan, PHPMD, Deptrac, instruction and frontend lint |
 | `./scripts/test-docker.sh --filter=Name` | Filtered PHPUnit |
 | `composer instructions:verify` | Verify AI instruction sync |
 
@@ -35,7 +35,7 @@ See [Native installation](../01-getting-started/native-installation.md).
 
 ## IDE
 
-- PHP: Laravel Pint for formatting (`vendor/bin/pint`)
+- PHP: Laravel Pint formats; PHPCS, PHPStan, PHPMD, and Deptrac verify quality
 - TypeScript: `npm run typecheck`
 
 ## Frontend dev server
