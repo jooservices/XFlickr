@@ -20,6 +20,7 @@ export function useCatalogOwnerNsidTable<T>(
         ...tableOptions,
         filters,
     });
+    const applyTableFilters = table.applyFilters;
 
     const filterFormProps: CatalogOwnerNsidFilterProps = useMemo(
         () => ({
@@ -27,16 +28,16 @@ export function useCatalogOwnerNsidTable<T>(
             onChange: setDraft,
             onSubmit: () => {
                 apply();
-                table.applyFilters();
+                applyTableFilters();
             },
             onClear: hasActiveFilter
                 ? () => {
                       clear();
-                      table.applyFilters();
+                      applyTableFilters();
                   }
                 : undefined,
         }),
-        [apply, clear, draft, hasActiveFilter, setDraft, table.applyFilters],
+        [apply, applyTableFilters, clear, draft, hasActiveFilter, setDraft],
     );
 
     return {

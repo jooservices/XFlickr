@@ -1,6 +1,6 @@
 import { ChevronDown } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { buttonVariants, type ButtonSize, type ButtonVariant } from '@/lib/buttonVariants';
@@ -36,7 +36,7 @@ export function ActionButton({
     const buttonRef = useRef<HTMLButtonElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
 
-    const updateMenuPosition = () => {
+    const updateMenuPosition = useCallback(() => {
         const button = buttonRef.current;
         const menuEl = menuRef.current;
         if (!button || !menuEl) {
@@ -58,7 +58,7 @@ export function ActionButton({
         left = Math.max(padding, Math.min(left, window.innerWidth - menuWidth - padding));
 
         setMenuPosition({ top, left });
-    };
+    }, [alignMenu]);
 
     useLayoutEffect(() => {
         if (!open) {
@@ -67,7 +67,7 @@ export function ActionButton({
         }
 
         updateMenuPosition();
-    }, [open, menu]);
+    }, [menu, open, updateMenuPosition]);
 
     useEffect(() => {
         if (!open) {
@@ -94,7 +94,7 @@ export function ActionButton({
             window.removeEventListener('resize', handleReposition);
             window.removeEventListener('scroll', handleReposition, true);
         };
-    }, [open]);
+    }, [open, updateMenuPosition]);
 
     const handleClick = () => {
         if (hasMenu) {

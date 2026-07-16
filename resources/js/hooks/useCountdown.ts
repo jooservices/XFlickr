@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export function useCountdown(targetIso: string | null, initialSeconds = 0): number {
-    const computeSeconds = (): number => {
+    const computeSeconds = useCallback((): number => {
         if (targetIso) {
             const diff = Math.ceil((new Date(targetIso).getTime() - Date.now()) / 1000);
 
@@ -9,7 +9,7 @@ export function useCountdown(targetIso: string | null, initialSeconds = 0): numb
         }
 
         return Math.max(0, initialSeconds);
-    };
+    }, [initialSeconds, targetIso]);
 
     const [seconds, setSeconds] = useState(computeSeconds);
 
@@ -21,7 +21,7 @@ export function useCountdown(targetIso: string | null, initialSeconds = 0): numb
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [targetIso, initialSeconds]);
+    }, [computeSeconds]);
 
     return seconds;
 }

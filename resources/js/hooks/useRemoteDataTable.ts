@@ -32,6 +32,7 @@ export function useRemoteDataTable<T>({
     const [loading, setLoading] = useState(true);
 
     const filtersKey = useMemo(() => JSON.stringify(filters), [filters]);
+    const normalizedFilters = useMemo<Record<string, string>>(() => JSON.parse(filtersKey), [filtersKey]);
 
     const handleSortChange = useCallback((key: string, direction: SortDirection) => {
         setSortKey(key);
@@ -49,7 +50,7 @@ export function useRemoteDataTable<T>({
             direction: sortDirection,
         };
 
-        for (const [key, value] of Object.entries(filters)) {
+        for (const [key, value] of Object.entries(normalizedFilters)) {
             if (value.trim() !== '') {
                 params[key] = value.trim();
             }
@@ -68,7 +69,7 @@ export function useRemoteDataTable<T>({
         } finally {
             setLoading(false);
         }
-    }, [fetchPath, page, perPage, sortKey, sortDirection, filtersKey]);
+    }, [fetchPath, normalizedFilters, page, perPage, sortDirection, sortKey]);
 
     useEffect(() => {
         void load();
