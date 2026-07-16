@@ -255,6 +255,17 @@ final class CuratedConfigCatalog
                 tier: 'operational',
                 sort: 20,
             ),
+            $this->define(
+                path: 'xflickr_transfer.google_photos_create_albums',
+                label: 'Create Google Photos albums matching photosets',
+                description: 'When enabled, uploads to Google Photos will automatically create or look up albums matching the name of the Flickr photoset or gallery.',
+                type: 'bool',
+                default: true,
+                groupLabel: 'Transfer / Uploads',
+                section: 'transfers',
+                tier: 'operational',
+                sort: 30,
+            ),
         ];
     }
 

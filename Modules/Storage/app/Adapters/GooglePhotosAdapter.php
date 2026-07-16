@@ -6,6 +6,7 @@ namespace Modules\Storage\Adapters;
 
 use GuzzleHttp\Psr7\Utils;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
 use Modules\Storage\Contracts\StorageAdapter;
@@ -55,7 +56,13 @@ final class GooglePhotosAdapter implements StorageAdapter, StorageVerifiable
                 : basename($request->localPath);
 
             $uploadToken = $this->performUpload($accessToken, $stream, $filename);
-            $mediaItem = $this->createMediaItem($accessToken, $filename, $uploadToken);
+
+            $albumId = null;
+            if ($request->albumLabel !== null && $request->albumLabel !== '') {
+                $albumId = $this->findOrCreateAlbum($accessToken, $request->albumLabel);
+            }
+
+            $mediaItem = $this->createMediaItem($accessToken, $filename, $uploadToken, $albumId);
 
             return $this->presentMediaItem($mediaItem, $filename);
         } catch (Throwable $exception) {
@@ -231,20 +238,26 @@ final class GooglePhotosAdapter implements StorageAdapter, StorageVerifiable
     /**
      * @return array<string, mixed>
      */
-    private function createMediaItem(string $accessToken, string $filename, string $uploadToken): array
+    private function createMediaItem(string $accessToken, string $filename, string $uploadToken, ?string $albumId = null): array
     {
         $startedAt = microtime(true);
+        $body = [
+            'newMediaItems' => [[
+                'description' => $filename,
+                'simpleMediaItem' => [
+                    'fileName' => $filename,
+                    'uploadToken' => $uploadToken,
+                ],
+            ]],
+        ];
+
+        if ($albumId !== null && $albumId !== '') {
+            $body['albumId'] = $albumId;
+        }
+
         $createResponse = Http::withToken($accessToken)
             ->timeout(60)
-            ->post(self::BATCH_CREATE_URL, [
-                'newMediaItems' => [[
-                    'description' => $filename,
-                    'simpleMediaItem' => [
-                        'fileName' => $filename,
-                        'uploadToken' => $uploadToken,
-                    ],
-                ]],
-            ]);
+            ->post(self::BATCH_CREATE_URL, $body);
         $this->apiLogger->logRequest(
             'google_photos',
             'POST',
@@ -619,5 +632,90 @@ final class GooglePhotosAdapter implements StorageAdapter, StorageVerifiable
         } while ($pageToken !== null && $pageToken !== '');
 
         return ['items' => $items, 'truncated' => $truncated];
+    }
+
+    private function findOrCreateAlbum(string $accessToken, string $title): string
+    {
+        if (mb_strlen($title) > 500) {
+            throw new InvalidArgumentException('Google Photos album titles may not exceed 500 characters.');
+        }
+
+        $cacheKey = 'gp_album_id:'.md5($this->account->id.':'.$title);
+        $cachedId = Cache::get($cacheKey);
+        if ($cachedId !== null) {
+            return (string) $cachedId;
+        }
+
+        $lock = Cache::lock($cacheKey.':create', 60);
+        $lock->block(10);
+        try {
+            $cachedId = Cache::get($cacheKey);
+            if ($cachedId !== null) {
+                return (string) $cachedId;
+            }
+
+            $endpoint = self::API_BASE.'/albums';
+            $pageToken = null;
+            do {
+                $startedAt = microtime(true);
+                $params = ['pageSize' => 50];
+                if ($pageToken !== null) {
+                    $params['pageToken'] = $pageToken;
+                }
+                $response = Http::withToken($accessToken)->timeout(30)->get($endpoint, $params);
+                $this->apiLogger->logRequest('google_photos', 'GET', $endpoint, $startedAt, $response, null, ['account_id' => $this->account->id]);
+                if (! $response->successful()) {
+                    throw new RuntimeException($this->apiError($response->json(), 'Google Photos album list failed.'));
+                }
+                $payload = $response->json();
+                foreach (is_array($payload['albums'] ?? null) ? $payload['albums'] : [] as $album) {
+                    if (is_array($album) && strcasecmp((string) ($album['title'] ?? ''), $title) === 0) {
+                        $albumId = (string) ($album['id'] ?? '');
+                        if ($albumId !== '') {
+                            Cache::put($cacheKey, $albumId, now()->addHours(24));
+
+                            return $albumId;
+                        }
+                    }
+                }
+                $pageToken = isset($payload['nextPageToken']) ? (string) $payload['nextPageToken'] : null;
+            } while ($pageToken !== null && $pageToken !== '');
+
+            $startedAt = microtime(true);
+            $createResponse = Http::withToken($accessToken)
+                ->timeout(30)
+                ->post($endpoint, [
+                    'album' => [
+                        'title' => $title,
+                    ],
+                ]);
+
+            $this->apiLogger->logRequest(
+                'google_photos',
+                'POST',
+                $endpoint,
+                $startedAt,
+                $createResponse,
+                null,
+                ['account_id' => $this->account->id, 'album_title' => $title]
+            );
+
+            if (! $createResponse->successful()) {
+                throw new RuntimeException($this->apiError($createResponse->json(), "Google Photos failed to create album '{$title}'."));
+            }
+
+            $createdAlbum = $createResponse->json();
+            $albumId = (string) ($createdAlbum['id'] ?? '');
+
+            if ($albumId === '') {
+                throw new RuntimeException("Google Photos album creation response was missing an ID for '{$title}'.");
+            }
+
+            Cache::put($cacheKey, $albumId, now()->addHours(24));
+
+            return $albumId;
+        } finally {
+            $lock->release();
+        }
     }
 }

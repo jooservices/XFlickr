@@ -11,6 +11,8 @@ final class TransferRuntimeConfig
 {
     private const DELETE_LOCAL_AFTER_UPLOAD_PATH = 'xflickr_transfer.delete_local_after_upload';
 
+    private const GP_CREATE_ALBUMS_PATH = 'xflickr_transfer.google_photos_create_albums';
+
     private const TIMEOUT_PATH = 'xflickr_download.timeout_seconds';
 
     private const MIN_TIMEOUT_SECONDS = 30;
@@ -52,6 +54,14 @@ final class TransferRuntimeConfig
         }
 
         return RuntimeConfig::get($path);
+    }
+
+    public function shouldCreateGooglePhotosAlbums(): bool
+    {
+        return (bool) $this->effectiveValue(
+            self::GP_CREATE_ALBUMS_PATH,
+            true,
+        );
     }
 
     private function runtimeAvailable(): bool

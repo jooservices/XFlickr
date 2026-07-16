@@ -69,11 +69,19 @@ final class FileUploadExecutionService
                 (string) $storedFile->source_id,
                 $localPath,
             );
+
+            $batch = $batchId !== null ? $this->batches->findById($batchId) : null;
+            $albumLabel = null;
+            if ($batch !== null && $batch->group_label !== null && $batch->group_label !== '' && $this->transferConfig->shouldCreateGooglePhotosAlbums()) {
+                $albumLabel = $batch->group_label;
+            }
+
             $remoteMetadata = $this->storage->upload(
                 $storageAccountId,
                 new StorageUploadRequest(
                     localPath: Storage::path($localPath),
                     remotePath: $remotePath,
+                    albumLabel: $albumLabel,
                 ),
             )->toArray();
 

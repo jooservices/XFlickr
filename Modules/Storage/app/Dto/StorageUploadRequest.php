@@ -9,5 +9,6 @@ final readonly class StorageUploadRequest
     public function __construct(
         public string $localPath,
         public string $remotePath,
+        public ?string $albumLabel = null,
     ) {}
 }
