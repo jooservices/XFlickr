@@ -1,4 +1,5 @@
 ; xflickr-managed
+; Host mode intentionally runs one app process; use Docker mode when app-level scaling is required.
 [program:xflickr-app]
 command=php artisan serve --host=127.0.0.1 --port=__APP_PORT__
 directory=__PROJECT_ROOT__

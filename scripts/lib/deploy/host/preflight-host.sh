@@ -63,10 +63,12 @@ deploy_preflight_host() {
                 return 1
             fi
         fi
+    elif [[ "$auto_install" == "1" ]]; then
+        echo "ERROR: Automatic prerequisite install supports Ubuntu 22.04 only." >&2
+        echo "Install PHP 8.5+, extensions, Composer, Node 22+, nginx, and supervisor manually." >&2
+        return 1
     fi
 
     deploy_host_check_prereqs || return 1
-
-    chmod +x "${root}/docker/entrypoint-prod.sh" 2>/dev/null || true
     return 0
 }

@@ -14,7 +14,6 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/app-init.sh"
 
 deploy_bootstrap_docker_stack() {
     deploy_prepare_production_app || return 1
-    deploy_app_wait_for_services || return 1
     deploy_finalize_release docker install
 }
 
@@ -37,27 +36,10 @@ xf_wait_for_app_prod() {
 
 deploy_scale_horizon_docker() {
     local count="$1"
-    local root env_file
+    local root
     root="$(xf_script_root)"
-    env_file="${root}/.env"
 
-    if [[ ! -f "$env_file" ]]; then
-        echo "ERROR: .env not found." >&2
-        return 1
-    fi
-
-    if [[ ! "$count" =~ ^[0-9]+$ ]] || [[ "$count" -lt 1 ]]; then
-        echo "ERROR: Replica count must be a positive integer." >&2
-        return 1
-    fi
-
-    if grep -q '^HORIZON_REPLICAS=' "$env_file"; then
-        sed -i.bak "s|^HORIZON_REPLICAS=.*|HORIZON_REPLICAS=${count}|" "$env_file"
-        rm -f "${env_file}.bak"
-    else
-        echo "HORIZON_REPLICAS=${count}" >>"$env_file"
-    fi
-
+    deploy_set_horizon_replicas "$root" "$count" || return 1
     export HORIZON_REPLICAS="$count"
     deploy_finalize_workers_only docker "$count"
 }

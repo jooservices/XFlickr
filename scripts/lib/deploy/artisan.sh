@@ -39,6 +39,7 @@ deploy_artisan_run() {
 deploy_artisan_bash_lc() {
     local mode script
     mode="$(deploy_artisan_mode)"
+    # Callers must pass fixed, reviewed scripts; never pass user-controlled input.
     script="$1"
 
     if [[ "$mode" == "host" ]]; then

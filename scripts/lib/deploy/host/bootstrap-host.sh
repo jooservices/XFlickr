@@ -20,9 +20,6 @@ deploy_bootstrap_host_stack() {
     deploy_app_wait_for_services || return 1
     deploy_host_install_configs "$root" || return 1
 
-    export DEPLOY_ARTISAN_MODE=host
-    export DEPLOY_TARGET=host
-
     deploy_finalize_release host install
 }
 
@@ -41,27 +38,10 @@ deploy_finish_install_host() {
 
 deploy_scale_horizon_host() {
     local count="$1"
-    local root env_file
+    local root
     root="$(xf_script_root)"
-    env_file="${root}/.env"
 
-    if [[ ! -f "$env_file" ]]; then
-        echo "ERROR: .env not found." >&2
-        return 1
-    fi
-
-    if [[ ! "$count" =~ ^[0-9]+$ ]] || [[ "$count" -lt 1 ]]; then
-        echo "ERROR: Replica count must be a positive integer." >&2
-        return 1
-    fi
-
-    if grep -q '^HORIZON_REPLICAS=' "$env_file"; then
-        sed -i.bak "s|^HORIZON_REPLICAS=.*|HORIZON_REPLICAS=${count}|" "$env_file"
-        rm -f "${env_file}.bak"
-    else
-        echo "HORIZON_REPLICAS=${count}" >>"$env_file"
-    fi
-
+    deploy_set_horizon_replicas "$root" "$count" || return 1
     export HORIZON_REPLICAS="$count"
     xf_load_root_env "$root"
     deploy_host_install_configs "$root" || return 1
@@ -69,8 +49,8 @@ deploy_scale_horizon_host() {
 }
 
 deploy_restart_nginx_host() {
-    nginx -t
-    systemctl reload nginx
+    deploy_host_sudo nginx -t
+    deploy_host_sudo systemctl reload nginx
 }
 
 deploy_host_down() {

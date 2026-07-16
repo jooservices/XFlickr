@@ -84,16 +84,16 @@ deploy_host_render_supervisor_conf() {
 deploy_host_install_configs() {
     local root="$1"
 
-    deploy_host_sudo mkdir -p "${DEPLOY_HOST_LOG_DIR}"
-    deploy_host_sudo chown www-data:www-data "${DEPLOY_HOST_LOG_DIR}"
+    deploy_host_sudo mkdir -p "${DEPLOY_HOST_LOG_DIR}" || return 1
+    deploy_host_sudo chown www-data:www-data "${DEPLOY_HOST_LOG_DIR}" || return 1
 
-    deploy_host_render_nginx_site "$root" | deploy_host_sudo tee "${DEPLOY_HOST_NGINX_SITE}" >/dev/null
-    deploy_host_sudo ln -sf "${DEPLOY_HOST_NGINX_SITE}" "${DEPLOY_HOST_NGINX_ENABLED}"
+    deploy_host_render_nginx_site "$root" | deploy_host_sudo tee "${DEPLOY_HOST_NGINX_SITE}" >/dev/null || return 1
+    deploy_host_sudo ln -sf "${DEPLOY_HOST_NGINX_SITE}" "${DEPLOY_HOST_NGINX_ENABLED}" || return 1
     deploy_host_sudo rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
 
-    deploy_host_render_supervisor_conf "$root" | deploy_host_sudo tee "${DEPLOY_HOST_SUPERVISOR_CONF}" >/dev/null
+    deploy_host_render_supervisor_conf "$root" | deploy_host_sudo tee "${DEPLOY_HOST_SUPERVISOR_CONF}" >/dev/null || return 1
 
-    deploy_host_sudo nginx -t
+    deploy_host_sudo nginx -t || return 1
 }
 
 deploy_host_print_urls() {

@@ -111,8 +111,11 @@ deploy_verify_web() {
     fi
 
     if [[ "${SSL_ENABLED:-false}" == "true" ]] && [[ -f "${SSL_CERT_PATH:-}/cert.pem" ]]; then
-        local https_port="${HTTPS_PORT:-443}"
-        if curl -kfsS "https://127.0.0.1:${https_port}/login" >/dev/null 2>&1; then
+        local https_port="${HTTPS_PORT:-443}" https_url
+        https_url="${APP_URL:-https://127.0.0.1}"
+        https_url="https://${https_url#*://}"
+        if curl --cacert "${SSL_CERT_PATH}/cert.pem" --connect-to "::127.0.0.1:${https_port}" \
+            -fsS "${https_url%/}/login" >/dev/null 2>&1; then
             echo "  ✓ HTTPS login page ready (port ${https_port})"
         else
             echo "  ✗ HTTPS login page not reachable on port ${https_port}" >&2

@@ -54,12 +54,34 @@ deploy_prompt_target() {
         value="${value:-1}"
     fi
 
-    case "$value" in
-        2|host|Host|HOST)
-            echo "$DEPLOY_TARGET_HOST"
+    while true; do
+        case "$value" in
+            1|docker|Docker|DOCKER)
+                echo "$DEPLOY_TARGET_DOCKER"
+                return 0
+                ;;
+            2|host|Host|HOST)
+                echo "$DEPLOY_TARGET_HOST"
+                return 0
+                ;;
+            *)
+                echo "Invalid deploy target. Choose 1 (Docker) or 2 (Host)." >&2
+                read -r -p "Choose [1/2]: " value
+                ;;
+        esac
+    done
+}
+
+deploy_validate_mode() {
+    local mode="$1"
+
+    case "$mode" in
+        "$DEPLOY_TARGET_DOCKER"|"$DEPLOY_TARGET_HOST")
+            echo "$mode"
             ;;
         *)
-            echo "$DEPLOY_TARGET_DOCKER"
+            echo "ERROR: Invalid DEPLOY_TARGET '${mode}'. Expected docker or host." >&2
+            return 1
             ;;
     esac
 }
@@ -71,19 +93,19 @@ deploy_resolve_mode() {
 
     mode="$(deploy_mode_from_env_file "$root")"
     if [[ -n "$mode" ]]; then
-        echo "$mode"
-        return 0
+        deploy_validate_mode "$mode"
+        return $?
     fi
 
     mode="$(deploy_mode_from_wizard_state "$root")"
     if [[ -n "$mode" ]]; then
-        echo "$mode"
-        return 0
+        deploy_validate_mode "$mode"
+        return $?
     fi
 
     if [[ "${DEPLOY_TARGET:-}" != "" ]]; then
-        echo "${DEPLOY_TARGET}"
-        return 0
+        deploy_validate_mode "${DEPLOY_TARGET}"
+        return $?
     fi
 
     if [[ "$prompt_if_missing" == "1" ]]; then
@@ -102,6 +124,20 @@ deploy_resolve_mode() {
     fi
 }
 
+deploy_command_needs_target_prompt() {
+    local root="$1"
+    local command_name="${2:-deploy}"
+
+    case "$command_name" in
+        deploy|install|"") ;;
+        *) return 1 ;;
+    esac
+
+    [[ -z "$(deploy_mode_from_env_file "$root")" ]] \
+        && [[ -z "$(deploy_mode_from_wizard_state "$root")" ]] \
+        && [[ -z "${DEPLOY_TARGET:-}" ]]
+}
+
 deploy_assert_mode_consistent() {
     local root="$1"
     local mode="$2"
@@ -118,7 +154,7 @@ deploy_assert_mode_consistent() {
         return 0
     fi
 
-    containers="$(docker compose -f docker-compose.prod.yml -p xflickr-prod ps -a -q 2>/dev/null | wc -l | tr -d ' ' || echo 0)"
+    containers="$(deploy_prod_container_count)"
     if [[ "${containers:-0}" -gt 0 ]]; then
         echo "ERROR: Docker production containers exist but DEPLOY_TARGET=host." >&2
         echo "Run: bash scripts/deploy.sh down   then reinstall with host target." >&2

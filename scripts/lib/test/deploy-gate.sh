@@ -39,8 +39,6 @@ test_deploy_gate_in_container() {
     docker run --rm -v "${root}:/app" -w /app "$image" bash -lc '
         set -u
         set -o pipefail
-        apt-get update -qq
-        apt-get install -y -qq shellcheck >/dev/null
         while IFS= read -r file; do
             shellcheck -S error -x "$file" || exit 1
         done < <(find /app/scripts/deploy.sh /app/scripts/lib/deploy -name "*.sh" -type f | sort)
@@ -51,7 +49,7 @@ test_deploy_gate_in_container() {
 test_gate_deploy_scripts() {
     local root
     root="$(xf_script_root)"
-    cd "$root"
+    cd "$root" || return 1
 
     printf 'XFlickr deploy-scripts gate (Ubuntu 22.04 container)\n'
 

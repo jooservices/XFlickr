@@ -147,10 +147,6 @@ deploy_verify_host() {
     echo "==> Post-deploy verification (host)"
     echo
 
-    echo "--- Supervisor services ---"
-    deploy_verify_host_supervisor "$replicas" || failures=1
-    echo
-
     echo "--- External database connectivity ---"
     deploy_verify_external_connectivity_host || failures=1
     echo

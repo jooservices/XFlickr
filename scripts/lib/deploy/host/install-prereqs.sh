@@ -28,29 +28,29 @@ deploy_host_install_prereqs() {
     fi
 
     echo "==> Installing host prerequisites (Ubuntu 22.04)"
-    deploy_host_sudo apt-get update -qq
+    deploy_host_sudo apt-get update -qq || return 1
     deploy_host_sudo apt-get install -y -qq \
-        ca-certificates curl git gnupg lsb-release software-properties-common unzip
+        ca-certificates curl git gnupg lsb-release software-properties-common unzip || return 1
 
     if ! apt-cache show php8.5-cli >/dev/null 2>&1; then
-        deploy_host_sudo add-apt-repository -y ppa:ondrej/php
-        deploy_host_sudo apt-get update -qq
+        deploy_host_sudo add-apt-repository -y ppa:ondrej/php || return 1
+        deploy_host_sudo apt-get update -qq || return 1
     fi
 
     deploy_host_sudo apt-get install -y -qq \
         php8.5-cli php8.5-bcmath php8.5-curl php8.5-intl php8.5-mbstring \
         php8.5-mysql php8.5-xml php8.5-zip php8.5-redis php8.5-mongodb \
-        nginx supervisor
+        nginx supervisor || return 1
 
     if ! command -v composer >/dev/null 2>&1; then
-        curl -fsSL https://getcomposer.org/installer | php
-        deploy_host_sudo mv composer.phar /usr/local/bin/composer
-        deploy_host_sudo chmod +x /usr/local/bin/composer
+        curl -fsSL https://getcomposer.org/installer | php || return 1
+        deploy_host_sudo mv composer.phar /usr/local/bin/composer || return 1
+        deploy_host_sudo chmod +x /usr/local/bin/composer || return 1
     fi
 
     if ! command -v node >/dev/null 2>&1; then
-        curl -fsSL https://deb.nodesource.com/setup_22.x | deploy_host_sudo bash -
-        deploy_host_sudo apt-get install -y -qq nodejs
+        curl -fsSL https://deb.nodesource.com/setup_22.x | deploy_host_sudo bash - || return 1
+        deploy_host_sudo apt-get install -y -qq nodejs || return 1
     fi
 
     echo "✓ Host prerequisites installed"

@@ -146,10 +146,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Photoset detail page (`/photosets/{id}`): metadata header and member photo grid; list thumbnails link to detail only.
 - Catalog photos API accepts `photoset_id` to list photos in a set; `GET /api/flickr/catalog/photosets/{id}` returns set metadata.
 
-- `bash scripts/dev.sh reload` syncs npm dependencies in the app container when `package-lock.json` changes before building assets. choose **Docker** or **host** (`DEPLOY_TARGET` in `.env`) at `bash scripts/deploy.sh install`.
+- `bash scripts/dev.sh reload` syncs npm dependencies in the app container when `package-lock.json` changes before building assets.
+- Dual-mode production deploy: choose **Docker** or **host** (`DEPLOY_TARGET` in `.env`) at `bash scripts/deploy.sh install`.
 - Host deploy for Ubuntu 22.04: auto-install PHP 8.5+, Composer, Node, nginx, supervisor; nginx → `artisan serve`; supervisor for Horizon and scheduler.
 - Shared release finalize pipeline: migrate, cache clear/recache, `horizon:terminate`, service restart, and verify-before-complete for all install/update paths.
 - `bash scripts/test.sh gate:deploy-scripts` — deploy shell tests in Ubuntu 22.04 Docker harness (CI job on `ubuntu-22.04`).
+- `bash scripts/deploy.sh finish` — complete production install from an existing `.env` without re-running the wizard (installs Composer/npm assets, then starts the stack).
 
 ### Changed
 
@@ -163,10 +165,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Expand** actions on Settings Flickr account cards: **Auto-expand (Spider)** and **Full contact pass** with confirmation modals and preview API (`full_pass.max_depth` runtime config, default 1).
 - Settings getting-started banner: dismissible with remembered preference (`localStorage`).
 - Production deploy refactor: `app-init.sh`, `app-release.sh`, `finalize.sh`, mode-specific bootstrap/update/verify modules.
-
-### Added
-
-- `bash scripts/deploy.sh finish` — complete production install from an existing `.env` without re-running the wizard (installs Composer/npm assets, then starts the stack).
 
 ### Fixed
 

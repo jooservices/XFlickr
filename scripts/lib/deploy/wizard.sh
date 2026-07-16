@@ -366,7 +366,7 @@ deploy_wizard_run() {
     if [[ "$mode" == "install" ]]; then
         if [[ -d "${root}/.git" ]]; then
             if deploy_prompt_yes_no "Run git pull before install?" "y"; then
-                git -C "$root" pull --ff-only
+                git -C "$root" pull --ff-only || return 1
             fi
         else
             echo "Not a git repository — skipping git pull."

@@ -16,7 +16,7 @@ deploy_update_docker_stack() {
 
     if [[ -d "${root}/.git" ]]; then
         echo "==> git pull"
-        git -C "$root" pull --ff-only
+        git -C "$root" pull --ff-only || return 1
     fi
 
     deploy_prepare_production_app || return 1

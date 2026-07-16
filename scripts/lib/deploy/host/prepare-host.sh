@@ -6,7 +6,7 @@ set -o pipefail
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/install-prereqs.sh"
 # shellcheck disable=SC1091
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/common.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/common.sh"
 
 deploy_prepare_host_app() {
     local root
@@ -17,7 +17,7 @@ deploy_prepare_host_app() {
         return 1
     fi
 
-    cd "$root"
+    cd "$root" || return 1
 
     echo "==> Installing PHP dependencies from Packagist and building frontend assets"
     if [[ -d vendor ]] && [[ ! -f vendor/autoload.php ]]; then
@@ -25,9 +25,9 @@ deploy_prepare_host_app() {
         rm -rf vendor
     fi
 
-    composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
-    npm ci --no-audit --no-fund
-    npm run build
+    composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader || return 1
+    npm ci --no-audit --no-fund || return 1
+    npm run build || return 1
 
     if [[ -d storage ]]; then
         deploy_host_sudo chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true

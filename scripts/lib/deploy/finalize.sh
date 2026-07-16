@@ -21,13 +21,13 @@ deploy_finalize_restart_docker_services() {
 
     if [[ "$context" == "install" ]]; then
         echo "==> Starting production stack (horizon replicas: ${replicas})"
-        xf_prod_compose up -d --build --scale "horizon=${replicas}" app horizon scheduler reverb nginx
+        xf_prod_compose up -d --build --scale "horizon=${replicas}" app horizon scheduler reverb nginx || return 1
     else
         echo "==> Restarting containers (rolling — data volumes preserved)"
-        xf_prod_compose up -d --build --scale "horizon=${replicas}" app horizon scheduler reverb nginx
+        xf_prod_compose up -d --build --scale "horizon=${replicas}" app horizon scheduler reverb nginx || return 1
     fi
 
-    xf_prod_compose ps
+    xf_prod_compose ps || return 1
 }
 
 deploy_finalize_restart_host_services() {
@@ -40,10 +40,11 @@ deploy_finalize_restart_host_services() {
 
     supervisorctl restart xflickr-app xflickr-horizon xflickr-scheduler >/dev/null 2>&1 \
         || supervisorctl start xflickr-app xflickr-horizon xflickr-scheduler >/dev/null 2>&1 \
-        || true
+        || return 1
 
     if command -v nginx >/dev/null 2>&1; then
-        nginx -t >/dev/null 2>&1 && systemctl reload nginx >/dev/null 2>&1 || true
+        nginx -t >/dev/null 2>&1 || return 1
+        systemctl reload nginx >/dev/null 2>&1 || return 1
     fi
 }
 
@@ -109,7 +110,7 @@ deploy_finalize_workers_only() {
     deploy_app_graceful_worker_shutdown || true
 
     if [[ "$mode" == "host" ]]; then
-        supervisorctl restart xflickr-horizon >/dev/null 2>&1 || true
+        supervisorctl restart xflickr-horizon >/dev/null 2>&1 || return 1
         # shellcheck disable=SC1091
         source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/host/verify-host.sh"
         deploy_verify_horizon_workers_host "$replicas" || failures=1

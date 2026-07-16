@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Deploy script test harness — runs inside ubuntu:22.04 container.
-set -u
+set -eu
 set -o pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
-cd "$ROOT"
+cd "$ROOT" || exit 1
 export ROOT
 
 TESTS_DIR="${ROOT}/scripts/lib/test/deploy/tests"

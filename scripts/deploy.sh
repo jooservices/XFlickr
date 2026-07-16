@@ -71,7 +71,20 @@ deploy_verify_for_mode() {
 cmd="${1:-deploy}"
 shift || true
 
-DEPLOY_MODE="$(deploy_resolve_mode "$ROOT")"
+case "$cmd" in
+    -h|--help|help)
+        usage
+        exit 0
+        ;;
+esac
+
+if deploy_command_needs_target_prompt "$ROOT" "$cmd"; then
+    DEPLOY_MODE="$(deploy_resolve_mode "$ROOT" 1)"
+    export DEPLOY_TARGET="$DEPLOY_MODE"
+else
+    DEPLOY_MODE="$(deploy_resolve_mode "$ROOT")"
+fi
+
 deploy_preflight "$ROOT" "$DEPLOY_MODE" || exit 1
 
 case "$cmd" in
@@ -157,9 +170,6 @@ case "$cmd" in
             echo "Stopping production stack (containers only — volumes and external databases are kept)."
             xf_prod_compose down
         fi
-        ;;
-    -h|--help|help)
-        usage
         ;;
     *)
         echo "Unknown command: ${cmd}" >&2

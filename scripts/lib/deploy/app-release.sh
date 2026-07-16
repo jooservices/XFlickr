@@ -15,14 +15,16 @@ deploy_app_migrate() {
 
 deploy_app_optimize_refresh() {
     echo "==> Clearing Laravel caches"
-    deploy_artisan_bash_lc 'php artisan config:clear --no-interaction
+    deploy_artisan_bash_lc 'set -e
+php artisan config:clear --no-interaction
 php artisan route:clear --no-interaction
 php artisan view:clear --no-interaction
 php artisan cache:clear --no-interaction
 php artisan optimize:clear --no-interaction'
 
     echo "==> Rebuilding Laravel caches"
-    deploy_artisan_bash_lc 'php artisan config:cache --no-interaction
+    deploy_artisan_bash_lc 'set -e
+php artisan config:cache --no-interaction
 php artisan route:cache --no-interaction
 php artisan view:cache --no-interaction'
 }
