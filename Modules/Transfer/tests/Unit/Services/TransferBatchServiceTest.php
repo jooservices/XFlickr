@@ -263,4 +263,81 @@ final class TransferBatchServiceTest extends TestCase
             $this->assertSame(0, TransferItem::query()->count());
         }
     }
+
+    public function test_retry_failed_items_processes_in_bulk(): void
+    {
+        Queue::fake();
+        Event::fake();
+
+        $batch = TransferBatch::factory()->create([
+            'connection_key' => 'connection-a',
+            'subject_nsid' => 'subject@N01',
+            'type' => 'download',
+            'status' => TransferBatchStatus::Failed->value,
+            'total_count' => 2,
+            'failed_count' => 2,
+        ]);
+
+        $item1 = TransferItem::factory()->create([
+            'transfer_batch_id' => $batch->id,
+            'source_id' => 'photo-retry-1',
+            'status' => TransferItemStatus::Failed->value,
+        ]);
+        $item2 = TransferItem::factory()->create([
+            'transfer_batch_id' => $batch->id,
+            'source_id' => 'photo-retry-2',
+            'status' => TransferItemStatus::Failed->value,
+        ]);
+
+        StoredFile::factory()->create([
+            'source_type' => 'flickr_photo',
+            'source_id' => 'photo-retry-1',
+            'source_owner' => 'subject@N01',
+            'variant' => 'original',
+        ]);
+
+        StoredFile::factory()->create([
+            'source_type' => 'flickr_photo',
+            'source_id' => 'photo-retry-2',
+            'source_owner' => 'subject@N01',
+            'variant' => 'original',
+        ]);
+
+        $result = app(TransferBatchService::class)->retryFailedItems('connection-a', $batch);
+
+        $this->assertSame(2, $result->queued);
+        $this->assertEmpty($result->skipped);
+        $this->assertSame(TransferItemStatus::Pending->value, $item1->refresh()->status);
+        $this->assertSame(TransferItemStatus::Pending->value, $item2->refresh()->status);
+        Queue::assertPushed(DownloadFileJob::class, 2);
+    }
+
+    public function test_retry_failed_items_validates_connection_and_handles_skips(): void
+    {
+        $batch = TransferBatch::factory()->create([
+            'connection_key' => 'connection-a',
+            'type' => 'upload',
+            'status' => TransferBatchStatus::Failed->value,
+        ]);
+
+        TransferItem::factory()->create([
+            'transfer_batch_id' => $batch->id,
+            'source_id' => 'missing-file',
+            'status' => TransferItemStatus::Failed->value,
+        ]);
+
+        $service = app(TransferBatchService::class);
+
+        try {
+            $service->retryFailedItems('other-connection', $batch);
+            $this->fail('Expected a not-found response.');
+        } catch (NotFoundHttpException $exception) {
+            $this->assertSame(404, $exception->getStatusCode());
+        }
+
+        $result = $service->retryFailedItems('connection-a', $batch);
+        $this->assertSame(0, $result->queued);
+        $this->assertCount(1, $result->skipped);
+        $this->assertSame('missing-file', $result->skipped[0]['source_id']);
+    }
 }
