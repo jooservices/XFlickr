@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Modules\Transfer\Tests\Unit\Services;
 
+use Database\Factories\Crawler\PhotoFactory;
 use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
-use Modules\Crawler\Models\Photo;
 use Modules\Transfer\Enums\StoredFileStatus;
 use Modules\Transfer\Enums\TransferExecutionOutcome;
 use Modules\Transfer\Enums\TransferItemStatus;
@@ -90,7 +90,7 @@ final class FileDownloadServiceTest extends TestCase
         Cache::flush();
         $connection = $this->createFlickrConnection(['connection_key' => 'connection-a']);
         $sourceId = 'photo-download';
-        Photo::query()->create([
+        PhotoFactory::new()->create([
             'flickr_photo_id' => $sourceId,
             'owner_nsid' => 'owner@N01',
             'raw_payload' => [
@@ -136,7 +136,7 @@ final class FileDownloadServiceTest extends TestCase
         Cache::flush();
         $connection = $this->createFlickrConnection(['connection_key' => 'connection-a']);
         $sourceId = 'photo-http-failure';
-        Photo::query()->create([
+        PhotoFactory::new()->create([
             'flickr_photo_id' => $sourceId,
             'owner_nsid' => 'owner@N01',
             'raw_payload' => [

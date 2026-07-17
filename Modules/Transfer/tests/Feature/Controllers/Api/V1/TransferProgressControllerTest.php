@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Modules\Transfer\Tests\Feature\Controllers\Api\V1;
 
 use Database\Factories\Crawler\PhotoFactory;
-use Modules\Crawler\Models\Photo;
 use Modules\Transfer\Models\TransferBatch;
 use Modules\Transfer\Models\TransferItem;
 use Modules\Transfer\Tests\TestCase;
@@ -44,13 +43,13 @@ final class TransferProgressControllerTest extends TestCase
     public function test_show_includes_catalog_photo_for_a_transfer_item(): void
     {
         $connection = $this->createFlickrConnection();
-        $photo = Photo::query()->create(array_merge(PhotoFactory::new()->definition(), [
+        $photo = PhotoFactory::new()->create([
             'flickr_photo_id' => 'photo-in-history',
             'owner_nsid' => 'owner@N01',
             'title' => 'Photo in transfer history',
             'secret' => 'secret123',
             'server' => '1234',
-        ]));
+        ]);
         $batch = TransferBatch::factory()->create([
             'connection_key' => $connection->connection_key,
             'total_count' => 1,
@@ -75,10 +74,10 @@ final class TransferProgressControllerTest extends TestCase
     public function test_item_index_returns_photo_transfer_history_rows(): void
     {
         $connection = $this->createFlickrConnection();
-        $photo = Photo::query()->create(array_merge(PhotoFactory::new()->definition(), [
+        $photo = PhotoFactory::new()->create([
             'flickr_photo_id' => 'photo-history-row',
             'owner_nsid' => 'owner@N02',
-        ]));
+        ]);
         $batch = TransferBatch::factory()->create([
             'connection_key' => $connection->connection_key,
             'type' => 'upload',

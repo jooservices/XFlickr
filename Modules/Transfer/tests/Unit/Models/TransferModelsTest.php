@@ -18,13 +18,15 @@ final class TransferModelsTest extends TestCase
 {
     public function test_stored_file_boot_scopes_and_upload_relationship(): void
     {
-        $file = StoredFile::query()->create([
+        $file = StoredFile::factory()->create([
+            'uuid' => null,
             'source_type' => 'flickr_photo',
             'source_id' => 'photo-model',
             'source_owner' => 'owner@N01',
             'variant' => 'original',
             'original_name' => 'photo-model.jpg',
             'status' => StoredFileStatus::Completed->value,
+            'dedup_key' => null,
         ]);
         $account = StorageAccount::factory()->googleDrive()->create();
         $upload = StorageUpload::factory()->create([
