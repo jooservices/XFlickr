@@ -112,6 +112,8 @@ describe('SidebarActivityPanel', () => {
         expect(screen.getByText('Download')).toBeTruthy();
         expect(screen.getByText('5/20')).toBeTruthy();
         expect(screen.getByText('1')).toBeTruthy();
+        expect(screen.getByText(/Batch #12/)).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'Trace activity' })).toBeTruthy();
         expect(screen.queryByText('Fetch')).toBeNull();
         expect(screen.getByRole('link', { name: 'View Operations' })).toBeTruthy();
     });

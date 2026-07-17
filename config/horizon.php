@@ -200,7 +200,7 @@ return [
     'defaults' => [
         'supervisor-1' => [
             'connection' => 'redis',
-            'queue' => ['default', 'xflickr', 'xflickr-downloads', 'xflickr-uploads'],
+            'queue' => ['default', 'logging', 'xflickr', 'xflickr-downloads', 'xflickr-uploads'],
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
             'maxProcesses' => 1,
@@ -249,7 +249,7 @@ return [
         'local' => [
             'supervisor-1' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'xflickr', 'xflickr-downloads', 'xflickr-uploads'],
+                'queue' => ['default', 'logging', 'xflickr', 'xflickr-downloads', 'xflickr-uploads'],
                 'balance' => 'simple',
                 'maxProcesses' => 3,
                 'tries' => 1,

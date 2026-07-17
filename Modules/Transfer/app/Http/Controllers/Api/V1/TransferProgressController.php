@@ -67,8 +67,12 @@ final class TransferProgressController extends BaseApiController
 
     public function retryBatch(Connection $connection, TransferBatch $batch): JsonResponse
     {
-        $count = $this->transfers->retryFailedItems($connection->connection_key, $batch);
+        $result = $this->transfers->retryFailedItems($connection->connection_key, $batch);
 
-        return $this->accepted(['count' => $count], "Queued {$count} failed item(s) for retry.");
+        return $this->accepted([
+            'count' => $result->queued,
+            'queued_count' => $result->queued,
+            'skipped' => $result->skipped,
+        ], "Queued {$result->queued} failed item(s) for retry.");
     }
 }

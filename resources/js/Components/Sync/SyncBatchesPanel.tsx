@@ -9,7 +9,7 @@ import PageSection from '@/Components/ui/PageSection';
 import StatusBadge from '@/Components/ui/StatusBadge';
 import Thumbnail from '@/Components/ui/Thumbnail';
 import { usePolledResource } from '@/hooks/usePolledResource';
-import { apiPost } from '@/lib/apiClient';
+import { apiGet, apiPost } from '@/lib/apiClient';
 import { downloadGroupLabel } from '@/lib/crawlOperations';
 import { flickrPhotoGridUrl } from '@/lib/flickrPhoto';
 import type { FlickrAccount, PaginatedMeta, Photo, TransferBatch, TransferHistoryItem } from '@/types';
@@ -35,6 +35,33 @@ export default function SyncBatchesPanel({ accounts }: SyncBatchesPanelProps) {
     useEffect(() => {
         setPage(1);
     }, [selectedAccount, type, status]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const batchId = Number(params.get('batch_id') ?? '');
+        const accountPublicId = params.get('account');
+
+        if (!Number.isFinite(batchId) || batchId <= 0 || !accountPublicId) {
+            return;
+        }
+
+        setSelectedAccount(accountPublicId);
+        void apiGet<{ data: { batch: TransferBatch } }>(
+            `/api/v1/flickr/accounts/${accountPublicId}/transfers/${batchId}`,
+        )
+            .then((response) => {
+                if (response.data?.batch) {
+                    setSelectedBatch(response.data.batch);
+                }
+            })
+            .catch(() => {
+                // Deep-link batch may have been pruned; ignore.
+            });
+    }, []);
 
     const listUrl = useMemo(() => {
         if (!selectedAccount) {

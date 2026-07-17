@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Modules\Transfer\Enums\IntegrityAnomalyType;
 use Modules\Transfer\Enums\IntegrityResolution;
+use Modules\Transfer\Enums\IntegrityScanStatus;
 use Modules\Transfer\Enums\StoredFileStatus;
 use Modules\Transfer\Jobs\RunIntegrityScanJob;
 use Modules\Transfer\Models\IntegrityScan;
@@ -27,7 +28,14 @@ final class IntegrityScanService
 
     public function startScan(): IntegrityScan
     {
-        $scan = DB::transaction(fn (): IntegrityScan => $this->scans->createPending('local'));
+        $scan = DB::transaction(function (): IntegrityScan {
+            return $this->scans->findActiveForDisk('local') ?? $this->scans->createPending('local');
+        });
+
+        if ($scan->status !== IntegrityScanStatus::Pending) {
+            return $scan;
+        }
+
         RunIntegrityScanJob::dispatch($scan->id)->afterCommit();
 
         return $scan;

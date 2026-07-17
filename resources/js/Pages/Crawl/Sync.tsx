@@ -57,6 +57,11 @@ function SyncPageBody() {
                 />
 
                 <PageShellCanvas className="space-y-6" variant="plain">
+                    {integrity.error !== null && (
+                        <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800" role="alert">
+                            {integrity.error}
+                        </div>
+                    )}
                     <SyncIntegritySummary
                         report={integrity.report}
                         loading={integrity.loading}

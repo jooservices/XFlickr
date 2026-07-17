@@ -14,6 +14,7 @@ final class TransferBatchReconciler
     public function __construct(
         private readonly TransferBatchRepository $batches,
         private readonly TransferItemRepository $items,
+        private readonly TransferObservability $observability,
     ) {}
 
     public function reconcile(TransferBatch|int|null $batch): void
@@ -23,11 +24,23 @@ final class TransferBatchReconciler
         }
 
         $batchId = $batch instanceof TransferBatch ? $batch->id : $batch;
+        $existing = $batch instanceof TransferBatch ? $batch : $this->batches->findById($batchId);
+        $previousStatus = $existing !== null ? (string) $existing->status : null;
 
         $reconciled = $this->batches->reconcile($batchId);
 
         if ($reconciled === null) {
             return;
+        }
+
+        $openCounts = $this->items->countOpenGroupedByBatchIds([$batchId]);
+        $open = $openCounts[$batchId] ?? ['pending' => 0, 'processing' => 0];
+
+        if ($previousStatus !== null && $previousStatus !== $reconciled['status'] && $existing !== null) {
+            $existing->status = $reconciled['status'];
+            $existing->completed_count = $reconciled['completedCount'];
+            $existing->failed_count = $reconciled['failedCount'];
+            $this->observability->batchStatusChanged($existing, $previousStatus, $reconciled['status']);
         }
 
         event(new TransferBatchReconciled(
@@ -45,11 +58,19 @@ final class TransferBatchReconciler
             groupLabel: $reconciled['groupLabel'],
             storageAccountId: $reconciled['storageAccountId'],
             updatedAt: $reconciled['updatedAt'],
+            pendingCount: $open['pending'],
+            processingCount: $open['processing'],
         ));
     }
 
     public function sampleError(int $batchId): ?string
     {
         return $this->items->latestErrorMessage($batchId);
+    }
+
+    /** @param list<int> $batchIds @return array<int, string> */
+    public function sampleErrors(array $batchIds): array
+    {
+        return $this->items->latestErrorsByBatchIds($batchIds);
     }
 }

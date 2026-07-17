@@ -6,7 +6,11 @@ import type {
     TransferBatch,
 } from '@/types';
 
-export type DownloadTransferBatch = TransferBatch & { sample_error?: string | null };
+export type DownloadTransferBatch = TransferBatch & {
+    sample_error?: string | null;
+    pending_count?: number;
+    processing_count?: number;
+};
 
 export type OperationsStreamState = {
     overview: OperationsOverviewTotals;
@@ -105,6 +109,24 @@ export function applySnapshot(
     };
 }
 
+function isNewerBatchPatch<T extends TransferBatch>(current: T, next: T): boolean {
+    const currentAt = current.updated_at ? Date.parse(current.updated_at) : 0;
+    const nextAt = next.updated_at ? Date.parse(next.updated_at) : Number.NaN;
+
+    if (Number.isFinite(nextAt) && nextAt > 0) {
+        if (!Number.isFinite(currentAt) || currentAt <= 0) {
+            return true;
+        }
+
+        return nextAt >= currentAt;
+    }
+
+    const currentDone = current.completed_count + current.failed_count;
+    const nextDone = next.completed_count + next.failed_count;
+
+    return nextDone >= currentDone;
+}
+
 function upsertBatch<T extends TransferBatch>(
     rows: T[],
     batch: TransferBatch & { sample_error?: string | null },
@@ -116,9 +138,7 @@ function upsertBatch<T extends TransferBatch>(
     }
 
     const current = rows[index];
-    const currentDone = current.completed_count + current.failed_count;
-    const nextDone = next.completed_count + next.failed_count;
-    if (nextDone < currentDone) {
+    if (!isNewerBatchPatch(current, next)) {
         return rows;
     }
 

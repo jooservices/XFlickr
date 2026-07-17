@@ -282,6 +282,9 @@ export interface TransferBatch {
     failed_count: number;
     created_at: string | null;
     updated_at: string | null;
+    sample_error?: string | null;
+    pending_count?: number;
+    processing_count?: number;
 }
 
 export interface TransferItem {

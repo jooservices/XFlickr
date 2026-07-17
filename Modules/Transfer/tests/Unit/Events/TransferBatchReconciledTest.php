@@ -63,6 +63,8 @@ final class TransferBatchReconciledTest extends TestCase
         $this->assertNull($event->groupLabel);
         $this->assertNull($event->storageAccountId);
         $this->assertNull($event->updatedAt);
+        $this->assertSame(0, $event->pendingCount);
+        $this->assertSame(0, $event->processingCount);
     }
 
     public function test_optional_properties_can_be_set(): void

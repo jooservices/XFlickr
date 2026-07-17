@@ -21,6 +21,13 @@ type ActivityRow = {
     detail: string;
     value: number;
     max: number;
+    batchId?: number;
+    runId?: number;
+    connectionKey?: string;
+    accountPublicId?: string;
+    pendingCount?: number;
+    processingCount?: number;
+    sampleError?: string | null;
 };
 
 interface SidebarActivityPanelProps {
@@ -36,6 +43,17 @@ function isLiveStatus(status: string): boolean {
     return status === LIVE_STATUS;
 }
 
+function activityTraceHref(correlationId: string, actionPrefix: string): string {
+    const params = new URLSearchParams({
+        type: 'domain',
+        action_prefix: actionPrefix,
+        correlation_id: correlationId,
+        from: '',
+    });
+
+    return `/activity?${params.toString()}`;
+}
+
 function buildActivityRows(
     fetchRuns: CrawlRun[],
     downloadBatches: DownloadTransferBatch[],
@@ -48,6 +66,7 @@ function buildActivityRows(
         const account = accountByNsid[batch.connection_key];
         const processed = batch.completed_count + batch.failed_count;
         const max = Math.max(batch.total_count, processed, 1);
+        const pendingCount = batch.pending_count ?? Math.max(batch.total_count - processed, 0);
 
         rows.push({
             key: `download-${batch.id}`,
@@ -56,6 +75,12 @@ function buildActivityRows(
             detail: `${accountLabel(account)} · ${downloadGroupLabel(batch)}`,
             value: processed,
             max,
+            batchId: batch.id,
+            connectionKey: batch.connection_key,
+            accountPublicId: account?.public_id,
+            pendingCount,
+            processingCount: batch.processing_count ?? 0,
+            sampleError: batch.sample_error ?? null,
         });
     }
 
@@ -63,6 +88,7 @@ function buildActivityRows(
         const account = accountByNsid[batch.connection_key];
         const processed = batch.completed_count + batch.failed_count;
         const max = Math.max(batch.total_count, processed, 1);
+        const pendingCount = batch.pending_count ?? Math.max(batch.total_count - processed, 0);
 
         rows.push({
             key: `upload-${batch.id}`,
@@ -71,6 +97,12 @@ function buildActivityRows(
             detail: accountLabel(account),
             value: processed,
             max,
+            batchId: batch.id,
+            connectionKey: batch.connection_key,
+            accountPublicId: account?.public_id,
+            pendingCount,
+            processingCount: batch.processing_count ?? 0,
+            sampleError: batch.sample_error ?? null,
         });
     }
 
@@ -86,6 +118,8 @@ function buildActivityRows(
             detail: `${accountLabel(account)} · ${run.crawl_type}${run.subject_nsid ? ` · ${run.subject_nsid}` : ''}`,
             value: discovered,
             max,
+            runId: run.id,
+            connectionKey: run.connection_key,
         });
     }
 
@@ -102,6 +136,22 @@ function ActivityIcon({ kind }: { kind: ActivityRow['kind'] }) {
     }
 
     return <RefreshCw className="h-3.5 w-3.5 shrink-0 text-cyan-600" aria-hidden />;
+}
+
+function openItemLabel(row: ActivityRow): string | null {
+    if ((row.pendingCount ?? 0) <= 0 && (row.processingCount ?? 0) <= 0) {
+        return null;
+    }
+
+    const parts: string[] = [];
+    if ((row.pendingCount ?? 0) > 0) {
+        parts.push(`${row.pendingCount} pending`);
+    }
+    if ((row.processingCount ?? 0) > 0) {
+        parts.push(`${row.processingCount} processing`);
+    }
+
+    return parts.join(' · ');
 }
 
 export default function SidebarActivityPanel({
@@ -149,23 +199,61 @@ export default function SidebarActivityPanel({
 
             {rows.length > 0 ? (
                 <ul className="mt-2 space-y-2">
-                    {rows.map((row) => (
-                        <li key={row.key} className="rounded-md py-0.5">
-                            <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
-                                <ActivityIcon kind={row.kind} />
-                                <span>{row.label}</span>
-                                <span className="ml-auto tabular-nums text-slate-500">
-                                    {row.value}/{row.max}
-                                </span>
-                            </div>
-                            <p className="mt-0.5 truncate pl-5 text-[11px] text-slate-500" title={row.detail}>
-                                {row.detail}
-                            </p>
-                            <div className="mt-1 pl-5">
-                                <ProgressBar value={row.value} max={row.max} showLabel={false} className="[&>div]:h-1.5" />
-                            </div>
-                        </li>
-                    ))}
+                    {rows.map((row) => {
+                        const openLabel = openItemLabel(row);
+                        const traceHref =
+                            row.batchId !== undefined
+                                ? activityTraceHref(String(row.batchId), 'transfer.')
+                                : row.runId !== undefined
+                                  ? activityTraceHref(String(row.runId), 'crawler.')
+                                  : null;
+                        const syncHref =
+                            row.batchId !== undefined && row.accountPublicId
+                                ? `/sync?batch_id=${row.batchId}&account=${encodeURIComponent(row.accountPublicId)}`
+                                : null;
+
+                        return (
+                            <li key={row.key} className="rounded-md py-0.5">
+                                <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
+                                    <ActivityIcon kind={row.kind} />
+                                    <span>{row.label}</span>
+                                    <span className="ml-auto tabular-nums text-slate-500">
+                                        {row.value}/{row.max}
+                                    </span>
+                                </div>
+                                <p className="mt-0.5 truncate pl-5 text-[11px] text-slate-500" title={row.detail}>
+                                    {row.batchId !== undefined ? `Batch #${row.batchId} · ` : null}
+                                    {row.runId !== undefined ? `Run #${row.runId} · ` : null}
+                                    {row.detail}
+                                </p>
+                                {openLabel ? (
+                                    <p className="mt-0.5 pl-5 text-[11px] font-medium text-amber-700">{openLabel}</p>
+                                ) : null}
+                                {row.sampleError ? (
+                                    <p className="mt-0.5 truncate pl-5 text-[11px] text-rose-600" title={row.sampleError}>
+                                        {row.sampleError}
+                                    </p>
+                                ) : null}
+                                <div className="mt-1 pl-5">
+                                    <ProgressBar value={row.value} max={row.max} showLabel={false} className="[&>div]:h-1.5" />
+                                </div>
+                                {traceHref || syncHref ? (
+                                    <div className="mt-1 flex flex-wrap gap-2 pl-5">
+                                        {syncHref ? (
+                                            <Link href={syncHref} className="text-[11px] font-medium text-cyan-700 hover:underline">
+                                                Open batch
+                                            </Link>
+                                        ) : null}
+                                        {traceHref ? (
+                                            <Link href={traceHref} className="text-[11px] font-medium text-cyan-700 hover:underline">
+                                                Trace activity
+                                            </Link>
+                                        ) : null}
+                                    </div>
+                                ) : null}
+                            </li>
+                        );
+                    })}
                 </ul>
             ) : null}
 
@@ -173,14 +261,24 @@ export default function SidebarActivityPanel({
                 <p className="pt-1 text-[11px] text-slate-500">+{totalActive - MAX_ROWS} more</p>
             ) : null}
 
-            <Link
-                href="/operations"
-                className={cn(
-                    'mt-1.5 block rounded-md py-1 text-xs font-medium text-cyan-700 hover:bg-cyan-50',
-                )}
-            >
-                View Operations
-            </Link>
+            <div className="mt-1.5 flex flex-col gap-0.5">
+                <Link
+                    href="/operations"
+                    className={cn(
+                        'block rounded-md py-1 text-xs font-medium text-cyan-700 hover:bg-cyan-50',
+                    )}
+                >
+                    View Operations
+                </Link>
+                <Link
+                    href="/activity"
+                    className={cn(
+                        'block rounded-md py-1 text-xs font-medium text-cyan-700 hover:bg-cyan-50',
+                    )}
+                >
+                    View Activity
+                </Link>
+            </div>
         </section>
     );
 }

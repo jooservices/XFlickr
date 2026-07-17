@@ -101,22 +101,36 @@ describe('operationsStreamPatches', () => {
 
     it('upserts batch patches and ignores stale lower progress', () => {
         const withBatch = applyBatchPatch(emptyState(), {
-            ...batch({ id: 9, completed_count: 4, failed_count: 0 }),
+            ...batch({ id: 9, completed_count: 4, failed_count: 0, updated_at: '2026-07-16T10:00:00.000Z' }),
             sample_error: null,
         });
         expect(withBatch.downloadBatches[0]?.completed_count).toBe(4);
 
         const stale = applyBatchPatch(withBatch, {
-            ...batch({ id: 9, completed_count: 2, failed_count: 0 }),
+            ...batch({ id: 9, completed_count: 2, failed_count: 0, updated_at: '2026-07-16T09:00:00.000Z' }),
         });
         expect(stale.downloadBatches[0]?.completed_count).toBe(4);
 
         const newer = applyBatchPatch(withBatch, {
-            ...batch({ id: 9, completed_count: 6, failed_count: 1, status: 'running' }),
+            ...batch({ id: 9, completed_count: 6, failed_count: 1, status: 'running', updated_at: '2026-07-16T11:00:00.000Z' }),
             sample_error: 'boom',
         });
         expect(newer.downloadBatches[0]?.completed_count).toBe(6);
         expect(newer.downloadBatches[0]?.failed_count).toBe(1);
+    });
+
+    it('accepts retry patches when updated_at is newer even if processed count decreases', () => {
+        const withBatch = applyBatchPatch(emptyState(), {
+            ...batch({ id: 9, completed_count: 60, failed_count: 1, updated_at: '2026-07-16T10:00:00.000Z' }),
+        });
+
+        const retried = applyBatchPatch(withBatch, {
+            ...batch({ id: 9, completed_count: 60, failed_count: 0, updated_at: '2026-07-16T11:00:00.000Z' }),
+            pending_count: 1,
+        });
+
+        expect(retried.downloadBatches[0]?.failed_count).toBe(0);
+        expect(retried.downloadBatches[0]?.pending_count).toBe(1);
     });
 
     it('merges overview patches and no-ops unknown patches', () => {

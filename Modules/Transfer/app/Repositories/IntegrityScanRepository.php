@@ -33,6 +33,17 @@ final class IntegrityScanRepository extends EloquentRepository
         return $scan instanceof IntegrityScan ? $scan : null;
     }
 
+    public function findActiveForDisk(string $disk): ?IntegrityScan
+    {
+        $scan = $this->newQuery()
+            ->where('disk', $disk)
+            ->whereIn('status', [IntegrityScanStatus::Pending, IntegrityScanStatus::Running])
+            ->orderByDesc('id')
+            ->first();
+
+        return $scan instanceof IntegrityScan ? $scan : null;
+    }
+
     public function markRunning(int $id): void
     {
         $this->newQuery()->whereKey($id)->update(['status' => IntegrityScanStatus::Running, 'started_at' => now(), 'error_message' => null]);

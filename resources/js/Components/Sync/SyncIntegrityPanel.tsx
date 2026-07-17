@@ -63,6 +63,7 @@ export default function SyncIntegrityPanel({
                 variant: 'secondary',
                 disabled: () => fixing,
                 onAction: ({ selectedRows }) => {
+                    if (!window.confirm(`Import ${selectedRows.length} selected orphaned file(s)?`)) return;
                     void onFix(
                         selectedRows
                             .map((file) => ({ type: 'import' as const, id: file.id })),
@@ -77,6 +78,7 @@ export default function SyncIntegrityPanel({
                 variant: 'destructive',
                 disabled: () => fixing,
                 onAction: ({ selectedRows }) => {
+                    if (!window.confirm(`Delete ${selectedRows.length} selected orphaned file(s)? This cannot be undone.`)) return;
                     void onFix(
                         selectedRows
                             .map((file) => ({ type: 'delete' as const, id: file.id })),
@@ -97,6 +99,7 @@ export default function SyncIntegrityPanel({
                 variant: 'secondary',
                 disabled: () => fixing,
                 onAction: ({ selectedRows }) => {
+                    if (!window.confirm(`Queue ${selectedRows.length} selected file(s) for re-download?`)) return;
                     void onFix(
                         selectedRows
                             .map((file) => ({ type: 'redownload' as const, id: file.id })),

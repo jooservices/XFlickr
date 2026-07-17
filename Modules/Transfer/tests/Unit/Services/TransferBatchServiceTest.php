@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Validation\ValidationException;
+use JOOservices\LaravelLogging\Jobs\StoreActivityLogJob;
 use Modules\Storage\Models\StorageAccount;
 use Modules\Transfer\Enums\StoredFileStatus;
 use Modules\Transfer\Enums\TransferBatchStatus;
@@ -148,6 +149,7 @@ final class TransferBatchServiceTest extends TestCase
 
         $this->assertSame(TransferItemStatus::Pending->value, $item->refresh()->status);
         Queue::assertPushed(DownloadFileJob::class, 1);
+        Queue::assertPushedOn('logging', StoreActivityLogJob::class);
     }
 
     public function test_retry_rejects_wrong_connection_and_nonfailed_item(): void

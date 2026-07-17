@@ -86,6 +86,45 @@ final class TransferItemRepository extends EloquentRepository
             ->count();
     }
 
+    /**
+     * @param  list<int>  $batchIds
+     * @return array<int, array{pending: int, processing: int}>
+     */
+    public function countOpenGroupedByBatchIds(array $batchIds): array
+    {
+        if ($batchIds === []) {
+            return [];
+        }
+
+        $rows = $this->newQuery()
+            ->whereIn('transfer_batch_id', $batchIds)
+            ->whereIn('status', [
+                TransferItemStatus::Pending->value,
+                TransferItemStatus::Processing->value,
+            ])
+            ->selectRaw('transfer_batch_id, status, count(*) as aggregate')
+            ->groupBy('transfer_batch_id', 'status')
+            ->get();
+
+        /** @var array<int, array{pending: int, processing: int}> $counts */
+        $counts = [];
+
+        foreach ($rows as $row) {
+            $batchId = (int) $row->transfer_batch_id;
+            if (! isset($counts[$batchId])) {
+                $counts[$batchId] = ['pending' => 0, 'processing' => 0];
+            }
+
+            if ($row->status === TransferItemStatus::Pending->value) {
+                $counts[$batchId]['pending'] = (int) $row->aggregate;
+            } else {
+                $counts[$batchId]['processing'] = (int) $row->aggregate;
+            }
+        }
+
+        return $counts;
+    }
+
     public function countFailedSince(\DateTimeInterface $since): int
     {
         return $this->newQuery()
@@ -135,6 +174,36 @@ final class TransferItemRepository extends EloquentRepository
             ->value('error_message');
 
         return $value !== null ? (string) $value : null;
+    }
+
+    /**
+     * @param  list<int>  $batchIds
+     * @return array<int, string>
+     */
+    public function latestErrorsByBatchIds(array $batchIds): array
+    {
+        if ($batchIds === []) {
+            return [];
+        }
+
+        $latestIds = $this->newQuery()
+            ->whereIn('transfer_batch_id', $batchIds)
+            ->failed()
+            ->whereNotNull('error_message')
+            ->selectRaw('max(id) as id')
+            ->groupBy('transfer_batch_id')
+            ->pluck('id')
+            ->all();
+
+        if ($latestIds === []) {
+            return [];
+        }
+
+        return $this->newQuery()
+            ->whereIn('id', $latestIds)
+            ->pluck('error_message', 'transfer_batch_id')
+            ->map(static fn (mixed $message): string => (string) $message)
+            ->all();
     }
 
     public function findForBatch(int $batchId, string $sourceId): ?TransferItem
@@ -193,5 +262,15 @@ final class TransferItemRepository extends EloquentRepository
             ->orderByDesc('id')
             ->limit($limit)
             ->get(['id', 'source_id', 'status', 'error_message', 'updated_at']);
+    }
+
+    /** @param callable(Collection<int, TransferItem>): void $callback */
+    public function chunkFailedForBatch(int $batchId, int $chunkSize, callable $callback): void
+    {
+        $this->newQuery()
+            ->where('transfer_batch_id', $batchId)
+            ->failed()
+            ->orderBy('id')
+            ->chunkById($chunkSize, $callback);
     }
 }

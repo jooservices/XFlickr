@@ -346,7 +346,10 @@ function AppLayoutShell({ children }: PropsWithChildren) {
                             <AppShell.HeaderNav>
                                 {topNav.map((item) => {
                                     if (item.href === '/operations') {
-                                        const active = path.startsWith('/operations') || path.startsWith('/sync');
+                                        const active =
+                                            path.startsWith('/operations') ||
+                                            path.startsWith('/sync') ||
+                                            path.startsWith('/activity');
                                         const Icon = item.icon;
 
                                         return (
@@ -385,6 +388,19 @@ function AppLayoutShell({ children }: PropsWithChildren) {
                                                         className="absolute top-full left-0 z-40 mt-2 w-48 overflow-hidden rounded-md border border-slate-200 bg-white py-1 shadow-lg"
                                                     >
                                                         <Link
+                                                            href="/operations"
+                                                            role="menuitem"
+                                                            className={cn(
+                                                                'flex items-center gap-2 px-3 py-2 text-sm',
+                                                                path === '/operations'
+                                                                    ? 'bg-cyan-50 font-medium text-cyan-800'
+                                                                    : 'text-slate-700 hover:bg-slate-100',
+                                                            )}
+                                                            onClick={() => setOpsDropdownOpen(false)}
+                                                        >
+                                                            Overview
+                                                        </Link>
+                                                        <Link
                                                             href="/sync"
                                                             role="menuitem"
                                                             className={cn(
@@ -396,6 +412,19 @@ function AppLayoutShell({ children }: PropsWithChildren) {
                                                             onClick={() => setOpsDropdownOpen(false)}
                                                         >
                                                             Sync
+                                                        </Link>
+                                                        <Link
+                                                            href="/activity"
+                                                            role="menuitem"
+                                                            className={cn(
+                                                                'flex items-center gap-2 px-3 py-2 text-sm',
+                                                                path === '/activity' || path.startsWith('/activity?')
+                                                                    ? 'bg-cyan-50 font-medium text-cyan-800'
+                                                                    : 'text-slate-700 hover:bg-slate-100',
+                                                            )}
+                                                            onClick={() => setOpsDropdownOpen(false)}
+                                                        >
+                                                            Activity
                                                         </Link>
                                                     </div>
                                                 ) : null}

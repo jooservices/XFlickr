@@ -27,5 +27,7 @@ final class TransferBatchReconciled
         public readonly ?string $groupLabel = null,
         public readonly ?int $storageAccountId = null,
         public readonly ?string $updatedAt = null,
+        public readonly int $pendingCount = 0,
+        public readonly int $processingCount = 0,
     ) {}
 }

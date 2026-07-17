@@ -41,6 +41,8 @@ final class TransferBatchResource extends JsonResource
             'created_at' => $batch->created_at?->toIso8601String(),
             'updated_at' => $batch->updated_at?->toIso8601String(),
             'sample_error' => $batch->getAttribute('sample_error'),
+            'pending_count' => (int) ($batch->getAttribute('pending_count') ?? 0),
+            'processing_count' => (int) ($batch->getAttribute('processing_count') ?? 0),
         ];
     }
 }

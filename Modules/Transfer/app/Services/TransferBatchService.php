@@ -8,7 +8,9 @@ use App\Repositories\Crawler\PhotoQueryRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
+use Modules\Transfer\Dto\BulkRetryResult;
 use Modules\Transfer\Dto\TransferQueueResult;
+use Modules\Transfer\Enums\TransferBatchStatus;
 use Modules\Transfer\Enums\TransferItemStatus;
 use Modules\Transfer\Enums\TransferType;
 use Modules\Transfer\Jobs\DownloadFileJob;
@@ -29,6 +31,7 @@ final class TransferBatchService
         private readonly TransferBatchRepository $batches,
         private readonly TransferItemRepository $items,
         private readonly TransferBatchReconciler $batchReconciler,
+        private readonly TransferObservability $observability,
         private readonly PhotoQueryRepository $photos,
     ) {}
 
@@ -327,18 +330,13 @@ final class TransferBatchService
         );
 
         return [
-            'data' => $batchList->map(fn (TransferBatch $batch): array => [
-                ...$batch->toArray(),
-                'sample_error' => $batch->failed_count > 0
-                    ? $this->batchReconciler->sampleError($batch->id)
-                    : null,
-            ]),
+            'data' => $this->enrichBatchRows($batchList),
         ];
     }
 
     // ── Retry ───────────────────────────────────────────────
 
-    public function retryItem(string $connectionKey, TransferBatch $batch, string $sourceId): void
+    public function retryItem(string $connectionKey, TransferBatch $batch, string $sourceId, bool $reconcile = true, bool $recordActivity = true): void
     {
         if ($batch->connection_key !== $connectionKey) {
             abort(404);
@@ -372,7 +370,9 @@ final class TransferBatchService
 
         if ($type === TransferType::Download) {
             $this->items->updateStatus($batch->id, $sourceId, TransferItemStatus::Pending);
-            $this->batchReconciler->reconcile($batch->id);
+            if ($reconcile) {
+                $this->batchReconciler->reconcile($batch->id);
+            }
             DownloadFileJob::dispatch(
                 $sourceType,
                 $sourceId,
@@ -380,6 +380,10 @@ final class TransferBatchService
                 $connectionKey,
                 $batch->id,
             );
+
+            if ($recordActivity) {
+                $this->observability->itemRetryQueued($batch, $sourceId);
+            }
 
             return;
         }
@@ -397,7 +401,9 @@ final class TransferBatchService
         }
 
         $this->items->updateStatus($batch->id, $sourceId, TransferItemStatus::Pending);
-        $this->batchReconciler->reconcile($batch->id);
+        if ($reconcile) {
+            $this->batchReconciler->reconcile($batch->id);
+        }
 
         UploadFileJob::dispatch(
             $storedFile->id,
@@ -405,27 +411,37 @@ final class TransferBatchService
             $batch->id,
             (int) $batch->total_count,
         );
+
+        if ($recordActivity) {
+            $this->observability->itemRetryQueued($batch, $sourceId);
+        }
     }
 
-    public function retryFailedItems(string $connectionKey, TransferBatch $batch): int
+    public function retryFailedItems(string $connectionKey, TransferBatch $batch): BulkRetryResult
     {
         if ($batch->connection_key !== $connectionKey) {
             abort(404);
         }
 
-        $failedItems = $this->items->failedForBatch($batch->id);
-
         $queued = 0;
-        foreach ($failedItems as $item) {
-            try {
-                $this->retryItem($connectionKey, $batch, $item->source_id);
-                $queued++;
-            } catch (\Throwable $exception) {
-                report($exception);
+        $skipped = [];
+        $this->items->chunkFailedForBatch($batch->id, 100, function (Collection $items) use ($connectionKey, $batch, &$queued, &$skipped): void {
+            foreach ($items as $item) {
+                try {
+                    $this->retryItem($connectionKey, $batch, $item->source_id, false, false);
+                    $queued++;
+                } catch (ValidationException $exception) {
+                    $skipped[] = ['source_id' => $item->source_id, 'reason' => $exception->getMessage()];
+                }
             }
+        });
+
+        if ($queued > 0) {
+            $this->batchReconciler->reconcile($batch->id);
+            $this->observability->batchRetriesQueued($batch, $queued, count($skipped));
         }
 
-        return $queued;
+        return new BulkRetryResult($queued, $skipped);
     }
 
     public function batchesForConnectionPaginated(
@@ -448,11 +464,33 @@ final class TransferBatchService
             self::BATCH_SORTS,
         );
 
-        return $paginator->through(fn (TransferBatch $batch): array => [
+        $enriched = $this->enrichBatchRows($paginator->getCollection());
+
+        return $paginator->setCollection($enriched);
+    }
+
+    /**
+     * @param  Collection<int, TransferBatch>  $batchList
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function enrichBatchRows(Collection $batchList): Collection
+    {
+        $runningIds = $batchList
+            ->filter(static fn (TransferBatch $batch): bool => $batch->status === TransferBatchStatus::Running->value)
+            ->pluck('id')
+            ->map(static fn (mixed $id): int => (int) $id)
+            ->all();
+
+        $openCounts = $this->items->countOpenGroupedByBatchIds($runningIds);
+        $sampleErrors = $this->batchReconciler->sampleErrors(
+            $batchList->filter(static fn (TransferBatch $batch): bool => $batch->failed_count > 0)->pluck('id')->map(static fn (mixed $id): int => (int) $id)->all(),
+        );
+
+        return $batchList->map(fn (TransferBatch $batch): array => [
             ...$batch->toArray(),
-            'sample_error' => $batch->failed_count > 0
-                ? $this->batchReconciler->sampleError($batch->id)
-                : null,
+            'sample_error' => $sampleErrors[$batch->id] ?? null,
+            'pending_count' => $openCounts[$batch->id]['pending'] ?? 0,
+            'processing_count' => $openCounts[$batch->id]['processing'] ?? 0,
         ]);
     }
 }

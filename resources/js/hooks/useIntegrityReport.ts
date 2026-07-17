@@ -39,16 +39,22 @@ export function useIntegrityReport() {
     const [loading] = useState(false);
     const [scanning, setScanning] = useState(false);
     const [fixing, setFixing] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const loadReport = useCallback(async () => {
         if (!scan) return;
-        const status = await apiGet<{ data: Scan }>(`/api/v1/transfers/integrity-scans/${scan.id}`);
-        setScan(status.data);
-        if (status.data.status !== 'completed') return;
-        const anomalies = await apiGet<{ data: StoredFileAnomaly[] }>(`/api/v1/transfers/integrity-scans/${scan.id}/anomalies`);
-        const orphaned = anomalies.data.filter((item) => item.type === 'orphaned');
-        const missing = anomalies.data.filter((item) => item.type === 'missing');
-        setReport({ checked_at: new Date().toISOString(), orphaned_files: orphaned, missing_files: missing, stats: { orphaned_count: status.data.orphaned_count, missing_count: status.data.missing_count, total_disk_files: 0, total_disk_size: 0, total_db_records: 0 } });
+        try {
+            const status = await apiGet<{ data: Scan }>(`/api/v1/transfers/integrity-scans/${scan.id}`);
+            setScan(status.data);
+            if (status.data.status !== 'completed') return;
+            const anomalies = await apiGet<{ data: StoredFileAnomaly[] }>(`/api/v1/transfers/integrity-scans/${scan.id}/anomalies`);
+            const orphaned = anomalies.data.filter((item) => item.type === 'orphaned');
+            const missing = anomalies.data.filter((item) => item.type === 'missing');
+            setReport({ checked_at: new Date().toISOString(), orphaned_files: orphaned, missing_files: missing, stats: { orphaned_count: status.data.orphaned_count, missing_count: status.data.missing_count, total_disk_files: 0, total_disk_size: 0, total_db_records: 0 } });
+            setError(null);
+        } catch {
+            setError('Unable to load the integrity scan. Try again.');
+        }
     }, [scan]);
 
     useEffect(() => {
@@ -63,6 +69,9 @@ export function useIntegrityReport() {
             const response = await apiPost<{ data: Scan }>('/api/v1/transfers/integrity-scans');
             setScan(response.data);
             setReport(null);
+            setError(null);
+        } catch {
+            setError('Unable to start the integrity scan. Try again.');
         } finally { setScanning(false); }
     }, []);
 
@@ -75,8 +84,11 @@ export function useIntegrityReport() {
                 if (ids.length > 0) await apiPost(`/api/v1/transfers/integrity-scans/${scan.id}/resolutions`, { resolution: type, anomaly_ids: ids });
             }
             await loadReport();
+            setError(null);
+        } catch {
+            setError('Unable to apply the selected integrity resolution. Try again.');
         } finally { setFixing(false); }
     }, [loadReport, scan]);
 
-    return { report, loading, scanning, fixing, loadReport, triggerScan, executeFixActions };
+    return { report, loading, scanning, fixing, error, loadReport, triggerScan, executeFixActions };
 }
