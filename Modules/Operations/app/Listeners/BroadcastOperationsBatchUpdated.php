@@ -30,6 +30,8 @@ final class BroadcastOperationsBatchUpdated
             'failed_count' => $event->failedCount,
             'sample_error' => $event->sampleError,
             'updated_at' => $event->updatedAt,
+            'pending_count' => $event->pendingCount,
+            'processing_count' => $event->processingCount,
         ]);
     }
 }

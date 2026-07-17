@@ -6,8 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Operations **Activity** page (`/activity`): filterable ActivityLog timeline (type/level/action prefix/correlation/date) with detail drawer and 15s polling; API `GET /api/v1/operations/activities`.
+- Transfer observability: `TransferObservability` writes durable `ActivityLog::domain()` records for item/bulk retries and batch status changes (`correlation_id` = transfer batch id). Sidebar Live rows link to Sync batch detail and Activity trace.
+- Crawler hybrid observability: `CrawlerObservability` writes redacted Laravel logs plus durable `ActivityLog::domain()` records (queued on `logging`) for run start/complete/fail, target release/fail, stall recovery, and rate-limit cooldown; new `CrawlRunStarted` / `CrawlRunFailed` events refresh Operations overview. Policy documented in application standards.
+
 ### Changed
 
+- Sidebar **Live** transfer rows show batch id, pending/processing counts, sample errors, and **Open batch** / **Trace activity** links. WebSocket batch patches prefer `updated_at` so retries refresh counts even when processed totals decrease.
 - Transfer integrity checks now run as persisted queued scans with scan-scoped anomaly resolutions; browser clients never submit filesystem paths or arbitrary stored-file IDs. Google Photos album lookup now validates title length, follows pages, and serializes same-account/title creation. Module README files document all nine module ownership boundaries.
 - Sync page (`/sync`): integrity storage summary cards sit above Batches/Integrity tabs; mismatch health uses rose MetricCard tone; orphan/missing tables gain Owner/Photosets/Galleries columns, selection bulk actions, and correct button variants (Delete=`destructive`, Import/Re-download=`secondary` with icons). Batches use DataTable pagination, readable selects, operation chips, and stuck detection (running + stale `updated_at`) with live polling.
 - Frontend semantic color guidance documented in `ui-buttons` rule and `react-inertia-frontend` skill (MetricCard tones, StatusBadge, destructive vs recovery actions).

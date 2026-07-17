@@ -2,6 +2,11 @@
 
 Path: `/operations` (legacy `/crawl/operations` redirects here)
 
+Related operator surfaces:
+
+- `/sync` — transfer batches and integrity
+- `/activity` — durable ActivityLog trail (audit / domain / system)
+
 Live process console for crawls, transfers, and platform health. Prefer this page when diagnosing stuck jobs; use [Dashboard](dashboard.md) for catalog growth KPIs.
 
 Query tabs: `?panel=overview` (default) · `crawl` · `transfers`.
@@ -31,12 +36,27 @@ Query tabs: `?panel=overview` (default) · `crawl` · `transfers`.
 - Download batches with group/storage path, progress, sample errors, and failed-item retry (pushed on reconcile when WebSocket is live)
 - Upload batches with progress and failed-item retry
 
+## Activity
+
+Path: `/activity` · API: `GET /api/v1/operations/activities`
+
+Read-only timeline of durable `ActivityLog` records (Mongo `activity_logs`): crawler domain lifecycle, transfer retries/batch status, settings audit actions, and system records.
+
+- Facet chips: type (`domain` / `audit` / `system` / `security`) and level
+- Filters: action prefix (`crawler.` or `transfer.`), correlation id (crawl **run** id or transfer **batch** id), time range (default last 24h; use **All time** when tracing old stuck batches)
+- Row detail drawer shows properties / context / changes
+- **Filter by this correlation** deep-links the feed to one run or batch trail
+- Sidebar **Live** rows include **Trace activity** (`correlation_id` = batch id, `action_prefix=transfer.`)
+- Polls every 15 seconds (no live WebSocket tail in v1)
+
+Does **not** show Monolog channel files or Flickr `xflickr_api_logs` (those remain ops/API telemetry).
+
 ## When to use
 
 - Crawl seems stuck — check Overview cooldown / pending / queues, then Crawl tab target breakdown
 - Download/upload progress — Transfers tab (or Horizon for worker detail)
 - Integrity scans are queued checks of the local Flickr cache against completed download records. Review the completed scan’s anomalies before resolving them; resolutions use the scan’s server-created entries and cannot accept arbitrary local paths.
-- Debugging failures — `failed_reason` on fetch runs and sample errors on batches
+- Debugging failures — `failed_reason` on fetch runs and sample errors on batches; use Activity for the durable run/batch timeline (`correlation_id` = run id or batch id)
 
 ## Related
 

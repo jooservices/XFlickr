@@ -8,6 +8,8 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvi
 use Modules\Crawler\Events\ContactsCrawlCompleted;
 use Modules\Crawler\Events\CrawlPageFailed;
 use Modules\Crawler\Events\CrawlRunCompleted;
+use Modules\Crawler\Events\CrawlRunFailed;
+use Modules\Crawler\Events\CrawlRunStarted;
 use Modules\Operations\Listeners\BroadcastOperationsBatchUpdated;
 use Modules\Operations\Listeners\BroadcastOperationsOverviewFromDomain;
 use Modules\Transfer\Events\TransferBatchReconciled;
@@ -21,7 +23,13 @@ class EventServiceProvider extends ServiceProvider
         TransferBatchReconciled::class => [
             BroadcastOperationsBatchUpdated::class,
         ],
+        CrawlRunStarted::class => [
+            BroadcastOperationsOverviewFromDomain::class,
+        ],
         CrawlRunCompleted::class => [
+            BroadcastOperationsOverviewFromDomain::class,
+        ],
+        CrawlRunFailed::class => [
             BroadcastOperationsOverviewFromDomain::class,
         ],
         ContactsCrawlCompleted::class => [

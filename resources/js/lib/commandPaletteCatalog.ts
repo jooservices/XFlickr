@@ -61,6 +61,20 @@ export function commandPaletteNavigationItems(): CommandPaletteNavItem[] {
             keywords: ['crawl', 'jobs', 'transfers', 'horizon', 'batches'],
         },
         {
+            id: 'nav-sync',
+            label: 'Sync',
+            href: '/sync',
+            section: 'Navigate',
+            keywords: ['transfers', 'integrity', 'download', 'upload', 'batches'],
+        },
+        {
+            id: 'nav-activity',
+            label: 'Activity',
+            href: '/activity',
+            section: 'Navigate',
+            keywords: ['audit', 'logs', 'domain', 'events', 'correlation', 'trail'],
+        },
+        {
             id: 'nav-connections',
             label: 'Connections',
             href: connectionsPath(),
