@@ -6,7 +6,10 @@ XFlickr registers scheduled commands in `routes/console.php`.
 
 | Command | Schedule | Purpose |
 |---|---|---|
-| `xflickr:dispatch` | Every minute (`withoutOverlapping`) | Drain pending crawl targets from the crawler package |
+| `xflickr:crawler:dispatch` | Every minute (`withoutOverlapping`) | Drain pending crawl targets; it never creates them |
+| `xflickr:spider:expand` | Every minute (`withoutOverlapping`) | Expand opt-in Spider frontier work |
+| `xflickr:contacts:full-pass-expand` | Every minute (`withoutOverlapping`) | Expand an active full contact pass |
+| `xflickr:transfer:integrity-scan` | Daily at 02:00 (`withoutOverlapping`) | Queue a persisted local-storage integrity scan |
 
 ## Important
 

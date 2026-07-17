@@ -7,6 +7,7 @@ namespace Modules\Crawler\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
+/** @property string $contact_nsid */
 final class SubjectContact extends Model
 {
     protected $fillable = [

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Queue;
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
 use Modules\Contacts\Database\Factories\ContactFullPassRunFactory;
 use Modules\Crawler\Events\ContactsCrawlCompleted;
+use Modules\Crawler\Models\SubjectContact;
 use Modules\Flickr\Exceptions\GlobalCrawlPauseException;
 use Modules\Spider\Enums\SpiderFrontierStatus;
 use Modules\Spider\Enums\SpiderRunStatus;
@@ -81,12 +82,22 @@ final class SpiderPlannerServiceTest extends TestCase
             'max_depth' => 2,
         ]);
 
+        $crawlRunId = 1;
+        foreach (['a@N01', 'b@N02'] as $nsid) {
+            SubjectContact::query()->create([
+                'connection_key' => $connection->connection_key,
+                'subject_nsid' => $connection->nsid ?? 'root@N00',
+                'contact_nsid' => $nsid,
+                'crawl_run_id' => $crawlRunId,
+                'discovered_at' => now(),
+            ]);
+        }
+
         app(SpiderPlannerService::class)->handleContactsCrawlCompleted(
             new ContactsCrawlCompleted(
                 connectionKey: $connection->connection_key,
                 subjectNsid: null,
-                crawlRunId: 1,
-                discoveredContactNsids: ['a@N01', 'b@N02'],
+                crawlRunId: $crawlRunId,
                 spiderRunId: $run->id,
             ),
         );
@@ -119,12 +130,20 @@ final class SpiderPlannerServiceTest extends TestCase
             'status' => SpiderFrontierStatus::Queued,
         ]);
 
+        $crawlRunId = 2;
+        SubjectContact::query()->create([
+            'connection_key' => $connection->connection_key,
+            'subject_nsid' => 'seed@N01',
+            'contact_nsid' => 'child@N02',
+            'crawl_run_id' => $crawlRunId,
+            'discovered_at' => now(),
+        ]);
+
         app(SpiderPlannerService::class)->handleContactsCrawlCompleted(
             new ContactsCrawlCompleted(
                 connectionKey: $connection->connection_key,
                 subjectNsid: 'seed@N01',
-                crawlRunId: 2,
-                discoveredContactNsids: ['child@N02'],
+                crawlRunId: $crawlRunId,
                 spiderRunId: $run->id,
                 spiderFrontierItemId: $item->id,
             ),

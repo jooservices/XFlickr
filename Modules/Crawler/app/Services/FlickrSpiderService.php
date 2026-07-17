@@ -13,13 +13,13 @@ use Modules\Crawler\Enums\CrawlType;
 use Modules\Crawler\Enums\TaskType;
 use Modules\Crawler\Events\ContactsCrawlCompleted;
 use Modules\Crawler\Events\CrawlRunCompleted;
+use Modules\Crawler\Events\CrawlRunFailed;
+use Modules\Crawler\Events\CrawlRunStarted;
 use Modules\Crawler\Jobs\CrawlTargetJobFactory;
 use Modules\Crawler\Models\CrawlRun;
 use Modules\Crawler\Models\CrawlTarget;
-use Modules\Crawler\Repositories\ConnectionRepository;
 use Modules\Crawler\Repositories\CrawlRunRepository;
 use Modules\Crawler\Repositories\CrawlTargetRepository;
-use Modules\Crawler\Repositories\SubjectContactRepository;
 use Modules\Crawler\Support\CrawlStall;
 use Modules\Crawler\Support\XFlickrConfig;
 
@@ -27,10 +27,9 @@ final class FlickrSpiderService
 {
     public function __construct(
         private readonly CrawlTargetJobFactory $jobFactory,
-        private readonly SubjectContactRepository $subjectContacts,
-        private readonly ConnectionRepository $connections,
         private readonly CrawlTargetRepository $targets,
         private readonly CrawlRunRepository $crawlRuns,
+        private readonly CrawlerObservability $observability,
     ) {}
 
     public function dispatchDueTargets(): int
@@ -64,7 +63,10 @@ final class FlickrSpiderService
 
     public function recoverStalledTargets(): int
     {
-        return $this->targets->recoverStalled(CrawlStall::cutoff());
+        $count = $this->targets->recoverStalled(CrawlStall::cutoff());
+        $this->observability->stalledRecovered($count);
+
+        return $count;
     }
 
     public function enqueueTarget(
@@ -99,20 +101,7 @@ final class FlickrSpiderService
      */
     public function enqueueSpecs(CrawlRun $run, array $specs): int
     {
-        $count = 0;
-        foreach ($specs as $spec) {
-            $this->enqueueTarget(
-                $run,
-                $spec->taskType,
-                $spec->subjectNsid,
-                $spec->subjectId,
-                $spec->page,
-                $spec->priority,
-            );
-            $count++;
-        }
-
-        return $count;
+        return $this->targets->insertPendingSpecs($run, $specs);
     }
 
     public function createRun(
@@ -122,11 +111,7 @@ final class FlickrSpiderService
         ?int $spiderRunId = null,
         ?int $spiderFrontierItemId = null,
     ): CrawlRun {
-        $this->connections->updateOrCreateByKey($connectionKey, [
-            'last_crawled_at' => now(),
-        ]);
-
-        return $this->crawlRuns->create([
+        $run = $this->crawlRuns->create([
             'connection_key' => $connectionKey,
             'crawl_type' => $crawlType->value,
             'subject_nsid' => $subjectNsid,
@@ -135,6 +120,11 @@ final class FlickrSpiderService
             'spider_run_id' => $spiderRunId,
             'spider_frontier_item_id' => $spiderFrontierItemId,
         ]);
+
+        $this->observability->runStarted($run);
+        event(new CrawlRunStarted($run));
+
+        return $run;
     }
 
     public function maybeCompleteRun(CrawlRun $run): void
@@ -147,11 +137,16 @@ final class FlickrSpiderService
         $failedTarget = $this->targets->firstFailedForRun($run->id);
 
         if ($completedCount === 0 && $failedTarget !== null) {
-            $this->crawlRuns->update($run, [
+            $reason = $failedTarget->failed_reason ?? 'All crawl targets failed';
+            $run = $this->crawlRuns->update($run, [
                 'status' => CrawlRunStatus::Failed,
                 'completed_at' => now(),
-                'failed_reason' => $failedTarget->failed_reason ?? 'All crawl targets failed',
+                'failed_reason' => $reason,
+                'targets_failed' => $this->targets->countFailedForRun($run->id),
             ]);
+
+            $this->observability->runFailed($run, $reason);
+            event(new CrawlRunFailed($run, $reason));
 
             return;
         }
@@ -162,6 +157,7 @@ final class FlickrSpiderService
             'failed_reason' => null,
         ]);
 
+        $this->observability->runCompleted($run);
         event(new CrawlRunCompleted($run));
 
         if ($run->crawl_type === CrawlType::Contacts->value) {
@@ -169,11 +165,25 @@ final class FlickrSpiderService
                 connectionKey: $run->connection_key,
                 subjectNsid: $run->subject_nsid,
                 crawlRunId: $run->id,
-                discoveredContactNsids: $this->subjectContacts->discoveredForCrawlRun($run->id),
                 spiderRunId: $run->spider_run_id,
                 spiderFrontierItemId: $run->spider_frontier_item_id,
             ));
         }
+    }
+
+    public function incrementRunDiscoveryCounter(CrawlRun $run, TaskType $taskType, int $resultCount): void
+    {
+        $column = match ($taskType) {
+            TaskType::ContactsPage, TaskType::SubjectContactsPage => 'contacts_discovered',
+            default => 'photos_discovered',
+        };
+
+        $this->crawlRuns->incrementDiscoveryCounter($run, $column, $resultCount);
+    }
+
+    public function incrementFailedTargets(CrawlRun $run): void
+    {
+        $this->crawlRuns->incrementFailedTargets($run);
     }
 
     public function refreshRunCounters(CrawlRun $run): void

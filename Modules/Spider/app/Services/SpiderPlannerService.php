@@ -9,6 +9,7 @@ use Modules\Crawler\Enums\CrawlType;
 use Modules\Crawler\Events\ContactsCrawlCompleted;
 use Modules\Crawler\Models\Connection;
 use Modules\Crawler\Repositories\ConnectionRepository;
+use Modules\Crawler\Services\CrawlerRuns;
 use Modules\Crawler\Support\XFlickrConfig;
 use Modules\Flickr\Exceptions\GlobalCrawlPauseException;
 use Modules\Flickr\Services\FlickrAccountsService;
@@ -32,6 +33,7 @@ final class SpiderPlannerService
         private readonly SpiderRuntimeConfig $spiderConfig,
         private readonly FrontierExpansion $frontierExpansion,
         private readonly ConnectionRepository $connections,
+        private readonly CrawlerRuns $crawlerRuns,
     ) {}
 
     public function isEnabled(): bool
@@ -197,22 +199,14 @@ final class SpiderPlannerService
                     'crawled_at' => now(),
                 ]);
 
-                $this->frontierExpansion->enqueueDiscovered(
-                    $run,
-                    $this->frontier,
-                    $this->runs,
-                    $event->discoveredContactNsids,
-                    $item->depth + 1,
-                );
+                $this->crawlerRuns->chunkDiscoveredContacts($event->crawlRunId, 250, function (array $contacts) use ($run, $item): void {
+                    $this->frontierExpansion->enqueueDiscovered($run, $this->frontier, $this->runs, $contacts, $item->depth + 1);
+                });
             }
         } else {
-            $this->frontierExpansion->enqueueDiscovered(
-                $run,
-                $this->frontier,
-                $this->runs,
-                $event->discoveredContactNsids,
-                0,
-            );
+            $this->crawlerRuns->chunkDiscoveredContacts($event->crawlRunId, 250, function (array $contacts) use ($run): void {
+                $this->frontierExpansion->enqueueDiscovered($run, $this->frontier, $this->runs, $contacts, 0);
+            });
         }
 
         $this->frontierExpansion->maybeCompleteRun($run, $this->frontier, $this->runs);

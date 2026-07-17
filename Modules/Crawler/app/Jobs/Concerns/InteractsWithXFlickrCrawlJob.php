@@ -10,11 +10,11 @@ use Modules\Crawler\Contracts\PageFetcherContract;
 use Modules\Crawler\DTO\FetcherFetchResult;
 use Modules\Crawler\DTO\FlickrPermit;
 use Modules\Crawler\Enums\ApiOutcome;
-use Modules\Crawler\Enums\CrawlStatus;
 use Modules\Crawler\Events\CrawlPageFailed;
 use Modules\Crawler\Models\CrawlRun;
 use Modules\Crawler\Models\CrawlTarget;
 use Modules\Crawler\Repositories\CrawlTargetRepository;
+use Modules\Crawler\Services\CrawlerObservability;
 use Modules\Crawler\Services\FlickrApiAuditService;
 use Modules\Crawler\Services\FlickrApiOutcomeClassifier;
 use Modules\Crawler\Services\FlickrClientFactory;
@@ -124,43 +124,41 @@ trait InteractsWithXFlickrCrawlJob
 
     protected function completeTarget(CrawlTarget $target, FlickrSpiderService $spider, int $resultCount = 0): void
     {
-        $this->targets()->update($target, [
-            'status' => CrawlStatus::Completed,
-            'last_result_count' => $resultCount,
-            'last_crawled_at' => now(),
-            'locked_until' => null,
-            'failed_reason' => null,
-        ]);
+        $claimToken = $target->claim_token;
+        if (! is_string($claimToken) || ! $this->targets()->completeClaimed($target, $claimToken, $resultCount)) {
+            return;
+        }
 
         if ($target->crawlRun !== null) {
+            $spider->incrementRunDiscoveryCounter($target->crawlRun, $target->task_type, $resultCount);
             $spider->dispatchPendingTargetsForRun($target->crawlRun);
             $spider->maybeCompleteRun($target->crawlRun);
-            $spider->refreshRunCounters($target->crawlRun);
         }
     }
 
     protected function releaseTarget(CrawlTarget $target, int $seconds): void
     {
-        $this->targets()->update($target, [
-            'status' => CrawlStatus::Pending,
-            'next_run_at' => now()->addSeconds($seconds),
-            'locked_until' => null,
-            'retry_count' => $target->retry_count + 1,
-        ]);
+        $claimToken = $target->claim_token;
+        if (! is_string($claimToken) || ! $this->targets()->releaseClaimed($target, $claimToken, $seconds)) {
+            return;
+        }
+
+        app(CrawlerObservability::class)->targetReleased($target, $seconds);
     }
 
     protected function failTarget(CrawlTarget $target, string $reason): void
     {
-        $target = $this->targets()->update($target, [
-            'status' => CrawlStatus::Failed,
-            'failed_reason' => $reason,
-            'locked_until' => null,
-            'last_crawled_at' => now(),
-        ]);
+        $claimToken = $target->claim_token;
+        if (! is_string($claimToken) || ! $this->targets()->failClaimed($target, $claimToken, $reason)) {
+            return;
+        }
+
+        app(CrawlerObservability::class)->targetFailed($target, $reason);
 
         event(new CrawlPageFailed($target, $reason));
 
         if ($target->crawlRun !== null) {
+            app(FlickrSpiderService::class)->incrementFailedTargets($target->crawlRun);
             app(FlickrSpiderService::class)->maybeCompleteRun($target->crawlRun);
         }
     }

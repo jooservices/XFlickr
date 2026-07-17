@@ -123,16 +123,16 @@ final class CrawlingService
         $existing = $this->connections->findByKey($connectionKey);
 
         if ($existing !== null) {
-            if ($existing->app_profile !== $profile) {
-                return $this->connections->update($existing, ['app_profile' => $profile]);
-            }
-
-            return $existing;
+            return $this->connections->update($existing, [
+                'app_profile' => $profile,
+                'last_crawled_at' => now(),
+            ]);
         }
 
         return $this->connections->updateOrCreateByKey($connectionKey, [
             'app_profile' => $profile,
             'token_payload' => $tokenPayload,
+            'last_crawled_at' => now(),
         ]);
     }
 

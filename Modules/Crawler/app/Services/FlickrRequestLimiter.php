@@ -13,6 +13,10 @@ use Modules\Crawler\Support\XFlickrConfig;
 
 final class FlickrRequestLimiter
 {
+    public function __construct(
+        private readonly CrawlerObservability $observability,
+    ) {}
+
     public function acquire(string $connectionKey): FlickrPermit
     {
         if (XFlickrConfig::globalPause()) {
@@ -42,6 +46,8 @@ final class FlickrRequestLimiter
         $seconds = XFlickrConfig::throttle('rate_limit_backoff_seconds', 3600);
         $until = CarbonImmutable::now()->addSeconds($seconds);
         Redis::setex($this->pauseKey($connectionKey), $seconds, (string) $until->getTimestamp());
+
+        $this->observability->cooldownTriggered($seconds, $connectionKey);
 
         return $until;
     }

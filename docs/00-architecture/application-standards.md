@@ -82,6 +82,27 @@ Nine business modules: Auth, Settings, Operations, Flickr, Contacts, Catalog, Sp
 - Root `routes/web.php` and `routes/api.php` are stubs.
 - Ownership map: [class-purpose-and-module-map](../../ai/skills/class-purpose-and-module-map/SKILL.md).
 
+## Observability
+
+Hybrid layers — do not collapse them into one mechanism:
+
+| Concern | Mechanism | Destination |
+|---|---|---|
+| Cross-module workflow milestones | Domain events | Peer module listeners (Spider, Contacts, Operations) |
+| Durable operator / domain trail | `ActivityLog::{audit,domain,system}` (`jooservices/laravel-logging`) | Mongo `activity_logs` |
+| Ops diagnosis (retries, cooldown, worker noise) | Redacted `Log::*` via module Observability wrappers | Laravel logging channels |
+| Flickr API call outcomes | `FlickrApiAuditService` | MySQL `xflickr_api_logs` |
+| Admin config mutations | `AdminActionLogger` | `ActivityLog::audit()` |
+
+Rules:
+
+- Prefer domain events for cross-module milestones (`CrawlRunStarted` / `Completed` / `Failed`, `ContactsCrawlCompleted`, etc.).
+- Prefer `ActivityLog` for durable, queryable history; Crawler writes through `CrawlerObservability`.
+- Prefer redacted `Log::*` (never raw keys/tokens/bodies — use `ThirdPartyApiLogger::fingerprint()`) for infra/ops noise.
+- Correlation: use natural IDs (`crawl_run_id` as `correlationId` / `batchId`; `spider_run_id` as `workflowId` when present).
+- Operator UI: `/activity` (Operations) reads Mongo `activity_logs` via `GET /api/v1/operations/activities`.
+- Explicit non-goal: full event sourcing for crawl/target state (account connect/disconnect already use `laravel-events` sourcing).
+
 ## Frontend
 
 - Pages in `resources/js/Pages/` compose shared `Components/` inside **AppShell** (master) + **PageShell** (content).

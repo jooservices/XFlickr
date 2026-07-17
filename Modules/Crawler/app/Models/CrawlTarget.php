@@ -26,6 +26,8 @@ use Modules\Crawler\Support\XFlickrConfig;
  * @property int|null $last_result_count
  * @property string|null $failed_reason
  * @property Carbon|null $locked_until
+ * @property string|null $claim_token
+ * @property Carbon|null $claim_expires_at
  * @property Carbon|null $last_crawled_at
  * @property Carbon|null $next_run_at
  * @property CrawlRun|null $crawlRun
@@ -41,6 +43,8 @@ final class CrawlTarget extends Model
         'status',
         'priority',
         'locked_until',
+        'claim_token',
+        'claim_expires_at',
         'last_crawled_at',
         'next_run_at',
         'last_result_count',
@@ -56,6 +60,7 @@ final class CrawlTarget extends Model
             'page' => 'integer',
             'priority' => 'integer',
             'locked_until' => 'datetime',
+            'claim_expires_at' => 'datetime',
             'last_crawled_at' => 'datetime',
             'next_run_at' => 'datetime',
             'last_result_count' => 'integer',

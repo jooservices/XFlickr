@@ -22,6 +22,7 @@ use Modules\Crawler\Support\XFlickrConfig;
  * @property CrawlRunStatus $status
  * @property int $contacts_discovered
  * @property int $photos_discovered
+ * @property int $targets_failed
  * @property int $api_calls
  * @property Carbon|null $started_at
  * @property Carbon|null $completed_at
@@ -36,6 +37,7 @@ final class CrawlRun extends Model
         'status',
         'contacts_discovered',
         'photos_discovered',
+        'targets_failed',
         'api_calls',
         'started_at',
         'completed_at',
@@ -50,6 +52,7 @@ final class CrawlRun extends Model
             'status' => CrawlRunStatus::class,
             'contacts_discovered' => 'integer',
             'photos_discovered' => 'integer',
+            'targets_failed' => 'integer',
             'api_calls' => 'integer',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',

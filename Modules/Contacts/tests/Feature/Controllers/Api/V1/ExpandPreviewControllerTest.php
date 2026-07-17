@@ -8,6 +8,7 @@ use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
 use Modules\Contacts\Models\ContactFullPassRun;
 use Modules\Contacts\Services\ContactFullPassPlannerService;
 use Modules\Crawler\Events\ContactsCrawlCompleted;
+use Modules\Crawler\Models\SubjectContact;
 use Modules\Spider\Enums\SpiderFrontierStatus;
 use Modules\Spider\Enums\SpiderRunStatus;
 use Modules\Spider\Models\SpiderRun;
@@ -54,12 +55,22 @@ final class ExpandPreviewControllerTest extends TestCase
             'max_depth' => 1,
         ]);
 
+        $crawlRunId = 1;
+        foreach (['a@N01', 'b@N02'] as $nsid) {
+            SubjectContact::query()->create([
+                'connection_key' => $connection->connection_key,
+                'subject_nsid' => $connection->nsid ?? 'root@N00',
+                'contact_nsid' => $nsid,
+                'crawl_run_id' => $crawlRunId,
+                'discovered_at' => now(),
+            ]);
+        }
+
         app(ContactFullPassPlannerService::class)->handleContactsCrawlCompleted(
             new ContactsCrawlCompleted(
                 connectionKey: $connection->connection_key,
                 subjectNsid: null,
-                crawlRunId: 1,
-                discoveredContactNsids: ['a@N01', 'b@N02'],
+                crawlRunId: $crawlRunId,
                 spiderRunId: null,
             ),
         );

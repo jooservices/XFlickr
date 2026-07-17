@@ -2,14 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Modules\Crawler\Console;
+namespace Modules\Crawler\Console\Commands;
 
 use Illuminate\Console\Command;
 use Modules\Crawler\Services\CrawlPruneService;
 
 final class PruneCrawlDataCommand extends Command
 {
-    protected $signature = 'xflickr:prune {--days=30 : Delete API logs older than this many days} {--targets : Also delete completed crawl targets older than the retention window}';
+    protected $signature = 'xflickr:crawler:prune {--days=30 : Delete API logs older than this many days} {--targets : Also delete completed crawl targets older than the retention window}';
+
+    protected $aliases = ['xflickr:prune'];
 
     protected $description = 'Prune old XFlickr API logs and optionally completed crawl targets';
 

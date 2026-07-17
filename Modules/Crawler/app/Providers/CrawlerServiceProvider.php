@@ -6,14 +6,15 @@ namespace Modules\Crawler\Providers;
 
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\ServiceProvider;
-use Modules\Crawler\Console\DispatchCrawlTargetsCommand;
-use Modules\Crawler\Console\DoctorCommand;
-use Modules\Crawler\Console\PruneCrawlDataCommand;
+use Modules\Crawler\Console\Commands\DispatchCrawlTargetsCommand;
+use Modules\Crawler\Console\Commands\DoctorCommand;
+use Modules\Crawler\Console\Commands\PruneCrawlDataCommand;
 use Modules\Crawler\Facades\FlickrService;
 use Modules\Crawler\FlickrCrawlerManager;
 use Modules\Crawler\Jobs\CrawlTargetJobFactory;
 use Modules\Crawler\Services\ConnectionRegistryService;
 use Modules\Crawler\Services\CrawlerCatalog;
+use Modules\Crawler\Services\CrawlerObservability;
 use Modules\Crawler\Services\CrawlerRuns;
 use Modules\Crawler\Services\CrawlingService;
 use Modules\Crawler\Services\FlickrApiAuditService;
@@ -33,6 +34,7 @@ final class CrawlerServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../../config/xflickr-crawler.php', 'xflickr-crawler');
 
         $this->app->singleton(FlickrCrawlerManager::class);
+        $this->app->singleton(CrawlerObservability::class);
         $this->app->singleton(FlickrPermitAcquirer::class);
         $this->app->singleton(FlickrRequestLimiter::class);
         $this->app->singleton(FlickrApiOutcomeClassifier::class);

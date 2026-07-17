@@ -26,7 +26,7 @@ final class FlickrClientFactory
 
     public function forConnection(string $connectionKey, bool $authenticated = true): Flickr
     {
-        $connection = $this->connectionRepository()->findByKey($connectionKey);
+        $connection = ($this->connections ?? app(ConnectionRepository::class))->findByKey($connectionKey);
 
         if ($connection === null) {
             throw new RuntimeException("Flickr connection [{$connectionKey}] was not found.");
@@ -101,10 +101,5 @@ final class FlickrClientFactory
             'username' => $payload->username,
             'fullname' => $payload->fullname,
         ]);
-    }
-
-    private function connectionRepository(): ConnectionRepository
-    {
-        return $this->connections ?? app(ConnectionRepository::class);
     }
 }

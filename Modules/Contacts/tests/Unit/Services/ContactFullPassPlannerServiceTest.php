@@ -13,6 +13,7 @@ use Modules\Contacts\Database\Factories\ContactFullPassRunFactory;
 use Modules\Contacts\Models\ContactFullPassFrontierItem;
 use Modules\Contacts\Services\ContactFullPassPlannerService;
 use Modules\Crawler\Events\ContactsCrawlCompleted;
+use Modules\Crawler\Models\SubjectContact;
 use Modules\Flickr\Exceptions\GlobalCrawlPauseException;
 use Modules\Spider\Enums\SpiderFrontierStatus;
 use Modules\Spider\Enums\SpiderRunStatus;
@@ -135,13 +136,21 @@ final class ContactFullPassPlannerServiceTest extends TestCase
         ]);
 
         $discoveredNsid = FlickrNsid::fake();
+        $crawlRunId = 1;
+
+        SubjectContact::query()->create([
+            'connection_key' => $connection->connection_key,
+            'subject_nsid' => $connection->nsid ?? 'root@N00',
+            'contact_nsid' => $discoveredNsid,
+            'crawl_run_id' => $crawlRunId,
+            'discovered_at' => now(),
+        ]);
 
         app(ContactFullPassPlannerService::class)->handleContactsCrawlCompleted(
             new ContactsCrawlCompleted(
                 connectionKey: $connection->connection_key,
                 subjectNsid: null,
-                crawlRunId: 1,
-                discoveredContactNsids: [$discoveredNsid],
+                crawlRunId: $crawlRunId,
                 spiderRunId: null,
             ),
         );
@@ -261,12 +270,20 @@ final class ContactFullPassPlannerServiceTest extends TestCase
             'status' => SpiderFrontierStatus::Queued,
         ]);
 
+        $crawlRunId = 3;
+        SubjectContact::query()->create([
+            'connection_key' => $connection->connection_key,
+            'subject_nsid' => $subjectNsid,
+            'contact_nsid' => $childNsid,
+            'crawl_run_id' => $crawlRunId,
+            'discovered_at' => now(),
+        ]);
+
         app(ContactFullPassPlannerService::class)->handleContactsCrawlCompleted(
             new ContactsCrawlCompleted(
                 connectionKey: $connection->connection_key,
                 subjectNsid: $subjectNsid,
-                crawlRunId: 3,
-                discoveredContactNsids: [$childNsid],
+                crawlRunId: $crawlRunId,
                 spiderRunId: null,
             ),
         );

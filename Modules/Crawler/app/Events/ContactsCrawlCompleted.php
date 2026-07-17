@@ -12,14 +12,12 @@ final class ContactsCrawlCompleted
     use Dispatchable;
     use SerializesModels;
 
-    /**
-     * @param  list<string>  $discoveredContactNsids
-     */
+    /** @param list<string> $discoveredContactNsids */
     public function __construct(
         public readonly string $connectionKey,
         public readonly ?string $subjectNsid,
         public readonly int $crawlRunId,
-        public readonly array $discoveredContactNsids,
+        public readonly array $discoveredContactNsids = [],
         public readonly ?int $spiderRunId = null,
         public readonly ?int $spiderFrontierItemId = null,
     ) {}

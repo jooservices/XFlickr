@@ -74,6 +74,17 @@ final class SubjectContactRepository
             ->all();
     }
 
+    /** @param callable(list<string>): void $callback */
+    public function chunkDiscoveredForCrawlRun(int $crawlRunId, int $size, callable $callback): void
+    {
+        SubjectContact::query()
+            ->where('crawl_run_id', $crawlRunId)
+            ->orderBy('id')
+            ->chunkById($size, function ($contacts) use ($callback): void {
+                $callback($contacts->map(static fn (SubjectContact $contact): string => $contact->contact_nsid)->all());
+            });
+    }
+
     /**
      * @return list<string>
      */

@@ -4,12 +4,18 @@ declare(strict_types=1);
 
 namespace Modules\Crawler\Tests\Unit\Services;
 
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 use JOOservices\LaravelConfig\Facades\Config as RuntimeConfig;
+use JOOservices\LaravelLogging\Jobs\StoreActivityLogJob;
 use Modules\Crawler\Enums\ApiOutcome;
 use Modules\Crawler\Enums\CrawlRunStatus;
 use Modules\Crawler\Enums\CrawlStatus;
 use Modules\Crawler\Enums\CrawlType;
 use Modules\Crawler\Enums\TaskType;
+use Modules\Crawler\Events\CrawlRunFailed;
+use Modules\Crawler\Events\CrawlRunStarted;
 use Modules\Crawler\Models\CrawlRun;
 use Modules\Crawler\Models\CrawlTarget;
 use Modules\Crawler\Services\FlickrApiAuditService;
@@ -18,6 +24,25 @@ use Modules\Crawler\Tests\TestCase;
 
 final class FlickrSpiderServiceTest extends TestCase
 {
+    public function test_create_run_emits_started_event_and_domain_activity(): void
+    {
+        Event::fake([CrawlRunStarted::class]);
+        Queue::fake();
+        Log::spy();
+
+        $spider = app(FlickrSpiderService::class);
+        $connectionKey = 'create-run-'.fake()->uuid();
+
+        $run = $spider->createRun($connectionKey, CrawlType::Contacts);
+
+        Event::assertDispatched(CrawlRunStarted::class, fn (CrawlRunStarted $event): bool => $event->run->id === $run->id);
+        Log::shouldHaveReceived('info')
+            ->once()
+            ->withArgs(fn (string $message, array $context): bool => $message === 'Crawler run started.'
+                && ($context['run_id'] ?? null) === $run->id);
+        Queue::assertPushedOn('logging', StoreActivityLogJob::class, fn (StoreActivityLogJob $job): bool => $job->data->action === 'crawler.run.started');
+    }
+
     public function test_enqueue_specs_and_complete_run(): void
     {
         $spider = app(FlickrSpiderService::class);
@@ -40,6 +65,10 @@ final class FlickrSpiderServiceTest extends TestCase
 
     public function test_maybe_complete_run_when_all_targets_failed(): void
     {
+        Event::fake([CrawlRunFailed::class]);
+        Queue::fake();
+        Log::spy();
+
         $spider = app(FlickrSpiderService::class);
 
         $run = CrawlRun::query()->create([
@@ -63,6 +92,13 @@ final class FlickrSpiderServiceTest extends TestCase
         $fresh = $run->fresh();
         $this->assertSame(CrawlRunStatus::Failed, $fresh->status);
         $this->assertNotNull($fresh->failed_reason);
+
+        Event::assertDispatched(CrawlRunFailed::class, fn (CrawlRunFailed $event): bool => $event->run->id === $run->id
+            && $event->reason === 'API error');
+        Log::shouldHaveReceived('warning')
+            ->once()
+            ->withArgs(fn (string $message): bool => $message === 'Crawler run failed.');
+        Queue::assertPushedOn('logging', StoreActivityLogJob::class, fn (StoreActivityLogJob $job): bool => $job->data->action === 'crawler.run.failed');
     }
 
     public function test_refresh_run_counters_sums_per_run_targets(): void

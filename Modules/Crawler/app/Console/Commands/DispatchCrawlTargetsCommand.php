@@ -2,14 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Modules\Crawler\Console;
+namespace Modules\Crawler\Console\Commands;
 
 use Illuminate\Console\Command;
 use Modules\Crawler\Services\FlickrSpiderService;
 
 final class DispatchCrawlTargetsCommand extends Command
 {
-    protected $signature = 'xflickr:dispatch';
+    protected $signature = 'xflickr:crawler:dispatch';
+
+    protected $aliases = ['xflickr:dispatch'];
 
     protected $description = 'Dispatch due XFlickr crawl targets to the queue';
 

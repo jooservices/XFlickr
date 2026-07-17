@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Modules\Crawler\Tests\Feature\Console;
 
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Redis;
+use JOOservices\LaravelLogging\Jobs\StoreActivityLogJob;
 use Modules\Crawler\Services\FlickrPermitAcquirer;
 use Modules\Crawler\Services\FlickrRequestLimiter;
 use Modules\Crawler\Tests\TestCase;
@@ -48,6 +51,9 @@ final class RateLimitTest extends TestCase
 
     public function test_global_cooldown_sets_pause_key_with_ttl(): void
     {
+        Log::spy();
+        Queue::fake();
+
         $limiter = app(FlickrRequestLimiter::class);
         $key = 'cooldown-test-'.uniqid();
 
@@ -59,6 +65,11 @@ final class RateLimitTest extends TestCase
         $ttl = (int) Redis::ttl("xflickr:pause:{$key}");
         $this->assertGreaterThan(0, $ttl);
         $this->assertLessThanOrEqual(3600, $ttl);
+
+        Log::shouldHaveReceived('warning')
+            ->once()
+            ->withArgs(fn (string $message): bool => $message === 'Crawler global cooldown triggered.');
+        Queue::assertPushedOn('logging', StoreActivityLogJob::class, fn (StoreActivityLogJob $job): bool => $job->data->action === 'crawler.cooldown.triggered');
 
         Redis::del("xflickr:pause:{$key}");
     }

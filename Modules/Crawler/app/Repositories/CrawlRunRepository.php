@@ -58,6 +58,20 @@ final class CrawlRunRepository
             ->increment('api_calls');
     }
 
+    public function incrementDiscoveryCounter(CrawlRun $run, string $column, int $by): void
+    {
+        if ($by === 0) {
+            return;
+        }
+
+        CrawlRun::query()->whereKey($run->id)->increment($column, $by);
+    }
+
+    public function incrementFailedTargets(CrawlRun $run): void
+    {
+        CrawlRun::query()->whereKey($run->id)->increment('targets_failed');
+    }
+
     /**
      * @return Collection<int, CrawlRun>
      */

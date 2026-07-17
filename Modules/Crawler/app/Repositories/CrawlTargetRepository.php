@@ -8,9 +8,14 @@ use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Modules\Crawler\DTO\CrawlTaskSpec;
 use Modules\Crawler\Enums\CrawlStatus;
 use Modules\Crawler\Enums\TaskType;
+use Modules\Crawler\Models\CrawlRun;
 use Modules\Crawler\Models\CrawlTarget;
+use Modules\Crawler\Support\XFlickrConfig;
 
 final class CrawlTargetRepository
 {
@@ -31,20 +36,27 @@ final class CrawlTargetRepository
         return $target->fresh(['crawlRun']) ?? $target;
     }
 
-    /**
-     * Mark a target Processing for job execution, or null if missing/already completed.
-     */
+    /** Mark a claimable target Processing, returning its fencing token. */
     public function claimForProcessing(int $crawlTargetId): ?CrawlTarget
     {
-        $target = $this->findWithRun($crawlTargetId);
-        if ($target === null || $target->status === CrawlStatus::Completed) {
+        $token = (string) Str::uuid();
+        $expiresAt = now()->addMinutes(XFlickrConfig::crawlInt('stall_minutes', 15));
+
+        $claimed = CrawlTarget::query()
+            ->whereKey($crawlTargetId)
+            ->whereIn('status', [CrawlStatus::Pending, CrawlStatus::Queued])
+            ->update([
+                'status' => CrawlStatus::Processing,
+                'claim_token' => $token,
+                'claim_expires_at' => $expiresAt,
+                'locked_until' => $expiresAt,
+            ]);
+
+        if ($claimed !== 1) {
             return null;
         }
 
-        return $this->update($target, [
-            'status' => CrawlStatus::Processing,
-            'locked_until' => now()->addMinutes(15),
-        ]);
+        return $this->findWithRun($crawlTargetId);
     }
 
     /**
@@ -64,6 +76,8 @@ final class CrawlTargetRepository
             ->update([
                 'status' => CrawlStatus::Pending,
                 'locked_until' => null,
+                'claim_token' => null,
+                'claim_expires_at' => null,
                 'next_run_at' => now(),
             ]);
     }
@@ -145,6 +159,89 @@ final class CrawlTargetRepository
             ->completed()
             ->whereIn('task_type', $taskTypes)
             ->sum('last_result_count');
+    }
+
+    public function completeClaimed(CrawlTarget $target, string $claimToken, int $resultCount): bool
+    {
+        return CrawlTarget::query()
+            ->whereKey($target->id)
+            ->where('status', CrawlStatus::Processing)
+            ->where('claim_token', $claimToken)
+            ->update([
+                'status' => CrawlStatus::Completed,
+                'last_result_count' => $resultCount,
+                'last_crawled_at' => now(),
+                'locked_until' => null,
+                'claim_token' => null,
+                'claim_expires_at' => null,
+                'failed_reason' => null,
+            ]) === 1;
+    }
+
+    public function releaseClaimed(CrawlTarget $target, string $claimToken, int $seconds): bool
+    {
+        return CrawlTarget::query()
+            ->whereKey($target->id)
+            ->where('status', CrawlStatus::Processing)
+            ->where('claim_token', $claimToken)
+            ->update([
+                'status' => CrawlStatus::Pending,
+                'next_run_at' => now()->addSeconds($seconds),
+                'locked_until' => null,
+                'claim_token' => null,
+                'claim_expires_at' => null,
+                'retry_count' => $target->retry_count + 1,
+            ]) === 1;
+    }
+
+    public function failClaimed(CrawlTarget $target, string $claimToken, string $reason): bool
+    {
+        return CrawlTarget::query()
+            ->whereKey($target->id)
+            ->where('status', CrawlStatus::Processing)
+            ->where('claim_token', $claimToken)
+            ->update([
+                'status' => CrawlStatus::Failed,
+                'failed_reason' => $reason,
+                'locked_until' => null,
+                'claim_token' => null,
+                'claim_expires_at' => null,
+                'last_crawled_at' => now(),
+            ]) === 1;
+    }
+
+    public function countFailedForRun(int $runId): int
+    {
+        return CrawlTarget::query()->where('xflickr_crawl_run_id', $runId)->failed()->count();
+    }
+
+    /** @param list<CrawlTaskSpec> $specs */
+    public function insertPendingSpecs(CrawlRun $run, array $specs): int
+    {
+        if ($specs === []) {
+            return 0;
+        }
+
+        $now = now()->toDateTimeString();
+        $rows = array_map(static fn (CrawlTaskSpec $spec): array => [
+            'xflickr_crawl_run_id' => $run->id,
+            'task_type' => $spec->taskType->value,
+            'subject_nsid' => $spec->subjectNsid ?? '',
+            'subject_id' => $spec->subjectId ?? '',
+            'page' => $spec->page,
+            'status' => CrawlStatus::Pending->value,
+            'priority' => $spec->priority,
+            'next_run_at' => $now,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ], $specs);
+
+        $inserted = 0;
+        foreach (array_chunk($rows, (int) config('xflickr-crawler.bulk.chunk_size', 250)) as $chunk) {
+            $inserted += DB::table((new CrawlTarget)->getTable())->insertOrIgnore($chunk);
+        }
+
+        return $inserted;
     }
 
     public function deleteCompletedOlderThan(CarbonInterface $cutoff): int

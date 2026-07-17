@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Modules\Crawler\Console;
+namespace Modules\Crawler\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Database\Migrations\Migrator;
@@ -14,7 +14,9 @@ use Throwable;
 
 final class DoctorCommand extends Command
 {
-    protected $signature = 'xflickr:doctor';
+    protected $signature = 'xflickr:crawler:doctor';
+
+    protected $aliases = ['xflickr:doctor'];
 
     protected $description = 'Diagnose XFlickr Crawler host integration (Redis, app profile, queue, migrations)';
 
