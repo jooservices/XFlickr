@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Storage\Tests\Unit\Adapters\GooglePhotos;
 
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Modules\Storage\Dto\StorageUploadRequest;
@@ -29,18 +30,7 @@ final class GooglePhotosAdapterUploadTest extends TestCase
             ], 200),
         ]);
 
-        $account = StorageAccount::query()->create([
-            'provider' => 'google_photos',
-            'label' => 'Photos',
-            'credentials' => [
-                'access_token' => 'token',
-                'refresh_token' => 'refresh',
-                'client_id' => 'client',
-                'client_secret' => 'secret',
-                'expires_at' => now()->addHour()->toIso8601String(),
-            ],
-            'connected_at' => now(),
-        ]);
+        $account = StorageAccount::factory()->googlePhotos()->create();
 
         $tempFile = tempnam(sys_get_temp_dir(), 'xflickr-gp-');
         $this->assertNotFalse($tempFile);
@@ -65,5 +55,58 @@ final class GooglePhotosAdapterUploadTest extends TestCase
                 && ($context['url'] ?? null) === 'https://photoslibrary.googleapis.com/v1/mediaItems:batchCreate'
                 && ($context['upload_token_present'] ?? null) === true
                 && ! array_key_exists('upload_token', $context));
+    }
+
+    public function test_upload_creates_album_and_assigns_media_item_to_it(): void
+    {
+        $albumPage = 0;
+
+        Http::fake(function (Request $request) use (&$albumPage) {
+            if ($request->url() === 'https://photoslibrary.googleapis.com/v1/uploads') {
+                return Http::response('upload-token-123', 200);
+            }
+
+            if (str_starts_with($request->url(), 'https://photoslibrary.googleapis.com/v1/albums')) {
+                if ($request->method() === 'POST') {
+                    return Http::response(['id' => 'album-123', 'title' => 'Summer'], 200);
+                }
+
+                return Http::response($albumPage++ === 0
+                    ? ['albums' => [], 'nextPageToken' => 'next-page']
+                    : ['albums' => []], 200);
+            }
+
+            if ($request->url() === 'https://photoslibrary.googleapis.com/v1/mediaItems:batchCreate') {
+                return Http::response([
+                    'newMediaItemResults' => [[
+                        'mediaItem' => ['id' => 'media-item-123', 'filename' => 'photo.jpg'],
+                    ]],
+                ], 200);
+            }
+
+            return Http::response([], 404);
+        });
+        $account = StorageAccount::factory()->googlePhotos()->create();
+        $tempFile = tempnam(sys_get_temp_dir(), 'xflickr-gp-');
+        $this->assertNotFalse($tempFile);
+        file_put_contents($tempFile, 'fake-image-bytes');
+
+        try {
+            app(StorageAdapterFactory::class)->make($account)->upload(
+                new StorageUploadRequest($tempFile, 'Flickr/nsid/Photos/123_original.jpg', 'Summer'),
+            );
+        } finally {
+            @unlink($tempFile);
+        }
+
+        Http::assertSent(fn ($request) => $request->method() === 'GET'
+            && str_contains($request->url(), 'https://photoslibrary.googleapis.com/v1/albums?pageSize=50'));
+        Http::assertSent(fn ($request) => $request->method() === 'GET'
+            && str_contains($request->url(), 'pageToken=next-page'));
+        Http::assertSent(fn ($request) => $request->url() === 'https://photoslibrary.googleapis.com/v1/albums'
+            && $request->method() === 'POST'
+            && $request['album']['title'] === 'Summer');
+        Http::assertSent(fn ($request) => $request->url() === 'https://photoslibrary.googleapis.com/v1/mediaItems:batchCreate'
+            && $request['albumId'] === 'album-123');
     }
 }
