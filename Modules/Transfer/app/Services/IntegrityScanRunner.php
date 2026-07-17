@@ -25,7 +25,7 @@ final class IntegrityScanRunner
             return;
         }
         try {
-            $scan = $this->scans->find($scanId);
+            $scan = $this->scans->findById($scanId);
             if (! $scan instanceof IntegrityScan) {
                 return;
             }
@@ -39,7 +39,7 @@ final class IntegrityScanRunner
                 if (! preg_match('#^flickr/([^/]+)/photos/([a-zA-Z0-9_-]+)_[a-zA-Z0-9]+\.[a-zA-Z0-9]+$#', $path, $matches) || $byPath->has($path)) {
                     continue;
                 }
-                $rows[] = ['integrity_scan_id' => $scanId, 'uuid' => (string) Str::uuid(), 'type' => IntegrityAnomalyType::Orphaned->value, 'local_path' => $path, 'connection_key' => $matches[1], 'source_id' => $matches[2], 'created_at' => now(), 'updated_at' => now()];
+                $rows[] = ['integrity_scan_id' => $scanId, 'uuid' => (string) Str::uuid(), 'type' => IntegrityAnomalyType::Orphaned->value, 'local_path' => $path, 'stored_file_id' => null, 'connection_key' => $matches[1], 'source_id' => $matches[2], 'created_at' => now(), 'updated_at' => now()];
                 $orphaned++;
             }
             foreach ($records as $file) {

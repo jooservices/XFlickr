@@ -26,6 +26,13 @@ final class IntegrityScanRepository extends EloquentRepository
         return $this->newQuery()->where('uuid', $uuid)->first();
     }
 
+    public function findById(int $id): ?IntegrityScan
+    {
+        $scan = $this->newQuery()->find($id);
+
+        return $scan instanceof IntegrityScan ? $scan : null;
+    }
+
     public function markRunning(int $id): void
     {
         $this->newQuery()->whereKey($id)->update(['status' => IntegrityScanStatus::Running, 'started_at' => now(), 'error_message' => null]);
