@@ -1606,16 +1606,16 @@
         },
         {
             "name": "jooservices/dto",
-            "version": "v1.2.0",
+            "version": "v1.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/jooservices/dto.git",
-                "reference": "613521f97e033b587403789f694cf80b488c3872"
+                "reference": "d3c3c51e5201371b7e54ca63c7815d2145fa6d84"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jooservices/dto/zipball/613521f97e033b587403789f694cf80b488c3872",
-                "reference": "613521f97e033b587403789f694cf80b488c3872",
+                "url": "https://api.github.com/repos/jooservices/dto/zipball/d3c3c51e5201371b7e54ca63c7815d2145fa6d84",
+                "reference": "d3c3c51e5201371b7e54ca63c7815d2145fa6d84",
                 "shasum": ""
             },
             "require": {
@@ -1668,7 +1668,7 @@
                 "issues": "https://github.com/jooservices/dto/issues",
                 "source": "https://github.com/jooservices/dto"
             },
-            "time": "2026-07-05T11:36:29+00:00"
+            "time": "2026-07-21T01:15:17+00:00"
         },
         {
             "name": "jooservices/flickr",
